@@ -1,0 +1,400 @@
+{
+  "fileKey": "VnCd2MBmt4sYlVmtOVyCMH",
+  "fileName": "App_CV Maker (ATS Hero)",
+  "figmaUrl": "https://www.figma.com/design/VnCd2MBmt4sYlVmtOVyCMH/App_CV-Maker--ATS-Hero-",
+  "exportedAt": "2026-06-22",
+  "pages": [
+    {
+      "id": "1:6",
+      "name": "✅ Competitors Mobile app",
+      "folder": "pages",
+      "file": "01-competitors-mobile-app.png",
+      "status": "pending"
+    },
+    {
+      "id": "17:1154",
+      "name": "✅ Competitors visual conception",
+      "folder": "pages",
+      "file": "02-competitors-visual-conception.png",
+      "status": "pending"
+    },
+    {
+      "id": "151:300",
+      "name": "✅ Documentation",
+      "folder": "pages",
+      "file": "03-documentation.png",
+      "status": "pending"
+    },
+    {
+      "id": "180:17",
+      "name": "✅ User flow (Desktop)",
+      "folder": "pages",
+      "file": "04-user-flow-desktop-full.png",
+      "status": "pending"
+    },
+    {
+      "id": "17:1152",
+      "name": "⏱️ User flow (Mob)",
+      "folder": "pages",
+      "file": "05-user-flow-mobile-full.png",
+      "status": "pending"
+    },
+    {
+      "id": "0:1",
+      "name": "Preview",
+      "folder": "pages",
+      "file": "06-preview.png",
+      "status": "pending"
+    }
+  ],
+  "desktop": [
+    {
+      "id": "180:19",
+      "name": "Landing 1728px",
+      "file": "landing-1728px.png",
+      "status": "done"
+    },
+    {
+      "id": "193:907",
+      "name": "Dropdown How it works",
+      "file": "dropdown-how-it-works.png",
+      "status": "done"
+    },
+    {
+      "id": "230:685",
+      "name": "Function 2 — Improve CV",
+      "file": "function-2-improve-cv.png",
+      "status": "done"
+    },
+    {
+      "id": "398:8400",
+      "name": "Function 3 — Job Fit",
+      "file": "function-3-job-fit.png",
+      "status": "done"
+    },
+    {
+      "id": "242:950",
+      "name": "Function 1 Step 1 — Personal Info",
+      "file": "function-1-step-1-personal-info.png",
+      "status": "done"
+    },
+    {
+      "id": "249:1655",
+      "name": "Function 1 Step 2 — Add CV",
+      "file": "function-1-step-2-add-cv.png",
+      "status": "done"
+    },
+    {
+      "id": "249:1850",
+      "name": "Function 1 Step 2 Variant 2",
+      "file": "function-1-step-2-variant-2.png",
+      "status": "done"
+    },
+    {
+      "id": "272:77",
+      "name": "Function 1 Step 4 — Summary",
+      "file": "function-1-step-4-summary.png",
+      "status": "done"
+    },
+    {
+      "id": "272:609",
+      "name": "Function 1 Step 5 — Work",
+      "file": "function-1-step-5-work.png",
+      "status": "done"
+    },
+    {
+      "id": "290:154",
+      "name": "Function 1 Step 6 — Education",
+      "file": "function-1-step-6-education.png",
+      "status": "done"
+    },
+    {
+      "id": "291:1321",
+      "name": "Function 1 Step 7 — Awards",
+      "file": "function-1-step-7-awards.png",
+      "status": "pending"
+    },
+    {
+      "id": "293:891",
+      "name": "Function 1 Step 8 — Certifications",
+      "file": "function-1-step-8-certifications.png",
+      "status": "pending"
+    },
+    {
+      "id": "293:1094",
+      "name": "Function 1 Step 9 — Publications",
+      "file": "function-1-step-9-publications.png",
+      "status": "pending"
+    },
+    {
+      "id": "293:1309",
+      "name": "Function 1 Step 10 — Activities",
+      "file": "function-1-step-10-activities.png",
+      "status": "pending"
+    },
+    {
+      "id": "358:6909",
+      "name": "Function 1 Step 11 — Add section",
+      "file": "function-1-step-11-add-section.png",
+      "status": "pending"
+    },
+    {
+      "id": "319:3807",
+      "name": "ATS Score Loading 1",
+      "file": "ats-score-loading-1.png",
+      "status": "done"
+    },
+    {
+      "id": "331:5590",
+      "name": "ATS Score Loading 2",
+      "file": "ats-score-loading-2.png",
+      "status": "done"
+    },
+    {
+      "id": "319:4126",
+      "name": "ATS Score Results 1",
+      "file": "ats-score-results-1.png",
+      "status": "done"
+    },
+    {
+      "id": "383:7664",
+      "name": "ATS Score Results 2",
+      "file": "ats-score-results-2.png",
+      "status": "done"
+    },
+    {
+      "id": "383:8025",
+      "name": "ATS Score Results 3",
+      "file": "ats-score-results-3.png",
+      "status": "done"
+    },
+    {
+      "id": "311:3326",
+      "name": "Pop-up Complete",
+      "file": "popup-complete.png",
+      "status": "done"
+    },
+    {
+      "id": "336:6042",
+      "name": "Pop-up Tips",
+      "file": "popup-tips.png",
+      "status": "done"
+    },
+    {
+      "id": "311:3434",
+      "name": "Pop-up Plan",
+      "file": "popup-plan.png",
+      "status": "done"
+    },
+    {
+      "id": "311:3470",
+      "name": "Pop-up Sign in",
+      "file": "popup-sign-in.png",
+      "status": "done"
+    },
+    {
+      "id": "311:3740",
+      "name": "Pop-up Add section 1",
+      "file": "popup-add-section-1.png",
+      "status": "done"
+    },
+    {
+      "id": "331:4891",
+      "name": "Pop-up Add section 2",
+      "file": "popup-add-section-2.png",
+      "status": "pending"
+    },
+    {
+      "id": "358:7402",
+      "name": "Pop-up Almost there",
+      "file": "popup-almost-there.png",
+      "status": "pending"
+    },
+    {
+      "id": "358:7339",
+      "name": "Pop-up Add section 3",
+      "file": "popup-add-section-3.png",
+      "status": "pending"
+    },
+    {
+      "id": "297:1293",
+      "name": "UI Kit",
+      "file": "ui-kit.png",
+      "status": "pending"
+    },
+    {
+      "id": "297:1297",
+      "name": "FAQ text content",
+      "file": "faq-text-content.png",
+      "status": "pending"
+    },
+    {
+      "id": "151:1984",
+      "name": "Landing structure 1",
+      "file": "landing-structure-1.png",
+      "status": "pending"
+    },
+    {
+      "id": "398:8337",
+      "name": "Landing structure 2",
+      "file": "landing-structure-2.png",
+      "status": "pending"
+    },
+    {
+      "id": "151:1909",
+      "name": "Web App map",
+      "file": "web-app-map.png",
+      "status": "pending"
+    }
+  ],
+  "documentation": [
+    {
+      "id": "151:1894",
+      "name": "Product concept",
+      "file": "product-concept.png",
+      "status": "pending"
+    },
+    {
+      "id": "151:1905",
+      "name": "Marketing Funnel",
+      "file": "marketing-funnel.png",
+      "status": "pending"
+    },
+    {
+      "id": "153:2089",
+      "name": "Desktop/mobile Prioritisation",
+      "file": "desktop-mobile-prioritisation.png",
+      "status": "pending"
+    }
+  ],
+  "mobile": [
+    {
+      "id": "55:310",
+      "name": "Plans and conditions",
+      "file": "screen-plans-and-conditions.png",
+      "status": "pending"
+    },
+    {
+      "id": "57:697",
+      "name": "Contacts wizard",
+      "file": "screen-contacts-wizard.png",
+      "status": "pending"
+    },
+    {
+      "id": "76:143",
+      "name": "Screen 76:143",
+      "file": "screen-76-143.png",
+      "status": "pending"
+    },
+    {
+      "id": "77:15",
+      "name": "Screen 77:15",
+      "file": "screen-77-15.png",
+      "status": "pending"
+    },
+    {
+      "id": "77:190",
+      "name": "Screen 77:190",
+      "file": "screen-77-190.png",
+      "status": "pending"
+    },
+    {
+      "id": "83:536",
+      "name": "Screen 83:536",
+      "file": "screen-83-536.png",
+      "status": "pending"
+    },
+    {
+      "id": "86:844",
+      "name": "Screen 86:844",
+      "file": "screen-86-844.png",
+      "status": "pending"
+    },
+    {
+      "id": "86:1450",
+      "name": "Screen 86:1450",
+      "file": "screen-86-1450.png",
+      "status": "pending"
+    },
+    {
+      "id": "86:1618",
+      "name": "Screen 86:1618",
+      "file": "screen-86-1618.png",
+      "status": "pending"
+    },
+    {
+      "id": "89:2396",
+      "name": "Screen 89:2396",
+      "file": "screen-89-2396.png",
+      "status": "pending"
+    },
+    {
+      "id": "86:1986",
+      "name": "Screen 86:1986",
+      "file": "screen-86-1986.png",
+      "status": "pending"
+    },
+    {
+      "id": "86:2125",
+      "name": "Screen 86:2125",
+      "file": "screen-86-2125.png",
+      "status": "pending"
+    },
+    {
+      "id": "86:2265",
+      "name": "Screen 86:2265",
+      "file": "screen-86-2265.png",
+      "status": "pending"
+    },
+    {
+      "id": "55:322",
+      "name": "Screen 55:322",
+      "file": "screen-55-322.png",
+      "status": "pending"
+    }
+  ],
+  "landingSections": [
+    {
+      "id": "180:112",
+      "name": "Hero",
+      "file": "../section-hero.png",
+      "status": "done"
+    },
+    {
+      "id": "180:190",
+      "name": "Problem",
+      "file": "../section-untranslated.png",
+      "status": "done"
+    },
+    {
+      "id": "180:70",
+      "name": "Tool cards",
+      "file": "../section-tool.png",
+      "status": "done"
+    },
+    {
+      "id": "193:869",
+      "name": "Features",
+      "file": "../section-features.png",
+      "status": "done"
+    },
+    {
+      "id": "212:1154",
+      "name": "Testimonials",
+      "file": "../section-testimonials.png",
+      "status": "done"
+    },
+    {
+      "id": "180:20",
+      "name": "FAQ",
+      "file": "../section-faq.png",
+      "status": "done"
+    },
+    {
+      "id": "180:214",
+      "name": "Footer",
+      "file": "../section-footer.png",
+      "status": "done"
+    }
+  ]
+}
