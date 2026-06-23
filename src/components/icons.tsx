@@ -403,9 +403,9 @@ export function SectionIcon({ name, size = 22 }: { name: SectionIconName; size?:
     case "activities":
       return svg(
         <>
-          <path d="M14.5 3.5c2.5.4 5.6 3.5 6 6-2 2.3-5.2 5.4-7.6 6.2l-3.6-3.6C10.1 9.7 13.2 6.5 14.5 3.5z" fill="#FBD2CB" stroke="#E0492E" strokeWidth="1.3" strokeLinejoin="round" />
-          <circle cx="14.5" cy="9" r="1.6" fill="#E0492E" />
-          <path d="M9.3 14.7l-3.3 3.3M7.5 13.2l-2.6 2.6M10.8 16.5l-2.6 2.6" stroke="#E0492E" strokeWidth="1.3" strokeLinecap="round" />
+          <path d="M12 3l1.8 4.2H18l-3.6 2.8 1.4 4.5L12 12.8 8.2 14.5 9.6 9.8 6 7h4.2L12 3z" fill="#E8F0FE" stroke="#4285F4" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M10 14.5v4.5M14 14.5v4.5M8 19h8" stroke="#E0492E" strokeWidth="1.3" strokeLinecap="round" />
+          <circle cx="12" cy="10.2" r="1.4" fill="#4285F4" />
         </>
       );
     case "awards":
@@ -439,6 +439,82 @@ export function SectionIcon({ name, size = 22 }: { name: SectionIconName; size?:
         </>
       );
   }
+}
+
+/* Analyze flow — clipboard on step 1 (Figma) */
+export function AnalyzeClipboard({ size = 18, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <rect x="5" y="4" width="14" height="17" rx="2" fill="#F5E6C8" stroke="#C4A574" strokeWidth="1.2" />
+      <path d="M8.5 4h7a1.2 1.2 0 0 1 1.2 1.2V7H7.3V5.2A1.2 1.2 0 0 1 8.5 4z" fill="#E8E8E8" stroke="#AAA" strokeWidth="1" />
+      <path d="M8.5 10.5h7M8.5 13.5h5.5" stroke="#B8956A" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* ATS loading — resume with profile badge */
+export function LoadingResume({ size = 52, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <rect x="6" y="3" width="13" height="18" rx="2" fill="#fff" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M9 8h7M9 11.5h7M9 15h4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <circle cx="16.5" cy="7" r="3.2" fill="#fff" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="16.5" cy="6.5" r="1.1" fill="currentColor" />
+      <path d="M15 8.8c.6-.8 1.4-.8 2 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function Magnify({ size = 18, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <circle cx="10.5" cy="10.5" r="5.5" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M15 15l4.5 4.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function Trash({ size = 16, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M7 7l.8 12h8.4L17 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 10.5v5M14 10.5v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function LightbulbBadge({ size = 12, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <path d="M9 17h6M10 20h4M12 3c-3 0-5.5 2.2-5.5 5 0 2 1 3.5 2.2 4.5.5.4.8.9.8 1.5h5c0-.6.3-1.1.8-1.5 1.2-1 2.2-2.5 2.2-4.5C17.5 5.2 15 3 12 3z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function BriefcaseSm({ size = 13, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <rect x="3" y="8" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M9 8V6.5A1.5 1.5 0 0 1 10.5 5h3A1.5 1.5 0 0 1 15 6.5V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function FolderSm({ size = 13, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18V7.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function PersonSm({ size = 13, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <circle cx="12" cy="8" r="3" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M6 19c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 /* Warning triangle — score badges */

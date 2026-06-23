@@ -1,3 +1,5 @@
+import { AnalyzeClipboard } from "../icons";
+
 const ANALYZE_STEPS = ["Adding CV", "ATS-Analysis", "Improvement"];
 
 /** Three-node horizontal stepper used by the Improve / Job Fit flow (and its results). */
@@ -7,10 +9,19 @@ export default function AnalyzeSteps({ current }: { current: number }) {
       {ANALYZE_STEPS.map((label, i) => {
         const isCurrent = i === current;
         const isDone = i < current;
+        const showClipboard = i === 0 && (isCurrent || isDone);
+        const nodeClass = [
+          "analyze-step__node",
+          isCurrent ? " is-current" : "",
+          isDone ? " is-done" : "",
+          isCurrent && i === 1 ? " is-solid" : "",
+          isDone && i > 0 ? " is-solid" : "",
+        ].join("");
+
         return (
           <div className="analyze-step" key={label}>
             {i > 0 && <span className={`analyze-step__line${isDone || isCurrent ? " is-filled" : ""}`} />}
-            <span className={`analyze-step__node${isCurrent ? " is-current" : ""}${isDone ? " is-done" : ""}`} />
+            <span className={nodeClass}>{showClipboard && <AnalyzeClipboard size={16} />}</span>
             <span className={`analyze-step__label${isCurrent || isDone ? " is-current" : ""}`}>{label}</span>
           </div>
         );

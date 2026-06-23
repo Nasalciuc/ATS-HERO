@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { nanoid } from "nanoid";
 import { Field, TextArea } from "../../components/app/Field";
-import { Check, Plus, Tag } from "../../components/icons";
+import { Check, Plus, Upload, Trash, BriefcaseSm, PersonSm, FolderSm, Globe } from "../../components/icons";
 import type {
   CvData,
   EducationItem,
@@ -70,7 +70,7 @@ function TabbedRepeat<T extends { id: string }>({
               setActive(0);
             }}
           >
-            Delete
+            <Trash size={15} /> Delete
           </button>
         )}
       </div>
@@ -79,6 +79,13 @@ function TabbedRepeat<T extends { id: string }>({
 }
 
 type TagTone = "green" | "blue" | "amber" | "violet";
+
+const TAG_ICONS: Record<TagTone, ReactNode> = {
+  green: <BriefcaseSm size={13} />,
+  amber: <PersonSm size={13} />,
+  blue: <FolderSm size={13} />,
+  violet: <Globe size={13} />,
+};
 
 /** Chip input: type + Enter to add a tag, click × to remove. Matches Figma skill groups. */
 function TagInput({
@@ -114,7 +121,7 @@ function TagInput({
         <div className="skill-tags">
           {tags.map((t) => (
             <span className={`skill-tag skill-tag--${tone}`} key={t}>
-              <Tag size={13} />
+              {TAG_ICONS[tone]}
               {t}
               <button onClick={() => onRemove(t)} aria-label={`Remove ${t}`}>
                 ×
@@ -139,7 +146,9 @@ export function PersonalInfoStep({ data, update }: StepProps) {
         <Field label="PHONE" value={p.phone} placeholder="+1 123 456 7890" onChange={(v) => set({ phone: v })} />
         <div className="field">
           <span className="field__label">PHOTO (OPTIONAL)</span>
-          <button className="field__upload">⬆ Upload</button>
+          <button className="field__upload">
+            <Upload size={16} /> Upload
+          </button>
         </div>
       </div>
       <div className="form-col">
@@ -368,7 +377,9 @@ function PhotoField() {
   return (
     <div className="field">
       <span className="field__label">PHOTO (OPTIONAL)</span>
-      <button className="field__upload">⬆ Upload</button>
+      <button className="field__upload">
+        <Upload size={16} /> Upload
+      </button>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/app/AppShell";
 import AnalyzeSteps from "../components/app/AnalyzeSteps";
@@ -54,6 +54,18 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const draftCv = sessionStorage.getItem(`ats_${mode}_cv`);
+    const draftJob = sessionStorage.getItem("ats_jobfit_jd");
+    if (draftCv) setCvText(draftCv);
+    if (mode === "jobfit" && draftJob) setJobText(draftJob);
+  }, [mode]);
+
+  const saveDraft = () => {
+    sessionStorage.setItem(`ats_${mode}_cv`, cvText);
+    if (mode === "jobfit") sessionStorage.setItem("ats_jobfit_jd", jobText);
+  };
+
   const title = mode === "improve" ? "Add your CV" : "Add your CV and job description";
   const active = mode === "improve" ? "improve" : "jobfit";
 
@@ -71,6 +83,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
           setBusy(false);
           return;
         }
+        sessionStorage.setItem("ats_flow", "jobfit");
         const [{ report }, fit] = await Promise.all([
           api.score({ text: cvText }),
           api.jobfit(cvText, jobText),
@@ -78,6 +91,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
         sessionStorage.setItem("ats_report", JSON.stringify(report));
         sessionStorage.setItem("ats_jobfit", JSON.stringify(fit.report));
       } else {
+        sessionStorage.setItem("ats_flow", "improve");
         const { report } = await api.score({ text: cvText });
         sessionStorage.setItem("ats_report", JSON.stringify(report));
         sessionStorage.removeItem("ats_jobfit");
@@ -95,7 +109,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
       title={title}
       active={active}
       actions={
-        <button className="topbtn topbtn--dark">
+        <button className="topbtn topbtn--dark" onClick={saveDraft}>
           <Save size={18} /> Save
         </button>
       }

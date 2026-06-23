@@ -2,7 +2,19 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/app/AppShell";
 import AnalyzeSteps from "../components/app/AnalyzeSteps";
-import { Eye, Save, Plus, Minus, Warn, Check, SectionIcon, StatCv } from "../components/icons";
+import {
+  Eye,
+  Save,
+  Plus,
+  Minus,
+  Warn,
+  Check,
+  SectionIcon,
+  ArrowLeft,
+  LoadingResume,
+  Magnify,
+  LightbulbBadge,
+} from "../components/icons";
 import { useApp } from "../store/AppContext";
 import { api } from "../lib/api";
 import type { JobFitReport, ScoreReport, SectionKey } from "../lib/types";
@@ -18,6 +30,14 @@ import {
   ActivitiesStep,
   VolunteeringStep,
 } from "./builder/steps";
+
+type AtsFlow = "create" | "improve" | "jobfit";
+
+function getAtsFlow(): AtsFlow {
+  const f = sessionStorage.getItem("ats_flow");
+  if (f === "improve" || f === "jobfit") return f;
+  return "create";
+}
 
 function scoreColor(score: number): string {
   if (score >= 80) return "var(--green)";
@@ -39,10 +59,15 @@ export default function ScorePage() {
   const [fixing, setFixing] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [secondsLeft, setSecondsLeft] = useState(30);
-  const fromAnalyze = typeof window !== "undefined" && !!sessionStorage.getItem("ats_report");
+  const flow = getAtsFlow();
+  const fromAnalyze = flow === "improve" || flow === "jobfit";
+
+  const backHref = flow === "jobfit" ? "/app/jobfit" : flow === "improve" ? "/app/improve" : "/app/create";
 
   const compute = async () => {
     setLoading(true);
+    const started = Date.now();
+    const MIN_LOADING_MS = 1500;
     try {
       const cached = sessionStorage.getItem("ats_report");
       if (cached) {
@@ -56,6 +81,8 @@ export default function ScorePage() {
         setOpen(report.sections[0]?.key ?? null);
       }
     } finally {
+      const wait = MIN_LOADING_MS - (Date.now() - started);
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       setLoading(false);
     }
   };
@@ -65,7 +92,6 @@ export default function ScorePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Countdown flavor for the loading screen.
   useEffect(() => {
     if (!loading) return;
     setSecondsLeft(30);
@@ -99,29 +125,46 @@ export default function ScorePage() {
     setOpen(fresh.sections[0]?.key ?? null);
   };
 
+  const headerActions = loading || fixing ? (
+    <>
+      <button className="topbtn topbtn--ghost" onClick={() => navigate(backHref)}>
+        <ArrowLeft size={18} /> Back
+      </button>
+      <button className="topbtn topbtn--dark" onClick={() => void save()}>
+        <Save size={18} /> {saving ? "Saving…" : "Save"}
+      </button>
+    </>
+  ) : (
+    <>
+      <button className="topbtn topbtn--ghost" onClick={() => navigate("/app/create")}>
+        <Eye size={18} /> Preview
+      </button>
+      <button className="topbtn topbtn--dark" onClick={() => void save()}>
+        <Save size={18} /> {saving ? "Saving…" : "Save"}
+      </button>
+    </>
+  );
+
   return (
     <AppShell
       title={loading ? "ATS Score Estimation" : "ATS Score Results"}
-      active={fromAnalyze ? "improve" : "create"}
-      actions={
-        <>
-          <button className="topbtn topbtn--ghost" onClick={() => navigate("/app/create")}>
-            <Eye size={18} /> Preview
-          </button>
-          <button className="topbtn topbtn--dark" onClick={() => void save()}>
-            <Save size={18} /> {saving ? "Saving…" : "Save"}
-          </button>
-        </>
-      }
+      active={flow}
+      actions={headerActions}
     >
       {loading || !report ? (
-        <div className="ats-loading">
-          <div className="ats-loading__badge">
-            <StatCv size={56} />
+        <>
+          {fromAnalyze && <AnalyzeSteps current={1} />}
+          <div className="ats-loading">
+            <div className="ats-loading__badge">
+              <span className="ats-loading__ring" aria-hidden />
+              <LoadingResume size={52} />
+            </div>
+            <p className="ats-loading__msg">
+              <Magnify size={18} /> Hunting for hidden resume glitches…
+            </p>
+            <p className="ats-loading__time">{secondsLeft} sec left</p>
           </div>
-          <p className="ats-loading__msg">🔍 Hunting for hidden resume glitches…</p>
-          <p className="ats-loading__time">{secondsLeft} sec left</p>
-        </div>
+        </>
       ) : (
         <div className="score">
           {fromAnalyze && <AnalyzeSteps current={1} />}
@@ -235,10 +278,13 @@ function Group({
   title: string;
   items: string[];
 }) {
+  const badgeIcon =
+    tone === "good" ? <Check size={12} /> : tone === "suggestion" ? <LightbulbBadge size={12} /> : <Warn size={12} />;
+
   return (
     <div className="score-group">
       <span className={`score-group__badge score-group__badge--${tone}`}>
-        {tone === "good" ? <Check size={12} /> : <Warn size={12} />} {title}
+        {badgeIcon} {title}
       </span>
       <ol className="score-group__list">
         {items.map((it, i) => (

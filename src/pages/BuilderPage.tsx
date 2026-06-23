@@ -55,12 +55,15 @@ export default function BuilderPage() {
   const [addedSections, setAddedSections] = useState<SectionKey[]>([]);
 
   const steps: Step[] = useMemo(() => {
-    const extra = OPTIONAL_SECTIONS.filter((o) => addedSections.includes(o.key)).map((o) => ({
-      key: o.key,
-      label: o.label,
-      emoji: o.emoji,
-    }));
-    return [...BASE_STEPS, ...extra];
+    const optional = (keys: SectionKey[]) =>
+      OPTIONAL_SECTIONS.filter((o) => keys.includes(o.key) && addedSections.includes(o.key)).map((o) => ({
+        key: o.key,
+        label: o.label,
+        emoji: o.emoji,
+      }));
+    const core = BASE_STEPS.slice(0, 4);
+    const skills = BASE_STEPS.slice(4);
+    return [...core, ...optional(["activities"]), ...skills, ...optional(["awards", "certifications", "publications", "volunteering"])];
   }, [addedSections]);
 
   const activeIndex = steps.findIndex((s) => s.key === activeKey);
@@ -190,16 +193,23 @@ export default function BuilderPage() {
       </div>
 
       <div className="builder__footer">
-        {activeIndex > 0 ? (
-          <button className="topbtn topbtn--ghost" onClick={back}>
-            <ArrowLeft size={18} /> Back
+        <div>
+          {activeIndex > 0 ? (
+            <button className="topbtn topbtn--ghost" onClick={back}>
+              <ArrowLeft size={18} /> Back
+            </button>
+          ) : null}
+        </div>
+        <div className="builder__footer__actions">
+          {!isLast && (
+            <button className="topbtn topbtn--ghost" onClick={next}>
+              Next step <ArrowRight size={18} />
+            </button>
+          )}
+          <button className="topbtn topbtn--dark" onClick={finish}>
+            Complete
           </button>
-        ) : (
-          <span />
-        )}
-        <button className="topbtn topbtn--ghost" onClick={next}>
-          {isLast ? "Complete" : "Next step"} <ArrowRight size={18} />
-        </button>
+        </div>
       </div>
 
       <TipsModal open={tips} onClose={() => setTips(false)} section={activeKey} />
@@ -224,6 +234,9 @@ export default function BuilderPage() {
         data={data}
         onScore={() => {
           setComplete(false);
+          sessionStorage.removeItem("ats_report");
+          sessionStorage.removeItem("ats_jobfit");
+          sessionStorage.setItem("ats_flow", "create");
           navigate("/app/score");
         }}
       />

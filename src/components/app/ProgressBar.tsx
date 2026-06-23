@@ -1,19 +1,6 @@
-import { Plus, Check, SectionIcon } from "../icons";
+import { Plus } from "../icons";
 
 export type Step = { key: string; label: string; emoji: string };
-
-const ICON_KEYS = new Set([
-  "personalInfo",
-  "education",
-  "summary",
-  "work",
-  "skills",
-  "activities",
-  "awards",
-  "certifications",
-  "publications",
-  "volunteering",
-]);
 
 export default function ProgressBar({
   steps,
@@ -32,6 +19,8 @@ export default function ProgressBar({
   onAddSection: () => void;
   onRemoveSection?: (key: string) => void;
 }) {
+  const currentIndex = steps.findIndex((s) => s.key === current);
+
   return (
     <div className="progress">
       <div className="progress__scroll">
@@ -40,9 +29,12 @@ export default function ProgressBar({
           const isCurrent = s.key === current;
           const isDone = completed.has(s.key) && !isCurrent;
           const isOptional = optional?.has(s.key) ?? false;
+          const lineFilled =
+            i > 0 &&
+            (completed.has(steps[i - 1].key) || isCurrent || isDone || i <= currentIndex);
           return (
             <div className="progress__step" key={s.key}>
-              {i > 0 && <span className={`progress__line${isDone || isCurrent ? " is-filled" : ""}`} />}
+              {i > 0 && <span className={`progress__line${lineFilled ? " is-filled" : ""}`} />}
               {isOptional && onRemoveSection && (
                 <button
                   className="progress__remove"
@@ -56,16 +48,9 @@ export default function ProgressBar({
                 className={`progress__node${isCurrent ? " is-current" : ""}${isDone ? " is-done" : ""}`}
                 onClick={() => onSelect(s.key)}
               >
-                {ICON_KEYS.has(s.key) ? (
-                  <SectionIcon name={s.key as never} size={24} />
-                ) : (
-                  <span className="progress__emoji">{s.emoji}</span>
-                )}
-                {isDone && (
-                  <span className="progress__check">
-                    <Check size={12} />
-                  </span>
-                )}
+                <span className="progress__emoji" aria-hidden>
+                  {s.emoji}
+                </span>
               </button>
               <span className={`progress__label${isCurrent ? " is-current" : ""}`}>{s.label}</span>
             </div>

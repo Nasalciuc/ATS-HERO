@@ -1209,15 +1209,18 @@ p {
   margin-top: 40px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 .appshell__nav-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 0;
+  padding: 14px 0;
   font-size: 16px;
   color: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+}
+.appshell__nav-item:last-child {
+  border-bottom: none;
 }
 .appshell__nav-item:hover {
   color: #fff;
@@ -1365,7 +1368,8 @@ p {
   right: 50%;
   width: 100%;
   height: 2px;
-  background: var(--line);
+  background: #d8d8d8;
+  z-index: 0;
 }
 .progress__line.is-filled {
   background: var(--green);
@@ -1381,22 +1385,19 @@ p {
   align-items: center;
   justify-content: center;
   z-index: 1;
-  filter: grayscale(1);
-  opacity: 0.55;
 }
 .progress__node.is-current {
   box-shadow: inset 0 0 0 2px var(--green);
-  filter: none;
-  opacity: 1;
+  background: #fff;
 }
 .progress__node.is-done {
   box-shadow: inset 0 0 0 2px var(--green);
-  filter: none;
-  opacity: 1;
+  background: #fff;
 }
 .progress__emoji {
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 }
 .progress__check {
   position: absolute;
@@ -1441,7 +1442,9 @@ p {
 }
 .progress__label.is-current {
   color: var(--green);
-  font-weight: 500;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .progress__add {
   display: flex;
@@ -1552,8 +1555,14 @@ p {
 .builder__footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
   margin-top: 28px;
+}
+.builder__footer__actions {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
 }
 
 /* form fields */
@@ -1799,8 +1808,9 @@ p {
 /* ---------------- analyze (Function 2/3) ---------------- */
 .analyze-steps {
   display: flex;
-  margin: 28px 0 24px;
-  max-width: 560px;
+  margin: 28px auto 24px;
+  max-width: 680px;
+  width: 100%;
 }
 .analyze-step {
   display: flex;
@@ -1808,29 +1818,42 @@ p {
   align-items: center;
   flex: 1;
   position: relative;
+  min-width: 0;
 }
 .analyze-step__line {
   position: absolute;
-  top: 14px;
+  top: 15px;
   right: 50%;
   width: 100%;
   height: 2px;
   background: var(--line);
+  z-index: 0;
 }
 .analyze-step__line.is-filled {
   background: var(--green);
 }
 .analyze-step__node.is-done {
   box-shadow: inset 0 0 0 2px var(--green);
+  background: #eafff2;
+}
+.analyze-step__node.is-done.is-solid,
+.analyze-step__node.is-current.is-solid {
   background: var(--green);
+  box-shadow: none;
+}
+.analyze-step__node.is-current.is-solid .analyze-step__icon {
+  display: none;
 }
 .analyze-step__node {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1.5px var(--line);
-  background: var(--white);
+  background: #ececec;
+  box-shadow: none;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .analyze-step__node.is-current {
   box-shadow: inset 0 0 0 2px var(--green);
@@ -2061,22 +2084,30 @@ p {
   padding: 90px 0;
 }
 .ats-loading__badge {
+  position: relative;
   width: 140px;
   height: 140px;
   border-radius: 50%;
   background: #efeaff;
-  box-shadow: inset 0 0 0 2px var(--green);
   color: var(--violet-600);
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: ats-pulse 1.6s ease-in-out infinite;
 }
-@keyframes ats-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+.ats-loading__ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid #e8e8e8;
+  border-top-color: var(--green);
+  border-right-color: var(--green);
+  border-bottom-color: var(--green);
+  transform: rotate(35deg);
 }
 .ats-loading__msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   color: var(--ink);
   margin-top: 8px;
