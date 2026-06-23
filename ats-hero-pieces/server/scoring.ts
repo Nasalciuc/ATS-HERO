@@ -31,7 +31,6 @@ const CORE_SECTIONS: SectionKey[] = [
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Unanchored: finds an email embedded inside free-form CV text (Improve flow).
 const EMAIL_SCAN_RE = /[^\s@]+@[^\s@]+\.[^\s@]+/;
-const NUMBER_RE = /\d/;
 const ACTION_VERBS = [
   "led",
   "built",

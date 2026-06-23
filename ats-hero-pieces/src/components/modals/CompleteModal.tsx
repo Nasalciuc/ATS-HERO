@@ -31,6 +31,7 @@ export default function CompleteModal({
   };
 
   const handleDoc = () => {
+    // DOC export remains a lightweight text serialization for now.
     const text = serializeCv(data);
     const blob = new Blob([text], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
