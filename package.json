@@ -10,9 +10,10 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "figma:status": "node scripts/figma-status.mjs",
-    "figma:download:desktop": "node scripts/download-figma-pages.mjs --section desktop --delay 8000",
-    "figma:download:rest": "node scripts/download-figma-pages.mjs --delay 8000",
-    "figma:download:all": "node scripts/download-figma-pages.mjs --delay 8000",
+    "figma:download:desktop": "node scripts/download-figma-pages.mjs --section desktop --delay 10000",
+    "figma:download:pages": "node scripts/download-figma-pages.mjs --section pages --delay 10000",
+    "figma:download:rest": "node scripts/download-figma-pages.mjs --delay 10000",
+    "figma:download:all": "node scripts/download-figma-pages.mjs --delay 10000",
     "api:health": "node scripts/api-smoke-test.mjs",
     "api:test": "node scripts/api-smoke-test.mjs",
     "postman:run": "npx --yes newman run postman/ATS-Hero-API.postman_collection.json -e postman/ATS-Hero-Local.postman_environment.json"

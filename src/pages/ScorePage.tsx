@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/app/AppShell";
-import { Eye, Save, Plus, Minus, Warn, Check } from "../components/icons";
+import AnalyzeSteps from "../components/app/AnalyzeSteps";
+import { Eye, Save, Plus, Minus, Warn, Check, SectionIcon, StatCv } from "../components/icons";
 import { useApp } from "../store/AppContext";
 import { api } from "../lib/api";
 import type { JobFitReport, ScoreReport, SectionKey } from "../lib/types";
-
-const SECTION_EMOJI: Record<SectionKey, string> = {
-  personalInfo: "🪪",
-  education: "🎓",
-  work: "💼",
-  summary: "📝",
-  skills: "💪",
-  awards: "🏆",
-  certifications: "📜",
-  publications: "📚",
-  volunteering: "🤝",
-  activities: "🚀",
-};
+import {
+  PersonalInfoStep,
+  EducationStep,
+  SummaryStep,
+  WorkStep,
+  SkillsStep,
+  AwardsStep,
+  CertificationsStep,
+  PublicationsStep,
+  ActivitiesStep,
+  VolunteeringStep,
+} from "./builder/steps";
 
 function scoreColor(score: number): string {
   if (score >= 80) return "var(--green)";
@@ -25,13 +25,21 @@ function scoreColor(score: number): string {
   return "var(--red)";
 }
 
+const ICON_KEYS = new Set<SectionKey>([
+  "personalInfo", "education", "summary", "work", "skills",
+  "activities", "awards", "certifications", "publications", "volunteering",
+]);
+
 export default function ScorePage() {
-  const { data, save, saving } = useApp();
+  const { data, update, save, saving } = useApp();
   const navigate = useNavigate();
   const [report, setReport] = useState<ScoreReport | null>(null);
   const [jobFit, setJobFit] = useState<JobFitReport | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [fixing, setFixing] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [secondsLeft, setSecondsLeft] = useState(30);
+  const fromAnalyze = typeof window !== "undefined" && !!sessionStorage.getItem("ats_report");
 
   const compute = async () => {
     setLoading(true);
@@ -57,6 +65,31 @@ export default function ScorePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Countdown flavor for the loading screen.
+  useEffect(() => {
+    if (!loading) return;
+    setSecondsLeft(30);
+    const id = setInterval(() => setSecondsLeft((s) => (s > 1 ? s - 1 : s)), 800);
+    return () => clearInterval(id);
+  }, [loading]);
+
+  const renderSectionForm = (key: SectionKey) => {
+    const props = { data, update };
+    switch (key) {
+      case "personalInfo": return <PersonalInfoStep {...props} />;
+      case "education": return <EducationStep {...props} />;
+      case "summary": return <SummaryStep {...props} />;
+      case "work": return <WorkStep {...props} />;
+      case "skills": return <SkillsStep {...props} />;
+      case "awards": return <AwardsStep {...props} />;
+      case "certifications": return <CertificationsStep {...props} />;
+      case "publications": return <PublicationsStep {...props} />;
+      case "activities": return <ActivitiesStep {...props} />;
+      case "volunteering": return <VolunteeringStep {...props} />;
+      default: return null;
+    }
+  };
+
   const recalculate = async () => {
     sessionStorage.removeItem("ats_report");
     sessionStorage.removeItem("ats_jobfit");
@@ -68,8 +101,8 @@ export default function ScorePage() {
 
   return (
     <AppShell
-      title="ATS Score Results"
-      active="create"
+      title={loading ? "ATS Score Estimation" : "ATS Score Results"}
+      active={fromAnalyze ? "improve" : "create"}
       actions={
         <>
           <button className="topbtn topbtn--ghost" onClick={() => navigate("/app/create")}>
@@ -82,12 +115,16 @@ export default function ScorePage() {
       }
     >
       {loading || !report ? (
-        <div className="score-loading">
-          <div className="score-spinner" />
-          <p>Analyzing your resume…</p>
+        <div className="ats-loading">
+          <div className="ats-loading__badge">
+            <StatCv size={56} />
+          </div>
+          <p className="ats-loading__msg">🔍 Hunting for hidden resume glitches…</p>
+          <p className="ats-loading__time">{secondsLeft} sec left</p>
         </div>
       ) : (
         <div className="score">
+          {fromAnalyze && <AnalyzeSteps current={1} />}
           <div className="score__head">
             <div className="score__circle" style={{ borderColor: scoreColor(report.generalScore) }}>
               <span className="score__value" style={{ color: scoreColor(report.generalScore) }}>
@@ -132,14 +169,21 @@ export default function ScorePage() {
                 <div className={`score-row${isOpen ? " is-open" : ""}`} key={s.key}>
                   <div className="score-row__head">
                     <span className="score-row__icon" style={{ borderColor: scoreColor(s.score) }}>
-                      {SECTION_EMOJI[s.key]}
+                      {ICON_KEYS.has(s.key) ? <SectionIcon name={s.key as never} size={22} /> : null}
                     </span>
                     <span className="score-row__label">{s.label}</span>
                     <span className="score-row__score" style={{ color: scoreColor(s.score) }}>
                       {s.score.toFixed(0)} / 100
                     </span>
                     <span className="score-row__entry">Entry score: {s.entryScore.toFixed(2)}</span>
-                    {isOpen && <button className="score-row__fix">Fix now</button>}
+                    {isOpen && (
+                      <button
+                        className={`score-row__fix${fixing === s.key ? " is-active" : ""}`}
+                        onClick={() => setFixing(fixing === s.key ? null : s.key)}
+                      >
+                        {fixing === s.key ? "Done" : "Fix now"}
+                      </button>
+                    )}
                     <button
                       className="score-row__toggle"
                       onClick={() => setOpen(isOpen ? null : s.key)}
@@ -159,6 +203,16 @@ export default function ScorePage() {
                       )}
                       {s.goodPractices.length > 0 && (
                         <Group tone="good" title="Good practices" items={s.goodPractices} />
+                      )}
+                      {fixing === s.key && (
+                        <div className="score-row__fixform">
+                          {renderSectionForm(s.key)}
+                          <div className="score-row__fixactions">
+                            <button className="topbtn topbtn--dark" onClick={() => { setFixing(null); void recalculate(); }}>
+                              Save & recalculate
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}

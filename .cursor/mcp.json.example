@@ -15,6 +15,24 @@
       "command": "cmd",
       "args": ["/c", "npx", "-y", "@postman/postman-mcp-server", "--full"],
       "envFile": ".env"
+    },
+    "snyk": {
+      "command": "cmd",
+      "args": ["/c", "snyk", "mcp", "-t", "stdio"]
+    },
+    "semgrep": {
+      "command": "cmd",
+      "args": ["/c", "semgrep", "mcp"]
+    },
+    "GitGuardian": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "uvx",
+        "--from",
+        "git+https://github.com/GitGuardian/ggmcp.git",
+        "gg-mcp-server"
+      ]
     }
   }
 }

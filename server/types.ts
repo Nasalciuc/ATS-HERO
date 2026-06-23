@@ -43,7 +43,18 @@ export type SimpleEntry = {
   title: string;
   description: string;
   date: string;
+  organisation?: string;
+  issuer?: string;
+  publisher?: string;
+  link?: string;
+  activityType?: string;
+  role?: string;
+  location?: string;
+  endDate?: string;
+  ongoing?: boolean;
 };
+
+export type LanguageItem = { id: string; name: string; level: string };
 
 export type CvData = {
   personalInfo: PersonalInfo;
@@ -51,6 +62,9 @@ export type CvData = {
   work: WorkItem[];
   education: EducationItem[];
   skills: string[];
+  instruments: string[];
+  softSkills: string[];
+  languages: LanguageItem[];
   awards: SimpleEntry[];
   certifications: SimpleEntry[];
   publications: SimpleEntry[];

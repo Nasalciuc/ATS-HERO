@@ -1,50 +1,50 @@
 {
-  "fileKey": "VnCd2MBmt4sYlVmtOVyCMH",
+  "fileKey": "PNKgBLPtOt19nrqTHHywho",
   "fileName": "App_CV Maker (ATS Hero)",
-  "figmaUrl": "https://www.figma.com/design/VnCd2MBmt4sYlVmtOVyCMH/App_CV-Maker--ATS-Hero-",
-  "exportedAt": "2026-06-22",
+  "figmaUrl": "https://www.figma.com/design/PNKgBLPtOt19nrqTHHywho/App_CV-Maker--ATS-Hero-",
+  "exportedAt": "2026-06-23",
   "pages": [
     {
       "id": "1:6",
       "name": "✅ Competitors Mobile app",
       "folder": "pages",
       "file": "01-competitors-mobile-app.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "17:1154",
       "name": "✅ Competitors visual conception",
       "folder": "pages",
       "file": "02-competitors-visual-conception.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "151:300",
       "name": "✅ Documentation",
       "folder": "pages",
       "file": "03-documentation.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "180:17",
       "name": "✅ User flow (Desktop)",
       "folder": "pages",
       "file": "04-user-flow-desktop-full.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "17:1152",
       "name": "⏱️ User flow (Mob)",
       "folder": "pages",
       "file": "05-user-flow-mobile-full.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "0:1",
       "name": "Preview",
       "folder": "pages",
       "file": "06-preview.png",
-      "status": "pending"
+      "status": "done"
     }
   ],
   "desktop": [
@@ -112,31 +112,31 @@
       "id": "291:1321",
       "name": "Function 1 Step 7 — Awards",
       "file": "function-1-step-7-awards.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "293:891",
       "name": "Function 1 Step 8 — Certifications",
       "file": "function-1-step-8-certifications.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "293:1094",
       "name": "Function 1 Step 9 — Publications",
       "file": "function-1-step-9-publications.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "293:1309",
       "name": "Function 1 Step 10 — Activities",
       "file": "function-1-step-10-activities.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "358:6909",
       "name": "Function 1 Step 11 — Add section",
       "file": "function-1-step-11-add-section.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "319:3807",
@@ -202,49 +202,55 @@
       "id": "331:4891",
       "name": "Pop-up Add section 2",
       "file": "popup-add-section-2.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "358:7402",
       "name": "Pop-up Almost there",
       "file": "popup-almost-there.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "358:7339",
       "name": "Pop-up Add section 3",
       "file": "popup-add-section-3.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "297:1293",
       "name": "UI Kit",
       "file": "ui-kit.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "297:1297",
       "name": "FAQ text content",
       "file": "faq-text-content.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "151:1984",
       "name": "Landing structure 1",
       "file": "landing-structure-1.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "398:8337",
       "name": "Landing structure 2",
       "file": "landing-structure-2.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "151:1909",
       "name": "Web App map",
       "file": "web-app-map.png",
-      "status": "pending"
+      "status": "done"
+    },
+    {
+      "id": "331:4830",
+      "name": "Error — Page not found",
+      "file": "page-not-found.png",
+      "status": "done"
     }
   ],
   "documentation": [
@@ -252,19 +258,19 @@
       "id": "151:1894",
       "name": "Product concept",
       "file": "product-concept.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "151:1905",
       "name": "Marketing Funnel",
       "file": "marketing-funnel.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "153:2089",
       "name": "Desktop/mobile Prioritisation",
       "file": "desktop-mobile-prioritisation.png",
-      "status": "pending"
+      "status": "done"
     }
   ],
   "mobile": [
@@ -272,85 +278,85 @@
       "id": "55:310",
       "name": "Plans and conditions",
       "file": "screen-plans-and-conditions.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "57:697",
       "name": "Contacts wizard",
       "file": "screen-contacts-wizard.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "76:143",
       "name": "Screen 76:143",
       "file": "screen-76-143.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "77:15",
       "name": "Screen 77:15",
       "file": "screen-77-15.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "77:190",
       "name": "Screen 77:190",
       "file": "screen-77-190.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "83:536",
       "name": "Screen 83:536",
       "file": "screen-83-536.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "86:844",
       "name": "Screen 86:844",
       "file": "screen-86-844.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "86:1450",
       "name": "Screen 86:1450",
       "file": "screen-86-1450.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "86:1618",
       "name": "Screen 86:1618",
       "file": "screen-86-1618.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "89:2396",
       "name": "Screen 89:2396",
       "file": "screen-89-2396.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "86:1986",
       "name": "Screen 86:1986",
       "file": "screen-86-1986.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "86:2125",
       "name": "Screen 86:2125",
       "file": "screen-86-2125.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "86:2265",
       "name": "Screen 86:2265",
       "file": "screen-86-2265.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "55:322",
       "name": "Screen 55:322",
       "file": "screen-55-322.png",
-      "status": "pending"
+      "status": "done"
     }
   ],
   "landingSections": [

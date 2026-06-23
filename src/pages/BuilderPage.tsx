@@ -7,16 +7,27 @@ import { Eye, Save, ArrowLeft, ArrowRight } from "../components/icons";
 import TipsModal from "../components/modals/TipsModal";
 import AddSectionModal from "../components/modals/AddSectionModal";
 import CompleteModal from "../components/modals/CompleteModal";
+import AlmostThereModal from "../components/modals/AlmostThereModal";
 import { useApp } from "../store/AppContext";
-import { OPTIONAL_SECTIONS, type SectionKey } from "../lib/types";
+import { OPTIONAL_SECTIONS, type CvData, type SectionKey, type SimpleEntry } from "../lib/types";
 import {
   PersonalInfoStep,
   EducationStep,
   SummaryStep,
   WorkStep,
   SkillsStep,
-  SimpleSectionStep,
+  AwardsStep,
+  CertificationsStep,
+  PublicationsStep,
+  ActivitiesStep,
+  VolunteeringStep,
 } from "./builder/steps";
+
+/** An added optional section counts as "filled" when it has at least one entry with a title. */
+function isSectionFilled(data: CvData, key: SectionKey): boolean {
+  const list = data[key] as SimpleEntry[];
+  return Array.isArray(list) && list.some((i) => i.title.trim());
+}
 
 const BASE_STEPS: { key: SectionKey; label: string; emoji: string }[] = [
   { key: "personalInfo", label: "Personal info", emoji: "🪪" },
@@ -26,12 +37,9 @@ const BASE_STEPS: { key: SectionKey; label: string; emoji: string }[] = [
   { key: "skills", label: "Skills", emoji: "💪" },
 ];
 
-const SECTION_NOUN: Record<string, string> = {
-  awards: "award",
-  certifications: "certification",
-  publications: "publication",
-  volunteering: "volunteering entry",
-  activities: "activity",
+// The page heading can differ from the compact stepper label (Figma).
+const STEP_TITLES: Partial<Record<SectionKey, string>> = {
+  work: "Work experience / Internship",
 };
 
 export default function BuilderPage() {
@@ -43,6 +51,7 @@ export default function BuilderPage() {
   const [tips, setTips] = useState(false);
   const [addSection, setAddSection] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [almostThere, setAlmostThere] = useState(false);
   const [addedSections, setAddedSections] = useState<SectionKey[]>([]);
 
   const steps: Step[] = useMemo(() => {
@@ -64,10 +73,17 @@ export default function BuilderPage() {
     if (next) setActiveKey(next as SectionKey);
   };
 
+  const hasUnfilledOptional = addedSections.some((k) => !isSectionFilled(data, k));
+
+  const finish = () => {
+    markDoneAnd();
+    if (hasUnfilledOptional) setAlmostThere(true);
+    else setComplete(true);
+  };
+
   const next = () => {
     if (isLast) {
-      markDoneAnd();
-      setComplete(true);
+      finish();
     } else {
       markDoneAnd(steps[activeIndex + 1].key);
     }
@@ -80,11 +96,23 @@ export default function BuilderPage() {
     (k) => !addedSections.includes(k)
   );
 
-  const onAddSection = (key: SectionKey) => {
-    setAddedSections((prev) => [...prev, key]);
+  const onAddSection = (keys: SectionKey[]) => {
+    if (keys.length === 0) return;
+    setAddedSections((prev) => [...prev, ...keys.filter((k) => !prev.includes(k))]);
     setAddSection(false);
-    setActiveKey(key);
+    setActiveKey(keys[0]);
   };
+
+  const onRemoveSection = (key: SectionKey) => {
+    setAddedSections((prev) => prev.filter((k) => k !== key));
+    update({ [key]: [] } as Partial<CvData>);
+    if (activeKey === key) {
+      const idx = steps.findIndex((s) => s.key === key);
+      setActiveKey((steps[idx - 1]?.key ?? "skills") as SectionKey);
+    }
+  };
+
+  const optionalKeys = new Set<string>(addedSections);
 
   const renderStep = () => {
     switch (activeKey) {
@@ -98,23 +126,29 @@ export default function BuilderPage() {
         return <WorkStep data={data} update={update} />;
       case "skills":
         return <SkillsStep data={data} update={update} />;
+      case "awards":
+        return <AwardsStep data={data} update={update} />;
+      case "certifications":
+        return <CertificationsStep data={data} update={update} />;
+      case "publications":
+        return <PublicationsStep data={data} update={update} />;
+      case "activities":
+        return <ActivitiesStep data={data} update={update} />;
+      case "volunteering":
+        return <VolunteeringStep data={data} update={update} />;
       default:
-        return (
-          <SimpleSectionStep
-            data={data}
-            update={update}
-            sectionKey={activeKey}
-            noun={SECTION_NOUN[activeKey] ?? "entry"}
-          />
-        );
+        return <PersonalInfoStep data={data} update={update} />;
     }
   };
 
   const showActivitiesPrompt = activeKey === "work" && !addedSections.includes("activities");
 
+  const pageTitle =
+    (activeStep && (STEP_TITLES[activeStep.key as SectionKey] ?? activeStep.label)) ?? "Create CV";
+
   return (
     <AppShell
-      title={activeStep?.label ?? "Create CV"}
+      title={pageTitle}
       active="create"
       actions={
         <>
@@ -131,8 +165,10 @@ export default function BuilderPage() {
         steps={steps}
         current={activeKey}
         completed={completed}
+        optional={optionalKeys}
         onSelect={goTo}
         onAddSection={() => setAddSection(true)}
+        onRemoveSection={(k) => onRemoveSection(k as SectionKey)}
       />
 
       <div className="builder">
@@ -144,7 +180,7 @@ export default function BuilderPage() {
               ? {
                   title: "Activities",
                   body: "Have relevant experience beyond paid roles? Add new section to showcase your involvement.",
-                  onAdd: () => setAddSection(true),
+                  onAdd: () => onAddSection(["activities"]),
                 }
               : undefined
           }
@@ -172,6 +208,15 @@ export default function BuilderPage() {
         onClose={() => setAddSection(false)}
         available={availableToAdd}
         onAdd={onAddSection}
+      />
+      <AlmostThereModal
+        open={almostThere}
+        onClose={() => setAlmostThere(false)}
+        onContinueEditing={() => setAlmostThere(false)}
+        onCompleteAnyway={() => {
+          setAlmostThere(false);
+          setComplete(true);
+        }}
       />
       <CompleteModal
         open={complete}

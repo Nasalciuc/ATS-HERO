@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "../../store/AppContext";
-import { UserIcon } from "../icons";
+import { MenuIcon, UserIcon } from "../icons";
 import SignInModal from "../modals/SignInModal";
 
 type NavKey = "create" | "improve" | "jobfit";
@@ -25,12 +25,19 @@ export default function AppShell({
 }) {
   const { user, logout } = useApp();
   const [signIn, setSignIn] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <div className="appshell">
-      <aside className="appshell__side">
-        <Link to="/" className="appshell__logo">ATS Hero</Link>
+      {menuOpen && <button className="appshell__backdrop" aria-label="Close menu" onClick={closeMenu} />}
+
+      <aside className={`appshell__side${menuOpen ? " is-open" : ""}`}>
+        <Link to="/" className="appshell__logo" onClick={closeMenu}>
+          ATS Hero
+        </Link>
 
         <nav className="appshell__nav">
           {NAV.map((n) => (
@@ -38,6 +45,7 @@ export default function AppShell({
               key={n.key}
               to={n.to}
               className={`appshell__nav-item${active === n.key ? " is-active" : ""}`}
+              onClick={closeMenu}
             >
               {active === n.key && <span className="appshell__dot" />}
               {n.label}
@@ -48,7 +56,11 @@ export default function AppShell({
         <div className="appshell__side-footer">
           {user ? (
             <>
-              <p className="appshell__hint">Signed in as<br />{user.email}</p>
+              <p className="appshell__hint">
+                Signed in as
+                <br />
+                {user.email}
+              </p>
               <button className="appshell__signin" onClick={logout}>
                 Log out
               </button>
@@ -56,7 +68,13 @@ export default function AppShell({
           ) : (
             <>
               <p className="appshell__hint">Sign in to save your progress and continue editing anytime</p>
-              <button className="appshell__signin" onClick={() => setSignIn(true)}>
+              <button
+                className="appshell__signin"
+                onClick={() => {
+                  closeMenu();
+                  setSignIn(true);
+                }}
+              >
                 <UserIcon size={16} /> Sign in
               </button>
             </>
@@ -66,13 +84,22 @@ export default function AppShell({
 
       <div className="appshell__main">
         <header className="appshell__topbar">
+          <button className="appshell__menu" type="button" aria-label="Open menu" onClick={() => setMenuOpen(true)}>
+            <MenuIcon size={22} />
+          </button>
           <h1 className="appshell__title">{title}</h1>
           <div className="appshell__actions">{actions}</div>
         </header>
         <div className="appshell__content">{children}</div>
       </div>
 
-      <SignInModal open={signIn} onClose={() => { setSignIn(false); navigate(0); }} />
+      <SignInModal
+        open={signIn}
+        onClose={() => {
+          setSignIn(false);
+          navigate(0);
+        }}
+      />
     </div>
   );
 }

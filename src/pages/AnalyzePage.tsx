@@ -1,26 +1,11 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/app/AppShell";
+import AnalyzeSteps from "../components/app/AnalyzeSteps";
 import { Save, ArrowRight, Upload } from "../components/icons";
 import { api } from "../lib/api";
 
 type Mode = "improve" | "jobfit";
-
-const ANALYZE_STEPS = ["Adding CV", "ATS-Analysis", "Improvement"];
-
-function StepDots() {
-  return (
-    <div className="analyze-steps">
-      {ANALYZE_STEPS.map((label, i) => (
-        <div className="analyze-step" key={label}>
-          {i > 0 && <span className="analyze-step__line" />}
-          <span className={`analyze-step__node${i === 0 ? " is-current" : ""}`} />
-          <span className={`analyze-step__label${i === 0 ? " is-current" : ""}`}>{label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function TextOrUpload({
   value,
@@ -115,7 +100,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
         </button>
       }
     >
-      <StepDots />
+      <AnalyzeSteps current={0} />
 
       <div className="analyze-panel">
         <TextOrUpload value={cvText} onChange={setCvText} placeholder="Paste your CV text here…" />

@@ -223,7 +223,11 @@ function scoreEducation(data: CvData): SectionReport {
 }
 
 function scoreSkills(data: CvData): SectionReport {
-  const items = data.skills.filter((s) => s.trim());
+  const hard = (data.skills ?? []).filter((s) => s.trim());
+  const instruments = (data.instruments ?? []).filter((s) => s.trim());
+  const soft = (data.softSkills ?? []).filter((s) => s.trim());
+  const languages = (data.languages ?? []).filter((l) => l.name?.trim());
+  const items = [...hard, ...instruments, ...soft];
   const critical: string[] = [];
   const suggestions: string[] = [];
   const goodPractices: string[] = [];
@@ -234,14 +238,24 @@ function scoreSkills(data: CvData): SectionReport {
   } else if (items.length < 5) {
     score = 50;
     suggestions.push("Add more relevant skills (aim for 6–12)");
-  } else if (items.length > 20) {
+  } else if (items.length > 25) {
     score = 70;
     suggestions.push("Trim to the most relevant skills for your target role");
   } else {
     score = 90;
     goodPractices.push("Healthy number of relevant skills");
   }
-  goodPractices.push("Relevant skills aligned with your target position");
+
+  if (hard.length > 0 && instruments.length > 0)
+    goodPractices.push("Hard skills and tools are clearly separated");
+  else if (items.length > 0)
+    suggestions.push("Group tools/instruments separately from core hard skills");
+
+  if (soft.length > 0) goodPractices.push("Soft skills add a well-rounded profile");
+  else suggestions.push("Add a few soft skills (e.g. collaboration, communication)");
+
+  if (languages.length > 0) goodPractices.push("Languages listed with proficiency level");
+  else suggestions.push("Add languages and proficiency levels if relevant");
 
   return finalize("skills", score, critical, suggestions, goodPractices);
 }

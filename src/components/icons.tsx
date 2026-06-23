@@ -1,6 +1,6 @@
 /* Inline SVG icons recreated to match the Figma iconography
    (Iconify sets: famicons, mage, ic, mynaui, iconoir, streamline, pepicons). */
-import type { SVGProps } from "react";
+import type { ReactNode, SVGProps } from "react";
 
 type IconProps = SVGProps<SVGSVGElement> & { size?: number };
 
@@ -86,6 +86,33 @@ export function Upload({ size = 42, ...p }: IconProps) {
         strokeLinejoin="round"
       />
       <path d="M5 18h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* Hero PDF badge — stacked documents (Figma Group 180:125) */
+export function PdfDocStack({ size = 32, ...p }: IconProps) {
+  const h = (size * 35.8) / 32;
+  return (
+    <svg width={size} height={h} viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg" {...p}>
+      <rect x="2" y="1" width="18" height="24" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="6" y="5" width="18" height="24" rx="1.5" stroke="currentColor" strokeWidth="1.5" fill="#fff" />
+      <path d="M10 12h10M10 16h10M10 20h7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* mage:file-download — corner arrow icon */
+export function DownloadArrow({ size = 24, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <path
+        d="M12 4v10m0 0l-3.5-3.5M12 14l3.5-3.5M5 18h14"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -210,6 +237,14 @@ export function UserIcon({ size = 18, ...p }: IconProps) {
   );
 }
 
+export function MenuIcon({ size = 22, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /* Light bulb with sparkles — Pro Tips */
 export function BulbTips({ size = 96, ...p }: IconProps) {
   return (
@@ -230,12 +265,66 @@ export function Close({ size = 18, ...p }: IconProps) {
   );
 }
 
+export function GoogleIcon({ size = 24, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p} aria-hidden>
+      <path
+        d="M21.6 12.2273C21.6 11.5182 21.5364 10.8364 21.4182 10.1818H12V14.05H17.3818C17.15 15.3 16.4455 16.3591 15.3864 17.0682V19.5773H18.6182C20.5091 17.8364 21.6 15.2727 21.6 12.2273Z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 22C14.7 22 16.9636 21.1045 18.6182 19.5773L15.3864 17.0682C14.4909 17.6682 13.3455 18.0227 12 18.0227C9.39545 18.0227 7.19091 16.2636 6.40455 13.9H3.06364V16.4909C4.70909 19.7591 8.09091 22 12 22Z"
+        fill="#34A853"
+      />
+      <path
+        d="M6.40455 13.9C6.20455 13.3 6.09091 12.6591 6.09091 12C6.09091 11.3409 6.20455 10.7 6.40455 10.1V7.50909H3.06364C2.38636 8.85909 2 10.3864 2 12C2 13.6136 2.38636 15.1409 3.06364 16.4909L6.40455 13.9Z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 5.97727C13.4682 5.97727 14.7864 6.48182 15.8227 7.47273L18.6909 4.60455C16.9591 2.99091 14.6955 2 12 2C8.09091 2 4.70909 4.24091 3.06364 7.50909L6.40455 10.1C7.19091 7.73636 9.39545 5.97727 12 5.97727Z"
+        fill="#EA4335"
+      />
+    </svg>
+  );
+}
+
+export function AppleIcon({ size = 24, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p} aria-hidden>
+      <path
+        d="M16.365 12.636c-.03-3.223 2.633-4.767 2.752-4.842-1.498-2.19-3.832-2.49-4.663-2.523-1.985-.201-3.873 1.17-4.878 1.17-1.025 0-2.585-1.14-4.252-1.11-2.188.03-4.2 1.272-5.325 3.233-2.272 3.945-.582 9.78 1.633 12.987 1.083 1.566 2.372 3.323 4.066 3.26 1.634-.066 2.25-1.056 4.222-1.056 1.952 0 2.508 1.056 4.222 1.026 1.744-.03 2.843-1.575 3.913-3.15 1.233-1.8 1.743-3.54 1.773-3.63-.039-.018-3.403-1.305-3.433-5.175zM13.695 4.44c.898-1.09 1.504-2.604 1.338-4.11-1.294.052-2.858.863-3.787 1.953-.832.963-1.563 2.504-1.368 3.98 1.444.112 2.918-.733 3.817-1.823z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 /* Radio control */
 export function RadioDot({ checked, size = 22, ...p }: IconProps & { checked?: boolean }) {
   return (
     <svg {...base(size)} {...p}>
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
       {checked && <circle cx="12" cy="12" r="5" fill="currentColor" />}
+    </svg>
+  );
+}
+
+/* Small tag/chip leading icon */
+export function Tag({ size = 14, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <path d="M3 7a2 2 0 0 1 2-2h5.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8l-4.2 4.2a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 11.2V7z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <circle cx="7.5" cy="9.5" r="1.3" fill="currentColor" />
+    </svg>
+  );
+}
+
+/* Globe — language chips */
+export function Globe({ size = 14, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p}>
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3.5 12h17M12 3.5c2.5 2.3 2.5 14.7 0 17M12 3.5c-2.5 2.3-2.5 14.7 0 17" stroke="currentColor" strokeWidth="1.3" />
     </svg>
   );
 }
@@ -247,6 +336,109 @@ export function Check({ size = 18, ...p }: IconProps) {
       <path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
+}
+
+/* ---------------- wizard step icons (colored, match Figma nodes) ---------------- */
+type SectionIconName =
+  | "personalInfo"
+  | "education"
+  | "summary"
+  | "work"
+  | "skills"
+  | "activities"
+  | "awards"
+  | "certifications"
+  | "publications"
+  | "volunteering";
+
+export function SectionIcon({ name, size = 22 }: { name: SectionIconName; size?: number }) {
+  const svg = (children: ReactNode) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {children}
+    </svg>
+  );
+  switch (name) {
+    case "personalInfo":
+      return svg(
+        <>
+          <rect x="3" y="5" width="18" height="14" rx="2.5" fill="#DCE9FF" stroke="#3B82F6" strokeWidth="1.4" />
+          <circle cx="8.5" cy="11" r="2.2" fill="#3B82F6" />
+          <path d="M5.6 16c.5-1.5 1.6-2.2 2.9-2.2s2.4.7 2.9 2.2" stroke="#3B82F6" strokeWidth="1.3" strokeLinecap="round" />
+          <path d="M14 9.5h4.2M14 12h4.2M14 14.5h2.6" stroke="#3B82F6" strokeWidth="1.4" strokeLinecap="round" />
+        </>
+      );
+    case "education":
+      return svg(
+        <>
+          <path d="M12 4L2.5 9 12 14l9.5-5L12 4z" fill="#C7CCF7" stroke="#4F46E5" strokeWidth="1.3" strokeLinejoin="round" />
+          <path d="M6.5 11.5V16c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-4.5" stroke="#4F46E5" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="M21 9v4" stroke="#4F46E5" strokeWidth="1.4" strokeLinecap="round" />
+        </>
+      );
+    case "summary":
+      return svg(
+        <>
+          <rect x="5" y="3" width="14" height="18" rx="2.2" fill="#EDEBF7" stroke="#6B7280" strokeWidth="1.3" />
+          <path d="M8.5 8h7M8.5 11.5h7M8.5 15h4.5" stroke="#6B7280" strokeWidth="1.4" strokeLinecap="round" />
+        </>
+      );
+    case "work":
+      return svg(
+        <>
+          <rect x="3" y="7.5" width="18" height="11.5" rx="2.2" fill="#FBE3CB" stroke="#C2742B" strokeWidth="1.3" />
+          <path d="M9 7.5V6.2C9 5.5 9.5 5 10.2 5h3.6c.7 0 1.2.5 1.2 1.2v1.3" stroke="#C2742B" strokeWidth="1.4" strokeLinecap="round" />
+          <path d="M3 12h18" stroke="#C2742B" strokeWidth="1.3" />
+          <rect x="10.6" y="11" width="2.8" height="2.4" rx="0.6" fill="#C2742B" />
+        </>
+      );
+    case "skills":
+      return svg(
+        <>
+          <path d="M3 12h2.5M18.5 12H21" stroke="#D9A300" strokeWidth="1.5" strokeLinecap="round" />
+          <rect x="5" y="8.5" width="3" height="7" rx="1.2" fill="#FCE9A6" stroke="#D9A300" strokeWidth="1.3" />
+          <rect x="16" y="8.5" width="3" height="7" rx="1.2" fill="#FCE9A6" stroke="#D9A300" strokeWidth="1.3" />
+          <rect x="8" y="10.4" width="8" height="3.2" rx="1.2" fill="#FCE9A6" stroke="#D9A300" strokeWidth="1.3" />
+        </>
+      );
+    case "activities":
+      return svg(
+        <>
+          <path d="M14.5 3.5c2.5.4 5.6 3.5 6 6-2 2.3-5.2 5.4-7.6 6.2l-3.6-3.6C10.1 9.7 13.2 6.5 14.5 3.5z" fill="#FBD2CB" stroke="#E0492E" strokeWidth="1.3" strokeLinejoin="round" />
+          <circle cx="14.5" cy="9" r="1.6" fill="#E0492E" />
+          <path d="M9.3 14.7l-3.3 3.3M7.5 13.2l-2.6 2.6M10.8 16.5l-2.6 2.6" stroke="#E0492E" strokeWidth="1.3" strokeLinecap="round" />
+        </>
+      );
+    case "awards":
+      return svg(
+        <>
+          <path d="M7 4h10v3.5a5 5 0 0 1-10 0V4z" fill="#FBE7A6" stroke="#D9A300" strokeWidth="1.3" strokeLinejoin="round" />
+          <path d="M7 5H4.5v1.5A2.5 2.5 0 0 0 7 9M17 5h2.5v1.5A2.5 2.5 0 0 1 17 9" stroke="#D9A300" strokeWidth="1.3" strokeLinecap="round" />
+          <path d="M12 12.5V16M9 20h6M10 20l.6-4M14 20l-.6-4" stroke="#D9A300" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "certifications":
+      return svg(
+        <>
+          <rect x="3.5" y="4" width="17" height="12" rx="2" fill="#D5F0E6" stroke="#1F9D6B" strokeWidth="1.3" />
+          <path d="M7 8h6M7 11h4" stroke="#1F9D6B" strokeWidth="1.4" strokeLinecap="round" />
+          <circle cx="16.5" cy="16" r="3.4" fill="#FCE9A6" stroke="#1F9D6B" strokeWidth="1.3" />
+          <path d="M14.7 18.6L14 22l2.5-1.4L19 22l-.7-3.4" stroke="#1F9D6B" strokeWidth="1.3" strokeLinejoin="round" />
+        </>
+      );
+    case "publications":
+      return svg(
+        <>
+          <path d="M12 6c-1.8-1.4-4-2-6.5-2H3v13h2.5c2.5 0 4.7.6 6.5 2 1.8-1.4 4-2 6.5-2H21V4h-2.5C16 4 13.8 4.6 12 6z" fill="#D8F0DA" stroke="#2E9E45" strokeWidth="1.3" strokeLinejoin="round" />
+          <path d="M12 6v13" stroke="#2E9E45" strokeWidth="1.3" />
+        </>
+      );
+    case "volunteering":
+      return svg(
+        <>
+          <path d="M12 20s-6.5-3.8-6.5-8.3A3.5 3.5 0 0 1 12 9.4a3.5 3.5 0 0 1 6.5 2.3C18.5 16.2 12 20 12 20z" fill="#FBD3E2" stroke="#D6437E" strokeWidth="1.3" strokeLinejoin="round" />
+        </>
+      );
+  }
 }
 
 /* Warning triangle — score badges */

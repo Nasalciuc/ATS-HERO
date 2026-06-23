@@ -40,9 +40,29 @@ export default function CvDocument({ data, styleId = 1 }: { data: CvData; styleI
         </Section>
       )}
 
-      {data.skills.length > 0 && (
-        <Section title="TECHNICAL SKILLS" accent={accent}>
-          <p className="cvdoc__text">{data.skills.join(" · ")}</p>
+      {(data.skills.length > 0 ||
+        data.instruments.length > 0 ||
+        data.softSkills.length > 0 ||
+        data.languages.length > 0) && (
+        <Section title="SKILLS" accent={accent}>
+          {data.skills.length > 0 && (
+            <p className="cvdoc__text"><strong>Hard skills: </strong>{data.skills.join(" · ")}</p>
+          )}
+          {data.instruments.length > 0 && (
+            <p className="cvdoc__text"><strong>Tools: </strong>{data.instruments.join(" · ")}</p>
+          )}
+          {data.softSkills.length > 0 && (
+            <p className="cvdoc__text"><strong>Soft skills: </strong>{data.softSkills.join(" · ")}</p>
+          )}
+          {data.languages.length > 0 && (
+            <p className="cvdoc__text">
+              <strong>Languages: </strong>
+              {data.languages
+                .filter((l) => l.name.trim())
+                .map((l) => `${l.name}${l.level ? ` (${l.level})` : ""}`)
+                .join(" · ")}
+            </p>
+          )}
         </Section>
       )}
 

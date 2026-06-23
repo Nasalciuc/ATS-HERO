@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { CvData, DbShape, EducationItem, SimpleEntry, WorkItem } from "./types.ts";
+import type { CvData, DbShape, EducationItem, LanguageItem, SimpleEntry, WorkItem } from "./types.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, "data");
@@ -45,6 +45,9 @@ export function emptyCvData(): CvData {
     work: [],
     education: [],
     skills: [],
+    instruments: [],
+    softSkills: [],
+    languages: [],
     awards: [],
     certifications: [],
     publications: [],
@@ -85,6 +88,10 @@ function normalizeSimpleEntries(items: SimpleEntry[] | undefined): SimpleEntry[]
   return (items ?? []).map((item) => ({ ...EMPTY_SIMPLE, ...item, id: item.id ?? "" }));
 }
 
+function normalizeLanguages(items: LanguageItem[] | undefined): LanguageItem[] {
+  return (items ?? []).map((item) => ({ id: item.id ?? "", name: item.name ?? "", level: item.level ?? "" }));
+}
+
 /** Ensures partial CV payloads from API clients have all fields scoring expects. */
 export function normalizeCvData(input: Partial<CvData> = {}): CvData {
   const base = emptyCvData();
@@ -104,6 +111,9 @@ export function normalizeCvData(input: Partial<CvData> = {}): CvData {
       id: item.id ?? "",
     })),
     skills: input.skills ?? base.skills,
+    instruments: input.instruments ?? base.instruments,
+    softSkills: input.softSkills ?? base.softSkills,
+    languages: normalizeLanguages(input.languages),
     awards: normalizeSimpleEntries(input.awards),
     certifications: normalizeSimpleEntries(input.certifications),
     publications: normalizeSimpleEntries(input.publications),
@@ -121,6 +131,9 @@ export function mergeCvData(existing: CvData, patch: Partial<CvData>): CvData {
     work: patch.work ?? existing.work,
     education: patch.education ?? existing.education,
     skills: patch.skills ?? existing.skills,
+    instruments: patch.instruments ?? existing.instruments,
+    softSkills: patch.softSkills ?? existing.softSkills,
+    languages: patch.languages ?? existing.languages,
     awards: patch.awards ?? existing.awards,
     certifications: patch.certifications ?? existing.certifications,
     publications: patch.publications ?? existing.publications,

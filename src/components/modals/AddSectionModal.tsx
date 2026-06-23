@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Modal from "../ui/Modal";
-import { RadioDot } from "../icons";
+import { Check } from "../icons";
 import { OPTIONAL_SECTIONS, type SectionKey } from "../../lib/types";
 
 export default function AddSectionModal({
@@ -12,41 +12,56 @@ export default function AddSectionModal({
   open: boolean;
   onClose: () => void;
   available: SectionKey[];
-  onAdd: (key: SectionKey) => void;
+  onAdd: (keys: SectionKey[]) => void;
 }) {
   const options = OPTIONAL_SECTIONS.filter((s) => available.includes(s.key));
-  const [selected, setSelected] = useState<SectionKey | null>(options[0]?.key ?? null);
+  const [checked, setChecked] = useState<Set<SectionKey>>(new Set());
+
+  const toggle = (key: SectionKey) =>
+    setChecked((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+
+  const confirm = () => {
+    onAdd([...checked]);
+    setChecked(new Set());
+  };
 
   return (
     <Modal open={open} onClose={onClose} variant="center" width={548}>
       <div className="addsection">
         <h2 className="addsection__title">Add section</h2>
         <p className="addsection__subtitle">
-          Choose an additional section to showcase more of your experience
+          Your resume is ATS-ready. You can add more sections to improve your chances.
         </p>
         <div className="addsection__list">
           {options.length === 0 && (
             <p className="addsection__empty">All sections have been added.</p>
           )}
-          {options.map((o) => (
-            <button
-              key={o.key}
-              className="addsection__option"
-              onClick={() => setSelected(o.key)}
-            >
-              <span className={selected === o.key ? "is-checked" : ""}>
-                <RadioDot checked={selected === o.key} />
-              </span>
-              {o.emoji} {o.label}
-            </button>
-          ))}
+          {options.map((o) => {
+            const isOn = checked.has(o.key);
+            return (
+              <button
+                key={o.key}
+                className="addsection__check"
+                onClick={() => toggle(o.key)}
+              >
+                <span className={`addsection__box${isOn ? " is-on" : ""}`}>
+                  {isOn && <Check size={13} />}
+                </span>
+                {o.label}
+              </button>
+            );
+          })}
         </div>
         <button
           className="btn btn--dark addsection__confirm"
-          disabled={!selected}
-          onClick={() => selected && onAdd(selected)}
+          disabled={checked.size === 0}
+          onClick={confirm}
         >
-          Add section
+          Continue
         </button>
       </div>
     </Modal>

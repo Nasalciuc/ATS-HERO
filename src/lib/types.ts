@@ -43,14 +43,29 @@ export type SimpleEntry = {
   title: string;
   description: string;
   date: string;
+  // Section-specific optional fields (Figma desktop wizard).
+  organisation?: string; // Awards
+  issuer?: string; // Certifications
+  publisher?: string; // Publications
+  link?: string; // Publications
+  activityType?: string; // Relevant activities
+  role?: string; // Relevant activities
+  location?: string; // Relevant activities
+  endDate?: string; // Relevant activities
+  ongoing?: boolean; // Relevant activities
 };
+
+export type LanguageItem = { id: string; name: string; level: string };
 
 export type CvData = {
   personalInfo: PersonalInfo;
   summary: Summary;
   work: WorkItem[];
   education: EducationItem[];
-  skills: string[];
+  skills: string[]; // Hard skills
+  instruments: string[]; // Tools / instruments
+  softSkills: string[];
+  languages: LanguageItem[];
   awards: SimpleEntry[];
   certifications: SimpleEntry[];
   publications: SimpleEntry[];
@@ -128,6 +143,9 @@ export function emptyCvData(): CvData {
     work: [],
     education: [],
     skills: [],
+    instruments: [],
+    softSkills: [],
+    languages: [],
     awards: [],
     certifications: [],
     publications: [],
@@ -146,8 +164,10 @@ export function cvToText(data: CvData): string {
     parts.push(w.role, w.company, w.description, w.country, w.cityState);
   for (const e of data.education)
     parts.push(e.institution, e.degree, e.minor, e.location, e.additional);
-  parts.push(...data.skills);
+  parts.push(...data.skills, ...data.instruments, ...data.softSkills);
+  for (const l of data.languages) parts.push(l.name, l.level);
   for (const list of [data.awards, data.certifications, data.publications, data.volunteering, data.activities])
-    for (const it of list) parts.push(it.title, it.description);
+    for (const it of list)
+      parts.push(it.title, it.description, it.organisation ?? "", it.issuer ?? "", it.publisher ?? "", it.role ?? "");
   return parts.filter(Boolean).join("\n");
 }
