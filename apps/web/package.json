@@ -9,7 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.5.8",
     "@react-pdf/renderer": "^4.5.1",
+    "convex": "^1.42.0",
     "nanoid": "^5.1.15",
     "next": "^16.2.9",
     "pdfjs-dist": "^4.10.38",

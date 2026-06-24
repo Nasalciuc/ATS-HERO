@@ -9,7 +9,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api, getToken, setToken } from "../lib/api";
+import { useUser, useClerk } from "@clerk/nextjs";
+import { api } from "../lib/api";
+import { getGuestId } from "../lib/convexClient";
 import { emptyCvData, type Cv, type CvData, type User } from "../lib/types";
 
 const CV_ID_KEY = "ats_hero_cv_id";
@@ -22,7 +24,7 @@ type AppState = {
   lastSavedAt: string | null;
   ready: boolean;
 
-  login: (email: string, password?: string) => Promise<void>;
+  login: (email?: string) => void;
   logout: () => void;
 
   ensureCv: () => Promise<string>;
@@ -34,8 +36,12 @@ type AppState = {
 const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+  const clerk = useClerk();
+
   const [cv, setCv] = useState<Cv | null>(null);
+  // The editing buffer is LOCAL on purpose: a reactive query must never overwrite
+  // the user's in-progress edits. Autosave pushes this buffer to Convex.
   const [data, setData] = useState<CvData>(emptyCvData());
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
@@ -47,18 +53,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const cvRef = useRef(cv);
   cvRef.current = cv;
 
-  // Restore session + existing CV on first load.
+  const user: User | null = clerkUser
+    ? { id: clerkUser.id, email: clerkUser.primaryEmailAddress?.emailAddress ?? "" }
+    : null;
+
+  // Restore last-edited CV on first load.
   useEffect(() => {
     (async () => {
-      if (getToken()) {
-        try {
-          const { user } = await api.me();
-          setUser(user);
-        } catch {
-          setToken(null);
-        }
-      }
-      const savedId = localStorage.getItem(CV_ID_KEY);
+      const savedId = typeof window !== "undefined" ? localStorage.getItem(CV_ID_KEY) : null;
       if (savedId) {
         try {
           const { cv } = await api.getCv(savedId);
@@ -71,6 +73,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setReady(true);
     })();
   }, []);
+
+  // On sign-in: ensure the users row + claim any guest CVs/scans into the account.
+  const claimedRef = useRef(false);
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || claimedRef.current) return;
+    claimedRef.current = true;
+    (async () => {
+      try {
+        await api.ensureUser();
+        await api.claimGuest(getGuestId());
+      } catch (e) {
+        console.error("Account claim failed", e);
+      }
+    })();
+  }, [isLoaded, isSignedIn]);
 
   const persist = useCallback(async () => {
     const current = cvRef.current;
@@ -101,7 +118,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const { cv: created } = await api.createCv("My resume", dataRef.current);
     setCv(created);
     setData(created.data);
-    localStorage.setItem(CV_ID_KEY, created.id);
+    if (typeof window !== "undefined") localStorage.setItem(CV_ID_KEY, created.id);
     return created.id;
   }, []);
 
@@ -110,26 +127,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await persist();
   }, [ensureCv, persist]);
 
-  const login = useCallback(async (email: string, password?: string) => {
-    const { token, user } = await api.login(email, password);
-    setToken(token);
-    setUser(user);
-    // Claim the in-progress CV under the now-authenticated account.
-    if (cvRef.current) {
-      const { cv: updated } = await api.updateCv(cvRef.current.id, dataRef.current, cvRef.current.title);
-      setCv(updated);
-    }
-  }, []);
+  // Real auth is handled by Clerk: opens sign-in (email + Google + LinkedIn).
+  const login = useCallback(
+    (_email?: string) => {
+      clerk.openSignIn();
+    },
+    [clerk]
+  );
 
   const logout = useCallback(() => {
-    setToken(null);
-    setUser(null);
-  }, []);
+    void clerk.signOut();
+  }, [clerk]);
 
   const reset = useCallback(() => {
     setCv(null);
     setData(emptyCvData());
-    localStorage.removeItem(CV_ID_KEY);
+    if (typeof window !== "undefined") localStorage.removeItem(CV_ID_KEY);
   }, []);
 
   const value = useMemo<AppState>(

@@ -149,3 +149,56 @@ Port `server/scoring.ts` to TWO targets, preserving the original weights and sec
 4. Dynamic stepper: core steps (Contacts, Education, Professional summary, Work, Skills) + optional removable (Awards, Volunteering, Certification) + "+ Add section". Connected line; active = green text; completed = green connector.
 
 See the full Convex schema and component contracts in the original brief.
+
+---
+
+## AUTH & DATA LAYER — DECISION RECORD
+
+> Locked via audit + five-expert debate. Governs all backend/data/auth work.
+
+### Stack
+- **Data:** Convex (document store, reactive). Lives in `apps/web/convex/` (zero-config).
+- **Auth:** Clerk (`@clerk/nextjs` + `ConvexProviderWithClerk` from `convex/react-clerk`).
+- One shared `ConvexReactClient` (`apps/web/lib/convexClient.ts`) — Clerk attaches auth to it, so
+  imperative calls behind `api.*` are authenticated identically to hook calls.
+
+### Schema (`apps/web/convex/schema.ts`)
+- `users` { clerkId, email, name? } — index `by_clerk`.
+- `cvs` { ownerId?, guestId?, title, data: cvDataValidator, updatedAt } — `by_owner`, `by_guest`.
+- `scans` { ownerId?, guestId?, cvId?, kind, generalScore, result } — `by_owner`, `by_guest`.
+- `cvDataValidator` mirrors `apps/web/lib/types.ts:CvData` **exactly** — keep in sync.
+- `subscriptions` deferred until Stripe (Tier 3).
+
+### Rules
+1. **Auth-aware mutations always.** Every cvs/scans function resolves owner via
+   `ctx.auth.getUserIdentity()` with `guestId` fallback. Never write a guest-only path that
+   later needs an auth rewrite.
+2. **Hybrid data flow.** Writes go through imperative `convex.mutation()` behind `api.*`
+   (AppContext autosave unchanged). Reactive reads use `useQuery` hooks (`useCvs`, `useScans`).
+3. **Editing buffer is local.** The in-progress CV lives in `AppContext` React state; autosave
+   (debounced 800ms) pushes it via mutation. A reactive query must never overwrite live edits.
+4. **Guest → claim.** `getGuestId()` = per-browser nanoid. On sign-in, `claimGuest` re-assigns
+   guest cvs+scans to the owner (attaches, never overwrites).
+5. **IDs.** Convex `_id` for documents; `nanoid` only for `guestId`. No `Math.random` IDs.
+6. **No gating.** `clerkMiddleware()` gates nothing — sign-in is opt-in (only to persist).
+   Introduce `auth.protect()` only when Tier 2/3 gating is designed.
+7. **Scoring stays client-side** (Tier 1) — `api.score` / `api.jobfit` compute in-browser;
+   `api.saveScan` optionally persists the result.
+
+### Env
+- `apps/web/.env.local`: `NEXT_PUBLIC_CONVEX_URL` (from `convex dev`),
+  `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`.
+- Convex env var: `CLERK_JWT_ISSUER_DOMAIN` (Clerk Issuer; JWT template named `convex`).
+
+### Providers
+- Email/magic-link + Google + LinkedIn. **Account linking on verified email.**
+- Apple deferred ($99/yr, Android-first market).
+
+### Deferred / follow-ups
+- SignInModal → Clerk-themed UI (design task, Liubovi). `login()` opens Clerk sign-in for now.
+- Wire `api.saveScan` into Score/Job-fit pages for scan history.
+- Monorepo workspaces + root tsconfig/lockfile cleanup — when `apps/ai` is a real consumer.
+
+> Bootstrap (not yet run here — requires interactive login + Clerk keys):
+> `cd apps/web && npx convex dev` (generates `convex/_generated/` + writes `NEXT_PUBLIC_CONVEX_URL`),
+> then set Clerk keys in `apps/web/.env.local` and `CLERK_JWT_ISSUER_DOMAIN` in the Convex dashboard.

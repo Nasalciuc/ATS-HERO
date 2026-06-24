@@ -1,115 +1,110 @@
-import type { Cv, CvData, JobFitReport, ScoreReport, User } from "./types";
+import type { Cv, CvData, JobFitReport, ScoreReport } from "./types";
 import { emptyCvData } from "./types";
 import { scoreCv, scoreRawText } from "./analyzer/ats-scorer";
 import { jobFit } from "./analyzer/keyword-matcher";
+import { convex, getGuestId } from "./convexClient";
+import { api as convexApi } from "@/convex/_generated/api";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 
 /**
- * Faza 1 (Tier 0/1): fully client-side implementation — no Express backend.
- * CVs persist in localStorage; scoring/job-fit run in the browser via the ported
- * analyzer logic. The async signatures are preserved so the rest of the app
- * (AppContext, pages) keeps working unchanged. Auth (Clerk) + Convex land later.
+ * Convex-backed data layer. Same async surface the app already used, but CVs/scans
+ * now persist in Convex (reactive, multi-device) instead of localStorage. Scoring +
+ * job-fit stay fully client-side (Tier 1). Auth comes from Clerk via the shared
+ * client; guests are tracked by a nanoid guestId.
  */
 
-const TOKEN_KEY = "ats_hero_token";
-const USER_KEY = "ats_hero_user";
-const CVS_KEY = "ats_hero_cvs";
-
-const isBrowser = typeof window !== "undefined";
-
-export function getToken(): string | null {
-  return isBrowser ? localStorage.getItem(TOKEN_KEY) : null;
-}
-export function setToken(token: string | null): void {
-  if (!isBrowser) return;
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
-}
-
-function readCvs(): Cv[] {
-  if (!isBrowser) return [];
-  try {
-    return JSON.parse(localStorage.getItem(CVS_KEY) ?? "[]") as Cv[];
-  } catch {
-    return [];
-  }
-}
-function writeCvs(cvs: Cv[]): void {
-  if (isBrowser) localStorage.setItem(CVS_KEY, JSON.stringify(cvs));
-}
-function genId(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-function now(): string {
-  return new Date().toISOString();
+function toCv(doc: Doc<"cvs">): Cv {
+  return {
+    id: doc._id,
+    ownerId: doc.ownerId ?? null,
+    title: doc.title,
+    data: doc.data,
+    createdAt: new Date(doc._creationTime).toISOString(),
+    updatedAt: new Date(doc.updatedAt).toISOString(),
+  };
 }
 
 export const api = {
-  login: async (email: string, _password?: string): Promise<{ token: string; user: User }> => {
-    const user: User = { id: genId(), email };
-    const token = `local.${genId()}`;
-    if (isBrowser) {
-      localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
-    }
-    return { token, user };
+  listCvs: async (): Promise<{ cvs: Cv[] }> => {
+    const docs = await convex.query(convexApi.cvs.listMine, { guestId: getGuestId() });
+    return { cvs: docs.map(toCv) };
   },
-
-  me: async (): Promise<{ user: User }> => {
-    if (!isBrowser) throw new Error("No session");
-    const raw = localStorage.getItem(USER_KEY);
-    if (!raw) throw new Error("No session");
-    return { user: JSON.parse(raw) as User };
-  },
-
-  listCvs: async (): Promise<{ cvs: Cv[] }> => ({ cvs: readCvs() }),
 
   createCv: async (title?: string, data?: Partial<CvData>): Promise<{ cv: Cv }> => {
-    const cv: Cv = {
-      id: genId(),
-      ownerId: null,
-      title: title ?? "My resume",
+    const doc = await convex.mutation(convexApi.cvs.create, {
+      title,
       data: { ...emptyCvData(), ...(data ?? {}) },
-      createdAt: now(),
-      updatedAt: now(),
-    };
-    writeCvs([...readCvs(), cv]);
-    return { cv };
+      guestId: getGuestId(),
+    });
+    return { cv: toCv(doc!) };
   },
 
   getCv: async (id: string): Promise<{ cv: Cv }> => {
-    const cv = readCvs().find((c) => c.id === id);
-    if (!cv) throw new Error("CV not found");
-    return { cv };
+    const doc = await convex.query(convexApi.cvs.getById, {
+      id: id as Id<"cvs">,
+      guestId: getGuestId(),
+    });
+    if (!doc) throw new Error("CV not found");
+    return { cv: toCv(doc) };
   },
 
   updateCv: async (id: string, data: CvData, title?: string): Promise<{ cv: Cv }> => {
-    const cvs = readCvs();
-    const idx = cvs.findIndex((c) => c.id === id);
-    if (idx === -1) throw new Error("CV not found");
-    const updated: Cv = {
-      ...cvs[idx],
+    const doc = await convex.mutation(convexApi.cvs.update, {
+      id: id as Id<"cvs">,
       data,
-      title: title ?? cvs[idx].title,
-      updatedAt: now(),
-    };
-    cvs[idx] = updated;
-    writeCvs(cvs);
-    return { cv: updated };
+      title,
+      guestId: getGuestId(),
+    });
+    return { cv: toCv(doc!) };
   },
 
   deleteCv: async (id: string): Promise<{ ok: true }> => {
-    writeCvs(readCvs().filter((c) => c.id !== id));
+    await convex.mutation(convexApi.cvs.remove, { id: id as Id<"cvs">, guestId: getGuestId() });
     return { ok: true };
   },
 
-  score: async (payload: { cvId?: string; data?: CvData; text?: string }): Promise<{ report: ScoreReport }> => {
+  // --- Scoring stays fully client-side (Tier 1) ---
+  score: async (payload: {
+    cvId?: string;
+    data?: CvData;
+    text?: string;
+  }): Promise<{ report: ScoreReport }> => {
     if (payload.text != null) return { report: scoreRawText(payload.text) };
     let data = payload.data;
-    if (!data && payload.cvId) data = readCvs().find((c) => c.id === payload.cvId)?.data;
+    if (!data && payload.cvId) {
+      const { cv } = await api.getCv(payload.cvId);
+      data = cv.data;
+    }
     return { report: scoreCv(data ?? emptyCvData()) };
   },
 
   jobfit: async (cvText: string, jobText: string): Promise<{ report: JobFitReport }> => ({
     report: jobFit(cvText, jobText),
   }),
+
+  // --- Persist a scan result (optional; call from Score / Job-fit pages) ---
+  saveScan: async (args: {
+    kind: "score" | "jobfit";
+    generalScore: number;
+    result: ScoreReport | JobFitReport;
+    cvId?: string;
+  }): Promise<{ id: string }> => {
+    const { id } = await convex.mutation(convexApi.scans.save, {
+      kind: args.kind,
+      generalScore: args.generalScore,
+      result: args.result,
+      cvId: args.cvId ? (args.cvId as Id<"cvs">) : undefined,
+      guestId: getGuestId(),
+    });
+    return { id };
+  },
+
+  // --- Auth lifecycle (called by AppContext on sign-in) ---
+  ensureUser: async (): Promise<void> => {
+    await convex.mutation(convexApi.users.upsertCurrent, {});
+  },
+
+  claimGuest: async (guestId: string): Promise<{ cvs: number; scans: number }> => {
+    return await convex.mutation(convexApi.cvs.claimGuest, { guestId });
+  },
 };
