@@ -1,1 +1,10 @@
-# apps/ai/pyproject.toml — placeholder per CLAUDE.md. No project config yet.
+[project]
+name = "ats-hero-ai"
+version = "0.1.0"
+description = "ATS Hero — Tier 2 AI service (FastAPI + spaCy + PyMuPDF)"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,1 +1,13 @@
-# apps/ai/requirements.txt — placeholder per CLAUDE.md (fastapi, spacy, pymupdf, python-docx, openai, ...). No pins yet.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pymupdf>=1.24
+python-multipart>=0.0.9
+pydantic>=2.7
+pydantic-settings>=2.3
+spacy>=3.7,<3.9
+
+# The trained spaCy model is installed separately (not on PyPI):
+#   python -m spacy download en_core_web_sm
+# or pin it as a dependency via its wheel URL, e.g.:
+#   en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+# The service runs without it (degraded heuristic mode); install it in production.
