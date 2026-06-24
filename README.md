@@ -1,81 +1,131 @@
-# ATS Hero — Full-Stack Web App
+# ATS Hero
 
-A faithful implementation of the **ATS Hero** product (the “✅ User flow (Desktop)” designs) from the Figma source file, built as a real full-stack web application.
+ATS Hero helps job seekers build ATS-friendly CVs, score them against applicant tracking systems, and match them to job descriptions. The UI is aligned with the Figma **User flow (Desktop)** designs.
+
+This repo is a **monorepo in transition**: the production stack lives under `apps/` and `convex/`, while the original Vite + Express prototype remains at the repo root for reference and API testing during the rewrite.
 
 ## Stack
 
-- **Frontend:** Vite + React 18 + TypeScript + React Router
-- **Backend:** Express (run via `tsx`) with JWT auth, a JSON file store, a real ATS scoring engine, and keyword-based job-fit matching
-- **Styling:** Plain CSS with design tokens transcribed 1:1 from Figma (`src/styles.css`)
-- **Assets:** Real images exported from Figma into `public/images/`
+| Layer | Technology | Status |
+| --- | --- | --- |
+| Web app | **Next.js 16.2** (App Router, Turbopack) + **React 19.2** | ✅ Phase 1 — UI ported to `apps/web/` |
+| Styling | Global CSS design tokens from Figma (`apps/web/app/styles.css`) | ✅ |
+| PDF | `@react-pdf/renderer` + `pdfjs-dist` (export + upload parsing) | ✅ Client-side |
+| Local state | Zustand + `localStorage` (guest CV flow) | ✅ |
+| Backend | **Convex** (document DB, auth integration, actions) | 🚧 Scaffolding in `convex/` |
+| Auth | **Clerk** | 🚧 Planned |
+| AI / NLP | **FastAPI** + spaCy (`apps/ai/`) | 🚧 Scaffolding |
+| Legacy API | Express + JWT + JSON file store (`server/`) | ✅ Prototype — Postman-tested |
+| Legacy UI | Vite + React 18 (`src/`) | ✅ Prototype — kept during migration |
+| Testing | Vitest (scoring/jobfit), Newman/Postman (API), Playwright (visual audit) | ✅ |
+| CI | GitHub Actions (`.github/workflows/`) | 🚧 Placeholders |
+
+See [`CLAUDE.md`](./CLAUDE.md) for the full production architecture spec.
+
+## Monorepo layout
+
+```
+apps/
+  web/          Next.js 16 production frontend (App Router)
+  ai/           Python FastAPI module (Tier 2–3 NLP + LLM)
+convex/         Convex schema, queries, mutations, actions
+packages/
+  shared/       Shared TypeScript types and constants
+postman/        Postman collection + local environment
+server/         Legacy Express API (port 8787)
+src/            Legacy Vite SPA (port 5173)
+reference/figma/  Design reference exports
+scripts/        Figma download, Playwright audit, API smoke tests
+tests/          Screenshot audit outputs
+```
 
 ## Getting started
 
+### Production web app (Next.js)
+
 ```bash
+cd apps/web
 npm install
-npm run dev
+npm run dev        # http://localhost:3000
+npm run build
+npm run start
 ```
 
-`npm run dev` runs the web app and the API together (via `concurrently`):
+### Legacy prototype (Vite + Express)
 
-- Web: http://localhost:5173 (falls back to 5174 if the port is busy)
-- API: http://localhost:8787 (the web server proxies `/api` → 8787)
-
-Run them separately if you prefer: `npm run web` and `npm run server`.
-
-## Build
+Useful for comparing behaviour or running the Express API that Postman targets:
 
 ```bash
-npm run build      # type-checks + builds the frontend
-npm run preview
+npm install          # repo root
+npm run dev          # Vite :5173 + Express :8787
+npm run web          # frontend only
+npm run server       # API only
 ```
 
-## Routes (frontend)
+The Vite dev server proxies `/api` → `http://localhost:8787`.
+
+## Routes
 
 | Route | Screen |
 | --- | --- |
-| `/` | Landing page (hero, tool, features, testimonials, FAQ, footer) |
-| `/app/create` | **Function 1** — Create CV wizard (Personal info → Education → Summary → Work → Skills + optional sections) |
-| `/app/improve` | **Function 2** — Improve CV (paste/upload → ATS analysis) |
-| `/app/jobfit` | **Function 3** — Job Fit (CV + job description → match score) |
-| `/app/score` | ATS Score Results (gauge + per-section breakdown) |
+| `/` | Landing page |
+| `/app/create` | CV builder wizard |
+| `/app/improve` | Improve CV (paste/upload → ATS analysis) |
+| `/app/jobfit` | Job Fit (CV + job description → match score) |
+| `/app/score` | ATS score results (gauge + per-section breakdown) |
 
-## API
+These routes exist in both `apps/web/` (Next.js) and the legacy `src/` SPA.
+
+## Feature tiers
+
+| Tier | What | Where |
+| --- | --- | --- |
+| 0 | CV builder + watermarked PDF export | Client |
+| 1 | PDF text extraction + basic ATS score | Client (`apps/web/lib/analyzer/`) |
+| 2 | DOCX + spaCy NLP + full recommendations | `apps/ai/` (planned) |
+| 3 | AI deep analysis, rewrite, job fit AI | `apps/ai/` + LLM (planned) |
+
+## API (legacy Express)
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `POST` | `/api/auth/login` | Email-first sign in (upserts user, returns JWT) |
+| `GET` | `/api/health` | Health check |
+| `POST` | `/api/auth/login` | Sign in (JWT) |
 | `GET` | `/api/auth/me` | Current user |
 | `GET/POST` | `/api/cv` | List / create CVs |
-| `GET/PUT/DELETE` | `/api/cv/:id` | Read / update / delete a CV |
-| `POST` | `/api/score` | ATS score from `{ data }`, `{ cvId }` or raw `{ text }` |
-| `POST` | `/api/jobfit` | Match a CV against a job description |
+| `GET/PUT/DELETE` | `/api/cv/:id` | Read / update / delete |
+| `POST` | `/api/score` | ATS score from `{ data }`, `{ cvId }`, or `{ text }` |
+| `POST` | `/api/jobfit` | Match CV against a job description |
 
-CVs can be created anonymously (persisted via `localStorage`) and are claimed by your
-account when you sign in. Data is stored in `server/data/db.json`.
+Guest CVs are stored in `localStorage` and claimed on sign-in. Server data lives in `server/data/db.json`.
 
-## ATS scoring engine (`server/scoring.ts`)
+## Testing
 
-Each section is scored 0–100 on completeness, content quality, measurable results,
-keyword richness and formatting, producing **critical mistakes**, **suggestions** and
-**good practices**. The general score weights the five core sections and adds a small
-bonus for optional sections. Job-fit (`server/jobfit.ts`) tokenizes the job description,
-ranks the most significant keywords, and compares them to the CV.
+```bash
+# Unit tests — scoring engine + job fit (Vitest)
+npm test
 
-## Project structure
+# API — Postman collection via Newman (requires Express on :8787)
+npm run server       # in one terminal
+npm run postman:run  # in another
 
+# Visual audit — Playwright screenshots (legacy Vite app)
+npm run audit:screenshots
 ```
-public/images/        Exported Figma assets
-reference/figma/       Downloaded page/screen references + manifest.json
-scripts/               Figma page export helper
-server/                Express API (auth, cv, scoring, jobfit, file store)
-src/
-  components/          Landing sections, app shell, UI kit, modals, icons, CV renderer
-  pages/               LandingPage, BuilderPage, AnalyzePage, ScorePage + wizard steps
-  store/AppContext.tsx Auth + CV state with autosave
-  lib/                 Shared types + API client
-  styles.css           Design tokens + all styles
-```
+
+Import `postman/ATS-Hero-API.postman_collection.json` and `postman/ATS-Hero-Local.postman_environment.json` into Postman for manual runs.
+
+## ATS scoring engine
+
+Each CV section is scored 0–100 on completeness, content quality, measurable results, keyword richness, and formatting. Output includes **critical mistakes**, **suggestions**, and **good practices** per section.
+
+| Location | Role |
+| --- | --- |
+| `server/scoring.ts` | Legacy Express implementation |
+| `apps/web/lib/analyzer/ats-scorer.ts` | Tier 1 client-side (Next.js) |
+| `apps/ai/app/analyzers/ats_scorer.py` | Tier 2 spaCy NLP (planned) |
+
+Job-fit matching (`server/jobfit.ts`, `apps/web/lib/analyzer/keyword-matcher.ts`) tokenizes the job description, ranks significant keywords, and compares them to the CV.
 
 ## Design tokens
 
@@ -88,3 +138,7 @@ src/
 | Violet | `#B2A5FF` / `#D9D2FF` / `#725BFE` |
 | Error red | `#FF6161` |
 | Fonts | Helvetica (headings/body), Inter (badges & feature titles) |
+
+## License
+
+Private — see repository owner for usage terms.
