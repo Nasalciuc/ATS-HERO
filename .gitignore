@@ -1,6 +1,10 @@
 .env
 node_modules/
+.next/
 dist/
+.cursor/semgrep-report.json
+.cursor/snyk-code.json
+.cursor/snyk-deps.json
 server/data/db.json
 .cursor/mcp.json
 .playwright-mcp/
