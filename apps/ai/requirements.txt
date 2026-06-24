@@ -1,11 +1,15 @@
 fastapi>=0.115
 uvicorn[standard]>=0.30
 pymupdf>=1.24
+python-docx>=1.1
 python-multipart>=0.0.9
 pydantic>=2.7
 pydantic-settings>=2.3
 spacy>=3.7,<3.9
 
+# python-docx (above) is required at runtime by the format analyzer (DOCX structure
+# inspection), alongside pymupdf for PDF.
+#
 # The trained spaCy model is installed separately (not on PyPI):
 #   python -m spacy download en_core_web_sm
 # or pin it as a dependency via its wheel URL, e.g.:

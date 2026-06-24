@@ -36,7 +36,7 @@ def test_detected_contact():
 
 def test_five_signals_and_weights():
     r = score_text(STRONG_CV, get_engine())
-    assert len(r.signals) == 5
+    assert len(r.signals) == 6
     assert abs(sum(s.weight for s in r.signals) - 1.0) < 1e-9
     for s in r.signals:
         assert 0.0 <= s.score <= 100.0

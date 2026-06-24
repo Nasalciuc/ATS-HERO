@@ -1,0 +1,13 @@
+{
+  "_comment": "Standard CV section keywords. Used to detect section coverage and to flag non-standard headings ('My Journey' instead of 'Work Experience'). Each section lists synonyms the parser accepts.",
+  "sections": {
+    "summary": ["summary", "profile", "objective", "about me", "professional summary"],
+    "experience": ["experience", "employment", "work history", "work experience", "professional background"],
+    "education": ["education", "academic", "qualifications", "academic background"],
+    "skills": ["skills", "technologies", "competencies", "technical skills", "core competencies"]
+  },
+  "nonstandard_heading_hints": [
+    "my journey", "my story", "where i've been", "my career journey",
+    "highlights of my impact", "my professional journey", "career highlights"
+  ]
+}

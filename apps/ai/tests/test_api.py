@@ -15,7 +15,7 @@ def test_score_endpoint(client):
     assert r.status_code == 200
     body = r.json()
     assert 0 <= body["overall_score"] <= 100
-    assert len(body["signals"]) == 5
+    assert len(body["signals"]) == 6
     assert "Go" in body["detected"]["skills"]
     assert "C#" in body["detected"]["skills"]
 

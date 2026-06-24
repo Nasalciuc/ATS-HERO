@@ -1,0 +1,22 @@
+{
+  "_comment": "Single source of truth for weak/passive phrasing. Consumed by both the TS client (instant builder feedback) and the Python service (analyzer). Edit here, nowhere else.",
+  "weak_phrases": [
+    { "phrase": "responsible for", "why": "Describes a duty, not a result.", "rewrite_hint": "Lead with an action verb + outcome (e.g. 'Owned X, cutting Y by Z%')." },
+    { "phrase": "responsible for managing", "why": "Duty phrasing plus a weak verb.", "rewrite_hint": "Replace with 'Managed / Led' + a measurable result." },
+    { "phrase": "in charge of", "why": "States authority, not impact.", "rewrite_hint": "Show what changed under your ownership, with numbers." },
+    { "phrase": "tasked with", "why": "Passive; frames you as an order-taker.", "rewrite_hint": "Use an active verb describing what you did and achieved." },
+    { "phrase": "duties included", "why": "Lists responsibilities, not achievements.", "rewrite_hint": "Convert each duty into a result-focused bullet." },
+    { "phrase": "worked on", "why": "Vague; hides your actual contribution.", "rewrite_hint": "Name the specific action: built, designed, shipped, automated." },
+    { "phrase": "helped with", "why": "Minimizes your role.", "rewrite_hint": "State what you personally delivered." },
+    { "phrase": "helped to", "why": "Minimizes your role.", "rewrite_hint": "State what you personally delivered." },
+    { "phrase": "assisted with", "why": "Signals a supporting, not owning, role.", "rewrite_hint": "Claim the part you owned with a strong verb." },
+    { "phrase": "assisted in", "why": "Signals a supporting, not owning, role.", "rewrite_hint": "Claim the part you owned with a strong verb." },
+    { "phrase": "involved in", "why": "Vague participation, no ownership.", "rewrite_hint": "Describe your specific action and its result." },
+    { "phrase": "participated in", "why": "Passive participation.", "rewrite_hint": "Lead with what you contributed and the outcome." },
+    { "phrase": "contributed to", "why": "Often vague unless quantified.", "rewrite_hint": "Specify your contribution and its measurable effect." },
+    { "phrase": "familiar with", "why": "Weak skill claim.", "rewrite_hint": "If you can do it, list it as a skill; if not, drop it." },
+    { "phrase": "exposure to", "why": "Weak skill claim.", "rewrite_hint": "State proficiency honestly or move to a 'Learning' note." },
+    { "phrase": "various", "why": "Filler that adds no information.", "rewrite_hint": "Name the specific items instead of 'various'." },
+    { "phrase": "a variety of", "why": "Filler that adds no information.", "rewrite_hint": "List the actual items." }
+  ]
+}

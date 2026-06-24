@@ -1,4 +1,4 @@
-"""Normalize extracted text: collapse intra-line whitespace, preserve paragraph breaks."""
+"""Normalize extracted text: collapse runs of whitespace, trim, drop empty lines."""
 import re
 
 _MULTISPACE = re.compile(r"[ \t]+")
