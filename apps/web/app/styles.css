@@ -2711,6 +2711,12 @@ p {
   display: flex;
   gap: 16px;
 }
+.complete__subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
 
 /* cv document */
 .cvdoc {

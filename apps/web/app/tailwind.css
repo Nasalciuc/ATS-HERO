@@ -1,0 +1,5 @@
+/* Tailwind layers. Preflight (the global reset) is disabled in tailwind.config.ts so the
+   existing hand-written design system in styles.css is untouched; only components and
+   utilities are emitted for the newer Tailwind-based component layer. */
+@tailwind components;
+@tailwind utilities;

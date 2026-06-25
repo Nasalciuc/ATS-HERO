@@ -15,6 +15,7 @@
     "@clerk/nextjs": "^7.5.8",
     "@react-pdf/renderer": "^4.5.1",
     "ai": "^4.0.0",
+    "clsx": "^2.1.1",
     "convex": "^1.42.0",
     "docx": "^9.7.1",
     "nanoid": "^5.1.15",
@@ -22,6 +23,7 @@
     "pdfjs-dist": "^4.10.38",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "tailwind-merge": "^3.6.0",
     "zod": "^3.23.8",
     "zustand": "^5.0.14"
   },
@@ -29,6 +31,9 @@
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "autoprefixer": "^10.5.2",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.6.3"
   }
 }
