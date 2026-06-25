@@ -7,7 +7,7 @@ import { nanoid } from "nanoid";
  * `convex.mutation(...)` / `convex.query(...)` from lib/api.ts — are authenticated
  * exactly like the hook-based calls. Do NOT create a second client.
  */
-export const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+export const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL ?? "");
 
 const GUEST_ID_KEY = "ats_hero_guest_id";
 

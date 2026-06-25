@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   turbopack: {
-    // Pin the workspace root (the monorepo has multiple lockfiles).
-    root: __dirname,
+    // Must match Vercel's outputFileTracingRoot for monorepo builds.
+    root: path.resolve(__dirname, "../.."),
   },
 };
 
