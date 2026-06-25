@@ -44,6 +44,12 @@ const STEP_TITLES: Partial<Record<SectionKey, string>> = {
 };
 
 export default function BuilderPage() {
+  // TODO(integration): step/section UI state is intentionally NOT lifted into
+  // useBuilderStore yet. This wizard uses a key-based dynamic step model
+  // (activeKey: SectionKey + addedSections), whereas the store is index-based with a
+  // different OptionalSection union (includes "languages"). The template/accent state the
+  // new export/preview features need already lives in useBuilderStore and is wired through
+  // the cv components; lifting the wizard's step model here is risky with no functional gain.
   const { data, update, save, saving } = useApp();
   const navigate = useNavigate();
 

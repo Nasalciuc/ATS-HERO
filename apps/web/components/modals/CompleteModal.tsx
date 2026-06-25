@@ -1,10 +1,18 @@
 "use client";
-import { useState } from "react";
+import dynamic from "next/dynamic";
 import Modal from "../ui/Modal";
-import CvDocument from "../cv/CvDocument";
-import { ArrowLeft, ArrowRight, RadioDot } from "../icons";
-import { downloadCvPdf } from "../../lib/exportPdf";
+import { TemplateSelector } from "../cv/TemplateSelector";
+import { AccentPicker } from "../cv/AccentPicker";
+import { ExportButtons } from "../cv/ExportButtons";
+import { useBuilderStore } from "@/stores/cv-builder-store";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import type { CvData } from "../../lib/types";
+
+// Live preview must be client-only — PDFViewer touches browser APIs.
+const CvTemplatePreview = dynamic(
+  () => import("../cv/CvTemplatePreview").then((m) => m.CvTemplatePreview),
+  { ssr: false },
+);
 
 export default function CompleteModal({
   open,
@@ -17,45 +25,24 @@ export default function CompleteModal({
   data: CvData;
   onScore: () => void;
 }) {
-  const [style, setStyle] = useState(1);
-  const [exporting, setExporting] = useState(false);
+  const templateId = useBuilderStore((s) => s.templateId);
+  const accent = useBuilderStore((s) => s.accent);
 
-  const handlePdf = async () => {
-    setExporting(true);
-    try {
-      await downloadCvPdf(data, style);
-    } catch (err) {
-      console.error("PDF export failed", err);
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handleDoc = () => {
-    const text = serializeCv(data);
-    const blob = new Blob([text], { type: "application/msword" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(data.personalInfo.name || "resume").replace(/\s+/g, "_")}.doc`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  // Debounce the preview data so PDFViewer doesn't re-render on every keystroke.
+  const debouncedData = useDebouncedValue(data, 500);
 
   return (
     <Modal open={open} onClose={onClose} variant="center" width={900}>
       <div className="complete">
         <div className="complete__side">
           <h2 className="complete__title">Customise your CV</h2>
-          <div className="complete__styles">
-            {[1, 2, 3, 4, 5, 6].map((s) => (
-              <button key={s} className="complete__style" onClick={() => setStyle(s)}>
-                <span className={style === s ? "is-checked" : ""}>
-                  <RadioDot checked={style === s} size={20} />
-                </span>
-                Style {s}
-              </button>
-            ))}
+          {/* TODO(integration): these controls use Tailwind utility classes, but Tailwind is
+              not yet wired in apps/web (tailwind.config.ts is a placeholder). They are fully
+              functional; once Tailwind is configured they'll pick up their intended styling. */}
+          <TemplateSelector />
+          <div style={{ marginTop: 16 }}>
+            <div className="complete__subtitle">Accent</div>
+            <AccentPicker />
           </div>
         </div>
 
@@ -63,43 +50,16 @@ export default function CompleteModal({
           <button className="complete__score" onClick={onScore}>
             ⌾ ATS-score
           </button>
-          <div className="complete__nav">
-            <button className="tnav-btn tnav-btn--muted"><ArrowLeft /></button>
-            <button className="tnav-btn"><ArrowRight /></button>
+          <div className="complete__preview" style={{ height: 760 }}>
+            {open ? (
+              <CvTemplatePreview data={debouncedData} templateId={templateId} accent={accent} />
+            ) : null}
           </div>
-          <div className="complete__preview">
-            <CvDocument data={data} styleId={style} />
-          </div>
-          <div className="complete__page">Page 1 / 1</div>
           <div className="complete__downloads">
-            <button className="btn btn--outline-dark" onClick={handlePdf} disabled={exporting}>
-              ⬇ {exporting ? "Generating…" : "Download PDF"}
-            </button>
-            <button className="btn btn--outline-dark" onClick={handleDoc}>
-              ⬇ Download DOC
-            </button>
+            <ExportButtons data={data} />
           </div>
         </div>
       </div>
     </Modal>
   );
-}
-
-function serializeCv(data: CvData): string {
-  const lines: string[] = [];
-  const p = data.personalInfo;
-  lines.push(p.name, data.summary.position, "");
-  lines.push([p.email, p.phone, p.linkedin, p.website].filter(Boolean).join(" | "), "");
-  if (data.summary.valueProposition) lines.push("SUMMARY", data.summary.valueProposition, "");
-  if (data.skills.length) lines.push("SKILLS", data.skills.join(", "), "");
-  if (data.work.length) {
-    lines.push("EXPERIENCE");
-    for (const w of data.work)
-      lines.push(`${w.role}, ${w.company} (${w.startDate} – ${w.current ? "Present" : w.endDate})`, w.description, "");
-  }
-  if (data.education.length) {
-    lines.push("EDUCATION");
-    for (const e of data.education) lines.push(`${e.degree}, ${e.institution}`, e.additional, "");
-  }
-  return lines.filter((l) => l !== undefined).join("\n");
 }
