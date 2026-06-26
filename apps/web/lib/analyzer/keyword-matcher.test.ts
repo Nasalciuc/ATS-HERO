@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { jobFit } from "./jobfit.ts";
+import { jobFit } from "./keyword-matcher";
 
 describe("jobFit", () => {
   it("returns a 0 match with guidance when the job description is empty", () => {
@@ -40,7 +40,6 @@ describe("jobFit", () => {
   });
 
   it("filters out stopwords and generic recruiting noise", () => {
-    // These words are all in the STOPWORDS set; none should appear as a keyword.
     const job =
       "The candidate should have experience and ability to work with the team. " +
       "Responsibilities include building and developing strong solutions.";
@@ -66,9 +65,9 @@ describe("jobFit", () => {
   it("ignores tokens shorter than 3 characters and pure numbers", () => {
     const r = jobFit("x", "Go is a language 2024 ab cd");
     const all = [...r.matched, ...r.missing];
-    expect(all).not.toContain("ab"); // too short
-    expect(all).not.toContain("2024"); // pure number
-    expect(all).not.toContain("is"); // too short / stopword-ish
+    expect(all).not.toContain("ab");
+    expect(all).not.toContain("2024");
+    expect(all).not.toContain("is");
   });
 
   it("preserves multi-char tech tokens with + and . (c++, node.js)", () => {
@@ -80,8 +79,6 @@ describe("jobFit", () => {
   });
 
   it("FINDING: 2-character skills (c#, go, ml, ai, ux, qa, r) are silently dropped", () => {
-    // The `t.length >= 3` filter in tokenize() removes any 2-char token, so
-    // common real skills like "c#" or "Go" never participate in matching.
     const job = "We use c# and go and ml heavily";
     const cv = "Expert in c# and go and ml";
     const r = jobFit(cv, job);
@@ -92,7 +89,6 @@ describe("jobFit", () => {
   });
 
   it("caps ranking at the 30 most frequent keywords", () => {
-    // 40 distinct keywords; the matcher should only ever consider 30.
     const words = Array.from({ length: 40 }, (_, i) => `keyword${i}`);
     const job = words.join(" ");
     const r = jobFit("nothing relevant here", job);

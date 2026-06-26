@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { scoreCv, scoreRawText } from "./scoring.ts";
-import type { CvData, ScoreReport, SectionKey, SectionReport } from "./types.ts";
+import { scoreCv, scoreRawText } from "./ats-scorer";
+import type { CvData, ScoreReport, SectionKey, SectionReport } from "../types";
 
 /* --------------------------- test helpers --------------------------- */
 
@@ -216,7 +216,7 @@ describe("work", () => {
     const weak = {
       ...FILLED_WORK,
       id: "w2",
-      description: "", // missing description
+      description: "",
       startDate: "",
     };
     const s = section(scoreCv(makeData({ work: [FILLED_WORK, weak] })), "work");
@@ -272,7 +272,6 @@ describe("skills (count buckets: 0→crit, 1-4→50, 5-25→90, 26+→70)", () =
   });
 
   it("counts hard + instruments + soft together toward the bucket", () => {
-    // 2 hard + 2 instruments + 2 soft = 6 → lands in the 5-25 bucket → 90
     const s = section(
       scoreCv(makeData({ skills: ["a", "b"], instruments: ["c", "d"], softSkills: ["e", "f"] })),
       "skills"
@@ -340,9 +339,6 @@ describe("generalScore formula", () => {
       skills: ["Excel", "Python", "Valuation", "Modeling", "SQL", "Bloomberg"],
     });
     const r = scoreCv(perfectCore);
-    // skills section is hard-capped at 90, so coreAvg = (100+100+100+100+90)/5 = 98.
-    // generalScore = 98 * 0.9 = 88.2 (no optional bonus). The realistic max without
-    // optional sections is therefore 88.2, NOT 90.
     expect(r.generalScore).toBe(88.2);
   });
 
@@ -370,7 +366,6 @@ describe("generalScore formula", () => {
       awards: [{ id: "a1", title: "Dean's List", description: "Top 5%", date: "2022" }],
     });
     const r = scoreCv(perfectAll);
-    // 90 + (100 * 0.12) = 102 → clamped to 100
     expect(r.generalScore).toBe(100);
     expect(r.message).toMatch(/great shape/i);
   });
@@ -424,7 +419,6 @@ describe("hasMetric — edge cases worth knowing", () => {
 
   it("FINDING: a single-digit count (e.g. 'team of 3') is NOT treated as a metric", () => {
     const s = withDesc("Led a team of 3 engineers");
-    // single digit, no %/$/x → hasMetric false → flagged as lacking measurable impact
     expect(s.critical).toContain("Lack of measurable impact or results");
   });
 });

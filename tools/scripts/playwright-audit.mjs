@@ -1,7 +1,7 @@
 /**
  * Visual audit — captures app pages at Figma desktop width (1728px).
  * Run: node scripts/playwright-audit.mjs
- * Requires: dev server on BASE_URL (default http://localhost:5173)
+ * Requires: dev server on BASE_URL (default http://localhost:3000)
  */
 import fs from "fs";
 import path from "path";
@@ -11,7 +11,7 @@ import { chromium } from "playwright";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "tests", "screenshots", "audit-v8");
-const BASE = process.env.BASE_URL || "http://localhost:5173";
+const BASE = process.env.BASE_URL || "http://localhost:3000";
 const W = 1728;
 const H = 1100;
 
