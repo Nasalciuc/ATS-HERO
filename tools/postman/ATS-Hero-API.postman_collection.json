@@ -1,0 +1,201 @@
+{
+  "info": {
+    "name": "ATS Hero API",
+    "description": "ATS Hero production stack (Next.js + Python AI). Import this collection and select **ATS Hero — Local** environment.\n\n- **Next.js Web** (`baseUrlWeb`, port 3000): Tier 3 rewrite route\n- **Python AI** (`baseUrlAi`, port 8000): Tier 2 extract/score/job-fit/format/region\n\nCV persistence uses Convex + Clerk (not REST). Run `cd apps/web && npx convex dev` for data layer.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrlWeb", "value": "http://localhost:3000" },
+    { "key": "baseUrlAi", "value": "http://localhost:8000" },
+    {
+      "key": "sampleCvText",
+      "value": "David Smith UX Designer Berlin david@example.com +1 123 456 7890. Led product design at Acme Corp, increased conversion 25%. Skills: Figma, User Research, Prototyping, Accessibility. Education: BSc Design."
+    },
+    {
+      "key": "sampleJobText",
+      "value": "We need a UX Designer skilled in Figma, user research, prototyping, and accessibility. Experience with design systems required."
+    }
+  ],
+  "item": [
+    {
+      "name": "Next.js Web",
+      "item": [
+        {
+          "name": "GET Home",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Home page responds', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrlWeb}}/"
+          }
+        },
+        {
+          "name": "POST Rewrite (Tier 3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Rewrite returns 200 or 502 without AI keys', () => {",
+                  "  pm.expect([200, 502]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Rewrites array present', () => pm.expect(json.rewrites).to.be.an('array'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"UX Designer\",\n  \"bullets\": [\n    \"Worked on design projects\",\n    \"Helped with user research\"\n  ]\n}"
+            },
+            "url": "{{baseUrlWeb}}/api/rewrite"
+          }
+        },
+        {
+          "name": "POST Rewrite — validation (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Empty bullets rejected', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bullets\": []\n}"
+            },
+            "url": "{{baseUrlWeb}}/api/rewrite"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Python AI (Tier 2)",
+      "item": [
+        {
+          "name": "GET Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Health OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Status ok', () => pm.expect(json.status).to.eql('ok'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrlAi}}/health"
+          }
+        },
+        {
+          "name": "POST Score",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Score OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Overall score in range', () => {",
+                  "  pm.expect(json.overall_score).to.be.at.least(0);",
+                  "  pm.expect(json.overall_score).to.be.at.most(100);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{sampleCvText}}\"\n}"
+            },
+            "url": "{{baseUrlAi}}/score"
+          }
+        },
+        {
+          "name": "POST Job Fit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Job fit OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Match score present', () => pm.expect(json.match_score).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cv_text\": \"{{sampleCvText}}\",\n  \"job_text\": \"{{sampleJobText}}\"\n}"
+            },
+            "url": "{{baseUrlAi}}/job-fit"
+          }
+        },
+        {
+          "name": "POST Region",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Region OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Target echoed', () => pm.expect(json.target).to.eql('DE'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target\": \"DE\",\n  \"cv_text\": \"{{sampleCvText}}\"\n}"
+            },
+            "url": "{{baseUrlAi}}/region"
+          }
+        }
+      ]
+    }
+  ]
+}
