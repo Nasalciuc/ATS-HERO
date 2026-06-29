@@ -56,12 +56,38 @@ Set Clerk keys in `apps/web/.env.local` and `CLERK_JWT_ISSUER_DOMAIN` in the Con
 
 ## Vercel deployment
 
-1. **Root Directory:** `apps/web`
-2. **Build command:** `npm run build` (default)
-3. **Install command:** `npm ci`
-4. Env vars: `NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, etc.
+**Prerequisite (FAZA 1, local, interactive):** run once from `apps/web`:
 
-`apps/web/vercel.json` pins the Next.js framework.
+```bash
+npx convex dev
+```
+
+This links the Convex project, generates `convex/_generated/` (gitignored), and writes `NEXT_PUBLIC_CONVEX_URL` to `.env.local`. Without this step, `next build` fails with `Cannot find module '@/convex/_generated/api'`.
+
+### Vercel project settings
+
+1. **Root Directory:** `apps/web`
+2. **Build command:** `npx convex deploy --cmd 'npm run build'` (also in `apps/web/vercel.json`)
+3. **Install command:** `npm ci`
+
+If `_generated` is still missing at build time, use the fallback:
+
+```bash
+npx convex deploy && npm run build
+```
+
+### Environment variables (Production)
+
+| Variable | Where | Notes |
+| --- | --- | --- |
+| `CONVEX_DEPLOY_KEY` | Vercel only | Convex Dashboard → Project Settings → Generate Production Deploy Key |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Vercel | Clerk API keys |
+| `CLERK_SECRET_KEY` | Vercel | Clerk API keys |
+| `CLERK_JWT_ISSUER_DOMAIN` | **Convex** dashboard | Clerk Frontend API URL; JWT template named `convex` |
+
+Do **not** set `NEXT_PUBLIC_CONVEX_URL` manually on Vercel — `convex deploy` injects it during the build.
+
+Clerk production auth requires a **custom domain** (not `*.vercel.app`).
 
 ## Testing
 
