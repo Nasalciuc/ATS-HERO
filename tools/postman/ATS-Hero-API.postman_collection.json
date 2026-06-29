@@ -1,42 +1,57 @@
 {
   "info": {
     "name": "ATS Hero API",
-    "description": "Local API for ATS Hero (Express backend on port 8787). Import this collection in Postman and select the **ATS Hero — Local** environment.",
+    "description": "ATS Hero production stack (Next.js + Python AI). Import this collection and select **ATS Hero — Local** environment.\n\n- **Next.js Web** (`baseUrlWeb`, port 3000): Tier 3 rewrite route\n- **Python AI** (`baseUrlAi`, port 8000): Tier 2 extract/score/job-fit/format/region\n\nCV persistence uses Convex + Clerk (not REST). Run `cd apps/web && npx convex dev` for data layer.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8787" },
-    { "key": "token", "value": "" },
-    { "key": "cvId", "value": "" }
+    { "key": "baseUrlWeb", "value": "http://localhost:3000" },
+    { "key": "baseUrlAi", "value": "http://localhost:8000" },
+    {
+      "key": "sampleCvText",
+      "value": "David Smith UX Designer Berlin david@example.com +1 123 456 7890. Led product design at Acme Corp, increased conversion 25%. Skills: Figma, User Research, Prototyping, Accessibility. Education: BSc Design."
+    },
+    {
+      "key": "sampleJobText",
+      "value": "We need a UX Designer skilled in Figma, user research, prototyping, and accessibility. Experience with design systems required."
+    }
   ],
   "item": [
     {
-      "name": "Health",
+      "name": "Next.js Web",
       "item": [
         {
-          "name": "GET Health",
+          "name": "GET Home",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Home page responds', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/api/health"
+            "url": "{{baseUrlWeb}}/"
           }
-        }
-      ]
-    },
-    {
-      "name": "Auth",
-      "item": [
+        },
         {
-          "name": "POST Login",
+          "name": "POST Rewrite (Tier 3)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.token) {",
-                  "  pm.collectionVariables.set('token', json.token);",
-                  "  pm.environment.set('token', json.token);",
+                  "pm.test('Rewrite returns 200 or 502 without AI keys', () => {",
+                  "  pm.expect([200, 502]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Rewrites array present', () => pm.expect(json.rewrites).to.be.an('array'));",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -48,44 +63,19 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"demo@ats-hero.test\",\n  \"password\": \"demo123\"\n}"
+              "raw": "{\n  \"role\": \"UX Designer\",\n  \"bullets\": [\n    \"Worked on design projects\",\n    \"Helped with user research\"\n  ]\n}"
             },
-            "url": "{{baseUrl}}/api/auth/login"
+            "url": "{{baseUrlWeb}}/api/rewrite"
           }
         },
         {
-          "name": "GET Me",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": "{{baseUrl}}/api/auth/me"
-          }
-        }
-      ]
-    },
-    {
-      "name": "CV",
-      "item": [
-        {
-          "name": "GET List CVs",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": "{{baseUrl}}/api/cv"
-          }
-        },
-        {
-          "name": "POST Create CV",
+          "name": "POST Rewrite — validation (400)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.cv?.id) {",
-                  "  pm.collectionVariables.set('cvId', json.cv.id);",
-                  "  pm.environment.set('cvId', json.cv.id);",
-                  "}"
+                  "pm.test('Empty bullets rejected', () => pm.response.to.have.status(400));"
                 ],
                 "type": "text/javascript"
               }
@@ -96,86 +86,113 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"My ATS Resume\",\n  \"data\": {\n    \"personalInfo\": {\n      \"name\": \"David Smith\",\n      \"email\": \"david@example.com\",\n      \"phone\": \"+1 123 456 7890\",\n      \"cityState\": \"Berlin\",\n      \"country\": \"Germany\"\n    },\n    \"summary\": {\n      \"position\": \"UX Designer\",\n      \"valueProposition\": \"Product designer with 5+ years building user-centered experiences.\"\n    },\n    \"skills\": [\"Figma\", \"User Research\", \"Prototyping\"],\n    \"work\": [\n      {\n        \"id\": \"w1\",\n        \"role\": \"Senior UX Designer\",\n        \"company\": \"Acme Corp\",\n        \"startDate\": \"Jan 2022\",\n        \"endDate\": \"Present\",\n        \"current\": true,\n        \"description\": \"Led redesign that increased conversion by 25%.\"\n      }\n    ],\n    \"education\": [\n      {\n        \"id\": \"e1\",\n        \"degree\": \"BSc Design\",\n        \"institution\": \"Design University\",\n        \"startDate\": \"2016\",\n        \"endDate\": \"2020\"\n      }\n    ]\n  }\n}"
+              "raw": "{\n  \"bullets\": []\n}"
             },
-            "url": "{{baseUrl}}/api/cv"
-          }
-        },
-        {
-          "name": "GET CV by ID",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": "{{baseUrl}}/api/cv/{{cvId}}"
-          }
-        },
-        {
-          "name": "PUT Update CV",
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Resume\",\n  \"data\": {\n    \"skills\": [\"Figma\", \"User Research\", \"Prototyping\", \"Accessibility\"]\n  }\n}"
-            },
-            "url": "{{baseUrl}}/api/cv/{{cvId}}"
+            "url": "{{baseUrlWeb}}/api/rewrite"
           }
         }
       ]
     },
     {
-      "name": "Analysis",
+      "name": "Python AI (Tier 2)",
       "item": [
         {
-          "name": "POST Score (raw text)",
+          "name": "GET Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Health OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Status ok', () => pm.expect(json.status).to.eql('ok'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"text\": \"David Smith UX Designer Berlin david@example.com Experience: Led product design at Acme Corp, increased conversion 25%. Skills: Figma, User Research, Prototyping. Education: BSc Design.\"\n}"
-            },
-            "url": "{{baseUrl}}/api/score"
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrlAi}}/health"
           }
         },
         {
-          "name": "POST Score (CV data)",
+          "name": "POST Score",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Score OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Overall score in range', () => {",
+                  "  pm.expect(json.overall_score).to.be.at.least(0);",
+                  "  pm.expect(json.overall_score).to.be.at.most(100);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cvId\": \"{{cvId}}\"\n}"
+              "raw": "{\n  \"text\": \"{{sampleCvText}}\"\n}"
             },
-            "url": "{{baseUrl}}/api/score"
+            "url": "{{baseUrlAi}}/score"
           }
         },
         {
           "name": "POST Job Fit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Job fit OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Match score present', () => pm.expect(json.match_score).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cvText\": \"David Smith UX Designer with Figma, user research, prototyping, accessibility. 5 years experience at Acme Corp.\",\n  \"jobText\": \"We need a UX Designer skilled in Figma, user research, prototyping, and accessibility. Experience with design systems required.\"\n}"
+              "raw": "{\n  \"cv_text\": \"{{sampleCvText}}\",\n  \"job_text\": \"{{sampleJobText}}\"\n}"
             },
-            "url": "{{baseUrl}}/api/jobfit"
+            "url": "{{baseUrlAi}}/job-fit"
           }
-        }
-      ]
-    },
-    {
-      "name": "Cleanup",
-      "item": [
+        },
         {
-          "name": "DELETE CV",
+          "name": "POST Region",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Region OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Target echoed', () => pm.expect(json.target).to.eql('DE'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": "{{baseUrl}}/api/cv/{{cvId}}"
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target\": \"DE\",\n  \"cv_text\": \"{{sampleCvText}}\"\n}"
+            },
+            "url": "{{baseUrlAi}}/region"
           }
         }
       ]

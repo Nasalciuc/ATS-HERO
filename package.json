@@ -15,6 +15,7 @@
     "figma:download:pages": "node tools/scripts/download-figma-pages.mjs --section pages --delay 10000",
     "figma:download:rest": "node tools/scripts/download-figma-pages.mjs --delay 10000",
     "figma:download:all": "node tools/scripts/download-figma-pages.mjs --delay 10000",
-    "audit:screenshots": "node tools/scripts/playwright-audit.mjs"
+    "audit:screenshots": "node tools/scripts/playwright-audit.mjs",
+    "api:test": "node tools/scripts/api-smoke-test.mjs"
   }
 }
