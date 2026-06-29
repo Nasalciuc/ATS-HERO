@@ -28,6 +28,7 @@ type AppState = {
   logout: () => void;
 
   ensureCv: () => Promise<string>;
+  openCv: (id: string) => Promise<void>;
   update: (patch: Partial<CvData>) => void;
   save: () => Promise<void>;
   reset: () => void;
@@ -122,6 +123,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return created.id;
   }, []);
 
+  const openCv = useCallback(async (id: string): Promise<void> => {
+    const { cv } = await api.getCv(id);
+    setCv(cv);
+    setData(cv.data);
+    if (typeof window !== "undefined") localStorage.setItem(CV_ID_KEY, cv.id);
+  }, []);
+
   const save = useCallback(async () => {
     await ensureCv();
     await persist();
@@ -156,11 +164,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       ensureCv,
+      openCv,
       update,
       save,
       reset,
     }),
-    [user, cv, data, saving, lastSavedAt, ready, login, logout, ensureCv, update, save, reset]
+    [user, cv, data, saving, lastSavedAt, ready, login, logout, ensureCv, openCv, update, save, reset]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
