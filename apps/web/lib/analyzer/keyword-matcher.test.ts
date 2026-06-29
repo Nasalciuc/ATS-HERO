@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { jobFit } from "./jobfit.ts";
+import { jobFit } from "./keyword-matcher";
 
 describe("jobFit", () => {
   it("returns a 0 match with guidance when the job description is empty", () => {

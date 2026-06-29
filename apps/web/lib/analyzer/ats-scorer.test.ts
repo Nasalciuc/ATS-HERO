@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { scoreCv, scoreRawText } from "./scoring.ts";
-import type { CvData, ScoreReport, SectionKey, SectionReport } from "./types.ts";
+import { scoreCv, scoreRawText } from "./ats-scorer";
+import type { CvData, ScoreReport, SectionKey, SectionReport } from "../types";
 
 /* --------------------------- test helpers --------------------------- */
 
