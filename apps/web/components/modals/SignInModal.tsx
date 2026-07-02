@@ -3,12 +3,26 @@
 import { useSignIn } from "@clerk/nextjs/legacy";
 import type { OAuthStrategy } from "@clerk/nextjs/types";
 import { useState } from "react";
+import { isClerkPublicConfigured } from "@/lib/clerk-config";
 import Modal from "../ui/Modal";
 import { GitHubIcon, GoogleIcon } from "../icons";
 
 type Phase = "email" | "code";
 
-export default function SignInModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function SignInModalUnavailable({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Modal open={open} onClose={onClose} variant="side" width={690} overlayClassName="modal--signin-overlay" panelClassName="modal__panel--signin">
+      <div className="signin">
+        <h2 className="signin__title">Sign-in unavailable</h2>
+        <p className="signin__hint" style={{ marginTop: "1rem" }}>
+          Authentication is not configured on this deployment. You can still build CVs and run ATS scoring as a guest.
+        </p>
+      </div>
+    </Modal>
+  );
+}
+
+function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { isLoaded, signIn, setActive } = useSignIn();
   const [phase, setPhase] = useState<Phase>("email");
   const [email, setEmail] = useState("");
@@ -236,4 +250,11 @@ export default function SignInModal({ open, onClose }: { open: boolean; onClose:
       </div>
     </Modal>
   );
+}
+
+export default function SignInModal(props: { open: boolean; onClose: () => void }) {
+  if (!isClerkPublicConfigured()) {
+    return <SignInModalUnavailable {...props} />;
+  }
+  return <SignInModalClerk {...props} />;
 }

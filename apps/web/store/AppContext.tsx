@@ -12,6 +12,7 @@ import {
 import { useUser, useClerk } from "@clerk/nextjs";
 import { api } from "../lib/api";
 import { getGuestId } from "../lib/convexClient";
+import { isClerkPublicConfigured } from "../lib/clerk-config";
 import { emptyCvData, type Cv, type CvData, type User } from "../lib/types";
 
 const CV_ID_KEY = "ats_hero_cv_id";
@@ -36,13 +37,23 @@ type AppState = {
 
 const AppContext = createContext<AppState | null>(null);
 
-export function AppProvider({ children }: { children: ReactNode }) {
-  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
-  const clerk = useClerk();
+type ClerkAuth = {
+  user: User | null;
+  isLoaded: boolean;
+  isSignedIn: boolean;
+  signOut: () => Promise<void>;
+};
+
+function AppProviderCore({
+  children,
+  auth,
+}: {
+  children: ReactNode;
+  auth: ClerkAuth;
+}) {
+  const { user, isLoaded, isSignedIn, signOut } = auth;
 
   const [cv, setCv] = useState<Cv | null>(null);
-  // The editing buffer is LOCAL on purpose: a reactive query must never overwrite
-  // the user's in-progress edits. Autosave pushes this buffer to Convex.
   const [data, setData] = useState<CvData>(emptyCvData());
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
@@ -54,11 +65,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const cvRef = useRef(cv);
   cvRef.current = cv;
 
-  const user: User | null = clerkUser
-    ? { id: clerkUser.id, email: clerkUser.primaryEmailAddress?.emailAddress ?? "" }
-    : null;
-
-  // Restore last-edited CV on first load.
   useEffect(() => {
     (async () => {
       const savedId = typeof window !== "undefined" ? localStorage.getItem(CV_ID_KEY) : null;
@@ -75,7 +81,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  // On sign-in: ensure the users row + claim any guest CVs/scans into the account.
   const claimedRef = useRef(false);
   useEffect(() => {
     if (!isLoaded || !isSignedIn || claimedRef.current) return;
@@ -135,14 +140,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await persist();
   }, [ensureCv, persist]);
 
-  // Auth UI lives in SignInModal (headless Clerk flow — no clerk.openSignIn()).
-  const login = useCallback((_email?: string) => {
-    // Navbar/AppShell open SignInModal directly; keep for API compatibility.
-  }, []);
+  const login = useCallback((_email?: string) => {}, []);
 
   const logout = useCallback(() => {
-    void clerk.signOut();
-  }, [clerk]);
+    void signOut();
+  }, [signOut]);
 
   const reset = useCallback(() => {
     setCv(null);
@@ -170,6 +172,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+}
+
+function AppProviderWithClerk({ children }: { children: ReactNode }) {
+  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+  const clerk = useClerk();
+
+  const auth = useMemo<ClerkAuth>(
+    () => ({
+      user: clerkUser
+        ? { id: clerkUser.id, email: clerkUser.primaryEmailAddress?.emailAddress ?? "" }
+        : null,
+      isLoaded,
+      isSignedIn: Boolean(isSignedIn),
+      signOut: () => clerk.signOut(),
+    }),
+    [clerkUser, isLoaded, isSignedIn, clerk]
+  );
+
+  return <AppProviderCore auth={auth}>{children}</AppProviderCore>;
+}
+
+function AppProviderGuest({ children }: { children: ReactNode }) {
+  const auth = useMemo<ClerkAuth>(
+    () => ({
+      user: null,
+      isLoaded: true,
+      isSignedIn: false,
+      signOut: async () => {},
+    }),
+    []
+  );
+
+  return <AppProviderCore auth={auth}>{children}</AppProviderCore>;
+}
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  if (!isClerkPublicConfigured()) {
+    return <AppProviderGuest>{children}</AppProviderGuest>;
+  }
+  return <AppProviderWithClerk>{children}</AppProviderWithClerk>;
 }
 
 export function useApp(): AppState {
