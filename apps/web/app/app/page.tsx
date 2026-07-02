@@ -41,91 +41,72 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <header className="mb-8 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Your CVs</h1>
-          <p className="text-sm text-zinc-500">Build, score and tailor your resumes.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={newCv}
-            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
-          >
-            New CV
-          </button>
+    <main className="dash">
+      <div className="container dash__inner">
+        <div className="dash__topbar">
+          <a href="/" className="dash__logo">ATS Hero</a>
           {isSignedIn ? (
             <UserButton />
           ) : (
-            <button
-              type="button"
-              onClick={() => setSignInOpen(true)}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
-            >
+            <button type="button" className="btn btn--outline-dark dash__signin" onClick={() => setSignInOpen(true)}>
               Sign in
             </button>
           )}
         </div>
-      </header>
 
-      {!isSignedIn && (
-        <div className="mb-6 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-          You&apos;re working as a guest — your CVs are saved on this device.{" "}
-          <button
-            type="button"
-            className="font-semibold underline underline-offset-2"
-            onClick={() => setSignInOpen(true)}
-          >
-            Sign in
-          </button>{" "}
-          to keep them across devices.
-        </div>
-      )}
-
-      {cvs === undefined ? (
-        <div className="py-24 text-center text-zinc-400">Loading…</div>
-      ) : cvs.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 py-24 text-center">
-          <p className="text-zinc-600">No CVs yet.</p>
-          <button
-            onClick={newCv}
-            className="mt-3 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
-          >
-            Create your first CV
+        <header className="dash__head">
+          <div>
+            <h1 className="dash__title">Your CVs</h1>
+            <p className="dash__subtitle">Build, score and tailor your resumes.</p>
+          </div>
+          <button className="btn btn--dark dash__new" onClick={newCv}>
+            + New CV
           </button>
-        </div>
-      ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cvs.map((cv: Doc<"cvs">) => (
-            <li
-              key={cv._id}
-              className="group rounded-2xl border border-zinc-200 bg-white p-5 transition hover:border-violet-300 hover:shadow-sm"
-            >
-              <button onClick={() => open(cv._id)} className="block w-full text-left">
-                <h3 className="truncate font-semibold text-zinc-900">{cv.title || "Untitled"}</h3>
-                <p className="mt-1 text-xs text-zinc-400">Updated {formatDate(cv.updatedAt)}</p>
-                <p className="mt-3 truncate text-sm text-zinc-500">
-                  {cv.data?.summary?.position || cv.data?.personalInfo?.name || "Empty resume"}
-                </p>
-              </button>
-              <div className="mt-4 flex items-center justify-between">
-                <button
-                  onClick={() => open(cv._id)}
-                  className="text-sm font-medium text-violet-700 hover:text-violet-900"
-                >
-                  Open →
+        </header>
+
+        {!isSignedIn && (
+          <div className="dash__banner">
+            You&apos;re working as a guest — your CVs are saved on this device.{" "}
+            <button type="button" className="dash__banner-link" onClick={() => setSignInOpen(true)}>
+              Sign in
+            </button>{" "}
+            to keep them across devices.
+          </div>
+        )}
+
+        {cvs === undefined ? (
+          <div className="dash__loading">Loading…</div>
+        ) : cvs.length === 0 ? (
+          <div className="dash__empty">
+            <p>No CVs yet.</p>
+            <button className="btn btn--dark" onClick={newCv}>
+              Create your first CV
+            </button>
+          </div>
+        ) : (
+          <ul className="dash__grid">
+            {cvs.map((cv: Doc<"cvs">) => (
+              <li key={cv._id} className="dash-card">
+                <button onClick={() => open(cv._id)} className="dash-card__body">
+                  <h3 className="dash-card__title">{cv.title || "Untitled"}</h3>
+                  <p className="dash-card__date">Updated {formatDate(cv.updatedAt)}</p>
+                  <p className="dash-card__meta">
+                    {cv.data?.summary?.position || cv.data?.personalInfo?.name || "Empty resume"}
+                  </p>
                 </button>
-                <button
-                  onClick={() => remove(cv._id)}
-                  className="text-xs text-zinc-400 opacity-0 transition hover:text-rose-600 group-hover:opacity-100"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+                <div className="dash-card__foot">
+                  <button onClick={() => open(cv._id)} className="dash-card__open">
+                    Open →
+                  </button>
+                  <button onClick={() => remove(cv._id)} className="dash-card__delete">
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
     </main>
   );

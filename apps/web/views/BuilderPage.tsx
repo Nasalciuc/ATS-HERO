@@ -40,6 +40,7 @@ const BASE_STEPS: { key: SectionKey; label: string; emoji: string }[] = [
 
 // The page heading can differ from the compact stepper label (Figma).
 const STEP_TITLES: Partial<Record<SectionKey, string>> = {
+  personalInfo: "Personal Info",
   work: "Work experience / Internship",
 };
 
@@ -213,9 +214,12 @@ export default function BuilderPage() {
               Next step <ArrowRight size={18} />
             </button>
           )}
-          <button className="topbtn topbtn--dark" onClick={finish}>
-            Complete
-          </button>
+          {/* Figma: step 1 offers only "Next step"; "Complete" appears from step 2 on. */}
+          {activeIndex > 0 && (
+            <button className="topbtn topbtn--dark" onClick={finish}>
+              Complete
+            </button>
+          )}
         </div>
       </div>
 

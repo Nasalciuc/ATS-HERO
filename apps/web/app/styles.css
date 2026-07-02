@@ -3005,3 +3005,176 @@ p {
     margin: 0 0 0 calc((100% - 577px) / 2);
   }
 }
+
+/* ============================================================
+   DASHBOARD (/app — "Your CVs"). Not a Figma screen; styled with
+   the ATS Hero design system instead of raw utility classes.
+   ============================================================ */
+.dash {
+  min-height: 100vh;
+  background: var(--bg-page);
+  padding: 32px 0 80px;
+}
+.dash__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.dash__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.dash__logo {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.dash__signin {
+  height: 39px;
+  padding: 0 22px;
+}
+.dash__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.dash__title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.dash__subtitle {
+  margin: 8px 0 0;
+  font-size: 16px;
+  color: var(--gray-500);
+}
+.dash__new {
+  height: 44px;
+  padding: 0 22px;
+}
+.dash__banner {
+  background: rgba(114, 91, 254, 0.07);
+  border: 1px solid var(--violet-200);
+  border-radius: 16px;
+  padding: 14px 18px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.dash__banner-link {
+  font-weight: 700;
+  color: var(--violet-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dash__loading {
+  padding: 96px 0;
+  text-align: center;
+  color: var(--gray-400);
+}
+.dash__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  border: 2px dashed var(--violet-200);
+  border-radius: 20px;
+  padding: 72px 24px;
+  background: rgba(255, 255, 255, 0.5);
+}
+.dash__empty p {
+  font-size: 16px;
+  color: var(--gray-600);
+}
+.dash__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.dash-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 4px 15px 0 rgba(223, 218, 255, 1);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.dash-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px 0 rgba(203, 195, 255, 1);
+}
+.dash-card__body {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+.dash-card__title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-card__date {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+.dash-card__meta {
+  margin: 14px 0 0;
+  font-size: 15px;
+  color: var(--gray-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-card__foot {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dash-card__open {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--violet-600);
+}
+.dash-card__open:hover {
+  color: #5f48e8;
+}
+.dash-card__delete {
+  font-size: 13px;
+  color: var(--gray-500);
+}
+.dash-card__delete:hover {
+  color: var(--red);
+}
+@media (max-width: 1024px) {
+  .dash__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 680px) {
+  .dash__grid {
+    grid-template-columns: 1fr;
+  }
+  .dash__title {
+    font-size: 32px;
+  }
+}
