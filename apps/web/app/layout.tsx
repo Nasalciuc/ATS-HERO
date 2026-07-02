@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "ATS Hero — Build, improve and match your CV to any job",
   description:
     "Create an ATS-friendly resume, get an instant ATS score, and check how well your CV matches a job description.",
+  icons: {
+    icon: "/images/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

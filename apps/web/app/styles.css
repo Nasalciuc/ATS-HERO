@@ -56,6 +56,9 @@ body {
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Absolutely-positioned hero art/badges must never create a horizontal scrollbar.
+     `clip` (not `hidden`) so position:sticky descendants keep working. */
+  overflow-x: clip;
 }
 
 img,
@@ -324,6 +327,7 @@ p {
 .hero__cta {
   margin-top: 30px;
   display: flex;
+  flex-wrap: wrap;
   gap: 14px;
 }
 .hero__cta .btn {
@@ -664,7 +668,8 @@ p {
 }
 .tool__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* minmax(0, …) lets cards shrink below their nowrap-button min-content width. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
 }
 .tool__card {
@@ -692,6 +697,7 @@ p {
 .tool__actions {
   margin-top: 24px;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -1045,15 +1051,23 @@ p {
 /* ============================================================
    RESPONSIVE
    ============================================================ */
-@media (max-width: 1100px) {
-  :root {
-    --container: 960px;
-  }
+/* Laptop (1200–1359px): keep the two-column hero but drop the 1.12 art
+   scale and let the text column flex, so nothing overflows the viewport. */
+@media (max-width: 1359px) {
   .hero__grid {
     --hero-art-scale: 1;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) 577px;
+    gap: 40px;
     width: min(var(--container), calc(100% - 48px));
     max-width: var(--container);
+  }
+}
+
+/* Tablet / small laptop (<1200px): stack the hero — art centered under text. */
+@media (max-width: 1199px) {
+  .hero__grid {
+    /* minmax(0, …): fixed-width stats/CTAs must not inflate the column. */
+    grid-template-columns: minmax(0, 1fr);
   }
   .hero__art {
     width: min(calc(577px * var(--hero-art-scale)), 100%);
@@ -1070,6 +1084,12 @@ p {
   .hero__stats {
     margin-top: 48px;
     padding-top: 0;
+  }
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --container: 960px;
   }
   .problem__grid {
     grid-template-columns: 1fr;
@@ -1117,7 +1137,9 @@ p {
   .nav {
     position: relative;
   }
-  .tool__grid,
+  .tool__grid {
+    grid-template-columns: 1fr;
+  }
   .testimonials__row {
     flex-direction: column;
     align-items: stretch;
@@ -2935,6 +2957,22 @@ p {
   .hero {
     padding-top: 48px;
   }
+  /* 38px keeps the headline on two lines down to ~340px viewports,
+     so the fixed green highlight bars stay aligned with the text. */
+  .hero__title {
+    font-size: 38px;
+  }
+  .hero__title-inner {
+    min-height: 92px;
+  }
+  .hero__title-bg--1 {
+    top: 4px;
+    height: 44px;
+  }
+  .hero__title-bg--2 {
+    top: 50px;
+    height: 42px;
+  }
   .hero__stats {
     flex-direction: column;
     align-items: flex-start;
@@ -2947,14 +2985,23 @@ p {
   .hero__cta .btn {
     width: 100%;
   }
+  /* Scale-to-fit ratio as a NUMBER: tan(atan2(len, len)) divides two lengths.
+     A plain calc((100vw - 48px) / 577) yields a length, so min(1, …) would be
+     invalid and the whole declaration silently dropped (577px overflow bug). */
   .hero__art {
-    height: calc(616px * min(1, calc((100vw - 48px) / 577)));
+    --hero-fit: min(1, tan(atan2(calc(100vw - 48px), 577px)));
+    width: 100%;
+    height: calc(616px * var(--hero-fit));
   }
   .hero__stage {
+    --hero-fit: min(1, tan(atan2(calc(100vw - 48px), 577px)));
     width: 577px;
     height: 616px;
-    transform: scale(min(1, calc((100vw - 48px) / 577)));
+    aspect-ratio: auto;
+    transform: scale(var(--hero-fit));
     transform-origin: top center;
-    margin: 0 auto;
+    /* Center the 577px layout box inside the narrower art column so the
+       scaled result is centered too (auto margins can't go negative). */
+    margin: 0 0 0 calc((100% - 577px) / 2);
   }
 }
