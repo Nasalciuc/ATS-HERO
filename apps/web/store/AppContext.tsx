@@ -135,13 +135,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await persist();
   }, [ensureCv, persist]);
 
-  // Real auth is handled by Clerk: opens sign-in (email + Google + LinkedIn).
-  const login = useCallback(
-    (_email?: string) => {
-      clerk.openSignIn();
-    },
-    [clerk]
-  );
+  // Auth UI lives in SignInModal (headless Clerk flow — no clerk.openSignIn()).
+  const login = useCallback((_email?: string) => {
+    // Navbar/AppShell open SignInModal directly; keep for API compatibility.
+  }, []);
 
   const logout = useCallback(() => {
     void clerk.signOut();

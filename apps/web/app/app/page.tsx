@@ -7,8 +7,10 @@
 // (they were removed in favour of <Show>), and <UserButton> no longer accepts `afterSignOutUrl`.
 // To stay faithful to the package's UI we gate on Clerk's useUser() instead of the control
 // components, and drop the prop. Everything else is the package's page as-is.
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
+import SignInModal from "@/components/modals/SignInModal";
 import { useCvs } from "@/hooks/use-cvs";
 import { useApp } from "@/store/AppContext";
 import { api } from "@/lib/api";
@@ -23,6 +25,7 @@ export default function DashboardPage() {
   const { openCv, reset } = useApp();
   const { isSignedIn } = useUser();
   const router = useRouter();
+  const [signInOpen, setSignInOpen] = useState(false);
 
   function newCv() {
     reset();
@@ -54,11 +57,13 @@ export default function DashboardPage() {
           {isSignedIn ? (
             <UserButton />
           ) : (
-            <SignInButton mode="modal">
-              <button className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50">
-                Sign in
-              </button>
-            </SignInButton>
+            <button
+              type="button"
+              onClick={() => setSignInOpen(true)}
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
+            >
+              Sign in
+            </button>
           )}
         </div>
       </header>
@@ -66,9 +71,13 @@ export default function DashboardPage() {
       {!isSignedIn && (
         <div className="mb-6 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
           You&apos;re working as a guest — your CVs are saved on this device.{" "}
-          <SignInButton mode="modal">
-            <button className="font-semibold underline underline-offset-2">Sign in</button>
-          </SignInButton>{" "}
+          <button
+            type="button"
+            className="font-semibold underline underline-offset-2"
+            onClick={() => setSignInOpen(true)}
+          >
+            Sign in
+          </button>{" "}
           to keep them across devices.
         </div>
       )}
@@ -117,6 +126,7 @@ export default function DashboardPage() {
           ))}
         </ul>
       )}
+      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
     </main>
   );
 }

@@ -7,18 +7,20 @@ import { getOwnerId } from "../_shared/utils";
 export const save = mutation({
   args: {
     kind: scanKindValidator,
+    engine: v.optional(v.string()),
     generalScore: v.number(),
     result: v.any(),
     cvId: v.optional(v.id("cvs")),
     guestId: v.optional(v.string()),
   },
-  handler: async (ctx, { kind, generalScore, result, cvId, guestId }) => {
+  handler: async (ctx, { kind, engine, generalScore, result, cvId, guestId }) => {
     const ownerId = await getOwnerId(ctx);
     const id = await ctx.db.insert("scans", {
       ownerId: ownerId ?? undefined,
       guestId: ownerId ? undefined : guestId,
       cvId,
       kind,
+      engine,
       generalScore,
       result,
     });

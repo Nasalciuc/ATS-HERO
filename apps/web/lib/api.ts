@@ -91,6 +91,7 @@ export const api = {
   }): Promise<{ id: string }> => {
     const { id } = await convex.mutation(convexApi.scans.save, {
       kind: args.kind,
+      engine: "client", // Tier 0/1 in-browser scorer
       generalScore: args.generalScore,
       result: args.result,
       cvId: args.cvId ? (args.cvId as Id<"cvs">) : undefined,

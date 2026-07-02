@@ -48,6 +48,15 @@ export const remove = mutation({
     const cv = await ctx.db.get(id);
     if (!cv) return { ok: true as const };
     await assertCanWrite(ctx, cv, guestId);
+
+    // Integrity: keep the user's scan history (reports are standalone snapshots),
+    // but detach the dangling reference.
+    const related = await ctx.db
+      .query("scans")
+      .withIndex("by_cv", (q) => q.eq("cvId", id))
+      .collect();
+    for (const s of related) await ctx.db.patch(s._id, { cvId: undefined });
+
     await ctx.db.delete(id);
     return { ok: true as const };
   },
