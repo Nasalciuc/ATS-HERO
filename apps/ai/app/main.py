@@ -12,12 +12,20 @@ Tier 3 (AI WEAK->STRONG rewriting) lives in the Next.js app via the Vercel AI SD
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from .analyzers.nlp_engine import get_engine
 from .config import settings
 from .routers import analyze, format as format_router, job_fit, parse, region
+from .routers.parse import limiter
 
 app = FastAPI(title="ATS Hero AI", version="0.2.0")
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

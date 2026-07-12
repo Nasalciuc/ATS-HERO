@@ -58,3 +58,40 @@ def test_extract_rejects_empty(client):
     files = {"file": ("cv.docx", b"", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")}
     r = client.post("/extract", files=files)
     assert r.status_code == 400
+
+
+def test_extract_rejects_fake_pdf_magic(client):
+    files = {"file": ("fake.pdf", b"not a pdf at all", "application/pdf")}
+    r = client.post("/extract", files=files)
+    assert r.status_code == 415
+
+
+def test_extract_rejects_fake_docx_magic(client):
+    files = {
+        "file": (
+            "fake.docx",
+            b"not a zip",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+    }
+    r = client.post("/extract", files=files)
+    assert r.status_code == 415
+
+
+def test_extract_rejects_docx_zip_bomb(client):
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        for i in range(501):
+            zf.writestr(f"entry-{i}.txt", "x")
+    files = {
+        "file": (
+            "bomb.docx",
+            buf.getvalue(),
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+    }
+    r = client.post("/extract", files=files)
+    assert r.status_code == 413
