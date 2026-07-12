@@ -2,8 +2,8 @@
 
 Resolution order:
   1. ATS_AI_SHARED_DATA_DIR env var, if set.
-  2. Walk up from this file until a `packages/shared/data` directory is found
-     (works in the monorepo and in the standalone zip, which preserves that layout).
+  2. Bundled `apps/ai/data` (Docker / Heroku image).
+  3. Walk up until `packages/shared/data` is found (monorepo).
 Raises a clear error if the data cannot be located, so misconfiguration fails loudly.
 """
 import json
@@ -19,6 +19,11 @@ def _find_data_dir() -> Path:
         if p.is_dir():
             return p
         raise FileNotFoundError(f"ATS_AI_SHARED_DATA_DIR is set but not a directory: {override}")
+
+    # Docker / Heroku image: vendored copy next to the app package.
+    bundled = Path(__file__).resolve().parent.parent / "data"
+    if bundled.is_dir():
+        return bundled
 
     here = Path(__file__).resolve()
     for parent in here.parents:
