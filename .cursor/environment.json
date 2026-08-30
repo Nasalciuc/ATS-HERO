@@ -1,0 +1,15 @@
+{
+  "name": "ATS Hero",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "web",
+      "command": "cd apps/web && npm run dev"
+    },
+    {
+      "name": "ai",
+      "command": "cd apps/ai && . .venv/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    }
+  ],
+  "ports": [3000, 8000]
+}
