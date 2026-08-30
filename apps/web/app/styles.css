@@ -2134,6 +2134,11 @@ p {
   border-right-color: var(--green);
   border-bottom-color: var(--green);
   transform: rotate(35deg);
+  animation: ats-spin 1.2s linear infinite;
+}
+@keyframes ats-spin {
+  from { transform: rotate(35deg); }
+  to { transform: rotate(395deg); }
 }
 .ats-loading__msg {
   display: inline-flex;
@@ -3288,4 +3293,140 @@ p {
   .dash__title {
     font-size: 32px;
   }
+}
+
+/* ---------------- tool "how it works" timeline (s10) ---------------- */
+.tool__timeline {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0 0 0 22px;
+  border-left: 2px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  text-align: left;
+}
+.tool__step {
+  position: relative;
+}
+.tool__step-dot {
+  position: absolute;
+  left: -29px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.tool__step-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.tool__step-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.75;
+}
+.tool__timeline-foot {
+  list-style: none;
+}
+.tool__hide {
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ---------------- legal pages (s5) ---------------- */
+.legal {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 72px 20px 96px;
+  color: var(--ink);
+}
+.legal h1 {
+  font-size: 36px;
+  margin: 0 0 8px;
+}
+.legal h2 {
+  font-size: 20px;
+  margin: 32px 0 8px;
+}
+.legal p {
+  margin: 0;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.legal em {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---------------- footer legal links (s5) ---------------- */
+.footer__legal {
+  display: flex;
+  gap: 20px;
+  padding-top: 28px;
+  font-size: 14px;
+}
+.footer__legal a {
+  color: inherit;
+  opacity: 0.7;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.footer__legal a:hover {
+  opacity: 1;
+}
+
+/* ---------------- feedback link (s7) ---------------- */
+.appshell__feedback {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------------- delete account danger zone (s6) ---------------- */
+.danger-zone {
+  margin-top: 48px;
+  padding: 24px;
+  border: 1px solid var(--red);
+  border-radius: 16px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 520px;
+}
+.danger-zone p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.danger-zone input {
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 14px;
+  width: 200px;
+}
+.btn--danger {
+  background: var(--red);
+  color: #fff;
+}
+.btn--danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

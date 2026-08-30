@@ -5,6 +5,7 @@ import { useNavigate } from "@/lib/router";
 import { useApp } from "../../store/AppContext";
 import { MenuIcon, UserIcon } from "../icons";
 import SignInModal from "../modals/SignInModal";
+import { FeedbackLink } from "./FeedbackLink";
 
 type NavKey = "create" | "improve" | "jobfit";
 
@@ -81,6 +82,7 @@ export default function AppShell({
               </button>
             </>
           )}
+          <FeedbackLink />
         </div>
       </aside>
 

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import SignInModal from "@/components/modals/SignInModal";
 import { useCvs, useCvMutations } from "@/hooks/use-cvs";
+import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { useApp } from "@/store/AppContext";
 
 function formatDate(ms: number): string {
@@ -100,6 +101,8 @@ export default function DashboardPage() {
             ))}
           </ul>
         )}
+
+        {isSignedIn && <DeleteAccount />}
       </div>
       <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
     </main>

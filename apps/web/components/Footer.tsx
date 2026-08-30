@@ -26,6 +26,11 @@ export default function Footer() {
           <img src="/images/trophy.svg" alt="" aria-hidden="true" />
         </div>
       </div>
+
+      <div className="container footer__legal">
+        <a href="/terms">Terms and Conditions</a>
+        <a href="/privacy">Privacy Policy</a>
+      </div>
     </footer>
   );
 }

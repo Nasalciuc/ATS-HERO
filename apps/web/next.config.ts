@@ -10,6 +10,24 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: monorepoRoot,
   },
+  async headers() {
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+      "connect-src 'self' https://*.clerk.accounts.dev https://clerk-telemetry.com " + (process.env.NEXT_PUBLIC_AI_URL ?? ""),
+      "img-src 'self' data: blob: https:",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
+      "frame-src https://challenges.cloudflare.com",
+      "worker-src 'self' blob:",
+    ].join("; ");
+    return [{ source: "/(.*)", headers: [
+      { key: "Content-Security-Policy", value: csp },
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "X-Frame-Options", value: "DENY" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+    ]}];
+  },
 };
 
 export default nextConfig;
