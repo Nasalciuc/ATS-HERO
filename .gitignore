@@ -13,3 +13,5 @@ dist/
 server/data/db.json
 .cursor/mcp.json
 .playwright-mcp/
+*.tsbuildinfo
+tools/audit_result.txt
