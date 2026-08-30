@@ -89,7 +89,7 @@ function AppProviderCore({
     claimedRef.current = true;
     (async () => {
       try {
-        await api.ensureUser();
+        await api.ensureUser(user ? { email: user.email } : undefined);
         await api.claimGuest(getGuestId());
       } catch (e) {
         claimedRef.current = false;

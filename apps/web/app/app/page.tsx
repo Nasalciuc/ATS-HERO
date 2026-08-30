@@ -6,17 +6,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import SignInModal from "@/components/modals/SignInModal";
-import { useCvs } from "@/hooks/use-cvs";
+import { useCvs, useCvMutations } from "@/hooks/use-cvs";
 import { useApp } from "@/store/AppContext";
-import { api } from "@/lib/api";
-import type { Doc } from "@/convex/_generated/dataModel";
 
 function formatDate(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function DashboardPage() {
-  const cvs = useCvs(); // undefined while loading, then Doc<"cvs">[]
+  const cvs = useCvs(); // undefined while loading
+  const { remove: removeCv } = useCvMutations();
   const { openCv, reset } = useApp();
   const { isSignedIn } = useUser();
   const router = useRouter();
@@ -32,7 +31,7 @@ export default function DashboardPage() {
   }
   async function remove(id: string) {
     if (typeof window !== "undefined" && !window.confirm("Delete this CV?")) return;
-    await api.deleteCv(id); // reactive: useCvs() refreshes automatically
+    await removeCv(id);
   }
 
   return (
@@ -80,9 +79,9 @@ export default function DashboardPage() {
           </div>
         ) : (
           <ul className="dash__grid">
-            {cvs.map((cv: Doc<"cvs">) => (
-              <li key={cv._id} className="dash-card">
-                <button onClick={() => open(cv._id)} className="dash-card__body">
+            {cvs.map((cv) => (
+              <li key={cv.id} className="dash-card">
+                <button onClick={() => open(cv.id)} className="dash-card__body">
                   <h3 className="dash-card__title">{cv.title || "Untitled"}</h3>
                   <p className="dash-card__date">Updated {formatDate(cv.updatedAt)}</p>
                   <p className="dash-card__meta">
@@ -90,10 +89,10 @@ export default function DashboardPage() {
                   </p>
                 </button>
                 <div className="dash-card__foot">
-                  <button onClick={() => open(cv._id)} className="dash-card__open">
+                  <button onClick={() => open(cv.id)} className="dash-card__open">
                     Open →
                   </button>
-                  <button onClick={() => remove(cv._id)} className="dash-card__delete">
+                  <button onClick={() => remove(cv.id)} className="dash-card__delete">
                     Delete
                   </button>
                 </div>
