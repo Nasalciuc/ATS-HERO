@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
+import { useConvexAuth } from "convex/react";
 import { api } from "../lib/api";
 import { getGuestId } from "../lib/convexClient";
 import { isClerkPublicConfigured } from "../lib/clerk-config";
@@ -51,7 +52,7 @@ function AppProviderCore({
   children: ReactNode;
   auth: ClerkAuth;
 }) {
-  const { user, isLoaded, isSignedIn, signOut } = auth;
+  const { user, signOut } = auth;
 
   const [cv, setCv] = useState<Cv | null>(null);
   const [data, setData] = useState<CvData>(emptyCvData());
@@ -81,19 +82,21 @@ function AppProviderCore({
     })();
   }, []);
 
+  const { isAuthenticated, isLoading: convexAuthLoading } = useConvexAuth();
   const claimedRef = useRef(false);
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || claimedRef.current) return;
+    if (convexAuthLoading || !isAuthenticated || claimedRef.current) return;
     claimedRef.current = true;
     (async () => {
       try {
         await api.ensureUser();
         await api.claimGuest(getGuestId());
       } catch (e) {
+        claimedRef.current = false;
         console.error("Account claim failed", e);
       }
     })();
-  }, [isLoaded, isSignedIn]);
+  }, [convexAuthLoading, isAuthenticated]);
 
   const persist = useCallback(async () => {
     const current = cvRef.current;

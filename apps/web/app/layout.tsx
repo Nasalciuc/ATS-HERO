@@ -16,21 +16,24 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const body = (
-    <html lang="en">
-      <body id="top">
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  );
-
-  if (!isClerkPublicConfigured()) {
-    return body;
-  }
+  const inner = <Providers>{children}</Providers>;
 
   return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}>
-      {body}
-    </ClerkProvider>
+    <html lang="en">
+      <body id="top">
+        {isClerkPublicConfigured() ? (
+          <ClerkProvider
+            publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}
+            signInFallbackRedirectUrl="/app"
+            signUpFallbackRedirectUrl="/app"
+            afterSignOutUrl="/"
+          >
+            {inner}
+          </ClerkProvider>
+        ) : (
+          inner
+        )}
+      </body>
+    </html>
   );
 }

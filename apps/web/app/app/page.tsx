@@ -2,11 +2,6 @@
 // Dashboard — the "/app" index. Lists the current user's (or guest's) saved CVs reactively via
 // useCvs(). Works for both: a guest sees their on-device CVs; after sign-in + claim, the same CVs
 // appear owned. Open routes into the builder; delete is reactive (the list updates itself).
-//
-// TODO(integration): the installed @clerk/nextjs@7.5.8 does NOT export <SignedIn>/<SignedOut>
-// (they were removed in favour of <Show>), and <UserButton> no longer accepts `afterSignOutUrl`.
-// To stay faithful to the package's UI we gate on Clerk's useUser() instead of the control
-// components, and drop the prop. Everything else is the package's page as-is.
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";

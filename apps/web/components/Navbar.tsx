@@ -1,11 +1,22 @@
 "use client";
 import { useState } from "react";
+import { Show, UserButton } from "@clerk/nextjs";
 import { MenuIcon } from "./icons";
 import SignInModal from "./modals/SignInModal";
+import { isClerkPublicConfigured } from "@/lib/clerk-config";
+
+function NavLogin({ onOpen }: { onOpen: () => void }) {
+  return (
+    <button className="nav__login" type="button" onClick={onOpen}>
+      Log in
+    </button>
+  );
+}
 
 export default function Navbar() {
   const [signIn, setSignIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const clerkReady = isClerkPublicConfigured();
 
   return (
     <header className="nav">
@@ -36,9 +47,23 @@ export default function Navbar() {
           </a>
         </nav>
 
-        <button className="nav__login" onClick={() => setSignIn(true)}>
-          Log in
-        </button>
+        {clerkReady ? (
+          <>
+            <Show when="signed-out">
+              <NavLogin onOpen={() => setSignIn(true)} />
+            </Show>
+            <Show when="signed-in">
+              <div className="nav__account">
+                <a className="nav__login" href="/app">
+                  My CVs
+                </a>
+                <UserButton />
+              </div>
+            </Show>
+          </>
+        ) : (
+          <NavLogin onOpen={() => setSignIn(true)} />
+        )}
       </div>
       <SignInModal open={signIn} onClose={() => setSignIn(false)} />
     </header>

@@ -1,13 +1,131 @@
 "use client";
 
-import { useSignIn } from "@clerk/nextjs/legacy";
-import type { OAuthStrategy } from "@clerk/nextjs/types";
-import { useState } from "react";
+import { useSignIn, useSignUp } from "@clerk/nextjs";
+import { useRef, useState } from "react";
 import { isClerkPublicConfigured } from "@/lib/clerk-config";
 import Modal from "../ui/Modal";
 import { GitHubIcon, GoogleIcon } from "../icons";
 
 type Phase = "email" | "code";
+type Flow = "sign-in" | "sign-up";
+type OAuthStrategy = "oauth_google" | "oauth_github";
+
+function clerkMessage(error: { message?: string; longMessage?: string } | null | undefined, fallback: string) {
+  return error?.longMessage || error?.message || fallback;
+}
+
+function isIdentifierNotFound(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  const code = error.code ?? "";
+  const message = error.message ?? "";
+  return (
+    code === "form_identifier_not_found" ||
+    code === "identifier_not_found" ||
+    /not found|couldn't find|could not find|no account/i.test(message)
+  );
+}
+
+function isPasswordMissing(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  const blob = `${error.code ?? ""} ${error.message ?? ""}`.toLowerCase();
+  return blob.includes("password");
+}
+
+function isStaleSignIn(error: { code?: string; message?: string; longMessage?: string } | null | undefined): boolean {
+  if (!error) return false;
+  const blob = `${error.code ?? ""} ${error.message ?? ""} ${error.longMessage ?? ""}`.toLowerCase();
+  return (
+    blob.includes("older sign in") ||
+    blob.includes("older sign-in") ||
+    error.code === "sign_in_outdated" ||
+    error.code === "resource_outdated"
+  );
+}
+
+function hiddenSignupPassword(): string {
+  const rand = crypto.randomUUID().replace(/-/g, "");
+  return `Ah1!${rand}`;
+}
+
+function OtpBoxes({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  disabled: boolean;
+  onChange: (next: string) => void;
+}) {
+  const refs = useRef<Array<HTMLInputElement | null>>([]);
+  const digits = Array.from({ length: 6 }, (_, i) => value[i] ?? "");
+
+  const focusAt = (index: number) => {
+    const el = refs.current[Math.max(0, Math.min(5, index))];
+    el?.focus();
+    el?.select();
+  };
+
+  const apply = (next: string, focusIndex: number) => {
+    const cleaned = next.replace(/\D/g, "").slice(0, 6);
+    onChange(cleaned);
+    focusAt(focusIndex);
+  };
+
+  return (
+    <div className="signin__otp" role="group" aria-label="Verification code">
+      {digits.map((digit, i) => (
+        <input
+          key={i}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
+          className="signin__otp-cell"
+          type="text"
+          inputMode="numeric"
+          autoComplete={i === 0 ? "one-time-code" : "off"}
+          aria-label={`Digit ${i + 1}`}
+          maxLength={1}
+          value={digit}
+          disabled={disabled}
+          autoFocus={i === 0}
+          onChange={(e) => {
+            const incoming = e.target.value.replace(/\D/g, "");
+            if (incoming.length > 1) {
+              apply(incoming, incoming.length >= 6 ? 5 : incoming.length);
+              return;
+            }
+            const next = `${value.slice(0, i)}${incoming}${value.slice(i + 1)}`;
+            apply(next, incoming ? i + 1 : i);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Backspace") {
+              e.preventDefault();
+              if (digits[i]) {
+                apply(`${value.slice(0, i)}${value.slice(i + 1)}`, i);
+              } else {
+                apply(value.slice(0, i - 1), i - 1);
+              }
+            }
+            if (e.key === "ArrowLeft") {
+              e.preventDefault();
+              focusAt(i - 1);
+            }
+            if (e.key === "ArrowRight") {
+              e.preventDefault();
+              focusAt(i + 1);
+            }
+          }}
+          onPaste={(e) => {
+            const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+            if (!pasted) return;
+            e.preventDefault();
+            apply(pasted, pasted.length >= 6 ? 5 : pasted.length);
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 function SignInModalUnavailable({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -23,18 +141,46 @@ function SignInModalUnavailable({ open, onClose }: { open: boolean; onClose: () 
 }
 
 function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { isLoaded, signIn, setActive } = useSignIn();
+  const { signIn, errors: signInErrors, fetchStatus: signInStatus } = useSignIn();
+  const { signUp, errors: signUpErrors, fetchStatus: signUpStatus } = useSignUp();
   const [phase, setPhase] = useState<Phase>("email");
+  const [flow, setFlow] = useState<Flow>("sign-in");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const verifyingRef = useRef(false);
+
+  const busy = signInStatus === "fetching" || signUpStatus === "fetching";
+  const rawFieldError =
+    phase === "email"
+      ? signInErrors?.fields?.identifier?.message || signUpErrors?.fields?.emailAddress?.message
+      : flow === "sign-up"
+        ? signUpErrors?.fields?.code?.message
+        : signInErrors?.fields?.code?.message;
+  const fieldError = isStaleSignIn({ message: rawFieldError ?? undefined }) ? null : rawFieldError;
+  const shownError = error || fieldError || null;
+
+  const resetResources = () => {
+    try {
+      signIn.reset();
+    } catch {
+      /* ignore */
+    }
+    try {
+      signUp.reset();
+    } catch {
+      /* ignore */
+    }
+  };
 
   const reset = () => {
+    verifyingRef.current = false;
     setPhase("email");
+    setFlow("sign-in");
     setEmail("");
     setCode("");
     setError(null);
+    resetResources();
   };
 
   const handleClose = () => {
@@ -42,77 +188,182 @@ function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => voi
     onClose();
   };
 
+  const activate = async (kind: Flow) => {
+    const resource = kind === "sign-up" ? signUp : signIn;
+    await resource.finalize({
+      navigate: async ({ decorateUrl }) => {
+        handleClose();
+        const url = decorateUrl("/app");
+        if (url.startsWith("http")) {
+          window.location.href = url;
+        } else {
+          window.location.assign(url);
+        }
+      },
+    });
+  };
+
+  const ensureSignupPassword = async (): Promise<boolean> => {
+    const missing = signUp.missingFields ?? [];
+    if (signUp.status === "complete" || !missing.includes("password")) return true;
+    const { error: pwError } = await signUp.password({
+      emailAddress: email,
+      password: hiddenSignupPassword(),
+    });
+    if (pwError) {
+      setError(clerkMessage(pwError, "Could not complete email sign-up"));
+      return false;
+    }
+    return true;
+  };
+
   const signInWithOAuth = async (strategy: OAuthStrategy) => {
-    if (!isLoaded) return;
     setError(null);
-    setBusy(true);
-    try {
-      await signIn.authenticateWithRedirect({
-        strategy,
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: window.location.pathname || "/app",
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "OAuth sign-in failed");
-      setBusy(false);
+    const { error: signInError } = await signIn.sso({
+      strategy,
+      redirectUrl: "/app",
+      redirectCallbackUrl: "/sso-callback",
+    });
+    if (!signInError) return;
+
+    const { error: signUpError } = await signUp.sso({
+      strategy,
+      redirectUrl: "/app",
+      redirectCallbackUrl: "/sso-callback",
+    });
+    if (signUpError) {
+      setError(clerkMessage(signUpError, clerkMessage(signInError, "OAuth sign-in failed")));
     }
   };
 
+  const startSignupWithEmail = async (): Promise<boolean> => {
+    const created = await signUp.create({ emailAddress: email });
+    if (created.error) {
+      if (!isPasswordMissing(created.error)) {
+        setError(clerkMessage(created.error, "Could not start email sign-up"));
+        return false;
+      }
+      const pw = await signUp.password({
+        emailAddress: email,
+        password: hiddenSignupPassword(),
+      });
+      if (pw.error) {
+        setError(clerkMessage(pw.error, "Could not start email sign-up"));
+        return false;
+      }
+    } else if (!(await ensureSignupPassword())) {
+      return false;
+    }
+
+    const sent = await signUp.verifications.sendEmailCode();
+    if (sent.error) {
+      setError(clerkMessage(sent.error, "Could not send verification code"));
+      return false;
+    }
+    setFlow("sign-up");
+    setPhase("code");
+    return true;
+  };
+
   const sendEmailCode = async () => {
-    if (!isLoaded) return;
     setError(null);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Enter a valid email address");
       return;
     }
-    setBusy(true);
-    try {
-      await signIn.create({ identifier: email });
 
-      const emailCodeFactor = signIn.supportedFirstFactors?.find((f) => f.strategy === "email_code");
-      if (!emailCodeFactor || emailCodeFactor.strategy !== "email_code") {
-        setError("Email code sign-in is not enabled in Clerk. Use Google or GitHub.");
-        return;
-      }
-
-      await signIn.prepareFirstFactor({
-        strategy: "email_code",
-        emailAddressId: emailCodeFactor.emailAddressId,
-      });
-
+    resetResources();
+    const { error: sendError } = await signIn.emailCode.sendCode({ emailAddress: email });
+    if (!sendError) {
+      setFlow("sign-in");
       setPhase("code");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Email sign-in failed");
-    } finally {
-      setBusy(false);
+      setCode("");
+      return;
     }
+
+    if (!isIdentifierNotFound(sendError) && !isStaleSignIn(sendError)) {
+      setError(clerkMessage(sendError, "Email sign-in failed"));
+      return;
+    }
+
+    resetResources();
+    await startSignupWithEmail();
   };
 
-  const verifyEmailCode = async () => {
-    if (!isLoaded) return;
+  const resendCode = async () => {
     setError(null);
-    if (!/^\d{6}$/.test(code)) {
+    setCode("");
+    verifyingRef.current = false;
+
+    if (flow === "sign-up") {
+      const sent = await signUp.verifications.sendEmailCode();
+      if (sent.error) {
+        setError(clerkMessage(sent.error, "Could not resend the code"));
+      }
+      return;
+    }
+
+    const sent = await signIn.emailCode.sendCode();
+    if (!sent.error) return;
+
+    if (isStaleSignIn(sent.error)) {
+      resetResources();
+      const retry = await signIn.emailCode.sendCode({ emailAddress: email });
+      if (retry.error) setError(clerkMessage(retry.error, "Could not resend the code"));
+      return;
+    }
+
+    setError(clerkMessage(sent.error, "Could not resend the code"));
+  };
+
+  const verifyEmailCode = async (raw?: string) => {
+    if (verifyingRef.current) return;
+    const value = (raw ?? code).replace(/\D/g, "").slice(0, 6);
+    if (!/^\d{6}$/.test(value)) {
       setError("Enter the 6-digit code from your email");
       return;
     }
-    setBusy(true);
-    try {
-      const result = await signIn.attemptFirstFactor({
-        strategy: "email_code",
-        code,
-      });
 
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        handleClose();
+    verifyingRef.current = true;
+    setError(null);
+    try {
+      if (flow === "sign-up") {
+        const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code: value });
+        if (verifyError) {
+          setError(clerkMessage(verifyError, "Verification failed"));
+          return;
+        }
+        if (!(await ensureSignupPassword())) return;
+        if (signUp.status !== "complete") {
+          setError("Sign-up is not complete yet. Try Google or GitHub, or request a new code.");
+          return;
+        }
+        await activate("sign-up");
         return;
       }
 
-      setError("Sign-in is not complete yet. Try again.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Verification failed");
+      const { error: verifyError } = await signIn.emailCode.verifyCode({ code: value });
+      if (verifyError) {
+        if (isStaleSignIn(verifyError)) {
+          setCode("");
+          const resent = await signIn.emailCode.sendCode();
+          if (resent.error) {
+            resetResources();
+            await signIn.emailCode.sendCode({ emailAddress: email });
+          }
+          setError("This code expired. We sent a new one — enter it below.");
+          return;
+        }
+        setError(clerkMessage(verifyError, "Verification failed"));
+        return;
+      }
+      if (signIn.status !== "complete") {
+        setError("Sign-in is not complete yet. Try again.");
+        return;
+      }
+      await activate("sign-in");
     } finally {
-      setBusy(false);
+      verifyingRef.current = false;
     }
   };
 
@@ -126,7 +377,7 @@ function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => voi
       panelClassName="modal__panel--signin"
     >
       <div className="signin">
-        <h2 className="signin__title">
+        <h2 className={`signin__title${phase === "code" ? " signin__title--code" : ""}`}>
           {phase === "email" ? "Enter your e-mail" : "Check your e-mail"}
         </h2>
 
@@ -136,7 +387,7 @@ function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => voi
               <div className="signin__email-block">
                 <div className="signin__field">
                   <label className="signin__label" htmlFor="signin-email">
-                    E-mail adress
+                    E-mail address
                   </label>
                   <input
                     id="signin-email"
@@ -144,20 +395,20 @@ function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => voi
                     type="email"
                     value={email}
                     autoFocus
-                    disabled={!isLoaded || busy}
+                    disabled={busy}
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && void sendEmailCode()}
                   />
                 </div>
 
-                {error && <p className="signin__error">{error}</p>}
+                {shownError && <p className="signin__error">{shownError}</p>}
 
                 <div className="signin__next-row">
                   <button
                     className="signin__next"
                     type="button"
                     onClick={() => void sendEmailCode()}
-                    disabled={!isLoaded || busy}
+                    disabled={busy}
                   >
                     {busy ? "…" : "Next"}
                   </button>
@@ -174,7 +425,7 @@ function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => voi
                     className="signin__provider"
                     type="button"
                     onClick={() => void signInWithOAuth("oauth_google")}
-                    disabled={!isLoaded || busy}
+                    disabled={busy}
                   >
                     <GoogleIcon size={24} />
                     Continue with Google
@@ -183,7 +434,7 @@ function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => voi
                     className="signin__provider"
                     type="button"
                     onClick={() => void signInWithOAuth("oauth_github")}
-                    disabled={!isLoaded || busy}
+                    disabled={busy}
                   >
                     <GitHubIcon size={24} />
                     Continue with GitHub
@@ -192,55 +443,64 @@ function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => voi
               </div>
             </>
           ) : (
-            <div className="signin__email-block">
-              <p className="signin__hint" style={{ marginBottom: "1rem" }}>
+            <div className="signin__code-block">
+              <p className="signin__hint">
                 We sent a 6-digit code to <strong>{email}</strong>
               </p>
               <div className="signin__field">
-                <label className="signin__label" htmlFor="signin-code">
+                <span className="signin__label" id="signin-otp-label">
                   Verification code
-                </label>
-                <input
-                  id="signin-code"
-                  className="signin__input"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
+                </span>
+                <OtpBoxes
                   value={code}
-                  autoFocus
-                  disabled={!isLoaded || busy}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  onKeyDown={(e) => e.key === "Enter" && void verifyEmailCode()}
+                  disabled={busy}
+                  onChange={(next) => {
+                    setCode(next);
+                    setError(null);
+                    if (next.length === 6) void verifyEmailCode(next);
+                  }}
                 />
               </div>
 
-              {error && <p className="signin__error">{error}</p>}
+              {shownError && <p className="signin__error">{shownError}</p>}
 
-              <div className="signin__next-row" style={{ gap: "0.75rem" }}>
+              <div className="signin__actions">
                 <button
-                  className="signin__provider"
+                  className="signin__back"
                   type="button"
                   onClick={() => {
+                    verifyingRef.current = false;
                     setPhase("email");
                     setCode("");
                     setError(null);
+                    resetResources();
                   }}
                   disabled={busy}
                 >
                   Back
                 </button>
                 <button
-                  className="signin__next"
+                  className="signin__next signin__next--fill"
                   type="button"
                   onClick={() => void verifyEmailCode()}
-                  disabled={!isLoaded || busy}
+                  disabled={busy || code.length !== 6}
                 >
                   {busy ? "…" : "Verify"}
                 </button>
               </div>
+
+              <button
+                className="signin__resend"
+                type="button"
+                onClick={() => void resendCode()}
+                disabled={busy}
+              >
+                Resend code
+              </button>
             </div>
           )}
+
+          {phase === "email" ? <div id="clerk-captcha" /> : null}
 
           <p className="signin__terms">
             By continuing, you agree to our <a href="#">Terms and Conditions</a> and{" "}
