@@ -4,8 +4,9 @@ import type { NextRequest } from "next/server";
 import { isClerkConfigured } from "@/lib/clerk-config";
 
 /**
- * Clerk auth context when keys are configured. Without keys, passthrough so
- * Vercel preview/production still serves Tier 0/1 (guest builder + scoring).
+ * Clerk auth context when keys are configured. Routes stay public on purpose
+ * (value-before-paywall): guests use the builder; sign-in only persists/claims.
+ * Next.js 16 uses this `proxy.ts` file (not `middleware.ts`).
  */
 const handler = isClerkConfigured()
   ? clerkMiddleware()

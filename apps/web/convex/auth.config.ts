@@ -1,12 +1,14 @@
 // Wires Clerk as the Convex auth provider.
-// Set CLERK_JWT_ISSUER_DOMAIN as a Convex env var (Convex Dashboard → Settings →
-// Environment Variables) to your Clerk Frontend API URL, e.g.
-//   https://your-app.clerk.accounts.dev
-// "applicationID" must match the name of the JWT template you create in Clerk ("convex").
+// Set CLERK_JWT_ISSUER_DOMAIN as a Convex env var to your Clerk Frontend API URL.
+// "applicationID" must match the JWT template name in Clerk ("convex").
 export default {
   providers: [
     {
-      domain: process.env.CLERK_JWT_ISSUER_DOMAIN,
+      // Convex dashboard env wins; fallback matches the current Clerk Frontend API
+      // (decoded from NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY).
+      domain:
+        process.env.CLERK_JWT_ISSUER_DOMAIN ??
+        "https://giving-peacock-94.clerk.accounts.dev",
       applicationID: "convex",
     },
   ],
