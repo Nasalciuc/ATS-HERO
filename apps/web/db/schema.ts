@@ -2,7 +2,7 @@ import { pgTable, text, jsonb, timestamp, doublePrecision, integer,
          index, uniqueIndex, check } from "drizzle-orm/pg-core";
 import { relations, sql, type InferSelectModel } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import type { CvData, ScanKind, ScoreReport, JobFitReport, TemplateId } from "@/lib/types";
+import type { CvData, ScanKind, ScoreReport, JobFitReport, TemplateId, ApplicationStatus } from "@/lib/types";
 
 const id = () => text("id").primaryKey().$defaultFn(() => nanoid());
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -92,9 +92,28 @@ export const subscriptionEvents = pgTable("subscription_events", {
   createdAt: createdAt(),
 }, (t) => [index("subevents_by_sub").on(t.paddleSubscriptionId)]);
 
+/* ── application tracker (signed-in only; no guest path) ──────────── */
+export const applications = pgTable("applications", {
+  id: id(),
+  ownerId: text("owner_id").notNull(),
+  company: text("company").notNull(),
+  role: text("role").notNull(),
+  url: text("url"),
+  status: text("status").$type<ApplicationStatus>().notNull().default("applied"),
+  notes: text("notes"),
+  appliedAt: timestamp("applied_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [index("apps_by_owner").on(t.ownerId)]);
+
 /* ── relations (app-level; Ep5-7 pattern; NO hard FK to Clerk identity) ── */
 export const usersRelations = relations(users, ({ many }) => ({
   cvs: many(cvs),
+  applications: many(applications),
+}));
+export const applicationsRelations = relations(applications, ({ one }) => ({
+  owner: one(users, { fields: [applications.ownerId], references: [users.clerkId] }),
 }));
 export const cvsRelations = relations(cvs, ({ one, many }) => ({
   owner: one(users, { fields: [cvs.ownerId], references: [users.clerkId] }),
@@ -108,3 +127,4 @@ export const scansRelations = relations(scans, ({ one }) => ({
 export type User = InferSelectModel<typeof users>;
 export type Cv   = InferSelectModel<typeof cvs>;
 export type Scan = InferSelectModel<typeof scans>;
+export type Application = InferSelectModel<typeof applications>;

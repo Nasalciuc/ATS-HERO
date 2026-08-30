@@ -56,7 +56,15 @@ export default function DashboardPage() {
         <header className="dash__head">
           <div>
             <h1 className="dash__title">Your CVs</h1>
-            <p className="dash__subtitle">Build, score and tailor your resumes.</p>
+            <p className="dash__subtitle">
+              Build, score and tailor your resumes.
+              {isSignedIn && (
+                <>
+                  {" "}
+                  <a className="dash__banner-link" href="/app/tracker">Application tracker →</a>
+                </>
+              )}
+            </p>
           </div>
           <button className="btn btn--dark dash__new" onClick={newCv}>
             + New CV

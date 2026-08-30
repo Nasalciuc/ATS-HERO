@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { makeTestDb } from "./setup";
-import { aiUsage, cvs, scans, users } from "@/db/schema";
+import { aiUsage, applications, cvs, scans, users } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { emptyCvData } from "@/lib/types";
 
@@ -40,23 +40,33 @@ describe("ownership & integrity", () => {
     expect((await db.select().from(cvs).where(guestScope("g1"))).length).toBe(0);
   });
 
-  it("deleteAccount leaves zero rows across the four owned tables", async () => {
+  it("deleteAccount leaves zero rows across the owned tables", async () => {
     await db.insert(users).values({ clerkId: "u1", email: "u1@x.dev" });
     const [cv] = await db.insert(cvs).values({ ownerId: "u1", title: "t", data: data() }).returning();
     await db.insert(scans).values({ ownerId: "u1", cvId: cv.id, kind: "score", generalScore: 10, result: {} as never });
     await db.insert(aiUsage).values({ ownerId: "u1", day: "2026-01-01", count: 3 });
+    await db.insert(applications).values({ ownerId: "u1", company: "Acme", role: "Engineer" });
 
     await db.transaction(async (tx) => {
+      await tx.delete(applications).where(eq(applications.ownerId, "u1"));
       await tx.delete(scans).where(eq(scans.ownerId, "u1"));
       await tx.delete(cvs).where(eq(cvs.ownerId, "u1"));
       await tx.delete(aiUsage).where(eq(aiUsage.ownerId, "u1"));
       await tx.delete(users).where(eq(users.clerkId, "u1"));
     });
 
+    expect((await db.select().from(applications)).length).toBe(0);
     expect((await db.select().from(scans)).length).toBe(0);
     expect((await db.select().from(cvs)).length).toBe(0);
     expect((await db.select().from(aiUsage)).length).toBe(0);
     expect((await db.select().from(users)).length).toBe(0);
+  });
+
+  it("an owner cannot see another owner's applications", async () => {
+    await db.insert(applications).values({ ownerId: "u1", company: "Acme", role: "PM" });
+    await db.insert(applications).values({ ownerId: "u2", company: "Globex", role: "PM" });
+    const mine = await db.select().from(applications).where(eq(applications.ownerId, "u1"));
+    expect(mine.map((r) => r.company)).toEqual(["Acme"]);
   });
 
   it("deleting a CV detaches its scans instead of dropping history", async () => {

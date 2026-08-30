@@ -1,6 +1,6 @@
 "use server";
 import { db } from "@/db";
-import { users, cvs, scans, aiUsage } from "@/db/schema";
+import { users, cvs, scans, aiUsage, applications } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { withLog } from "@/lib/log";
@@ -37,6 +37,7 @@ export async function deleteAccount() {
   if (!userId) throw new Error("Not authenticated");
   return withLog("users.deleteAccount", { userId }, async () => {
     await db.transaction(async (tx) => {
+      await tx.delete(applications).where(eq(applications.ownerId, userId));
       await tx.delete(scans).where(eq(scans.ownerId, userId));
       await tx.delete(cvs).where(eq(cvs.ownerId, userId));
       await tx.delete(aiUsage).where(eq(aiUsage.ownerId, userId));
