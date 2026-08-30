@@ -1,13 +1,15 @@
-"use client";
+import { isClerkPublicConfigured } from "@/lib/clerk-config";
+import { SsoCallbackClient } from "./sso-callback-client";
 
-import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
+export const dynamic = "force-dynamic";
 
-/** Finishes Google / GitHub OAuth started from the custom SignInModal. */
 export default function SsoCallbackPage() {
-  return (
-    <div className="container" style={{ padding: "4rem 1rem", textAlign: "center" }}>
-      <p>Finishing sign-in…</p>
-      <AuthenticateWithRedirectCallback signInFallbackRedirectUrl="/app" signUpFallbackRedirectUrl="/app" />
-    </div>
-  );
+  if (!isClerkPublicConfigured()) {
+    return (
+      <main className="container" style={{ padding: "4rem 1rem", textAlign: "center" }}>
+        <p>Sign-in is not configured in this environment.</p>
+      </main>
+    );
+  }
+  return <SsoCallbackClient />;
 }

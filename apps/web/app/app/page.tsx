@@ -4,11 +4,12 @@
 // appear owned. Open routes into the builder; delete is reactive (the list updates itself).
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import SignInModal from "@/components/modals/SignInModal";
 import { useCvs, useCvMutations } from "@/hooks/use-cvs";
 import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { useApp } from "@/store/AppContext";
+import { isClerkPublicConfigured } from "@/lib/clerk-config";
 
 function formatDate(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
@@ -17,8 +18,11 @@ function formatDate(ms: number): string {
 export default function DashboardPage() {
   const cvs = useCvs(); // undefined while loading
   const { remove: removeCv } = useCvMutations();
-  const { openCv, reset } = useApp();
-  const { isSignedIn } = useUser();
+  // Auth state comes from AppContext (which already abstracts Clerk vs. guest mode), so this
+  // page also renders when Clerk is not configured.
+  const { openCv, reset, user } = useApp();
+  const isSignedIn = Boolean(user);
+  const clerkReady = isClerkPublicConfigured();
   const router = useRouter();
   const [signInOpen, setSignInOpen] = useState(false);
 
@@ -40,7 +44,7 @@ export default function DashboardPage() {
       <div className="container dash__inner">
         <div className="dash__topbar">
           <a href="/" className="dash__logo">ATS Hero</a>
-          {isSignedIn ? (
+          {isSignedIn && clerkReady ? (
             <UserButton />
           ) : (
             <button type="button" className="btn btn--outline-dark dash__signin" onClick={() => setSignInOpen(true)}>
