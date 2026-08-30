@@ -1,5 +1,4 @@
 import { ConvexReactClient } from "convex/react";
-import { nanoid } from "nanoid";
 
 /**
  * ONE ConvexReactClient for the whole app. It is passed to ConvexProviderWithClerk
@@ -16,15 +15,6 @@ const CONVEX_URL =
 
 export const convex = new ConvexReactClient(CONVEX_URL);
 
-const GUEST_ID_KEY = "ats_hero_guest_id";
-
-/** Stable per-browser guest id (nanoid), created lazily on first use. */
-export function getGuestId(): string {
-  if (typeof window === "undefined") return "";
-  let id = localStorage.getItem(GUEST_ID_KEY);
-  if (!id) {
-    id = nanoid();
-    localStorage.setItem(GUEST_ID_KEY, id);
-  }
-  return id;
-}
+// getGuestId now lives in lib/guest.ts (survives the Convex teardown). Re-exported so the
+// existing Convex call sites keep working unchanged until this file is deleted.
+export { getGuestId } from "./guest";

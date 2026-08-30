@@ -82,6 +82,12 @@ export type Cv = {
   updatedAt: string;
 };
 
+/** Scan flavours persisted in `scans.kind`. Mirrors the previous Convex scanKindValidator. */
+export type ScanKind = "score" | "jobfit";
+
+/** Presentation preference stored on a CV. Canonical union lives with the templates. */
+export type { TemplateId } from "../components/cv/templates";
+
 export type User = { id: string; email: string };
 
 export type SectionKey =

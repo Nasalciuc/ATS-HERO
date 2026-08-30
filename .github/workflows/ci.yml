@@ -1,0 +1,27 @@
+name: CI
+on: { pull_request: {}, push: { branches: [main] } }
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm, cache-dependency-path: apps/web/package-lock.json }
+      - run: npm ci
+      - name: Security grep-gate
+        run: |
+          ! grep -rn "dangerouslySetInnerHTML" --include="*.tsx" --include="*.ts" . || (echo "XSS gate: dangerouslySetInnerHTML forbidden" && exit 1)
+          ! grep -rnE "(sk_live|pk_live|AKIA[0-9A-Z]{16})" --include="*.ts*" . || (echo "Secret gate tripped" && exit 1)
+      - run: npx vitest run
+      - run: npm run build
+        env: { DATABASE_URL: "postgresql://x:x@localhost:5432/x" }
+  python:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/ai } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt
+      - run: pytest -q
