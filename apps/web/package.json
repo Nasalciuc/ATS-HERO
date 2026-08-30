@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:vercel": "npx convex deploy --cmd 'npm run build'",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
@@ -25,7 +24,6 @@
     "@react-pdf/renderer": "^4.5.1",
     "ai": "^4.0.0",
     "clsx": "^2.1.1",
-    "convex": "^1.42.0",
     "docx": "^9.7.1",
     "drizzle-orm": "^0.45.2",
     "nanoid": "^5.1.15",

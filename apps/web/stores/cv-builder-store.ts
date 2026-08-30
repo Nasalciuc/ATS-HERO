@@ -1,5 +1,5 @@
-// Builder UI state — Zustand. Per the agreed architecture: CV DATA lives in Convex
-// (reactive queries/mutations) and form fields in React Hook Form; this store holds only
+// Builder UI state — Zustand. Per the agreed architecture: CV DATA lives in Postgres
+// (Server Actions + Drizzle) and form fields in React Hook Form; this store holds only
 // the ephemeral builder chrome (which step, which optional sections, save status, the
 // chosen template). Do NOT put CvData here — that's the Reactive-Resume mistake we avoid.
 import { create } from "zustand";

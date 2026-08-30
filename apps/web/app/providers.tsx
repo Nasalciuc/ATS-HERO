@@ -1,10 +1,6 @@
 "use client";
 import type { ReactNode } from "react";
-import { ConvexProvider } from "convex/react";
-import ConvexClientProvider from "@/providers/convex-clerk-provider";
 import { AppProvider } from "@/store/AppContext";
-import { convex } from "@/lib/convexClient";
-import { isClerkPublicConfigured } from "@/lib/clerk-config";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -14,17 +10,7 @@ export default function Providers({ children }: { children: ReactNode }) {
     console.warn("⚠ Clerk missing — dev guest mode only.");
   }
 
-  if (!isClerkPublicConfigured()) {
-    return (
-      <ConvexProvider client={convex}>
-        <AppProvider>{children}</AppProvider>
-      </ConvexProvider>
-    );
-  }
-
-  return (
-    <ConvexClientProvider>
-      <AppProvider>{children}</AppProvider>
-    </ConvexClientProvider>
-  );
+  // ClerkProvider lives in app/layout.tsx; data access is Postgres via Server Actions, so
+  // there is no data provider to mount here any more.
+  return <AppProvider>{children}</AppProvider>;
 }

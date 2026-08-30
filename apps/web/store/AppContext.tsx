@@ -10,9 +10,8 @@ import {
   type ReactNode,
 } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { useConvexAuth } from "convex/react";
 import { api } from "../lib/api";
-import { getGuestId } from "../lib/convexClient";
+import { getGuestId } from "../lib/guest";
 import { isClerkPublicConfigured } from "../lib/clerk-config";
 import { emptyCvData, type Cv, type CvData, type User } from "../lib/types";
 
@@ -52,7 +51,7 @@ function AppProviderCore({
   children: ReactNode;
   auth: ClerkAuth;
 }) {
-  const { user, signOut } = auth;
+  const { user, isLoaded, isSignedIn, signOut } = auth;
 
   const [cv, setCv] = useState<Cv | null>(null);
   const [data, setData] = useState<CvData>(emptyCvData());
@@ -82,10 +81,11 @@ function AppProviderCore({
     })();
   }, []);
 
-  const { isAuthenticated, isLoading: convexAuthLoading } = useConvexAuth();
+  // Claim runs once Clerk reports a signed-in session: the Server Actions read the same
+  // session server-side, so there is no second auth handshake to wait for.
   const claimedRef = useRef(false);
   useEffect(() => {
-    if (convexAuthLoading || !isAuthenticated || claimedRef.current) return;
+    if (!isLoaded || !isSignedIn || claimedRef.current) return;
     claimedRef.current = true;
     (async () => {
       try {
@@ -96,7 +96,7 @@ function AppProviderCore({
         console.error("Account claim failed", e);
       }
     })();
-  }, [convexAuthLoading, isAuthenticated]);
+  }, [isLoaded, isSignedIn, user]);
 
   const persist = useCallback(async () => {
     const current = cvRef.current;

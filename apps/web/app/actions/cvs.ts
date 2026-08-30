@@ -75,7 +75,7 @@ export async function removeCv(id: string, guestId?: string) {
   });
 }
 
-/** THE KPI. Set-based, atomic — simpler than today's Convex loop. */
+/** THE KPI. Set-based and atomic — two UPDATEs in one transaction. */
 export async function claimGuest(guestId: string) {
   const ownerId = await getOwnerId();
   if (!ownerId) throw new Error("Not authenticated");
