@@ -5,7 +5,8 @@ import AppShell from "../components/app/AppShell";
 import AnalyzeSteps from "../components/app/AnalyzeSteps";
 import { Save, ArrowRight, Upload } from "../components/icons";
 import { api } from "../lib/api";
-import { extractTextFromPdf, isPdfFile } from "../lib/pdf";
+import { isPdfFile } from "../lib/pdf";
+import { guardAndExtractPdf, GUARD_MSG } from "../lib/pdf-guard";
 
 type Mode = "improve" | "jobfit";
 
@@ -20,14 +21,24 @@ function TextOrUpload({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [parsing, setParsing] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const onFile = async (file: File) => {
     setParsing(true);
+    setUploadError(null);
     try {
-      const text = isPdfFile(file) ? await extractTextFromPdf(file) : await file.text();
-      onChange(text);
-    } catch (err) {
-      console.error("Failed to read file", err);
+      if (isPdfFile(file)) {
+        const res = await guardAndExtractPdf(file);
+        if (!res.ok) {
+          setUploadError(GUARD_MSG[res.error]);
+          return;
+        }
+        onChange(res.text);
+        return;
+      }
+      onChange(await file.text());
+    } catch {
+      setUploadError(GUARD_MSG.PARSE_FAILED);
     } finally {
       setParsing(false);
     }
@@ -46,6 +57,7 @@ function TextOrUpload({
       <button className="field__upload" onClick={() => fileRef.current?.click()} disabled={parsing}>
         <Upload size={16} /> {parsing ? "Extracting…" : "Upload file"}
       </button>
+      {uploadError && <p className="analyze-error">{uploadError}</p>}
       <input
         ref={fileRef}
         type="file"

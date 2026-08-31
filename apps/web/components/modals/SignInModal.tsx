@@ -503,8 +503,9 @@ function SignInModalClerk({ open, onClose }: { open: boolean; onClose: () => voi
           {phase === "email" ? <div id="clerk-captcha" /> : null}
 
           <p className="signin__terms">
-            By continuing, you agree to our <a href="#">Terms and Conditions</a> and{" "}
-            <a href="#">Privacy Policy</a>.
+            By continuing, you agree to our{" "}
+            <a href="/terms" target="_blank" rel="noreferrer">Terms and Conditions</a> and{" "}
+            <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.
           </p>
         </div>
       </div>

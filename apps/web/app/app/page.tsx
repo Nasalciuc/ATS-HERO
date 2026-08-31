@@ -4,21 +4,25 @@
 // appear owned. Open routes into the builder; delete is reactive (the list updates itself).
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import SignInModal from "@/components/modals/SignInModal";
-import { useCvs } from "@/hooks/use-cvs";
+import { useCvs, useCvMutations } from "@/hooks/use-cvs";
+import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { useApp } from "@/store/AppContext";
-import { api } from "@/lib/api";
-import type { Doc } from "@/convex/_generated/dataModel";
+import { isClerkPublicConfigured } from "@/lib/clerk-config";
 
 function formatDate(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function DashboardPage() {
-  const cvs = useCvs(); // undefined while loading, then Doc<"cvs">[]
-  const { openCv, reset } = useApp();
-  const { isSignedIn } = useUser();
+  const cvs = useCvs(); // undefined while loading
+  const { remove: removeCv } = useCvMutations();
+  // Auth state comes from AppContext (which already abstracts Clerk vs. guest mode), so this
+  // page also renders when Clerk is not configured.
+  const { openCv, reset, user } = useApp();
+  const isSignedIn = Boolean(user);
+  const clerkReady = isClerkPublicConfigured();
   const router = useRouter();
   const [signInOpen, setSignInOpen] = useState(false);
 
@@ -32,7 +36,7 @@ export default function DashboardPage() {
   }
   async function remove(id: string) {
     if (typeof window !== "undefined" && !window.confirm("Delete this CV?")) return;
-    await api.deleteCv(id); // reactive: useCvs() refreshes automatically
+    await removeCv(id);
   }
 
   return (
@@ -40,7 +44,7 @@ export default function DashboardPage() {
       <div className="container dash__inner">
         <div className="dash__topbar">
           <a href="/" className="dash__logo">ATS Hero</a>
-          {isSignedIn ? (
+          {isSignedIn && clerkReady ? (
             <UserButton />
           ) : (
             <button type="button" className="btn btn--outline-dark dash__signin" onClick={() => setSignInOpen(true)}>
@@ -52,7 +56,15 @@ export default function DashboardPage() {
         <header className="dash__head">
           <div>
             <h1 className="dash__title">Your CVs</h1>
-            <p className="dash__subtitle">Build, score and tailor your resumes.</p>
+            <p className="dash__subtitle">
+              Build, score and tailor your resumes.
+              {isSignedIn && (
+                <>
+                  {" "}
+                  <a className="dash__banner-link" href="/app/tracker">Application tracker →</a>
+                </>
+              )}
+            </p>
           </div>
           <button className="btn btn--dark dash__new" onClick={newCv}>
             + New CV
@@ -80,9 +92,9 @@ export default function DashboardPage() {
           </div>
         ) : (
           <ul className="dash__grid">
-            {cvs.map((cv: Doc<"cvs">) => (
-              <li key={cv._id} className="dash-card">
-                <button onClick={() => open(cv._id)} className="dash-card__body">
+            {cvs.map((cv) => (
+              <li key={cv.id} className="dash-card">
+                <button onClick={() => open(cv.id)} className="dash-card__body">
                   <h3 className="dash-card__title">{cv.title || "Untitled"}</h3>
                   <p className="dash-card__date">Updated {formatDate(cv.updatedAt)}</p>
                   <p className="dash-card__meta">
@@ -90,10 +102,10 @@ export default function DashboardPage() {
                   </p>
                 </button>
                 <div className="dash-card__foot">
-                  <button onClick={() => open(cv._id)} className="dash-card__open">
+                  <button onClick={() => open(cv.id)} className="dash-card__open">
                     Open →
                   </button>
-                  <button onClick={() => remove(cv._id)} className="dash-card__delete">
+                  <button onClick={() => remove(cv.id)} className="dash-card__delete">
                     Delete
                   </button>
                 </div>
@@ -101,6 +113,8 @@ export default function DashboardPage() {
             ))}
           </ul>
         )}
+
+        {isSignedIn && <DeleteAccount />}
       </div>
       <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
     </main>

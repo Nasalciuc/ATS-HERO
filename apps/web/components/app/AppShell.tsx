@@ -5,13 +5,15 @@ import { useNavigate } from "@/lib/router";
 import { useApp } from "../../store/AppContext";
 import { MenuIcon, UserIcon } from "../icons";
 import SignInModal from "../modals/SignInModal";
+import { FeedbackLink } from "./FeedbackLink";
 
-type NavKey = "create" | "improve" | "jobfit";
+type NavKey = "create" | "improve" | "jobfit" | "tracker";
 
 const NAV: { key: NavKey; label: string; to: string }[] = [
   { key: "create", label: "Create ATS Resume", to: "/app/create" },
   { key: "improve", label: "Improve My Resume", to: "/app/improve" },
   { key: "jobfit", label: "Check Job Fit", to: "/app/jobfit" },
+  { key: "tracker", label: "Tracker", to: "/app/tracker" },
 ];
 
 export default function AppShell({
@@ -81,6 +83,7 @@ export default function AppShell({
               </button>
             </>
           )}
+          <FeedbackLink />
         </div>
       </aside>
 

@@ -10,11 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { useConvexAuth } from "convex/react";
 import { api } from "../lib/api";
-import { getGuestId } from "../lib/convexClient";
+import { getGuestId } from "../lib/guest";
 import { isClerkPublicConfigured } from "../lib/clerk-config";
 import { emptyCvData, type Cv, type CvData, type User } from "../lib/types";
+import { mutate } from "swr";
 
 const CV_ID_KEY = "ats_hero_cv_id";
 
@@ -52,7 +52,7 @@ function AppProviderCore({
   children: ReactNode;
   auth: ClerkAuth;
 }) {
-  const { user, signOut } = auth;
+  const { user, isLoaded, isSignedIn, signOut } = auth;
 
   const [cv, setCv] = useState<Cv | null>(null);
   const [data, setData] = useState<CvData>(emptyCvData());
@@ -82,21 +82,22 @@ function AppProviderCore({
     })();
   }, []);
 
-  const { isAuthenticated, isLoading: convexAuthLoading } = useConvexAuth();
+  // Claim runs once Clerk reports a signed-in session: the Server Actions read the same
+  // session server-side, so there is no second auth handshake to wait for.
   const claimedRef = useRef(false);
   useEffect(() => {
-    if (convexAuthLoading || !isAuthenticated || claimedRef.current) return;
+    if (!isLoaded || !isSignedIn || claimedRef.current) return;
     claimedRef.current = true;
     (async () => {
       try {
-        await api.ensureUser();
+        await api.ensureUser(user ? { email: user.email } : undefined);
         await api.claimGuest(getGuestId());
       } catch (e) {
         claimedRef.current = false;
         console.error("Account claim failed", e);
       }
     })();
-  }, [convexAuthLoading, isAuthenticated]);
+  }, [isLoaded, isSignedIn, user]);
 
   const persist = useCallback(async () => {
     const current = cvRef.current;
@@ -146,7 +147,10 @@ function AppProviderCore({
   const login = useCallback((_email?: string) => {}, []);
 
   const logout = useCallback(() => {
-    void signOut();
+    void (async () => {
+      await mutate(() => true, undefined, { revalidate: false });
+      await signOut();
+    })();
   }, [signOut]);
 
   const reset = useCallback(() => {
