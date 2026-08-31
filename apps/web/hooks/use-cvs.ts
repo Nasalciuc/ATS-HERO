@@ -1,16 +1,16 @@
 "use client";
 import useSWR, { useSWRConfig } from "swr";
-import { useAuth } from "@clerk/nextjs";
 import { listMyCvs, createCv, updateCv, removeCv, claimGuest } from "@/app/actions/cvs";
 import { getGuestId } from "@/lib/guest";
 import { K } from "@/lib/swr-keys";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 
 /**
  * List of the current user's (or guest's) CVs. `undefined` while loading — same contract the
  * reactive Convex query had, so consumers are unchanged.
  */
 export function useCvs() {
-  const { userId } = useAuth();
+  const userId = useCurrentUserId();
   const guestId = getGuestId();
   const { data } = useSWR(K.cvs(userId, guestId), () => listMyCvs(guestId),
     { revalidateOnFocus: true });
@@ -18,7 +18,7 @@ export function useCvs() {
 }
 
 export function useCvMutations() {
-  const { userId } = useAuth();
+  const userId = useCurrentUserId();
   const { mutate } = useSWRConfig();
   const guestId = getGuestId();
   const refresh = () => mutate(K.cvs(userId, guestId));

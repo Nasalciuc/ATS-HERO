@@ -2,15 +2,18 @@
 import useSWR, { useSWRConfig } from "swr";
 import { listMyApplications, createApplication, updateStatus, removeApplication } from "@/app/actions/applications";
 import { K } from "@/lib/swr-keys";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 
 export function useApplications() {
-  const { data } = useSWR(K.apps(), () => listMyApplications(), { revalidateOnFocus: true });
+  const userId = useCurrentUserId();
+  const { data } = useSWR(K.apps(userId), () => listMyApplications(), { revalidateOnFocus: true });
   return data;
 }
 
 export function useApplicationMutations() {
+  const userId = useCurrentUserId();
   const { mutate } = useSWRConfig();
-  const refresh = () => mutate(K.apps());
+  const refresh = () => mutate(K.apps(userId));
   return {
     create: async (i: Parameters<typeof createApplication>[0]) => {
       const r = await createApplication(i);
