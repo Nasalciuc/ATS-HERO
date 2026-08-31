@@ -2,7 +2,7 @@
 import { db } from "@/db";
 import { users, cvs, scans, aiUsage, applications } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { withLog } from "@/lib/log";
 
 export async function getCurrentUser() {
@@ -46,6 +46,13 @@ export async function deleteAccount() {
       await tx.delete(aiUsage).where(eq(aiUsage.ownerId, userId));
       await tx.delete(users).where(eq(users.clerkId, userId));
     });
+    try {
+      const client = await clerkClient();
+      await client.users.deleteUser(userId);
+    } catch (e) {
+      console.error(JSON.stringify({ level: "error", action: "users.deleteAccount.clerk", userId, err: String(e) }));
+      throw new Error("Account data deleted but identity removal failed — contact support");
+    }
     return { ok: true };
   });
 }

@@ -11,7 +11,19 @@ export function DeleteAccount() {
       <p>Type <b>DELETE</b> to permanently remove your account and all data.</p>
       <input value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="DELETE" />
       <button disabled={confirm !== "DELETE" || busy} className="btn btn--danger"
-        onClick={async () => { setBusy(true); await deleteAccount(); await signOut({ redirectUrl: "/" }); }}>
+        onClick={async () => {
+          setBusy(true);
+          try {
+            await deleteAccount();
+            try {
+              await signOut({ redirectUrl: "/" });
+            } catch {
+              window.location.href = "/";
+            }
+          } finally {
+            setBusy(false);
+          }
+        }}>
         Delete my account
       </button>
     </div>
