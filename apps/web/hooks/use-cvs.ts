@@ -1,5 +1,6 @@
 "use client";
 import useSWR, { useSWRConfig } from "swr";
+import { useAuth } from "@clerk/nextjs";
 import { listMyCvs, createCv, updateCv, removeCv, claimGuest } from "@/app/actions/cvs";
 import { getGuestId } from "@/lib/guest";
 import { K } from "@/lib/swr-keys";
@@ -9,16 +10,18 @@ import { K } from "@/lib/swr-keys";
  * reactive Convex query had, so consumers are unchanged.
  */
 export function useCvs() {
+  const { userId } = useAuth();
   const guestId = getGuestId();
-  const { data } = useSWR(K.cvs(guestId), () => listMyCvs(guestId),
+  const { data } = useSWR(K.cvs(userId, guestId), () => listMyCvs(guestId),
     { revalidateOnFocus: true });
   return data;
 }
 
 export function useCvMutations() {
+  const { userId } = useAuth();
   const { mutate } = useSWRConfig();
   const guestId = getGuestId();
-  const refresh = () => mutate(K.cvs(guestId));
+  const refresh = () => mutate(K.cvs(userId, guestId));
   return {
     create: async (i: Omit<Parameters<typeof createCv>[0], "guestId">) => { const r = await createCv({ ...i, guestId }); await refresh(); return r; },
     update: async (id: string, p: Parameters<typeof updateCv>[1]) => { const r = await updateCv(id, p, guestId); await refresh(); return r; },
