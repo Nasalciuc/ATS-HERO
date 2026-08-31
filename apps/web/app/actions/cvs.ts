@@ -2,7 +2,8 @@
 import { db } from "@/db";
 import { cvs, scans, type Cv } from "@/db/schema";
 import { and, eq, desc, isNull } from "drizzle-orm";
-import { getOwnerId, canRead, assertCanWrite } from "./_shared";
+import { getOwnerId, canRead } from "./_shared";
+import { cvOwnershipPredicate } from "@/lib/ownership";
 import type { CvData, TemplateId } from "@/lib/types";
 import { cvDataSchema } from "@/lib/validators";
 import { withLog } from "@/lib/log";
@@ -48,30 +49,30 @@ export async function createCv(input: { title: string; data: CvData; guestId?: s
 export async function updateCv(id: string, patch: {
   title?: string; data?: CvData; template?: TemplateId; accent?: string;
 }, guestId?: string) {
-  const row = await db.query.cvs.findFirst({ where: eq(cvs.id, id) });
-  if (!row) throw new Error("Not found");
-  await assertCanWrite(row, guestId);
-  return withLog("cvs.update", { cvId: id, ownerId: row.ownerId }, async () => {
+  const ownerId = await getOwnerId();
+  const ownershipPredicate = cvOwnershipPredicate(id, ownerId, guestId);
+  return withLog("cvs.update", { cvId: id, ownerId }, async () => {
     const [updated] = await db.update(cvs).set({
       ...(patch.title !== undefined && { title: patch.title }),
       ...(patch.data  !== undefined && { data: cvDataSchema.parse(patch.data) }),
       ...(patch.template !== undefined && { template: patch.template }),
       ...(patch.accent   !== undefined && { accent: patch.accent }),
-    }).where(eq(cvs.id, id)).returning();                    // updatedAt via $onUpdate
+    }).where(ownershipPredicate).returning();                    // updatedAt via $onUpdate
+    if (!updated) throw new Error("Not found or forbidden");   // 0 rows affected = reject
     return serialize(updated);
   });
 }
 
 export async function removeCv(id: string, guestId?: string) {
-  const row = await db.query.cvs.findFirst({ where: eq(cvs.id, id) });
-  if (!row) return { ok: true };
-  await assertCanWrite(row, guestId);
-  return withLog("cvs.remove", { cvId: id, ownerId: row.ownerId }, async () => {
-    await db.transaction(async (tx) => {                     // today's semantics: detach scans, keep history
-      await tx.update(scans).set({ cvId: null }).where(eq(scans.cvId, id));
-      await tx.delete(cvs).where(eq(cvs.id, id));
+  const ownerId = await getOwnerId();
+  const ownershipPredicate = cvOwnershipPredicate(id, ownerId, guestId);
+  return withLog("cvs.remove", { cvId: id, ownerId }, async () => {
+    return db.transaction(async (tx) => {
+      const [deleted] = await tx.delete(cvs).where(ownershipPredicate).returning({ id: cvs.id });
+      if (!deleted) throw new Error("Not found or forbidden");
+      await tx.update(scans).set({ cvId: null }).where(eq(scans.cvId, id));  // detach only if delete succeeded
+      return { ok: true };
     });
-    return { ok: true };
   });
 }
 
