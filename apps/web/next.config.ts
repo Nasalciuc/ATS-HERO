@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Trace deps from monorepo root when Root Directory = apps/web on Vercel.
   outputFileTracingRoot: monorepoRoot,
+  outputFileTracingIncludes: {
+    "/*": ["./certs/**"],
+  },
   turbopack: {
     root: monorepoRoot,
   },
