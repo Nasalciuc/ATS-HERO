@@ -16,6 +16,8 @@ export default function Privacy() {
       work you already did is attached to your new account.</p>
 
       <h2>Where your data lives</h2>
+      {/* Residency statement is accurate as of Stage B deploy (RDS us-east-1). Must match the live
+          infra at every change — see Stage B checklist. */}
       <p>Your data is stored on cloud infrastructure in the United States (AWS, us-east-1).
       For users in the EU/EEA, transfers rely on Standard Contractual Clauses.</p>
 
