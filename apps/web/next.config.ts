@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
     const devEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
     const csp = [
       "default-src 'self'",
+      // TODO(security-hardening): replace 'unsafe-inline' in script-src with nonce-based CSP.
+      // Needs: nonce generated in proxy.ts, forwarded via header, read in layout.tsx, passed to
+      // ClerkProvider's nonce prop. Tracked as a post-launch hardening item, not a launch blocker.
       `script-src 'self' 'unsafe-inline'${devEval} https://*.clerk.accounts.dev https://challenges.cloudflare.com`,
       "connect-src 'self' https://*.clerk.accounts.dev https://clerk-telemetry.com " + (process.env.NEXT_PUBLIC_AI_URL ?? ""),
       "img-src 'self' data: blob: https:",
