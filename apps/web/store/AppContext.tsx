@@ -14,6 +14,7 @@ import { api } from "../lib/api";
 import { getGuestId } from "../lib/guest";
 import { isClerkPublicConfigured } from "../lib/clerk-config";
 import { emptyCvData, type Cv, type CvData, type User } from "../lib/types";
+import { mutate } from "swr";
 
 const CV_ID_KEY = "ats_hero_cv_id";
 
@@ -146,7 +147,10 @@ function AppProviderCore({
   const login = useCallback((_email?: string) => {}, []);
 
   const logout = useCallback(() => {
-    void signOut();
+    void (async () => {
+      await mutate(() => true, undefined, { revalidate: false });
+      await signOut();
+    })();
   }, [signOut]);
 
   const reset = useCallback(() => {
