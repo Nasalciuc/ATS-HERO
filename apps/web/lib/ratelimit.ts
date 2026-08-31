@@ -6,22 +6,24 @@
 type Window = { count: number; resetAt: number };
 
 const windows = new Map<string, Window>();
-const MAX_KEYS = 10_000;
+export const MAX_KEYS = 10_000;
 
 export function allow(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
-  const w = windows.get(key);
-
-  if (!w || now >= w.resetAt) {
-    // Cheap eviction: the map only grows on a hot path, so prune expired entries on rollover.
-    if (windows.size > MAX_KEYS) {
-      for (const [k, v] of windows) if (now >= v.resetAt) windows.delete(k);
-    }
-    windows.set(key, { count: 1, resetAt: now + windowMs });
-    return true;
+  const existing = windows.get(key);
+  if (existing && now < existing.resetAt) {
+    if (existing.count >= limit) return false;
+    existing.count++; return true;
   }
-
-  if (w.count >= limit) return false;
-  w.count += 1;
+  if (windows.size >= MAX_KEYS) {
+    for (const [k, v] of windows) if (now >= v.resetAt) windows.delete(k);
+    if (windows.size >= MAX_KEYS) return false;             // still full after cleanup? reject new key
+  }
+  windows.set(key, { count: 1, resetAt: now + windowMs });
   return true;
+}
+
+/** Test-only: wipe the in-memory map so cases cannot leak into each other. */
+export function resetRateLimitForTests() {
+  windows.clear();
 }
