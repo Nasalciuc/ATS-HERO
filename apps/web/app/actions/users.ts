@@ -36,6 +36,9 @@ export async function deleteAccount() {
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
   return withLog("users.deleteAccount", { userId }, async () => {
+    // TODO(billing-activation): before deleting, cancel any active Paddle subscription via API
+    // and decide the retention policy for subscriptionEvents (delete vs anonymize). Tracked for
+    // the Ⓑ billing-activation milestone — do not implement against an unprovisioned account.
     await db.transaction(async (tx) => {
       await tx.delete(applications).where(eq(applications.ownerId, userId));
       await tx.delete(scans).where(eq(scans.ownerId, userId));
