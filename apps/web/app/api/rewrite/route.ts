@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { consumeAiQuota } from "@/app/actions/ai-usage";
 import { rewriteBullets } from "@/lib/ai/rewriter";
+import { positiveIntEnv } from "@/lib/env";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,8 @@ export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
 
-  const remaining = await consumeAiQuota(userId, Number(process.env.AI_REWRITE_DAILY_LIMIT ?? 5));
+  const dailyLimit = positiveIntEnv("AI_REWRITE_DAILY_LIMIT", 5);
+  const remaining = await consumeAiQuota(userId, dailyLimit);
   if (remaining < 0)
     return NextResponse.json({ error: "Daily limit reached. Try again tomorrow." }, { status: 429 });
 
