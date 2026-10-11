@@ -15,14 +15,27 @@ for (let p = 1; p <= doc.numPages; p++) {
     if (!("str" in it)) continue;
     const y = Math.round(it.transform[5]);
     const x = it.transform[4];
+    const size = Math.hypot(it.transform[2], it.transform[3]) || 10;
     let line = lines.find((l) => Math.abs(l.y - y) <= 2);
     if (!line) lines.push((line = { y, parts: [] }));
-    line.parts.push({ x, s: it.str });
+    line.parts.push({ x, end: x + it.width, size, s: it.str });
   }
   lines.sort((a, b) => b.y - a.y);
   for (const l of lines) {
     l.parts.sort((a, b) => a.x - b.x);
-    out.push(l.parts.map((p) => p.s).join(" ").replace(/\s+/g, " ").trim());
+    // pdf.js already emits real spaces as " " items. A font switch inside a word (a synthesized
+    // small cap, or 'Chi'+'ș'+'in' when the webfont lacks ș and it falls back to another font) is a
+    // new item with no gap: glue it, as OpenResume does (merge items closer than a character);
+    // a visible gap stays a space.
+    let text = "";
+    let end = null;
+    for (const part of l.parts) {
+      const gap = end === null ? 0 : part.x - end;
+      if (end !== null && gap > 0.15 * part.size && !/\s$/.test(text) && !/^\s/.test(part.s)) text += " ";
+      text += part.s;
+      end = Math.max(end ?? part.end, part.end);
+    }
+    out.push(text.replace(/\s+/g, " ").trim());
   }
 }
 process.stdout.write(out.filter(Boolean).join("\n"));

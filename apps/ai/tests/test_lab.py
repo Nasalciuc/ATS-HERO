@@ -82,6 +82,13 @@ def test_diacritics_must_survive_exactly():
     assert any("diacritics" in p for p in s.problems)
 
 
+def test_skill_label_on_its_own_line_still_lists_skills():
+    # Label and values in separate boxes (PyMuPDF block order): the label line reads as a
+    # second 'skills' heading; its values must still be listed.
+    text = "SKILLS & AWARDS\nTechnical Skills:\nReact, TypeScript, Next.js,\nGraphQL\nLanguages:\nEnglish (C1)\n"
+    assert parse(text).skills == ["React", "TypeScript", "Next.js", "GraphQL", "English"]
+
+
 def test_blocks_learn_header_depth_from_first_entry():
     text = """EXPERIENCE
 Senior Engineer
@@ -106,6 +113,17 @@ June 2018 – February 2021
 def test_date_key_normalises_vendor_formats(raw, key):
     # Commercial parsers return numeric dates; they must align with "Month YYYY" truth.
     assert _date_key(raw) == key
+
+
+@needs_fixture
+def test_uppercased_name_keeps_diacritics():
+    # Templates that uppercase the name in CSS emit 'MIHAI ȘTEFĂNESCU' — intact for ATS search.
+    mihai = json.loads(FIXTURES.read_text(encoding="utf-8"))["mihai"]
+    text = CLEAN.replace("Ana Popescu", "MIHAI ȘTEFĂNESCU")
+    s = score(parse(text), mihai)
+    assert "Mihai Ștefănescu" not in " ".join(s.problems)
+    flattened = score(parse(CLEAN.replace("Ana Popescu", "MIHAI STEFANESCU")), mihai)
+    assert any("Mihai Ștefănescu" in p for p in flattened.problems if p.startswith("diacritics"))
 
 
 @needs_fixture

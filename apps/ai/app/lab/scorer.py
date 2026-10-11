@@ -156,8 +156,10 @@ def score(parsed: Parsed, truth: dict) -> Score:
     uni = [v for v in [pi["name"], pi["cityState"], *[e["institution"] for e in edu], *[w["company"] for w in work]]
            if v and any(ord(c) > 127 for c in v)]
     if uni:
-        flat = re.sub(r"\s+", " ", text)  # a name wrapped over two lines is still intact text
-        bad = [v for v in uni if re.sub(r"\s+", " ", unicodedata.normalize("NFC", v)) not in flat]
+        # A name wrapped over two lines is still intact text, and ATS search is case-insensitive:
+        # 'MIHAI ȘTEFĂNESCU' (CSS uppercase) keeps its diacritics; 'Stefanescu' does not.
+        flat = re.sub(r"\s+", " ", text).casefold()
+        bad = [v for v in uni if re.sub(r"\s+", " ", unicodedata.normalize("NFC", v)).casefold() not in flat]
         s.checks["unicode"] = 1 - len(bad) / len(uni)
         if bad:
             s.problems.append(f"diacritics corrupted: {bad}")

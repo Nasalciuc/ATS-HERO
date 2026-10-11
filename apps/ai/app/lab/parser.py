@@ -18,15 +18,18 @@ HEADINGS: dict[str, tuple[str, ...]] = {
     "experience": ("experience", "work experience", "professional experience", "employment",
                    "employment history", "work history", "experiență", "experienta", "experiență profesională"),
     "education": ("education", "educație", "educatie", "studii"),
-    "skills": ("skills", "technical skills", "hard skills", "competențe", "competente", "abilități"),
+    "skills": ("skills", "technical skills", "hard skills", "skills & awards", "skills and awards",
+               "skills & languages", "competențe", "competente", "abilități"),
     "tools": ("tools", "instruments", "technologies"),
     "soft_skills": ("soft skills",),
     "languages": ("languages", "limbi", "limbi străine"),
-    "certifications": ("certifications", "certificates", "certificări"),
+    "certifications": ("certifications", "certificates", "training & certifications",
+                       "training and certifications", "certificări"),
     "awards": ("awards", "honors", "awards & honors", "premii"),
     "publications": ("publications", "publicații"),
     "volunteering": ("volunteering", "volunteer experience", "voluntariat"),
     "activities": ("activities", "relevant activities", "projects", "activități"),
+    "links": ("links", "profiles"),
 }
 _HEADING_INDEX = {v: k for k, vs in HEADINGS.items() for v in vs}
 
@@ -41,7 +44,7 @@ EMAIL = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 PHONE = re.compile(r"(?<![\w/])\+?\d[\d\s().\-]{7,}\d(?![\w/])")
 LINKEDIN = re.compile(r"linkedin\.com/in/([A-Za-z0-9\-_%]+)", re.IGNORECASE)
 LIGATURES = re.compile("[ﬀ-ﬆ]")
-_BULLET = re.compile(r"^[\s•●▪◦\-*·]+")
+_BULLET = re.compile(r"^[\s•●▪◦‣►▸→➜➔✓■◆\-*·]+")  # glyphs used by common resume builders
 
 
 def normalize(text: str) -> str:
@@ -163,13 +166,15 @@ def _blocks(lines: list[str], span: tuple[int, int] | None) -> list[Block]:
 
 def _skill_items(lines: list[str], sections: list[tuple[str, int]]) -> list[str]:
     items: list[str] = []
-    for key in ("skills", "tools", "soft_skills", "languages"):
-        span = _section_span(sections, lines, key)
-        if not span:
+    # Every skills-like section counts, not just the first: a label extracted on its own line
+    # ('SKILLS & AWARDS' / 'Technical Skills:' / 'Go, Java, …') opens a second 'skills' section.
+    for idx, (key, start) in enumerate(sections):
+        if key not in ("skills", "tools", "soft_skills", "languages"):
             continue
-        for line in lines[span[0]:span[1]]:
-            body = re.sub(r"^(hard skills|tools|soft skills|languages)\s*:\s*", "", _BULLET.sub("", line),
-                          flags=re.IGNORECASE)
+        end = sections[idx + 1][1] if idx + 1 < len(sections) else len(lines)
+        for line in lines[start + 1:end]:
+            # Any short "Label:" prefix (Hard skills:, Technical Skills:, Certifications:, …) is a label.
+            body = re.sub(r"^[A-Za-z][A-Za-z &/]{1,30}:\s*", "", _BULLET.sub("", line))
             for part in re.split(r"[·,|;•]", body):
                 part = re.sub(r"\s*\((?:a1|a2|b1|b2|c1|c2|native)\)\s*$", "", part.strip(), flags=re.IGNORECASE)
                 if part:
