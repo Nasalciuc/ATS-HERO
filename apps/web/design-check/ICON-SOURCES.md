@@ -24,6 +24,9 @@ Figma file uses (its layers are named after the Iconify icon, e.g. `ep:arrow-up`
 | `mynaui:plus` | `PlusThin` | 'Add one more …' buttons, Activities 'Add section' | [MIT](https://github.com/praveenjuge/mynaui-icons/blob/main/LICENSE) | [Praveen Juge](https://github.com/praveenjuge/mynaui-icons) | 1.2.19 |
 | `mage:trash` | `TrashOutline` | Entry 'Delete' button (flattened group; matched by shape) | [Apache 2.0](https://github.com/Mage-Icons/mage-icons/blob/main/License.txt) | [MageIcons](https://github.com/Mage-Icons/mage-icons) | 1.2.4 |
 | `mynaui:chevron-down` | `ChevronDown` | Select fields (Level, Activity type) | [MIT](https://github.com/praveenjuge/mynaui-icons/blob/main/LICENSE) | [Praveen Juge](https://github.com/praveenjuge/mynaui-icons) | 1.2.19 |
+| `proicons:pdf` | `PdfFileIcon` | Complete pop-up · Download PDF (flattened group; matched by shape) | [MIT](https://github.com/ProCode-Software/proicons/blob/main/LICENSE) | [ProCode](https://github.com/ProCode-Software/proicons) | 1.2.20 |
+| `f7:doc` | `DocFileIcon` | Complete pop-up · Download DOC (flattened vector; matched by shape) | [MIT](https://github.com/framework7io/framework7-icons/blob/master/LICENSE) | [Vladimir Kharlampidi](https://github.com/framework7io/framework7-icons) | 1.2.2 |
+| `streamline-plump:dashboard-gauge-2` | `GaugeIcon` | Complete pop-up · ATS-score button (Figma 'Icons_button' component; closest Iconify glyph, not exact) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Streamline](https://github.com/webalys-hq/streamline-vectors) | 1.2.0 |
 
 ## Attribution required
 

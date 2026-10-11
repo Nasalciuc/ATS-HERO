@@ -1,0 +1,103 @@
+{
+  "id": "popup-complete",
+  "title": "Pop-up · Complete (Customise your CV)",
+  "frame": "311:3326",
+  "reference": "reference/figma/desktop/popup-complete.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "note": "Figma lists 'Style 1–6'; we list our 3 templates (+ accent colours, not in Figma), so the list's height isn't checked. The preview is the real PDF (Figma shows a sample CV).",
+  "setup": [
+    {
+      "fill": [
+        "[data-figma=field-name-input]",
+        "Daniel Gallego"
+      ]
+    },
+    {
+      "click": "[data-figma=btn-preview]"
+    },
+    {
+      "wait": 3500
+    }
+  ],
+  "checks": [
+    {
+      "key": "modal-panel",
+      "node": "311:3269",
+      "style": {
+        "border-radius": "20px"
+      }
+    },
+    {
+      "key": "modal-close",
+      "node": "311:3300"
+    },
+    {
+      "key": "complete-title",
+      "box": [
+        419,
+        185,
+        null,
+        20
+      ],
+      "style": {
+        "font-size": "20px",
+        "font-weight": "700"
+      }
+    },
+    {
+      "key": "complete-styles",
+      "box": [
+        419,
+        239,
+        null,
+        null
+      ]
+    },
+    {
+      "key": "cv-prev",
+      "node": "311:3282"
+    },
+    {
+      "key": "cv-page",
+      "node": "311:3285"
+    },
+    {
+      "key": "cv-next",
+      "node": "311:3286"
+    },
+    {
+      "key": "cv-page-count",
+      "box": [
+        null,
+        745,
+        null,
+        14
+      ],
+      "style": {
+        "font-size": "12px",
+        "color": "rgb(156, 156, 156)"
+      }
+    },
+    {
+      "key": "download-pdf",
+      "node": "311:3290"
+    },
+    {
+      "key": "download-doc",
+      "node": "311:3296"
+    },
+    {
+      "key": "complete-score",
+      "node": "311:3303",
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    }
+  ]
+}

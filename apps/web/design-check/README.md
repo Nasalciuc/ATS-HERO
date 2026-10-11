@@ -64,6 +64,7 @@ also lists the CC BY icons that need credit). Don't hand-edit the generated file
 | `popup-tips` | 336:6042 Pop-up_Tips | Explore on Personal info |
 | `popup-add-section` | 311:3740 / 331:4891 Pop-up_Add section | "+ Add section" in the stepper |
 | `popup-almost-there` | 358:7402 | Awards added and left empty, then Complete |
+| `popup-complete` | 311:3326 Pop-up_Complete | Preview on Personal info |
 
 ## Known, deliberate deviations from Figma
 
@@ -82,6 +83,9 @@ also lists the CC BY icons that need credit). Don't hand-edit the generated file
   centred). "Add section" lists every section not added yet — 5 on a fresh CV, Figma shows 3 — and
   its "Continue" just closes when nothing is ticked (Figma shows it always enabled). The overlay is
   Figma's solid #2e2e2e (`--modal-overlay`), not see-through.
+- **Complete pop-up**: Figma lists "Style 1–6"; we list our three templates by name and keep the
+  accent colours under them. The preview is the real PDF drawn page by page (Figma shows a sample
+  CV); the ATS-score icon is the closest Iconify glyph to Figma's custom one.
 - **Below 1728px** Figma has no frames: the content column shrinks (max 1135px), the gutter
   tightens under 1280px, the sidebar becomes a drawer under 1024px, phones get a compact stepper.
   The phone/tablet look is derived and awaits design approval.

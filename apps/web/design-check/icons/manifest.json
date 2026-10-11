@@ -108,6 +108,24 @@
       "export": "ChevronDown",
       "size": 12,
       "use": "Select fields (Level, Activity type)"
+    },
+    {
+      "icon": "proicons:pdf",
+      "export": "PdfFileIcon",
+      "size": 18,
+      "use": "Complete pop-up · Download PDF (flattened group; matched by shape)"
+    },
+    {
+      "icon": "f7:doc",
+      "export": "DocFileIcon",
+      "size": 17,
+      "use": "Complete pop-up · Download DOC (flattened vector; matched by shape)"
+    },
+    {
+      "icon": "streamline-plump:dashboard-gauge-2",
+      "export": "GaugeIcon",
+      "size": 24,
+      "use": "Complete pop-up · ATS-score button (Figma 'Icons_button' component; closest Iconify glyph, not exact)"
     }
   ]
 }
