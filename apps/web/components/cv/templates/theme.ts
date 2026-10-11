@@ -8,6 +8,9 @@ export interface TemplateTheme {
   muted: string;     // roles, contact
   faint: string;     // dates, meta
   onPrimary: string; // text on a filled primary surface (modern sidebar)
+  /** Entry meta placement. "split" = title left / dates right (current design). "stacked" =
+   *  dates on the line under the title — every extractor keeps them with their entry (ATS lab). */
+  meta?: "split" | "stacked";
 }
 
 export const TOKENS = {

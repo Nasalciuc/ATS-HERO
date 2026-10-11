@@ -5,16 +5,21 @@ import { getTemplate } from "@/components/cv/templates";
 import { resolveTheme } from "@/components/cv/templates/theme";
 import { registerFonts } from "@/components/cv/templates/fonts";
 import type { CvData } from "@/lib/types";
+import { printableCv } from "@/lib/cv-print";
 
 /**
  * @param data        The CV data.
  * @param templateId  "classic" | "modern" | "minimal" (from the registry).
  * @param accent      Optional accent override (1-6) or hex string.
  */
-export async function downloadCvPdf(data: CvData, templateId = "classic", accent?: number | string): Promise<void> {
+export async function renderCvPdfBlob(data: CvData, templateId = "classic", accent?: number | string): Promise<Blob> {
   registerFonts();
   const { component: Template } = getTemplate(templateId);
-  const blob = await pdf(<Template data={data} theme={resolveTheme(templateId, accent)} />).toBlob();
+  return pdf(<Template data={printableCv(data)} theme={resolveTheme(templateId, accent)} />).toBlob();
+}
+
+export async function downloadCvPdf(data: CvData, templateId = "classic", accent?: number | string): Promise<void> {
+  const blob = await renderCvPdfBlob(data, templateId, accent);
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

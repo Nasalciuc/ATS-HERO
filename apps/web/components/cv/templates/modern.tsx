@@ -8,13 +8,17 @@ import {
   SimpleSection, ALL_SIMPLE, GAP,
 } from "./shared";
 
-const SIDEBAR_W = "34%";
+const SIDEBAR_RATIO = 0.34;
+const SIDEBAR_W = `${SIDEBAR_RATIO * 100}%`;
+const SIDEBAR_PAD_X = 18;
+// A4 width (pt) × sidebar share − horizontal padding − contact icon (9) − icon gap (4).
+const CONTACT_TEXT_W = 595.28 * SIDEBAR_RATIO - 2 * SIDEBAR_PAD_X - 13;
 
 const st = StyleSheet.create({
   page: { fontFamily: FONT, fontSize: 10, lineHeight: 1.45 },
   sidebarBg: { position: "absolute", top: 0, left: 0, bottom: 0, width: SIDEBAR_W },
   row: { flexDirection: "row" },
-  sidebar: { width: SIDEBAR_W, paddingVertical: 30, paddingHorizontal: 18 },
+  sidebar: { width: SIDEBAR_W, paddingVertical: 30, paddingHorizontal: SIDEBAR_PAD_X },
   main: { width: "66%", paddingVertical: 30, paddingHorizontal: 24 },
   name: { fontSize: 17, fontFamily: FONT_BOLD, marginTop: 12, lineHeight: 1.25 },
   role: { fontSize: 11, marginTop: 4 },
@@ -46,7 +50,7 @@ export default function ModernTemplate({ data, theme }: { data: CvData; theme: T
             <Text style={[st.name, { color: white }]}>{p.name || "Your Name"}</Text>
             {data.summary.position ? <Text style={[st.role, { color: white }]}>{data.summary.position}</Text> : null}
 
-            <ContactBar p={p} theme={theme} color={white} direction="column" />
+            <ContactBar p={p} theme={theme} color={white} direction="column" columnTextWidth={CONTACT_TEXT_W} />
 
             {data.skills.length > 0 ? (
               <SideBlock title="SKILLS"><Text style={{ color: white }}>{data.skills.join(", ")}</Text></SideBlock>

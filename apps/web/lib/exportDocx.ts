@@ -8,6 +8,7 @@ import {
   Document, Paragraph, TextRun, TabStopType, TabStopPosition, BorderStyle,
 } from "docx";
 import type { CvData, SimpleEntry } from "@/lib/types";
+import { displayUrl, printableCv } from "@/lib/cv-print";
 
 const ACCENTS = ["725BFE", "0EA5A4", "2563EB", "00A862", "E5484D", "B7791F"];
 const TEXT = "2E2E2E";
@@ -59,7 +60,8 @@ function skillLine(label: string, value: string): Paragraph {
   ] });
 }
 
-export function buildCvDocx(data: CvData, accent?: number | string): Document {
+export function buildCvDocx(input: CvData, accent?: number | string): Document {
+  const data = printableCv(input); // blank entries never reach the document
   const a = hexAccent(accent);
   const p = data.personalInfo;
   const c: Paragraph[] = [];
@@ -67,8 +69,17 @@ export function buildCvDocx(data: CvData, accent?: number | string): Document {
   // Header — name, role, contact (all in the BODY, never header/footer)
   c.push(new Paragraph({ spacing: { after: 20 }, children: [new TextRun({ text: p.name || "Your Name", bold: true, color: TEXT, size: 44 })] }));
   if (data.summary.position) c.push(new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: data.summary.position, color: MUTED, size: 24 })] }));
-  const contact = [p.email, p.phone, [p.cityState, p.country].filter(Boolean).join(", "), p.website, p.linkedin].filter(Boolean).join("   |   ");
-  if (contact) c.push(new Paragraph({ spacing: { after: 160 }, children: [new TextRun({ text: contact, color: MUTED, size: 18 })] }));
+  // Two short lines, not one long one: readers that paginate the DOCX (and Word itself) wrapped
+  // the single long line inside the LinkedIn URL, so parsers read a truncated slug (ATS lab).
+  const contact1 = [p.email, p.phone, [p.cityState, p.country].filter(Boolean).join(", ")].filter(Boolean).join("   |   ");
+  const links = [p.website, p.linkedin].filter(Boolean).map(displayUrl);
+  // Long links each get their own line so no URL is ever wrapped mid-token.
+  const linkLines = links.join("   |   ").length <= 60 ? [links.join("   |   ")].filter(Boolean) : links;
+  const contactLines = [contact1, ...linkLines].filter(Boolean);
+  contactLines.forEach((text, i) => c.push(new Paragraph({
+    spacing: { after: i === contactLines.length - 1 ? 160 : 20 },
+    children: [new TextRun({ text, color: MUTED, size: 18 })],
+  })));
 
   // Summary
   if (data.summary.valueProposition) { c.push(heading("Summary", a)); c.push(para(data.summary.valueProposition)); }
@@ -133,9 +144,13 @@ export function buildCvDocx(data: CvData, accent?: number | string): Document {
   });
 }
 
-export async function downloadCvDocx(data: CvData, accent?: number | string): Promise<void> {
+export async function renderCvDocxBlob(data: CvData, accent?: number | string): Promise<Blob> {
   const { Packer } = await import("docx");
-  const blob = await Packer.toBlob(buildCvDocx(data, accent));
+  return Packer.toBlob(buildCvDocx(data, accent));
+}
+
+export async function downloadCvDocx(data: CvData, accent?: number | string): Promise<void> {
+  const blob = await renderCvDocxBlob(data, accent);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

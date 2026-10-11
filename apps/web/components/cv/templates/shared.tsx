@@ -4,6 +4,7 @@
 // colored section headings with a rule, consistent section spacing.
 import { View, Text, Image, Svg, Path, StyleSheet } from "@react-pdf/renderer";
 import type { CvData, SimpleEntry } from "@/lib/types";
+import { displayUrl, fitFontSize } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
 
 /* ---------------------------------------------------------------- spacing scale */
@@ -37,6 +38,11 @@ export function Avatar({ src, size = 64, radius }: { src?: string; size?: number
   return <Image src={src} style={{ width: size, height: size, borderRadius: radius ?? size / 2, objectFit: "cover" }} />;
 }
 
+/** Separator between inline items. SINGLE spaces on purpose: react-pdf's textkit treats only a
+ *  single " " as a breakable space — a double space becomes an in-word break point, and a line
+ *  wrapping there gets a fake hyphen ("Kafka ·-", caught by the ATS lab on a 20-skill CV). */
+export const SEP = " · ";
+
 /* --------------------------------------------------------------------- helpers  */
 export function dateRange(start?: string, end?: string, ongoing?: boolean): string {
   const finish = ongoing ? "Present" : end;
@@ -58,27 +64,43 @@ export function contactPairs(p: CvData["personalInfo"]): ContactPair[] {
     p.email ? { icon: "mail", text: p.email } : null,
     p.phone ? { icon: "phone", text: p.phone } : null,
     loc ? { icon: "pin", text: loc } : null,
-    p.website ? { icon: "globe", text: p.website } : null,
-    p.linkedin ? { icon: "link", text: p.linkedin } : null,
+    p.website ? { icon: "globe", text: displayUrl(p.website) } : null,
+    p.linkedin ? { icon: "link", text: displayUrl(p.linkedin) } : null,
   ].filter(Boolean) as ContactPair[];
 }
 
 /* ------------------------------------------------------------------- contact    */
 export function ContactBar({
-  p, theme, color, direction = "row",
-}: { p: CvData["personalInfo"]; theme: TemplateTheme; color?: string; direction?: "row" | "column" }) {
+  p, theme, color, direction = "row", columnTextWidth,
+}: {
+  p: CvData["personalInfo"]; theme: TemplateTheme; color?: string; direction?: "row" | "column";
+  /** Width (pt) available to the text in a narrow column — long tokens shrink to fit it. */
+  columnTextWidth?: number;
+}) {
   const c = color ?? theme.muted;
   const items = contactPairs(p);
   return (
     <View style={direction === "row"
       ? { flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 3, marginTop: 6 }
       : { flexDirection: "column", rowGap: 4, marginTop: 8 }}>
-      {items.map((it, i) => (
-        <View key={i} style={{ flexDirection: "row", alignItems: "center", columnGap: 4 }}>
-          <Icon name={it.icon} color={c} />
-          <Text style={{ fontSize: 9, color: c, lineHeight: 1 }}>{it.text}</Text>
-        </View>
-      ))}
+      {items.map((it, i) =>
+        direction === "column" ? (
+          // Narrow column (Modern sidebar): ONE Text per contact item, never split or wrapped —
+          // the ATS lab showed a wrapped/split e-mail or URL is lost by every extractor (pdf.js
+          // even joins split pieces with spaces). Long tokens shrink to fit one line instead.
+          <View key={i} style={{ flexDirection: "row", alignItems: "center", columnGap: 4 }}>
+            <Icon name={it.icon} color={c} />
+            <Text style={{ fontSize: columnTextWidth ? fitFontSize(it.text, columnTextWidth) : 9, color: c, lineHeight: 1.2 }}>
+              {it.text}
+            </Text>
+          </View>
+        ) : (
+          <View key={i} style={{ flexDirection: "row", alignItems: "center", columnGap: 4 }}>
+            <Icon name={it.icon} color={c} />
+            <Text style={{ fontSize: 9, color: c, lineHeight: 1 }}>{it.text}</Text>
+          </View>
+        )
+      )}
     </View>
   );
 }
@@ -142,6 +164,15 @@ export function ExperienceBody({ data, theme }: { data: CvData; theme: TemplateT
       {data.work.map((w) => {
         const dates = dateRange(w.startDate, w.endDate, w.current);
         const loc = [w.cityState, w.country].filter(Boolean).join(", ");
+        if (theme.meta === "stacked") {
+          return (
+            <View key={w.id}>
+              <Text style={[meta.title, { color: theme.text }]}>{w.role || w.company || "—"}</Text>
+              <Text style={{ color: theme.muted }}>{[dates, w.role ? w.company : "", loc].filter(Boolean).join(SEP)}</Text>
+              <BulletList text={w.description} theme={theme} />
+            </View>
+          );
+        }
         return (
           <View key={w.id}>
             <SplitRow
@@ -165,7 +196,16 @@ export function EducationBody({ data, theme }: { data: CvData; theme: TemplateTh
     <View style={{ rowGap: GAP.entry }}>
       {data.education.map((e) => {
         const dates = dateRange(e.startDate, e.endDate);
-        const right = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join("  ·  ");
+        const right = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP);
+        if (theme.meta === "stacked") {
+          return (
+            <View key={e.id}>
+              <Text style={[meta.title, { color: theme.text }]}>{e.degree || e.institution || "—"}</Text>
+              <Text style={{ color: theme.muted }}>{[dates, e.degree ? e.institution : "", e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP)}</Text>
+              {e.additional ? <Text style={{ color: theme.text, marginTop: 1 }}>{e.additional}</Text> : null}
+            </View>
+          );
+        }
         return (
           <View key={e.id}>
             <SplitRow
@@ -185,7 +225,7 @@ export function EducationBody({ data, theme }: { data: CvData; theme: TemplateTh
 }
 
 export function SkillsBody({ data, theme, stacked = false }: { data: CvData; theme: TemplateTheme; stacked?: boolean }) {
-  const sep = stacked ? ", " : "  ·  ";
+  const sep = stacked ? ", " : SEP;
   const Group = ({ label, value }: { label: string; value: string }) => (
     <Text style={{ color: theme.text, marginBottom: stacked ? 4 : 2 }}>
       <Text style={{ fontFamily: FONT_BOLD, color: theme.text }}>{label}: </Text>
@@ -209,7 +249,7 @@ export function SimpleSection({ items, theme }: { items: SimpleEntry[]; theme: T
   return (
     <View style={{ rowGap: GAP.entry }}>
       {items.map((it) => {
-        const right = [it.organisation || it.issuer || it.publisher, it.date].filter(Boolean).join("  ·  ");
+        const right = [it.organisation || it.issuer || it.publisher, it.date].filter(Boolean).join(SEP);
         return (
           <View key={it.id}>
             <SplitRow

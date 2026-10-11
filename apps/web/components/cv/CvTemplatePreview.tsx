@@ -18,6 +18,7 @@ import { getTemplate } from "@/components/cv/templates";
 import { resolveTheme } from "@/components/cv/templates/theme";
 import { registerFonts } from "@/components/cv/templates/fonts";
 import type { CvData } from "@/lib/types";
+import { printableCv } from "@/lib/cv-print";
 
 registerFonts();
 
@@ -33,7 +34,7 @@ export function CvTemplatePreview({
   const { component: Template } = getTemplate(templateId);
   return (
     <PDFViewer style={{ width: "100%", height: "100%", border: "none" }} showToolbar={false}>
-      <Template data={data} theme={resolveTheme(templateId, accent)} />
+      <Template data={printableCv(data)} theme={resolveTheme(templateId, accent)} />
     </PDFViewer>
   );
 }
