@@ -1,23 +1,33 @@
 "use client";
-import { useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useNavigate } from "@/lib/router";
 import { useApp } from "../../store/AppContext";
-import { MenuIcon, UserIcon } from "../icons";
+import { useCvs } from "@/hooks/use-cvs";
+import { MenuIcon } from "../icons";
+import { UserOutline } from "../figma-icons";
 import SignInModal from "../modals/SignInModal";
 import { FeedbackLink } from "./FeedbackLink";
 
 type NavKey = "cvs" | "create" | "improve" | "jobfit" | "tracker";
 
-const NAV: { key: NavKey; label: string; to: string }[] = [
-  // The dashboard is "home" (PAGES-DESIGN-SPEC §2). Without this entry the builder had no
-  // in-app way back to the CV list — so no way to start a second CV or switch between CVs.
-  { key: "cvs", label: "Your CVs", to: "/app" },
-  { key: "create", label: "Create ATS Resume", to: "/app/create" },
-  { key: "improve", label: "Improve My Resume", to: "/app/improve" },
-  { key: "jobfit", label: "Check Job Fit", to: "/app/jobfit" },
-  { key: "tracker", label: "Tracker", to: "/app/tracker" },
-];
+type NavItem = { key: NavKey; label: string; to: string; count?: number };
+
+/**
+ * Figma "Menu": Create / Improve / Check Job Fit, then "My Resumes (n)" once there is a CV to go
+ * back to (the Figma variant with a count). Tracker is ours (not in Figma) and needs an account,
+ * so a guest never sees it — a guest's sidebar is exactly the Figma one.
+ */
+function navItems(cvCount: number, signedIn: boolean, active: NavKey): NavItem[] {
+  const items: NavItem[] = [
+    { key: "create", label: "Create ATS Resume", to: "/app/create" },
+    { key: "improve", label: "Improve My Resume", to: "/app/improve" },
+    { key: "jobfit", label: "Check Job Fit", to: "/app/jobfit" },
+  ];
+  if (cvCount > 0 || active === "cvs") items.push({ key: "cvs", label: "My Resumes", to: "/app", count: cvCount });
+  if (signedIn || active === "tracker") items.push({ key: "tracker", label: "Tracker", to: "/app/tracker" });
+  return items;
+}
 
 export default function AppShell({
   title,
@@ -31,6 +41,8 @@ export default function AppShell({
   children: ReactNode;
 }) {
   const { user, logout } = useApp();
+  const cvs = useCvs();
+  const nav = navItems(cvs?.length ?? 0, Boolean(user), active);
   const [signIn, setSignIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -47,18 +59,25 @@ export default function AppShell({
         </Link>
 
         <nav className="appshell__nav">
-          {NAV.map((n) => (
-            <Link
-              key={n.key}
-              href={n.to}
-              className={`appshell__nav-item${active === n.key ? " is-active" : ""}`}
-              data-figma={`nav-${n.key}`}
-              onClick={closeMenu}
-            >
-              {active === n.key && <span className="appshell__dot" data-figma="nav-dot" />}
-              {n.label}
-            </Link>
+          {nav.map((n, i) => (
+            <Fragment key={n.key}>
+              <span className="appshell__sep" data-figma={`nav-sep-${i}`} aria-hidden="true" />
+              <Link
+                href={n.to}
+                className={`appshell__nav-item${active === n.key ? " is-active" : ""}`}
+                aria-current={active === n.key ? "page" : undefined}
+                data-figma={`nav-${n.key}`}
+                onClick={closeMenu}
+              >
+                {active === n.key && <span className="appshell__dot" data-figma="nav-dot" />}
+                <span>
+                  {n.label}
+                  {n.count !== undefined && n.count > 0 && <span className="appshell__count"> ({n.count})</span>}
+                </span>
+              </Link>
+            </Fragment>
           ))}
+          <span className="appshell__sep" data-figma={`nav-sep-${nav.length}`} aria-hidden="true" />
         </nav>
 
         <div className="appshell__side-footer">
@@ -84,7 +103,8 @@ export default function AppShell({
                   setSignIn(true);
                 }}
               >
-                <UserIcon size={16} /> Sign in
+                {/* ep:user cropped to its glyph: Figma's 15.72×18 vector */}
+                <UserOutline width={15.43} height={18} viewBox="128 64 768 896" /> Sign in
               </button>
             </>
           )}

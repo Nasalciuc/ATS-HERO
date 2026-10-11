@@ -25,6 +25,11 @@ or missing check — that is the CI gate (`.github/workflows/design-check.yml`).
 | font size / weight / line height / letter spacing / colours / radii where the spec lists them | emoji artwork (Apple vs Noto vs Segoe) |
 | | the pixel-diff % — informational only |
 
+Fonts: the Figma file uses SF Pro Display (titles, badge), Helvetica (menu, buttons) and Inter
+(everything in cards). SF Pro can't be shipped (Apple licence), so `--font-display` is the system
+stack — SF on Apple devices, Segoe UI / Roboto elsewhere. Inter is self-hosted from
+`public/fonts/inter` (OFL), so it renders identically on every OS.
+
 ## Adding a screen
 
 1. Tag the elements: `data-figma="<key>"` (see `components/app/AppShell.tsx`, `ProgressBar.tsx`).
@@ -35,5 +40,21 @@ or missing check — that is the CI gate (`.github/workflows/design-check.yml`).
 3. Write `specs/<id>.json`: `frame`, `route`, `viewport`, optional `setup` steps
    (`{ "click": "<selector>" }`, `{ "fill": ["<selector>", "text"] }`, `{ "wait": ms }`),
    `reference` (the Figma export PNG) and `checks`.
-4. Iterate until it passes, then set `"locked": true`. (`builder-step1` starts unlocked: today's
-   builder is 0/42 — the restyle that brings it to 42/42 locks it.)
+4. Iterate until it passes, then set `"locked": true`.
+
+## Icons
+
+`components/figma-icons.tsx` is generated from the exact Iconify icons the Figma layers name
+(`icons/manifest.json` → `icons/generate.mjs`; sources and licences in `ICON-SOURCES.md`, which
+also lists the CC BY icons that need credit). Don't hand-edit the generated file.
+
+## Known, deliberate deviations from Figma
+
+- **Title / badge font** off Apple devices (system font instead of SF Pro).
+- **Emoji** are the platform's own.
+- **Sidebar extras**: "My Resumes (n)" appears once there is a CV (Figma's variant with a count);
+  "Tracker" only for signed-in users; a small "Feedback" link in the sidebar's empty bottom strip.
+  A guest's first visit shows exactly the Figma sidebar.
+- **Below 1728px** Figma has no frames: the content column shrinks (max 1135px), the gutter
+  tightens under 1280px, the sidebar becomes a drawer under 1024px, phones get a compact stepper.
+  The phone/tablet look is derived and awaits design approval.

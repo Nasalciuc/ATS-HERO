@@ -4,7 +4,7 @@ import { useNavigate } from "@/lib/router";
 import AppShell from "../components/app/AppShell";
 import ProgressBar, { type Step } from "../components/app/ProgressBar";
 import ProTips from "../components/app/ProTips";
-import { Eye, Save, ArrowLeft, ArrowRight } from "../components/icons";
+import { EyeOptic, SaveDisk, ArrowUp } from "../components/figma-icons";
 import TipsModal from "../components/modals/TipsModal";
 import AddSectionModal from "../components/modals/AddSectionModal";
 import CompleteModal from "../components/modals/CompleteModal";
@@ -30,17 +30,19 @@ function isSectionFilled(data: CvData, key: SectionKey): boolean {
   return Array.isArray(list) && list.some((i) => i.title.trim());
 }
 
+// Stepper labels break where Figma breaks them ("Professional⏎summary").
 const BASE_STEPS: { key: SectionKey; label: string; emoji: string }[] = [
   { key: "personalInfo", label: "Personal info", emoji: "🪪" },
   { key: "education", label: "Education", emoji: "🎓" },
-  { key: "summary", label: "Professional summary", emoji: "📝" },
-  { key: "work", label: "Work experience", emoji: "💼" },
+  { key: "summary", label: "Professional\nsummary", emoji: "📋" },
+  { key: "work", label: "Work\nexperience", emoji: "💼" },
   { key: "skills", label: "Skills", emoji: "💪" },
 ];
 
-// The page heading can differ from the compact stepper label (Figma).
+// Page heading = Pro Tips badge (Figma); it can differ from the compact stepper label.
 const STEP_TITLES: Partial<Record<SectionKey, string>> = {
   personalInfo: "Personal Info",
+  summary: "Professional summary",
   work: "Work experience / Internship",
 };
 
@@ -163,16 +165,16 @@ export default function BuilderPage() {
       active="create"
       actions={
         <>
-          <button className="topbtn topbtn--ghost" data-figma="btn-preview" onClick={() => setComplete(true)}>
-            <Eye size={18} /> Preview
+          <button className="topbtn topbtn--title topbtn--ghost" data-figma="btn-preview" onClick={() => setComplete(true)}>
+            <EyeOptic /> Preview
           </button>
           <button
-            className="topbtn topbtn--dark"
+            className="topbtn topbtn--title topbtn--dark"
             data-figma="btn-save"
             onClick={() => void save()}
             title={saveError ? `Not saved: ${saveError}` : undefined}
           >
-            <Save size={18} /> {saving ? "Saving…" : saveError ? "Retry save" : "Save"}
+            <SaveDisk /> {saving ? "Saving…" : saveError ? "Retry save" : "Save"}
           </button>
         </>
       }
@@ -189,7 +191,7 @@ export default function BuilderPage() {
 
       <div className="builder">
         <ProTips
-          badge={activeStep?.label ?? ""}
+          badge={pageTitle}
           onExplore={() => setTips(true)}
           extra={
             showActivitiesPrompt
@@ -208,20 +210,20 @@ export default function BuilderPage() {
       <div className="builder__footer">
         <div>
           {activeIndex > 0 ? (
-            <button className="topbtn topbtn--ghost" onClick={back}>
-              <ArrowLeft size={18} /> Back
+            <button className="topbtn topbtn--step topbtn--ghost" data-figma="btn-back" onClick={back}>
+              <ArrowUp className="topbtn__arrow--left" /> Back
             </button>
           ) : null}
         </div>
         <div className="builder__footer__actions">
           {!isLast && (
-            <button className="topbtn topbtn--ghost" data-figma="btn-next" onClick={next}>
-              Next step <ArrowRight size={18} />
+            <button className="topbtn topbtn--step topbtn--ghost" data-figma="btn-next" onClick={next}>
+              Next step <ArrowUp className="topbtn__arrow--right" />
             </button>
           )}
           {/* Figma: step 1 offers only "Next step"; "Complete" appears from step 2 on. */}
           {activeIndex > 0 && (
-            <button className="topbtn topbtn--dark" onClick={finish}>
+            <button className="topbtn topbtn--step topbtn--dark" data-figma="btn-complete" onClick={finish}>
               Complete
             </button>
           )}

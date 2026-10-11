@@ -110,6 +110,8 @@ function AppProviderCore({
         setCv(created); // NOT setData(created.data): the buffer may already hold newer edits
         if (typeof window !== "undefined") localStorage.setItem(CV_ID_KEY, created.id);
       }
+      // A new row changes every CV list on screen (sidebar "My Resumes (n)", dashboard).
+      void mutate((key) => Array.isArray(key) && key[0] === "cvs");
       return created;
     });
     creatingRef.current = promise;

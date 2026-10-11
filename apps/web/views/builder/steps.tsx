@@ -2,6 +2,7 @@
 import { useState, type ReactNode } from "react";
 import { nanoid } from "nanoid";
 import { Field, TextArea } from "../../components/app/Field";
+import { UploadRounded } from "../../components/figma-icons";
 import { Check, Plus, Upload, Trash, BriefcaseSm, PersonSm, FolderSm, Globe } from "../../components/icons";
 import type {
   CvData,
@@ -145,10 +146,11 @@ export function PersonalInfoStep({ data, update }: StepProps) {
         <Field figma="field-name" label="NAME, SURNAME" value={p.name} placeholder="David Smith" onChange={(v) => set({ name: v })} />
         <Field figma="field-email" label="EMAIL" value={p.email} placeholder="davidsmith@gmail.com" onChange={(v) => set({ email: v })} />
         <Field figma="field-phone" label="PHONE" value={p.phone} placeholder="+1 123 456 7890" onChange={(v) => set({ phone: v })} />
-        <div className="field">
+        <div className="field field--photo">
           <span className="field__label" data-figma="photo-label">PHOTO (OPTIONAL)</span>
-          <button className="field__upload" data-figma="upload">
-            <Upload size={16} /> Upload
+          <button type="button" className="field__upload" data-figma="upload">
+            {/* Figma flattened material-symbols:upload-rounded to a bare 16×15 vector: crop to the glyph */}
+            <UploadRounded width={16} height={15} viewBox="4 4.425 16 15.575" preserveAspectRatio="none" /> Upload
           </button>
         </div>
       </div>

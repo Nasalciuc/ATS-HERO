@@ -5,7 +5,7 @@
   "reference": "reference/figma/desktop/function-1-step-1-personal-info.png",
   "route": "/app/create",
   "viewport": { "width": 1728, "height": 1000 },
-  "locked": false,
+  "locked": true,
   "tolerance": 2,
   "checks": [
     { "key": "sidebar", "node": "311:2129" },

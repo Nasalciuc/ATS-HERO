@@ -1,5 +1,5 @@
 "use client";
-import { BulbTips } from "../icons";
+import { TipsBulb, ChevronUp } from "../figma-icons";
 
 export default function ProTips({
   badge,
@@ -18,11 +18,11 @@ export default function ProTips({
         <p className="protips__body" data-figma="tips-body">
           Explore best practices how to improve your chances of passing screening
         </p>
-        <button className="protips__explore" data-figma="tips-explore" onClick={onExplore}>
-          Explore ›
+        <button type="button" className="protips__explore" data-figma="tips-explore" onClick={onExplore}>
+          Explore <ChevronUp />
         </button>
-        <div className="protips__bulb" data-figma="tips-bulb">
-          <BulbTips size={120} />
+        <div className="protips__bulb" data-figma="tips-bulb" aria-hidden="true">
+          <TipsBulb />
         </div>
       </div>
 
@@ -30,7 +30,7 @@ export default function ProTips({
         <div className="protips-extra">
           <h3 className="protips-extra__title">{extra.title}</h3>
           <p className="protips-extra__body">{extra.body}</p>
-          <button className="protips-extra__add" onClick={extra.onAdd}>
+          <button type="button" className="protips-extra__add" onClick={extra.onAdd}>
             + Add section
           </button>
         </div>

@@ -32,11 +32,88 @@
 
   /* Type */
   --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-inter: "Inter", "Helvetica Neue", Arial, sans-serif;
+  /* Figma's three families. SF Pro can't be shipped (Apple licence): the display stack is SF on
+     Apple devices and the platform UI font elsewhere. Inter is self-hosted (see @font-face below). */
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-helvetica: Helvetica, "Helvetica Neue", Arial, sans-serif;
+  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 
   /* Layout */
   --container: 1200px;
   --gutter: 264px;
+
+  /* App shell (Figma "Function 1" frames, 1728×1000) */
+  --side-w: 274px;
+  --app-gap: 57px;      /* sidebar → content */
+  --app-max: 1135px;    /* content column    */
+}
+
+/* Inter 4 (SIL OFL 1.1, public/fonts/inter/LICENSE.txt) from @fontsource/inter 5.3.0.
+   latin + latin-ext cover English and Romanian (ă â î ș ț). */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(/fonts/inter/inter-latin-ext-400-normal.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(/fonts/inter/inter-latin-400-normal.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(/fonts/inter/inter-latin-ext-500-normal.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(/fonts/inter/inter-latin-500-normal.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(/fonts/inter/inter-latin-ext-600-normal.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(/fonts/inter/inter-latin-600-normal.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(/fonts/inter/inter-latin-ext-700-normal.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(/fonts/inter/inter-latin-700-normal.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 * {
@@ -1213,78 +1290,102 @@ p {
 
 /* ============================================================
    APP SHELL (Functions 1–3, Score)
+   Geometry from the Figma "Function 1" frames (1728×1000); every value below is checked by
+   design-check/specs/*.json (npm run design:check). Change the spec and the CSS together.
    ============================================================ */
 .appshell {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: var(--side-w) minmax(0, 1fr);
   min-height: 100vh;
   background: var(--white);
 }
+
+/* ---- sidebar ("Menu" component, 274 wide, #202020) ---- */
 .appshell__side {
-  background: var(--bg-dark);
+  background: var(--ink);
   color: var(--white);
   display: flex;
   flex-direction: column;
-  padding: 24px 20px;
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow-y: auto;
+  font-family: var(--font-helvetica);
 }
 .appshell__logo {
+  align-self: flex-start;
+  margin: 30px;
   font-weight: 700;
   font-size: 20px;
-  letter-spacing: -0.02em;
+  line-height: 23px;
+  letter-spacing: -0.4px;
   color: var(--white);
 }
 .appshell__nav {
-  margin-top: 40px;
+  margin-top: 54px; /* Figma: logo block (30 + 23 + 30) then 54 → first separator at y=137 */
   display: flex;
   flex-direction: column;
+  gap: 2px;
+}
+.appshell__sep {
+  display: block;
+  height: 1px;
+  background: #393939;
 }
 .appshell__nav-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 0;
+  padding: 10px 40px;
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.85);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
-}
-.appshell__nav-item:last-child {
-  border-bottom: none;
+  line-height: 18px;
+  letter-spacing: -0.32px;
+  color: var(--white);
 }
 .appshell__nav-item:hover {
-  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
 }
-.appshell__nav-item.is-active {
-  color: #fff;
-  font-weight: 500;
+.appshell__nav-item:focus-visible {
+  outline: 2px solid var(--violet-300);
+  outline-offset: -2px;
+}
+.appshell__count {
+  color: var(--gray-600);
 }
 .appshell__dot {
-  width: 8px;
-  height: 8px;
+  flex: none;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--green);
 }
 .appshell__side-footer {
+  position: relative;
   margin-top: auto;
+  padding: 30px 25px 90px 30px; /* Figma: 219 wide at x=30; Sign in ends at y=910 of 1000 */
 }
 .appshell__hint {
-  font-size: 13px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.55);
-  margin-bottom: 14px;
+  font-size: 16px;
+  line-height: 18px;
+  letter-spacing: -0.32px;
+  color: var(--gray-500);
+  margin-bottom: 24px;
+  overflow-wrap: anywhere;
 }
 .appshell__signin {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
   justify-content: center;
+  gap: 13px;
+  width: 100%;
+  height: 46px;
+  padding: 0 20px;
   border-radius: 100px;
-  padding: 12px;
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px var(--white);
+  color: var(--white);
+  font-size: 16px;
+  line-height: 18px;
+  letter-spacing: -0.32px;
 }
 .appshell__signin:hover {
   background: rgba(255, 255, 255, 0.08);
@@ -1293,6 +1394,7 @@ p {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  padding: 43px var(--app-gap) 48px;
 }
 .appshell__menu {
   display: none;
@@ -1314,41 +1416,63 @@ p {
   background: rgba(46, 46, 46, 0.45);
   cursor: pointer;
 }
+
+/* ---- title panel (52 tall: title left, 133×52 buttons right) ---- */
 .appshell__topbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 28px 40px 0;
   gap: 16px;
+  width: 100%;
+  max-width: var(--app-max);
+  min-height: 52px;
 }
 .appshell__title {
-  font-weight: 700;
-  font-size: 32px;
-  letter-spacing: -0.01em;
-  color: var(--ink);
   margin: 0;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 44px;
+  letter-spacing: -0.408px;
+  color: var(--ink);
 }
 .appshell__actions {
   display: flex;
-  gap: 12px;
+  gap: 4px;
+  flex: none;
 }
 .appshell__content {
-  padding: 28px 40px 60px;
+  width: 100%;
+  max-width: var(--app-max);
+  margin-top: 44px;
 }
 
-/* top buttons */
+/* ---- buttons (Figma "Buttons": 52 tall pills, Helvetica Bold 16) ---- */
 .topbtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  height: 52px;
+  padding: 0 20px;
   border-radius: 100px;
-  padding: 12px 22px;
+  font-family: var(--font-helvetica);
   font-weight: 700;
-  font-size: 15px;
-  letter-spacing: -0.01em;
+  font-size: 16px;
+  line-height: 18px;
+  letter-spacing: -0.32px;
+  white-space: nowrap;
+}
+.topbtn--title {
+  width: 133px;
+  padding: 0 10px;
+}
+.topbtn--step {
+  width: 160px;
 }
 .topbtn--ghost {
-  background: var(--white);
+  background: transparent;
   color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--ink);
 }
@@ -1358,77 +1482,120 @@ p {
 .topbtn--dark {
   background: var(--ink);
   color: var(--white);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.topbtn--dark:hover {
+  background: #000;
 }
 .topbtn--dark:disabled {
   opacity: 0.6;
 }
+.topbtn:focus-visible,
+.appshell__signin:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
+.topbtn__arrow--right {
+  transform: rotate(90deg);
+}
+.topbtn__arrow--left {
+  transform: rotate(-90deg);
+}
 
-/* ---------------- progress bar ---------------- */
+/* ---------------- progress bar ("Progressbar": 64px tabs, 46px connectors) ---------------- */
 .progress {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin: 28px 0 24px;
+  height: 98px;
+  margin: 0 0 32px;
   min-width: 0;
 }
 .progress__scroll {
   flex: 1;
   min-width: 0;
+  height: 100%;
+  /* Labels wider than their 64px tab ("Personal info") overhang to the left, as in Figma:
+     widen the clip box without moving the steps. */
+  margin-left: -16px;
+  padding-left: 16px;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.progress__scroll::-webkit-scrollbar {
+  display: none;
 }
 .progress__track {
   display: flex;
   align-items: flex-start;
   width: max-content;
   min-width: 100%;
+  height: 100%;
 }
 .progress__step {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 4px;
   position: relative;
-  flex: 0 0 auto;
-  width: 92px;
+  flex: 0 0 64px;
+  width: 64px;
 }
 .progress__line {
-  position: absolute;
-  top: 22px;
-  right: 50%;
-  width: 100%;
-  height: 2px;
-  background: #d8d8d8;
-  z-index: 0;
+  position: relative;
+  flex: 0 0 46px;
+  height: 62px;
 }
-.progress__line.is-filled {
+.progress__line::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30px;
+  height: 1px;
+  background: #c0c0c0;
+}
+.progress__line.is-filled::before {
+  top: 29px;
+  height: 2px;
   background: var(--green);
+}
+.progress__line--tail {
+  flex: 1 0 46px;
 }
 .progress__node {
   position: relative;
-  width: 44px;
-  height: 44px;
+  flex: none;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: var(--white);
-  box-shadow: inset 0 0 0 1.5px var(--line);
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
 }
 .progress__node.is-current {
+  background: var(--bg-mint);
   box-shadow: inset 0 0 0 2px var(--green);
-  background: #fff;
 }
 .progress__node.is-done {
   box-shadow: inset 0 0 0 2px var(--green);
-  background: #fff;
+}
+.progress__node:focus-visible,
+.progress__add:focus-visible .progress__add-node {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
 }
 .progress__emoji {
-  font-size: 22px;
-  line-height: 1;
-  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  width: 44px;
+  height: 44px;
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 44px;
+  letter-spacing: -0.6px;
+  text-align: center;
 }
 .progress__check {
   position: absolute;
@@ -1445,15 +1612,15 @@ p {
 }
 .progress__remove {
   position: absolute;
-  top: -6px;
-  left: calc(50% + 14px);
-  width: 16px;
-  height: 16px;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: var(--white);
   box-shadow: inset 0 0 0 1px var(--line);
   color: var(--gray-600);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -1465,195 +1632,478 @@ p {
   box-shadow: inset 0 0 0 1px var(--red);
 }
 .progress__label {
-  margin-top: 8px;
+  flex: none;
+  width: max-content;
+  font-family: var(--font-inter);
+  font-weight: 500;
   font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
   text-align: center;
-  color: var(--gray-600);
-  line-height: 1.2;
+  white-space: pre-line;
+  color: #757575;
 }
 .progress__label.is-current {
-  color: var(--green);
   font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--green);
 }
 .progress__add {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  flex: none;
+  gap: 4px;
+  flex: 0 0 62px;
+  width: 62px;
+  padding: 0;
   color: var(--green);
 }
 .progress__add-node {
-  width: 44px;
-  height: 44px;
+  flex: none;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1.5px var(--green);
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .progress__add-label {
-  font-size: 12px;
+  width: max-content;
+  font-family: var(--font-inter);
   font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
 }
 
-/* ---------------- builder ---------------- */
+/* ---------------- builder (Pro Tips 252 + form card, 16 apart, ≥455 tall) ---------------- */
 .builder {
   display: grid;
-  grid-template-columns: 270px 1fr;
-  gap: 24px;
-  align-items: start;
+  grid-template-columns: 252px minmax(0, 1fr);
+  column-gap: 16px;
+  min-height: 455px;
 }
 .protips-col {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 .protips {
   position: relative;
-  background: #efeaff;
-  border-radius: 16px;
-  padding: 24px;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 21px 20px 21px 21px;
+  background: var(--bg-page);
+  border: 1px solid #dad4ff;
+  border-radius: 10px;
   overflow: hidden;
-  min-height: 250px;
 }
 .protips__badge {
-  display: inline-block;
-  background: #d9d2ff;
-  color: #5b49d6;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
   border-radius: 100px;
-  padding: 4px 12px;
+  background: #d4cdff;
+  color: var(--violet-600);
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 12px;
-  font-weight: 500;
+  line-height: 13px;
+  white-space: nowrap;
 }
 .protips__title {
-  margin: 18px 0 10px;
+  position: relative;
+  z-index: 1;
+  margin: 24px 0 0;
+  width: 209px;
+  max-width: 100%;
+  font-family: var(--font-inter);
   font-weight: 700;
-  font-size: 28px;
-  letter-spacing: -0.02em;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.6px;
   color: var(--ink);
 }
 .protips__body {
-  font-size: 15px;
-  line-height: 1.35;
-  color: #6a6a6a;
-  max-width: 200px;
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+  width: 209px;
+  max-width: 100%;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 19px;
+  letter-spacing: -0.32px;
+  color: var(--gray-700);
 }
 .protips__explore {
-  margin-top: 14px;
-  color: var(--violet-600);
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 24px;
+  padding: 0;
+  height: 21px;
+  font-family: var(--font-inter);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
+  line-height: 19px;
+  letter-spacing: -0.32px;
+  color: var(--violet-600);
+}
+.protips__explore svg {
+  transform: rotate(90deg);
 }
 .protips__bulb {
   position: absolute;
-  right: 10px;
-  bottom: -10px;
-  color: #c9bff5;
+  left: 58px;
+  top: 281px;
+  width: 145px;
+  height: 145px;
+  color: #d4cdff;
+  pointer-events: none;
+}
+.protips__bulb svg {
+  width: 100%;
+  height: 100%;
 }
 .protips-extra {
-  background: #d6f7e2;
-  border-radius: 16px;
-  padding: 24px;
+  background: var(--bg-mint);
+  border-radius: 10px;
+  padding: 21px;
 }
 .protips-extra__title {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
+  font-family: var(--font-inter);
   font-weight: 700;
-  font-size: 26px;
-  letter-spacing: -0.02em;
+  font-size: 24px;
+  line-height: 29px;
+  letter-spacing: -0.48px;
   color: var(--ink);
 }
 .protips-extra__body {
+  font-family: var(--font-inter);
+  font-weight: 500;
   font-size: 14px;
-  line-height: 1.35;
+  line-height: 17px;
   color: #4f6b58;
 }
 .protips-extra__add {
-  margin-top: 14px;
-  color: #0a8f43;
+  margin-top: 16px;
+  padding: 0;
+  font-family: var(--font-inter);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
+  color: #0a8f43;
 }
 .builder__panel {
+  min-width: 0;
+  padding: 43px;
   background: #f8f8f8;
   border: 1px solid var(--line);
   border-radius: 20px;
-  padding: 32px;
-  min-height: 280px;
 }
 .builder__footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-top: 28px;
+  gap: 6px;
+  margin: 24px 0 0 268px; /* aligned with the form card: 252 (tips) + 16 */
 }
 .builder__footer__actions {
   display: flex;
-  gap: 12px;
+  gap: 6px;
   margin-left: auto;
 }
 
-/* form fields */
+/* form fields ("Text field": 12px Inter label, 4px gap, 41px input) */
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px 40px;
+  grid-template-columns: repeat(2, minmax(0, 373px));
+  column-gap: 32px;
+  row-gap: 16px;
+  align-items: start;
 }
 .form-col {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
+  min-width: 0;
 }
 .form-single {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  max-width: 760px;
+  gap: 16px;
+  max-width: 778px;
 }
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
+}
+.field--photo {
+  gap: 8px;
+  margin-top: 3px; /* Figma: 19 between the fields and the photo group */
 }
 .field__label {
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
   color: var(--gray-600);
   text-transform: uppercase;
 }
 .field__input {
-  background: var(--white);
-  border: 1px solid #e6e6e6;
-  border-radius: 10px;
-  padding: 12px 14px;
-  font-size: 15px;
-  font-family: inherit;
-  color: var(--ink);
   width: 100%;
+  min-height: 41px;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--white);
+  font-family: var(--font-inter);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+  letter-spacing: -0.28px;
+  color: var(--ink);
+}
+input.field__input,
+select.field__input {
+  height: 41px;
+}
+.field__input::placeholder {
+  color: #cccccc;
+  opacity: 1;
 }
 .field__input:focus {
   outline: none;
-  border-color: var(--violet-600);
+  box-shadow: inset 0 0 0 1px var(--violet-600);
 }
 .field__textarea {
   resize: vertical;
-  line-height: 1.4;
 }
 .field__upload {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: var(--white);
+  gap: 6px;
+  height: 37px;
+  padding: 0 30px;
   border-radius: 100px;
-  padding: 10px 18px;
+  background: transparent;
   box-shadow: inset 0 0 0 1px var(--ink);
-  font-weight: 600;
+  font-family: var(--font-inter);
+  font-weight: 500;
   font-size: 14px;
+  line-height: 17px;
+  letter-spacing: -0.28px;
   color: var(--ink);
+}
+.field__upload svg {
+  color: var(--violet-300);
+}
+.field__upload:hover {
+  background: var(--white);
+}
+
+/* ---------------- app shell below the Figma frame ----------------
+   Figma has desktop frames only (1728). Narrower: the content column shrinks first (max 1135),
+   then the gutter tightens, the sidebar becomes a drawer (<1024) and phones get a compact
+   stepper and buttons. The phone/tablet look is derived, pending design approval. */
+@media (max-width: 1279px) {
+  :root {
+    --app-gap: 32px;
+  }
+}
+@media (max-width: 1199px) {
+  .builder {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 16px;
+    min-height: 0;
+  }
+  .builder__footer {
+    margin-left: 0;
+  }
+  /* Pro Tips becomes a wide banner: text left, bulb right */
+  .protips {
+    padding-right: 168px;
+  }
+  .protips__title,
+  .protips__body {
+    width: auto;
+    max-width: 440px;
+  }
+  .protips__bulb {
+    left: auto;
+    right: 16px;
+    top: 50%;
+    width: 136px;
+    height: 136px;
+    transform: translateY(-50%);
+  }
+}
+@media (max-width: 1023px) {
+  :root {
+    --app-gap: 24px;
+  }
+  .appshell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .appshell__menu {
+    display: inline-flex;
+  }
+  .appshell__backdrop {
+    display: block;
+  }
+  .appshell__side {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 100;
+    width: min(var(--side-w), 86vw);
+    height: 100vh;
+    height: 100dvh;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+  }
+  .appshell__side.is-open {
+    transform: none;
+  }
+  .appshell__main {
+    padding-top: 24px;
+  }
+  .appshell__topbar {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+  .appshell__title {
+    flex: 1 1 260px;
+  }
+  .appshell__actions {
+    margin-left: auto;
+  }
+  .appshell__content {
+    margin-top: 32px;
+  }
+}
+@media (max-width: 980px) {
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .form-single {
+    max-width: none;
+  }
+}
+@media (max-width: 720px) {
+  :root {
+    --app-gap: 16px;
+  }
+  .appshell__main {
+    padding-top: 16px;
+    padding-bottom: 32px;
+  }
+  .appshell__title {
+    font-size: 28px;
+    line-height: 32px;
+    letter-spacing: -0.28px;
+  }
+  .appshell__content {
+    margin-top: 24px;
+  }
+  .topbtn {
+    height: 44px;
+    padding: 0 16px;
+    font-size: 15px;
+  }
+  .topbtn svg {
+    width: 20px;
+    height: 20px;
+  }
+  .topbtn--title,
+  .topbtn--step {
+    width: auto;
+  }
+  .progress {
+    height: 80px;
+    margin-bottom: 24px;
+  }
+  .progress__step,
+  .progress__add {
+    flex-basis: 52px;
+    width: 52px;
+  }
+  .progress__node,
+  .progress__add-node {
+    width: 52px;
+    height: 52px;
+  }
+  .progress__emoji {
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+    line-height: 36px;
+  }
+  .progress__add-node svg {
+    width: 36px;
+    height: 36px;
+  }
+  .progress__line {
+    flex-basis: 24px;
+    height: 52px;
+  }
+  .progress__line::before {
+    top: 25px;
+  }
+  .progress__line.is-filled::before {
+    top: 24px;
+  }
+  .progress__line--tail {
+    flex: 1 0 24px;
+  }
+  .progress__label,
+  .progress__add-label {
+    font-size: 11px;
+    line-height: 13px;
+  }
+  .protips {
+    padding: 16px 112px 16px 16px;
+  }
+  .protips__title {
+    margin-top: 12px;
+    font-size: 24px;
+    line-height: 29px;
+  }
+  .protips__body {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 17px;
+  }
+  .protips__explore {
+    margin-top: 12px;
+  }
+  .protips__bulb {
+    right: 8px;
+    width: 96px;
+    height: 96px;
+  }
+  .builder__panel {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+  .builder__footer,
+  .builder__footer__actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 .field-row {
   display: grid;
@@ -2905,19 +3355,7 @@ p {
   white-space: nowrap;
 }
 
-@media (max-width: 1200px) {
-  .builder {
-    grid-template-columns: 1fr;
-  }
-  .protips__body {
-    max-width: none;
-  }
-}
-
 @media (max-width: 980px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
   .complete {
     grid-template-columns: 1fr;
   }
@@ -2963,93 +3401,6 @@ p {
 }
 
 @media (max-width: 720px) {
-  .appshell {
-    grid-template-columns: 1fr;
-  }
-  .appshell__menu {
-    display: inline-flex;
-  }
-  .appshell__backdrop {
-    display: block;
-  }
-  .appshell__side {
-    position: fixed;
-    inset: 0 auto 0 0;
-    z-index: 100;
-    width: min(280px, 86vw);
-    height: 100vh;
-    transform: translateX(-105%);
-    transition: transform 0.2s ease;
-    flex-direction: column;
-    align-items: stretch;
-    flex-wrap: nowrap;
-    gap: 0;
-  }
-  .appshell__side.is-open {
-    transform: translateX(0);
-  }
-  .appshell__nav {
-    margin-top: 32px;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .appshell__side-footer {
-    margin-top: auto;
-  }
-  .appshell__hint {
-    display: block;
-  }
-  .appshell__topbar {
-    flex-wrap: wrap;
-    align-items: center;
-    padding: 20px 20px 0;
-    gap: 12px;
-  }
-  .appshell__title {
-    flex: 1;
-    min-width: 0;
-    font-size: 24px;
-  }
-  .appshell__actions {
-    flex: 1 1 100%;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-  }
-  .appshell__content {
-    padding: 20px 20px 48px;
-  }
-  .topbtn {
-    padding: 10px 16px;
-    font-size: 14px;
-  }
-  .builder__panel {
-    padding: 20px 16px;
-  }
-  .protips {
-    min-height: 0;
-    padding: 20px;
-  }
-  .protips__title {
-    font-size: 22px;
-  }
-  .progress__step {
-    width: 76px;
-  }
-  .progress__label {
-    font-size: 11px;
-  }
-  .progress__add-label {
-    font-size: 11px;
-  }
-  .builder__footer {
-    flex-wrap: wrap;
-  }
-  .builder__footer .topbtn {
-    flex: 1 1 auto;
-  }
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
   .score-row__entry {
     display: none;
   }
@@ -3389,11 +3740,14 @@ p {
 }
 
 /* ---------------- feedback link (s7) ---------------- */
+/* Not in Figma: sits in the sidebar's empty bottom strip so it moves nothing the design places. */
 .appshell__feedback {
-  display: inline-block;
-  margin-top: 16px;
+  position: absolute;
+  left: 30px;
+  bottom: 30px;
   font-size: 13px;
-  color: var(--muted);
+  line-height: 15px;
+  color: var(--gray-500);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
