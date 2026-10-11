@@ -163,11 +163,12 @@ export default function BuilderPage() {
       active="create"
       actions={
         <>
-          <button className="topbtn topbtn--ghost" onClick={() => setComplete(true)}>
+          <button className="topbtn topbtn--ghost" data-figma="btn-preview" onClick={() => setComplete(true)}>
             <Eye size={18} /> Preview
           </button>
           <button
             className="topbtn topbtn--dark"
+            data-figma="btn-save"
             onClick={() => void save()}
             title={saveError ? `Not saved: ${saveError}` : undefined}
           >
@@ -201,7 +202,7 @@ export default function BuilderPage() {
           }
         />
 
-        <div className="builder__panel">{renderStep()}</div>
+        <div className="builder__panel" data-figma="form-card">{renderStep()}</div>
       </div>
 
       <div className="builder__footer">
@@ -214,7 +215,7 @@ export default function BuilderPage() {
         </div>
         <div className="builder__footer__actions">
           {!isLast && (
-            <button className="topbtn topbtn--ghost" onClick={next}>
+            <button className="topbtn topbtn--ghost" data-figma="btn-next" onClick={next}>
               Next step <ArrowRight size={18} />
             </button>
           )}

@@ -23,7 +23,7 @@ export default function ProgressBar({
   const currentIndex = steps.findIndex((s) => s.key === current);
 
   return (
-    <div className="progress">
+    <div className="progress" data-figma="stepper">
       <div className="progress__scroll">
         <div className="progress__track">
         {steps.map((s, i) => {
@@ -47,13 +47,14 @@ export default function ProgressBar({
               )}
               <button
                 className={`progress__node${isCurrent ? " is-current" : ""}${isDone ? " is-done" : ""}`}
+                data-figma={`step-${i}`}
                 onClick={() => onSelect(s.key)}
               >
                 <span className="progress__emoji" aria-hidden>
                   {s.emoji}
                 </span>
               </button>
-              <span className={`progress__label${isCurrent ? " is-current" : ""}`}>{s.label}</span>
+              <span className={`progress__label${isCurrent ? " is-current" : ""}`} data-figma={`step-label-${i}`}>{s.label}</span>
             </div>
           );
         })}
@@ -61,7 +62,7 @@ export default function ProgressBar({
       </div>
 
       <button className="progress__add" onClick={onAddSection}>
-        <span className="progress__add-node"><Plus size={18} /></span>
+        <span className="progress__add-node" data-figma="step-add"><Plus size={18} /></span>
         <span className="progress__add-label">Add section</span>
       </button>
     </div>

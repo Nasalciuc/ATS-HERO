@@ -12,16 +12,16 @@ export default function ProTips({
 }) {
   return (
     <div className="protips-col">
-      <div className="protips">
-        <span className="protips__badge">{badge}</span>
-        <h3 className="protips__title">Pro Tips</h3>
-        <p className="protips__body">
+      <div className="protips" data-figma="tips">
+        <span className="protips__badge" data-figma="tips-badge">{badge}</span>
+        <h3 className="protips__title" data-figma="tips-title">Pro Tips</h3>
+        <p className="protips__body" data-figma="tips-body">
           Explore best practices how to improve your chances of passing screening
         </p>
-        <button className="protips__explore" onClick={onExplore}>
+        <button className="protips__explore" data-figma="tips-explore" onClick={onExplore}>
           Explore ›
         </button>
-        <div className="protips__bulb">
+        <div className="protips__bulb" data-figma="tips-bulb">
           <BulbTips size={120} />
         </div>
       </div>

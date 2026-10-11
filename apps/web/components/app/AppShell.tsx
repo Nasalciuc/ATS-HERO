@@ -41,8 +41,8 @@ export default function AppShell({
     <div className="appshell">
       {menuOpen && <button className="appshell__backdrop" aria-label="Close menu" onClick={closeMenu} />}
 
-      <aside className={`appshell__side${menuOpen ? " is-open" : ""}`}>
-        <Link href="/" className="appshell__logo" onClick={closeMenu}>
+      <aside className={`appshell__side${menuOpen ? " is-open" : ""}`} data-figma="sidebar">
+        <Link href="/" className="appshell__logo" data-figma="logo" onClick={closeMenu}>
           ATS Hero
         </Link>
 
@@ -52,9 +52,10 @@ export default function AppShell({
               key={n.key}
               href={n.to}
               className={`appshell__nav-item${active === n.key ? " is-active" : ""}`}
+              data-figma={`nav-${n.key}`}
               onClick={closeMenu}
             >
-              {active === n.key && <span className="appshell__dot" />}
+              {active === n.key && <span className="appshell__dot" data-figma="nav-dot" />}
               {n.label}
             </Link>
           ))}
@@ -74,9 +75,10 @@ export default function AppShell({
             </>
           ) : (
             <>
-              <p className="appshell__hint">Sign in to save your progress and continue editing anytime</p>
+              <p className="appshell__hint" data-figma="signin-hint">Sign in to save your progress and continue editing anytime</p>
               <button
                 className="appshell__signin"
+                data-figma="signin"
                 onClick={() => {
                   closeMenu();
                   setSignIn(true);
@@ -91,11 +93,11 @@ export default function AppShell({
       </aside>
 
       <div className="appshell__main">
-        <header className="appshell__topbar">
+        <header className="appshell__topbar" data-figma="title-panel">
           <button className="appshell__menu" type="button" aria-label="Open menu" onClick={() => setMenuOpen(true)}>
             <MenuIcon size={22} />
           </button>
-          <h1 className="appshell__title">{title}</h1>
+          <h1 className="appshell__title" data-figma="title">{title}</h1>
           <div className="appshell__actions">{actions}</div>
         </header>
         <div className="appshell__content">{children}</div>

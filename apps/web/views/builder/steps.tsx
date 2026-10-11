@@ -142,21 +142,21 @@ export function PersonalInfoStep({ data, update }: StepProps) {
   return (
     <div className="form-grid">
       <div className="form-col">
-        <Field label="NAME, SURNAME" value={p.name} placeholder="David Smith" onChange={(v) => set({ name: v })} />
-        <Field label="EMAIL" value={p.email} placeholder="davidsmith@gmail.com" onChange={(v) => set({ email: v })} />
-        <Field label="PHONE" value={p.phone} placeholder="+1 123 456 7890" onChange={(v) => set({ phone: v })} />
+        <Field figma="field-name" label="NAME, SURNAME" value={p.name} placeholder="David Smith" onChange={(v) => set({ name: v })} />
+        <Field figma="field-email" label="EMAIL" value={p.email} placeholder="davidsmith@gmail.com" onChange={(v) => set({ email: v })} />
+        <Field figma="field-phone" label="PHONE" value={p.phone} placeholder="+1 123 456 7890" onChange={(v) => set({ phone: v })} />
         <div className="field">
-          <span className="field__label">PHOTO (OPTIONAL)</span>
-          <button className="field__upload">
+          <span className="field__label" data-figma="photo-label">PHOTO (OPTIONAL)</span>
+          <button className="field__upload" data-figma="upload">
             <Upload size={16} /> Upload
           </button>
         </div>
       </div>
       <div className="form-col">
-        <Field label="LINKEDIN PROFILE" value={p.linkedin} placeholder="https://www.linkedin.com/in/davidsmith" onChange={(v) => set({ linkedin: v })} />
-        <Field label="PERSONAL WEBSITE" value={p.website} placeholder="https://www.davidsmith.com" onChange={(v) => set({ website: v })} />
-        <Field label="COUNTRY" value={p.country} placeholder="Germany" onChange={(v) => set({ country: v })} />
-        <Field label="CITY/STATE" value={p.cityState} placeholder="Berlin" onChange={(v) => set({ cityState: v })} />
+        <Field figma="field-linkedin" label="LINKEDIN PROFILE" value={p.linkedin} placeholder="https://www.linkedin.com/in/davidsmith" onChange={(v) => set({ linkedin: v })} />
+        <Field figma="field-website" label="PERSONAL WEBSITE" value={p.website} placeholder="https://www.davidsmith.com" onChange={(v) => set({ website: v })} />
+        <Field figma="field-country" label="COUNTRY" value={p.country} placeholder="Germany" onChange={(v) => set({ country: v })} />
+        <Field figma="field-city" label="CITY/STATE" value={p.cityState} placeholder="Berlin" onChange={(v) => set({ cityState: v })} />
       </div>
     </div>
   );
