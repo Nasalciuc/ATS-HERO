@@ -72,22 +72,27 @@ export default function TipsModal({
 }) {
   const groups = TIPS[section] ?? GENERIC;
   return (
-    <Modal open={open} onClose={onClose} variant="center" width={620}>
+    <Modal open={open} onClose={onClose} variant="center" panelClassName="modal__panel--tips">
       <div className="tips">
-        <h2 className="tips__title">Pro Tips</h2>
-        {groups.map((g) => (
-          <div className="tips__group" key={g.label}>
-            <span className="tips__badge">{g.label}</span>
-            {g.tips.map((t, i) => (
-              <div className="tips__row" key={i}>
-                <p className="tips__text">
-                  <span className="tips__num">({i + 1})</span> {t.text}
-                </p>
-                {t.hint && <p className="tips__hint">👉 {t.hint}</p>}
+        <h2 className="tips__title" data-figma="tips-modal-title">Pro Tips</h2>
+        <div className="tips__groups">
+          {groups.map((g) => (
+            <div className="tips__group" key={g.label}>
+              <span className="tips__badge" data-figma={`tips-modal-badge-${g.label}`}>{g.label}</span>
+              <div className="tips__rows">
+                {g.tips.map((t, i) => (
+                  <div className="tips__row" key={i}>
+                    <p className="tips__text">
+                      <span className="tips__num">({i + 1})</span>
+                      <span>{t.text}</span>
+                    </p>
+                    {t.hint && <p className="tips__hint">👉 {t.hint}</p>}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
       </div>
     </Modal>
   );

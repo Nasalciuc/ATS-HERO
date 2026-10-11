@@ -61,6 +61,9 @@ also lists the CC BY icons that need credit). Don't hand-edit the generated file
 | `builder-activities` | 293:1309 Step 10 | Relevant activities added, reached with Next |
 | `builder-awards` | 291:1321 Step 7 | four optional sections added |
 | `builder-publications` | 293:1094 Step 9 | same, last step |
+| `popup-tips` | 336:6042 Pop-up_Tips | Explore on Personal info |
+| `popup-add-section` | 311:3740 / 331:4891 Pop-up_Add section | "+ Add section" in the stepper |
+| `popup-almost-there` | 358:7402 | Awards added and left empty, then Complete |
 
 ## Known, deliberate deviations from Figma
 
@@ -75,6 +78,10 @@ also lists the CC BY icons that need credit). Don't hand-edit the generated file
   last step (the Skills frame hides it, the Publications frame doesn't); the "Add one more …" icon gap
   is 4px everywhere (one frame uses 8px).
 - **Volunteering** has no Figma frame; it reuses the "Relevant activities" layout.
+- **Pop-ups** are centred (two Figma frames sit 49px right / 36px up of centre; the third is
+  centred). "Add section" lists every section not added yet — 5 on a fresh CV, Figma shows 3 — and
+  its "Continue" just closes when nothing is ticked (Figma shows it always enabled). The overlay is
+  Figma's solid #2e2e2e (`--modal-overlay`), not see-through.
 - **Below 1728px** Figma has no frames: the content column shrinks (max 1135px), the gutter
   tightens under 1280px, the sidebar becomes a drawer under 1024px, phones get a compact stepper.
   The phone/tablet look is derived and awaits design approval.

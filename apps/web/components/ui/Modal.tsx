@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, type ReactNode } from "react";
-import { Close } from "../icons";
+import { PlusThin } from "../figma-icons";
 
 type ModalProps = {
   open: boolean;
@@ -35,14 +35,22 @@ export default function Modal({
   if (!open) return null;
 
   return (
-    <div className={`modal modal--${variant}${overlayClassName ? ` ${overlayClassName}` : ""}`} onMouseDown={onClose}>
+    <div
+      className={`modal modal--${variant}${overlayClassName ? ` ${overlayClassName}` : ""}`}
+      data-figma="modal-overlay"
+      onMouseDown={onClose}
+    >
       <div
         className={`modal__panel${panelClassName ? ` ${panelClassName}` : ""}`}
+        role="dialog"
+        aria-modal="true"
+        data-figma="modal-panel"
         style={width ? { width } : undefined}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <button className="modal__close" onClick={onClose} aria-label="Close">
-          <Close size={panelClassName === "modal__panel--signin" ? 20 : 18} />
+        {/* Figma: a 44px ring with mynaui:plus (34px) turned 45° */}
+        <button type="button" className="modal__close" data-figma="modal-close" onClick={onClose} aria-label="Close">
+          <PlusThin size={34} />
         </button>
         {children}
       </div>

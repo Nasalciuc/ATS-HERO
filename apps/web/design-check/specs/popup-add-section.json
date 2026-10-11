@@ -1,0 +1,55 @@
+{
+  "id": "popup-add-section",
+  "title": "Pop-up · Add section",
+  "frame": "311:3740",
+  "reference": "reference/figma/desktop/popup-add-section-1.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "note": "Content follows the v2 frame (331:4891: subtitle + Continue); we list every section not added yet (5 vs Figma's 3), so only the frame, title style, button and close are checked.",
+  "setup": [
+    {
+      "click": ".progress__add"
+    }
+  ],
+  "checks": [
+    {
+      "key": "modal-panel",
+      "box": [
+        590,
+        null,
+        548,
+        null
+      ],
+      "style": {
+        "border-radius": "10px"
+      }
+    },
+    {
+      "key": "dialog-title",
+      "box": [
+        null,
+        null,
+        null,
+        44
+      ],
+      "style": {
+        "font-size": "40px",
+        "font-weight": "600"
+      }
+    },
+    {
+      "key": "dialog-primary",
+      "box": [
+        745,
+        null,
+        238,
+        52
+      ]
+    }
+  ]
+}

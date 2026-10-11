@@ -2782,11 +2782,13 @@ select.field__input {
 /* ============================================================
    MODALS
    ============================================================ */
+/* Figma pop-up frames sit on a solid #2e2e2e; one variable if it should become see-through. */
 .modal {
+  --modal-overlay: #2e2e2e;
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(40, 40, 40, 0.55);
+  background: var(--modal-overlay);
   display: flex;
 }
 .modal--center {
@@ -2821,18 +2823,90 @@ select.field__input {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+/* Figma close: 44px ring (2px #9c9c9c) holding mynaui:plus at 34px, turned 45° */
 .modal__close {
   position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 32px;
-  height: 32px;
+  top: 20px;
+  right: 23px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px #c9c9c9;
-  color: #8a8a8a;
+  box-shadow: inset 0 0 0 2px var(--gray-500);
+  color: var(--gray-500);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
+}
+.modal__close svg {
+  transform: rotate(45deg);
+}
+.modal__close:hover {
+  color: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+.modal__close:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
+
+/* Figma "Pop-up" dialogs (Add section, Almost there): 548×416, radius 10, centred content */
+.modal--center .modal__panel--dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 548px;
+  min-height: 416px;
+  padding: 48px 44px;
+  border-radius: 10px;
+}
+.dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.dialog__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 44px;
+  letter-spacing: -0.408px;
+  color: var(--ink);
+}
+.dialog__text {
+  margin-top: 20px;
+  width: 458px;
+  max-width: 100%;
+  font-family: var(--font-helvetica);
+  font-size: 20px;
+  line-height: 24px;
+  color: var(--black);
+}
+.dialog__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 32px;
+}
+.dialog__btn {
+  width: 238px;
+}
+.dialog__btn--narrow {
+  width: 218px;
+}
+
+/* Figma "Pop-up_Tips": 1049 wide, radius 20, padding 50/80 */
+.modal--center .modal__panel--tips {
+  width: 1049px;
+  padding: 50px 52px 50px 80px;
+  border-radius: 20px;
+  max-height: calc(100vh - 48px);
+}
+.modal__panel--tips .modal__close {
+  top: 50px;
+  right: 52px;
 }
 
 .modal--signin-overlay {
@@ -3156,78 +3230,78 @@ select.field__input {
   flex: none;
 }
 
-/* tips */
+/* tips (Figma "Pop-up_Tips") */
+/* Figma's column is 722 wide but its tip lines run 31px further (the "(n)" gutter) */
+.tips {
+  width: 753px;
+  max-width: 100%;
+  font-family: var(--font-helvetica);
+}
 .tips__title {
+  margin: 0;
   font-weight: 700;
-  font-size: 22px;
-  margin: 0 0 20px;
-}
-.tips__group {
-  margin-bottom: 18px;
-}
-.tips__badge {
-  display: inline-block;
-  background: #e7e1ff;
-  color: #6a59d8;
-  border-radius: 100px;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-.tips__row {
-  margin-bottom: 8px;
-}
-.tips__text {
-  font-size: 15px;
+  font-size: 20px;
+  line-height: 20px;
   color: var(--ink);
 }
+.tips__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 34px;
+}
+.tips__group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+.tips__badge {
+  display: inline-flex;
+  padding: 8px 10px;
+  border-radius: 100px;
+  background: #d4cdff;
+  color: var(--violet-600);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 13px;
+}
+.tips__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tips__text {
+  display: flex;
+  gap: 9px;
+  font-size: 16px;
+  line-height: 18px;
+  letter-spacing: -0.32px;
+  color: var(--black);
+}
 .tips__num {
-  color: var(--gray-500);
-  margin-right: 4px;
+  flex: none;
+  width: 22px;
+  font-weight: 700;
+  color: var(--gray-600);
 }
 .tips__hint {
-  font-size: 13px;
-  color: var(--gray-500);
-  margin-top: 2px;
-  padding-left: 22px;
+  margin-top: 12px;
+  padding-left: 40px;
+  font-size: 16px;
+  line-height: 18px;
+  letter-spacing: -0.32px;
+  color: var(--gray-600);
 }
 
-/* add section */
-.addsection__title {
-  font-weight: 700;
-  font-size: 22px;
-  margin: 0 0 8px;
-}
-.addsection__subtitle {
-  color: var(--gray-500);
-  font-size: 14px;
-  margin-bottom: 20px;
-}
+/* add section (Figma "Pop-up_Add section") */
 .addsection__list {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
-  margin-bottom: 24px;
-}
-.addsection__option {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 16px;
-  color: var(--ink);
-  text-align: left;
-}
-.addsection__option:hover {
-  background: #f6f4ff;
-}
-.addsection__option .is-checked {
-  color: var(--violet-600);
-}
-.addsection__option span:not(.is-checked) {
-  color: #cfcfcf;
+  margin-top: 20px;
 }
 .addsection__empty {
   color: var(--gray-500);
@@ -3236,29 +3310,41 @@ select.field__input {
 .addsection__check {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 4px;
-  font-size: 15px;
+  gap: 4px;
+  height: 24px;
+  padding: 0;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
   color: var(--green);
   text-align: left;
 }
+/* an 18px square with a 2px green border, centred in a 24px box */
 .addsection__box {
+  flex: none;
   width: 18px;
   height: 18px;
-  border-radius: 4px;
-  box-shadow: inset 0 0 0 1.5px var(--green);
+  margin: 3px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 2px var(--green);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  flex: none;
 }
 .addsection__box.is-on {
   background: var(--green);
 }
-.addsection__confirm {
-  width: 100%;
+.addsection__check:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
 }
+.addsection__confirm {
+  margin-top: 32px;
+}
+
 
 /* 404 page not found */
 .notfound {
@@ -3312,26 +3398,7 @@ select.field__input {
   color: var(--gray-500);
 }
 
-/* almost there */
-.almost {
-  text-align: center;
-  padding: 8px 4px;
-}
-.almost__title {
-  font-weight: 700;
-  font-size: 26px;
-  margin: 0 0 10px;
-}
-.almost__subtitle {
-  color: var(--gray-600);
-  font-size: 15px;
-  margin: 0 0 24px;
-}
-.almost__actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
+/* almost there: the shared .dialog styles (Figma "Pop-up_Add section" 358:7402) */
 
 /* complete / preview */
 .complete {
@@ -3533,6 +3600,40 @@ select.field__input {
     width: 100%;
     padding: 28px 20px;
     border-radius: 16px;
+  }
+  .modal--center .modal__panel--dialog {
+    min-height: 0;
+    padding: 72px 20px 28px;
+  }
+  .modal__panel--tips .modal__close,
+  .modal__panel--dialog .modal__close {
+    top: 14px;
+    right: 14px;
+  }
+  .modal--center .modal__panel--tips {
+    padding-top: 30px;
+  }
+  .tips__title {
+    margin-right: 56px;
+  }
+  .tips__hint {
+    padding-left: 31px;
+  }
+  .dialog__title {
+    font-size: 30px;
+    line-height: 34px;
+  }
+  .dialog__text {
+    font-size: 17px;
+    line-height: 21px;
+  }
+  .dialog__actions {
+    flex-direction: column;
+    align-self: stretch;
+  }
+  .dialog__btn,
+  .dialog__btn--narrow {
+    width: 100%;
   }
   .complete {
     grid-template-columns: 1fr;
