@@ -53,7 +53,7 @@ const ICON_KEYS = new Set<SectionKey>([
 ]);
 
 export default function ScorePage() {
-  const { data, update, save, saving } = useApp();
+  const { data, update, save, saving, saveError } = useApp();
   const navigate = useNavigate();
   const [report, setReport] = useState<ScoreReport | null>(null);
   const [jobFit, setJobFit] = useState<JobFitReport | null>(null);
@@ -133,8 +133,12 @@ export default function ScorePage() {
       <button className="topbtn topbtn--ghost" onClick={() => navigate(backHref)}>
         <ArrowLeft size={18} /> Back
       </button>
-      <button className="topbtn topbtn--dark" onClick={() => void save()}>
-        <Save size={18} /> {saving ? "Saving…" : "Save"}
+      <button
+        className="topbtn topbtn--dark"
+        onClick={() => void save()}
+        title={saveError ? `Not saved: ${saveError}` : undefined}
+      >
+        <Save size={18} /> {saving ? "Saving…" : saveError ? "Retry save" : "Save"}
       </button>
     </>
   ) : (
@@ -142,8 +146,12 @@ export default function ScorePage() {
       <button className="topbtn topbtn--ghost" onClick={() => navigate("/app/create")}>
         <Eye size={18} /> Preview
       </button>
-      <button className="topbtn topbtn--dark" onClick={() => void save()}>
-        <Save size={18} /> {saving ? "Saving…" : "Save"}
+      <button
+        className="topbtn topbtn--dark"
+        onClick={() => void save()}
+        title={saveError ? `Not saved: ${saveError}` : undefined}
+      >
+        <Save size={18} /> {saving ? "Saving…" : saveError ? "Retry save" : "Save"}
       </button>
     </>
   );

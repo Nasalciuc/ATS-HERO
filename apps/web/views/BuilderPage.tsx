@@ -51,7 +51,7 @@ export default function BuilderPage() {
   // different OptionalSection union (includes "languages"). The template/accent state the
   // new export/preview features need already lives in useBuilderStore and is wired through
   // the cv components; lifting the wizard's step model here is risky with no functional gain.
-  const { data, update, save, saving } = useApp();
+  const { data, update, save, saving, saveError } = useApp();
   const navigate = useNavigate();
 
   const [activeKey, setActiveKey] = useState<SectionKey>("personalInfo");
@@ -166,8 +166,12 @@ export default function BuilderPage() {
           <button className="topbtn topbtn--ghost" onClick={() => setComplete(true)}>
             <Eye size={18} /> Preview
           </button>
-          <button className="topbtn topbtn--dark" onClick={() => void save()}>
-            <Save size={18} /> {saving ? "Saving…" : "Save"}
+          <button
+            className="topbtn topbtn--dark"
+            onClick={() => void save()}
+            title={saveError ? `Not saved: ${saveError}` : undefined}
+          >
+            <Save size={18} /> {saving ? "Saving…" : saveError ? "Retry save" : "Save"}
           </button>
         </>
       }
