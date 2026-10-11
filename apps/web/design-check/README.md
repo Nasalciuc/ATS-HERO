@@ -48,6 +48,20 @@ stack — SF on Apple devices, Segoe UI / Roboto elsewhere. Inter is self-hosted
 (`icons/manifest.json` → `icons/generate.mjs`; sources and licences in `ICON-SOURCES.md`, which
 also lists the CC BY icons that need credit). Don't hand-edit the generated file.
 
+## Screens covered
+
+| Spec | Figma frame | State the setup builds |
+|---|---|---|
+| `builder-step1` | 242:950 Step 1 · Personal info | fresh guest |
+| `builder-education` | 249:1655 Step 2 | Next ×1 |
+| `builder-education-tabs` | 249:1850 Step 2 variant 2 | two education entries, first tab active |
+| `builder-summary` | 272:77 Step 4 | Next ×2 |
+| `builder-work` | 272:609 Step 5 | Next ×3 (Activities suggestion card visible) |
+| `builder-skills` | 358:6909 Step 11 | Next ×4, the Figma chips typed in |
+| `builder-activities` | 293:1309 Step 10 | Relevant activities added, reached with Next |
+| `builder-awards` | 291:1321 Step 7 | four optional sections added |
+| `builder-publications` | 293:1094 Step 9 | same, last step |
+
 ## Known, deliberate deviations from Figma
 
 - **Title / badge font** off Apple devices (system font instead of SF Pro).
@@ -55,6 +69,12 @@ also lists the CC BY icons that need credit). Don't hand-edit the generated file
 - **Sidebar extras**: "My Resumes (n)" appears once there is a CV (Figma's variant with a count);
   "Tracker" only for signed-in users; a small "Feedback" link in the sidebar's empty bottom strip.
   A guest's first visit shows exactly the Figma sidebar.
+- **Builder copy/flow where the Figma file contradicts itself**: placeholders on Awards/Certifications
+  /Publications are real examples (Figma reuses "David Smith"/"davidsmith@gmail.com" from step 1);
+  the Publications badge says "Publications" (Figma: "Certifications"); "Next step" is hidden on the
+  last step (the Skills frame hides it, the Publications frame doesn't); the "Add one more …" icon gap
+  is 4px everywhere (one frame uses 8px).
+- **Volunteering** has no Figma frame; it reuses the "Relevant activities" layout.
 - **Below 1728px** Figma has no frames: the content column shrinks (max 1135px), the gutter
   tightens under 1280px, the sidebar becomes a drawer under 1024px, phones get a compact stepper.
   The phone/tablet look is derived and awaits design approval.

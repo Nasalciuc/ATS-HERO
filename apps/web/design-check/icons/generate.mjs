@@ -4,7 +4,8 @@
 // The icon sets are NOT dependencies of the app (some are large). Install the ones the manifest
 // names next to this run, without saving them:
 //
-//   npm i --no-save @iconify-json/ep @iconify-json/famicons @iconify-json/ic \
+//   npm i --no-save @iconify-json/ep @iconify-json/famicons @iconify-json/fluent @iconify-json/hugeicons \
+//     @iconify-json/ic @iconify-json/iconamoon @iconify-json/iconoir @iconify-json/mage \
 //     @iconify-json/material-symbols @iconify-json/mynaui @iconify-json/streamline-plump @iconify-json/typcn
 //   node design-check/icons/generate.mjs
 //

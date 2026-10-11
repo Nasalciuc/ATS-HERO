@@ -45,12 +45,19 @@ function sameStyle(want, got) {
   return a !== null && b !== null && Math.abs(a - b) <= 0.05;
 }
 
+// Setup steps put the screen into the state the Figma frame shows:
+//   { "click": sel } { "fill": [sel, text] } { "press": [sel, key] } { "select": [sel, value] } { "wait": ms }
 async function runSetup(page, steps = []) {
   for (const s of steps) {
     if (s.click) await page.locator(s.click).first().click();
     if (s.fill) await page.locator(s.fill[0]).first().fill(s.fill[1]);
+    if (s.press) await page.locator(s.press[0]).first().press(s.press[1]);
+    if (s.select) await page.locator(s.select[0]).first().selectOption(s.select[1]);
     if (s.wait) await page.waitForTimeout(s.wait);
   }
+  // Figma frames show no hover or focus state.
+  await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+  await page.mouse.move(page.viewportSize().width - 2, page.viewportSize().height - 2);
 }
 
 function blend(a, b, w, h) {

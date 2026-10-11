@@ -1,0 +1,128 @@
+{
+  "id": "builder-summary",
+  "title": "Builder · Professional summary",
+  "frame": "272:77",
+  "reference": "reference/figma/desktop/function-1-step-4-summary.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "setup": [
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1000
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "btn-preview",
+      "box": [
+        1196,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "stepper",
+      "box": [
+        331,
+        139,
+        1135,
+        98
+      ]
+    },
+    {
+      "key": "step-2",
+      "box": [
+        551,
+        139,
+        64,
+        64
+      ],
+      "style": {
+        "background-color": "rgb(214, 247, 226)"
+      }
+    },
+    {
+      "key": "tips",
+      "box": [
+        331,
+        269,
+        252,
+        455
+      ]
+    },
+    {
+      "key": "tips-badge",
+      "box": [
+        353,
+        291,
+        null,
+        29
+      ]
+    },
+    {
+      "key": "form-card",
+      "node": "272:177"
+    },
+    {
+      "key": "field-position",
+      "node": "273:1114"
+    },
+    {
+      "key": "field-value",
+      "node": "273:1119"
+    },
+    {
+      "key": "btn-back",
+      "box": [
+        599,
+        748,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-next",
+      "box": [
+        1306,
+        748,
+        160,
+        52
+      ]
+    }
+  ]
+}

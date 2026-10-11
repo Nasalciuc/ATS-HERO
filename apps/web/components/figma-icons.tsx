@@ -88,3 +88,93 @@ export function ArrowUp({ size = 24, ...p }: P) {
     </svg>
   );
 }
+
+/** material-symbols:business-center-outline — Skills · hard-skill chips */
+export function SkillHardIcon({ size = 20, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="currentColor" d="M4 21q-.825 0-1.412-.587T2 19V8q0-.825.588-1.412T4 6h4V4q0-.825.588-1.412T10 2h4q.825 0 1.413.588T16 4v2h4q.825 0 1.413.588T22 8v11q0 .825-.587 1.413T20 21zm6-15h4V4h-4zm10 9h-5v2H9v-2H4v4h16zm-9 0h2v-2h-2zm-7-2h5v-2h6v2h5V8H4zm8 1" />
+    </svg>
+  );
+}
+
+/** fluent:person-24-regular — Skills · soft-skill chips — Figma kept the layer name of the hard-skill icon; matched by shape */
+export function SkillSoftIcon({ size = 20, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="currentColor" d="M17.755 14a2.25 2.25 0 0 1 2.248 2.25v.575c0 .894-.32 1.759-.9 2.438c-1.57 1.833-3.957 2.738-7.103 2.738s-5.532-.905-7.098-2.74a3.75 3.75 0 0 1-.898-2.434v-.578A2.25 2.25 0 0 1 6.253 14zm0 1.5H6.252a.75.75 0 0 0-.75.75v.577c0 .535.192 1.053.54 1.46c1.253 1.469 3.22 2.214 5.957 2.214c2.739 0 4.706-.745 5.963-2.213a2.25 2.25 0 0 0 .54-1.463v-.576a.75.75 0 0 0-.748-.749M12 2.005a5 5 0 1 1 0 10a5 5 0 0 1 0-10m0 1.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 0 0 0-7" />
+    </svg>
+  );
+}
+
+/** hugeicons:app-window-mac — Skills · instrument chips — Figma layer says software-license; matched by shape */
+export function SkillToolIcon({ size = 20, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+        <path d="M3.496 9h17M11.75 5.813V6M12 6a.25.25 0 1 1-.5 0a.25.25 0 0 1 .5 0m-3.25-.187V6M9 6a.25.25 0 1 1-.5 0A.25.25 0 0 1 9 6m-3.25-.187V6M6 6a.25.25 0 1 1-.5 0A.25.25 0 0 1 6 6" />
+        <path d="M3 12c0-4.243 0-6.364 1.318-7.682S7.758 3 12 3s6.364 0 7.682 1.318S21 7.758 21 12s0 6.364-1.318 7.682S16.242 21 12 21s-6.364 0-7.682-1.318S3 16.242 3 12" />
+      </g>
+    </svg>
+  );
+}
+
+/** iconoir:language — Skills · language chips */
+export function LanguageIcon({ size = 19, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+        <path d="M2 12c0 5.523 4.477 10 10 10s10-4.477 10-10S17.523 2 12 2S2 6.477 2 12" />
+        <path d="M13 2.05S16 6 16 12s-3 9.95-3 9.95m-2 0S8 18 8 12s3-9.95 3-9.95M2.63 15.5h18.74m-18.74-7h18.74" />
+      </g>
+    </svg>
+  );
+}
+
+/** iconamoon:close — Skills · chip remove × (flattened vector; matched by shape) */
+export function ChipClose({ size = 16, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m7 7l10 10M7 17L17 7" />
+    </svg>
+  );
+}
+
+/** iconamoon:close-duotone — Stepper · remove an added section */
+export function StepRemove({ size = 24, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m7 7l10 10M7 17L17 7" />
+    </svg>
+  );
+}
+
+/** mynaui:plus — 'Add one more …' buttons, Activities 'Add section' */
+export function PlusThin({ size = 17, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M18 12h-6m0 0H6m6 0V6m0 6v6" />
+    </svg>
+  );
+}
+
+/** mage:trash — Entry 'Delete' button (flattened group; matched by shape) */
+export function TrashOutline({ size = 18, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+        <path d="M5.47 6.015v12.514a2.72 2.72 0 0 0 2.721 2.721h7.618a2.72 2.72 0 0 0 2.72-2.72V6.014m-15.235.001h17.412" />
+        <path d="M8.735 6.015V4.382a1.63 1.63 0 0 1 1.633-1.632h3.264a1.63 1.63 0 0 1 1.633 1.632v1.633M9.824 16.992v-5.439m4.353 5.439v-5.439" />
+      </g>
+    </svg>
+  );
+}
+
+/** mynaui:chevron-down — Select fields (Level, Activity type) */
+export function ChevronDown({ size = 12, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m6 9l6 6l6-6" />
+    </svg>
+  );
+}

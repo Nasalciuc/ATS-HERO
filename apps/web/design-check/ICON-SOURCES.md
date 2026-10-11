@@ -15,6 +15,15 @@ Figma file uses (its layers are named after the Iconify icon, e.g. `ep:arrow-up`
 | `ic:outline-tips-and-updates` | `TipsBulb` | Pro Tips card illustration | [Apache 2.0](https://github.com/material-icons/material-icons/blob/master/LICENSE) | [Material Design Authors](https://github.com/material-icons/material-icons) | 1.2.4 |
 | `ep:arrow-up` | `ChevronUp` | Explore link (rotated 90deg -> right) | [MIT](https://github.com/element-plus/element-plus-icons/blob/main/packages/svg/package.json) | [Element Plus](https://github.com/element-plus/element-plus-icons) | 1.2.4 |
 | `famicons:arrow-up` | `ArrowUp` | Next step / Back buttons (rotated) | [MIT](https://github.com/familyjs/famicons/blob/main/LICENSE) | [Family](https://github.com/familyjs/famicons) | 1.2.2 |
+| `material-symbols:business-center-outline` | `SkillHardIcon` | Skills · hard-skill chips | [Apache 2.0](https://github.com/google/material-design-icons/blob/master/LICENSE) | [Google](https://github.com/google/material-design-icons) | 1.2.95 |
+| `fluent:person-24-regular` | `SkillSoftIcon` | Skills · soft-skill chips — Figma kept the layer name of the hard-skill icon; matched by shape | [MIT](https://github.com/microsoft/fluentui-system-icons/blob/main/LICENSE) | [Microsoft Corporation](https://github.com/microsoft/fluentui-system-icons) | 1.2.59 |
+| `hugeicons:app-window-mac` | `SkillToolIcon` | Skills · instrument chips — Figma layer says software-license; matched by shape | [MIT](undefined) | [Hugeicons](https://icon-sets.iconify.design/icon-sets/hugeicons/) | 1.2.35 |
+| `iconoir:language` | `LanguageIcon` | Skills · language chips | [MIT](https://github.com/iconoir-icons/iconoir/blob/main/LICENSE) | [Luca Burgio](https://github.com/iconoir-icons/iconoir) | 1.2.12 |
+| `iconamoon:close` | `ChipClose` | Skills · chip remove × (flattened vector; matched by shape) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Dariush Habibpour](https://github.com/dariushhpg1/IconaMoon) | 1.2.2 |
+| `iconamoon:close-duotone` | `StepRemove` | Stepper · remove an added section | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Dariush Habibpour](https://github.com/dariushhpg1/IconaMoon) | 1.2.2 |
+| `mynaui:plus` | `PlusThin` | 'Add one more …' buttons, Activities 'Add section' | [MIT](https://github.com/praveenjuge/mynaui-icons/blob/main/LICENSE) | [Praveen Juge](https://github.com/praveenjuge/mynaui-icons) | 1.2.19 |
+| `mage:trash` | `TrashOutline` | Entry 'Delete' button (flattened group; matched by shape) | [Apache 2.0](https://github.com/Mage-Icons/mage-icons/blob/main/License.txt) | [MageIcons](https://github.com/Mage-Icons/mage-icons) | 1.2.4 |
+| `mynaui:chevron-down` | `ChevronDown` | Select fields (Level, Activity type) | [MIT](https://github.com/praveenjuge/mynaui-icons/blob/main/LICENSE) | [Praveen Juge](https://github.com/praveenjuge/mynaui-icons) | 1.2.19 |
 
 ## Attribution required
 
@@ -22,3 +31,4 @@ CC BY / CC BY-SA icons need credit wherever the app lists third-party notices (e
 
 - **Plump free icons** by Streamline (https://github.com/webalys-hq/streamline-vectors) — CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
 - **Typicons** by Stephen Hutchings (https://github.com/stephenhutchings/typicons.font) — CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
+- **IconaMoon** by Dariush Habibpour (https://github.com/dariushhpg1/IconaMoon) — CC BY 4.0, https://creativecommons.org/licenses/by/4.0/

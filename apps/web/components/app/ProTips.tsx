@@ -1,6 +1,10 @@
 "use client";
-import { TipsBulb, ChevronUp } from "../figma-icons";
+import { TipsBulb, ChevronUp, PlusThin } from "../figma-icons";
 
+/**
+ * Figma "Pro Tips" card (252 wide). With a suggestion card under it (Work step → "Activities"),
+ * the tips card shrinks to its 250px content height and the bulb is hidden, as in the Figma frame.
+ */
 export default function ProTips({
   badge,
   onExplore,
@@ -12,7 +16,7 @@ export default function ProTips({
 }) {
   return (
     <div className="protips-col">
-      <div className="protips" data-figma="tips">
+      <div className={`protips${extra ? " protips--compact" : ""}`} data-figma="tips">
         <span className="protips__badge" data-figma="tips-badge">{badge}</span>
         <h3 className="protips__title" data-figma="tips-title">Pro Tips</h3>
         <p className="protips__body" data-figma="tips-body">
@@ -27,11 +31,12 @@ export default function ProTips({
       </div>
 
       {extra && (
-        <div className="protips-extra">
+        <div className="protips-extra" data-figma="tips-extra">
           <h3 className="protips-extra__title">{extra.title}</h3>
           <p className="protips-extra__body">{extra.body}</p>
-          <button type="button" className="protips-extra__add" onClick={extra.onAdd}>
-            + Add section
+          <button type="button" className="protips-extra__add" data-figma="tips-extra-add" onClick={extra.onAdd}>
+            {/* 21px icon box like the Figma link; the plus fills 14px of it */}
+            <PlusThin size={21} viewBox="3 3 18 18" /> Add section
           </button>
         </div>
       )}

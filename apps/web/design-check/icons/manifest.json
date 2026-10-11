@@ -1,14 +1,113 @@
 {
   "$comment": "The exact Iconify icons the Figma file uses (layer names like 'ep:arrow-up', or matched by shape when Figma flattened the icon to a Vector). Regenerate components/figma-icons.tsx with design-check/icons/generate.mjs after editing.",
   "icons": [
-    { "icon": "streamline-plump:eye-optic", "export": "EyeOptic", "size": 24, "use": "Preview button (Title pannel)" },
-    { "icon": "mynaui:save", "export": "SaveDisk", "size": 24, "use": "Save button (Title pannel)" },
-    { "icon": "mynaui:upload", "export": "UploadTray", "size": 16, "use": "CV upload (Improve / Job Fit)" },
-    { "icon": "material-symbols:upload-rounded", "export": "UploadRounded", "size": 16, "use": "Photo 'Upload' button (Personal info) — Figma flattened it to a 16×15 Vector; matched by shape" },
-    { "icon": "ep:user", "export": "UserOutline", "size": 18, "use": "Sidebar Sign in" },
-    { "icon": "typcn:plus-outline", "export": "PlusOutline", "size": 44, "use": "Stepper 'Add section'" },
-    { "icon": "ic:outline-tips-and-updates", "export": "TipsBulb", "size": 145, "use": "Pro Tips card illustration" },
-    { "icon": "ep:arrow-up", "export": "ChevronUp", "size": 21, "use": "Explore link (rotated 90deg -> right)" },
-    { "icon": "famicons:arrow-up", "export": "ArrowUp", "size": 24, "use": "Next step / Back buttons (rotated)" }
+    {
+      "icon": "streamline-plump:eye-optic",
+      "export": "EyeOptic",
+      "size": 24,
+      "use": "Preview button (Title pannel)"
+    },
+    {
+      "icon": "mynaui:save",
+      "export": "SaveDisk",
+      "size": 24,
+      "use": "Save button (Title pannel)"
+    },
+    {
+      "icon": "mynaui:upload",
+      "export": "UploadTray",
+      "size": 16,
+      "use": "CV upload (Improve / Job Fit)"
+    },
+    {
+      "icon": "material-symbols:upload-rounded",
+      "export": "UploadRounded",
+      "size": 16,
+      "use": "Photo 'Upload' button (Personal info) — Figma flattened it to a 16×15 Vector; matched by shape"
+    },
+    {
+      "icon": "ep:user",
+      "export": "UserOutline",
+      "size": 18,
+      "use": "Sidebar Sign in"
+    },
+    {
+      "icon": "typcn:plus-outline",
+      "export": "PlusOutline",
+      "size": 44,
+      "use": "Stepper 'Add section'"
+    },
+    {
+      "icon": "ic:outline-tips-and-updates",
+      "export": "TipsBulb",
+      "size": 145,
+      "use": "Pro Tips card illustration"
+    },
+    {
+      "icon": "ep:arrow-up",
+      "export": "ChevronUp",
+      "size": 21,
+      "use": "Explore link (rotated 90deg -> right)"
+    },
+    {
+      "icon": "famicons:arrow-up",
+      "export": "ArrowUp",
+      "size": 24,
+      "use": "Next step / Back buttons (rotated)"
+    },
+    {
+      "icon": "material-symbols:business-center-outline",
+      "export": "SkillHardIcon",
+      "size": 20,
+      "use": "Skills · hard-skill chips"
+    },
+    {
+      "icon": "fluent:person-24-regular",
+      "export": "SkillSoftIcon",
+      "size": 20,
+      "use": "Skills · soft-skill chips — Figma kept the layer name of the hard-skill icon; matched by shape"
+    },
+    {
+      "icon": "hugeicons:app-window-mac",
+      "export": "SkillToolIcon",
+      "size": 20,
+      "use": "Skills · instrument chips — Figma layer says software-license; matched by shape"
+    },
+    {
+      "icon": "iconoir:language",
+      "export": "LanguageIcon",
+      "size": 19,
+      "use": "Skills · language chips"
+    },
+    {
+      "icon": "iconamoon:close",
+      "export": "ChipClose",
+      "size": 16,
+      "use": "Skills · chip remove × (flattened vector; matched by shape)"
+    },
+    {
+      "icon": "iconamoon:close-duotone",
+      "export": "StepRemove",
+      "size": 24,
+      "use": "Stepper · remove an added section"
+    },
+    {
+      "icon": "mynaui:plus",
+      "export": "PlusThin",
+      "size": 17,
+      "use": "'Add one more …' buttons, Activities 'Add section'"
+    },
+    {
+      "icon": "mage:trash",
+      "export": "TrashOutline",
+      "size": 18,
+      "use": "Entry 'Delete' button (flattened group; matched by shape)"
+    },
+    {
+      "icon": "mynaui:chevron-down",
+      "export": "ChevronDown",
+      "size": 12,
+      "use": "Select fields (Level, Activity type)"
+    }
   ]
 }

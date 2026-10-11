@@ -1,6 +1,6 @@
 "use client";
 import { Fragment, useEffect, useRef } from "react";
-import { PlusOutline } from "../figma-icons";
+import { PlusOutline, StepRemove } from "../figma-icons";
 
 /** `label` may contain "\n" — the stepper breaks lines where Figma does ("Professional\nsummary"). */
 export type Step = { key: string; label: string; emoji: string };
@@ -73,10 +73,11 @@ export default function ProgressBar({
                     <button
                       type="button"
                       className="progress__remove"
+                      data-figma={`step-remove-${i}`}
                       onClick={() => onRemoveSection(s.key)}
                       aria-label={`Remove ${name}`}
                     >
-                      ×
+                      <StepRemove />
                     </button>
                   )}
                   <span className={`progress__label${isCurrent ? " is-current" : ""}`} data-figma={`step-label-${i}`}>
@@ -86,7 +87,11 @@ export default function ProgressBar({
               </Fragment>
             );
           })}
-          <span className="progress__line progress__line--tail" aria-hidden="true" />
+          {/* Figma: on the last step the line runs green all the way to "Add section" */}
+          <span
+            className={`progress__line progress__line--tail${currentIndex === steps.length - 1 ? " is-filled" : ""}`}
+            aria-hidden="true"
+          />
         </div>
       </div>
 

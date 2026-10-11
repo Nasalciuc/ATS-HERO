@@ -1,0 +1,183 @@
+{
+  "id": "builder-activities",
+  "title": "Builder · Relevant activities",
+  "frame": "293:1309",
+  "reference": "reference/figma/desktop/function-1-step-10-activities.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "setup": [
+    {
+      "click": ".progress__add"
+    },
+    {
+      "click": ".addsection__check:has-text('Relevant activities')"
+    },
+    {
+      "click": ".addsection__confirm"
+    },
+    {
+      "wait": 300
+    },
+    {
+      "click": "[data-figma=step-0]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1000
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "btn-preview",
+      "box": [
+        1196,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "stepper",
+      "box": [
+        331,
+        139,
+        1135,
+        98
+      ]
+    },
+    {
+      "key": "step-4",
+      "box": [
+        771,
+        139,
+        64,
+        64
+      ],
+      "style": {
+        "background-color": "rgb(214, 247, 226)"
+      }
+    },
+    {
+      "key": "step-remove-4",
+      "box": [
+        821,
+        120,
+        24,
+        24
+      ]
+    },
+    {
+      "key": "step-label-4",
+      "box": [
+        null,
+        207,
+        null,
+        30
+      ]
+    },
+    {
+      "key": "tips",
+      "box": [
+        331,
+        269,
+        252,
+        480
+      ]
+    },
+    {
+      "key": "tips-badge",
+      "box": [
+        353,
+        291,
+        null,
+        29
+      ]
+    },
+    {
+      "key": "form-card",
+      "node": "293:1347"
+    },
+    {
+      "key": "field-type",
+      "node": "293:1352"
+    },
+    {
+      "key": "field-description",
+      "node": "294:1581"
+    },
+    {
+      "key": "entry-add",
+      "node": "293:1355"
+    },
+    {
+      "key": "field-organization",
+      "node": "293:1354"
+    },
+    {
+      "key": "field-start",
+      "node": "294:1563"
+    },
+    {
+      "key": "toggle-ongoing",
+      "node": "294:1565"
+    },
+    {
+      "key": "btn-back",
+      "box": [
+        599,
+        773,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-next",
+      "box": [
+        1306,
+        773,
+        160,
+        52
+      ]
+    }
+  ]
+}

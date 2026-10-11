@@ -39,6 +39,9 @@ const BASE_STEPS: { key: SectionKey; label: string; emoji: string }[] = [
   { key: "skills", label: "Skills", emoji: "💪" },
 ];
 
+// Figma breaks this optional section's stepper label too.
+const STEPPER_LABELS: Partial<Record<SectionKey, string>> = { activities: "Relevant\nactivities" };
+
 // Page heading = Pro Tips badge (Figma); it can differ from the compact stepper label.
 const STEP_TITLES: Partial<Record<SectionKey, string>> = {
   personalInfo: "Personal Info",
@@ -68,7 +71,7 @@ export default function BuilderPage() {
     const optional = (keys: SectionKey[]) =>
       OPTIONAL_SECTIONS.filter((o) => keys.includes(o.key) && addedSections.includes(o.key)).map((o) => ({
         key: o.key,
-        label: o.label,
+        label: STEPPER_LABELS[o.key] ?? o.label,
         emoji: o.emoji,
       }));
     const core = BASE_STEPS.slice(0, 4);
@@ -79,6 +82,10 @@ export default function BuilderPage() {
   const activeIndex = steps.findIndex((s) => s.key === activeKey);
   const isLast = activeIndex === steps.length - 1;
   const activeStep = steps[activeIndex];
+  // Figma: "Complete" appears once the core steps are done — on Skills and every section after it.
+  const canComplete = activeIndex >= steps.findIndex((s) => s.key === "skills");
+  // Figma keeps the form card at 480 from Skills on (and on the optional sections) so the footer doesn't jump.
+  const tall = activeKey === "skills" || addedSections.includes(activeKey);
 
   const goTo = (key: string) => setActiveKey(key as SectionKey);
   const markDoneAnd = (next?: string) => {
@@ -128,29 +135,30 @@ export default function BuilderPage() {
   const optionalKeys = new Set<string>(addedSections);
 
   const renderStep = () => {
+    const props = { data, update, framed: true };
     switch (activeKey) {
       case "personalInfo":
-        return <PersonalInfoStep data={data} update={update} />;
+        return <PersonalInfoStep key="personalInfo" {...props} />;
       case "education":
-        return <EducationStep data={data} update={update} />;
+        return <EducationStep key="education" {...props} />;
       case "summary":
-        return <SummaryStep data={data} update={update} />;
+        return <SummaryStep key="summary" {...props} />;
       case "work":
-        return <WorkStep data={data} update={update} />;
+        return <WorkStep key="work" {...props} />;
       case "skills":
-        return <SkillsStep data={data} update={update} />;
+        return <SkillsStep key="skills" {...props} />;
       case "awards":
-        return <AwardsStep data={data} update={update} />;
+        return <AwardsStep key="awards" {...props} />;
       case "certifications":
-        return <CertificationsStep data={data} update={update} />;
+        return <CertificationsStep key="certifications" {...props} />;
       case "publications":
-        return <PublicationsStep data={data} update={update} />;
+        return <PublicationsStep key="publications" {...props} />;
       case "activities":
-        return <ActivitiesStep data={data} update={update} />;
+        return <ActivitiesStep key="activities" {...props} />;
       case "volunteering":
-        return <VolunteeringStep data={data} update={update} />;
+        return <VolunteeringStep key="volunteering" {...props} />;
       default:
-        return <PersonalInfoStep data={data} update={update} />;
+        return <PersonalInfoStep key="personalInfo" {...props} />;
     }
   };
 
@@ -189,7 +197,7 @@ export default function BuilderPage() {
         onRemoveSection={(k) => onRemoveSection(k as SectionKey)}
       />
 
-      <div className="builder">
+      <div className={`builder${tall ? " builder--tall" : ""}`}>
         <ProTips
           badge={pageTitle}
           onExplore={() => setTips(true)}
@@ -204,7 +212,7 @@ export default function BuilderPage() {
           }
         />
 
-        <div className="builder__panel" data-figma="form-card">{renderStep()}</div>
+        <div className="builder__main">{renderStep()}</div>
       </div>
 
       <div className="builder__footer">
@@ -221,8 +229,7 @@ export default function BuilderPage() {
               Next step <ArrowUp className="topbtn__arrow--right" />
             </button>
           )}
-          {/* Figma: step 1 offers only "Next step"; "Complete" appears from step 2 on. */}
-          {activeIndex > 0 && (
+          {canComplete && (
             <button className="topbtn topbtn--step topbtn--dark" data-figma="btn-complete" onClick={finish}>
               Complete
             </button>

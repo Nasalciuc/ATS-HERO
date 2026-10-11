@@ -130,7 +130,7 @@ export type JobFitReport = {
 export const OPTIONAL_SECTIONS: { key: SectionKey; label: string; emoji: string }[] = [
   { key: "awards", label: "Awards", emoji: "🏆" },
   { key: "certifications", label: "Certifications", emoji: "📜" },
-  { key: "publications", label: "Publications", emoji: "📚" },
+  { key: "publications", label: "Publications", emoji: "📰" },
   { key: "volunteering", label: "Volunteering", emoji: "🤝" },
   { key: "activities", label: "Relevant activities", emoji: "🚀" },
 ];
