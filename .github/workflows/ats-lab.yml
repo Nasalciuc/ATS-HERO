@@ -1,0 +1,56 @@
+name: ATS lab
+# Round-trip gate: CvData fixtures → production templates → extractor panel → reference parser.
+# A template/export change that makes an ATS-recommended layout (classic, minimal, docx) FAIL
+# on any extractor blocks the PR. Weekly run catches drift in react-pdf / extractor versions.
+on:
+  pull_request:
+    paths:
+      - "apps/web/components/cv/**"
+      - "apps/web/lib/exportPdf.tsx"
+      - "apps/web/lib/exportDocx.ts"
+      - "apps/web/lib/cv-print.ts"
+      - "apps/web/lab/**"
+      - "apps/ai/app/lab/**"
+      - "tools/ats-lab/**"
+      - ".github/workflows/ats-lab.yml"
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  lab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm, cache-dependency-path: apps/web/package-lock.json }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      - name: System extractors (poppler, LibreOffice)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils libreoffice-writer-nogui
+      - name: Apache Tika 3.3.2 (PDFBox) — the Java enterprise extraction stack
+        run: |
+          curl -fsSL -o /tmp/tika-app.jar https://repo1.maven.org/maven2/org/apache/tika/tika-app/3.3.2/tika-app-3.3.2.jar
+          echo "TIKA_JAR=/tmp/tika-app.jar" >> "$GITHUB_ENV"
+      - run: npm ci
+        working-directory: apps/web
+      - run: pip install -r requirements-lab.txt
+        working-directory: apps/ai
+      - name: Unit tests (parser + scorer)
+        run: python -m pytest -q tests/test_lab.py
+        working-directory: apps/ai
+      - name: Render fixtures with the production templates
+        run: npx tsx --tsconfig lab/tsconfig.json lab/render.tsx
+        working-directory: apps/web
+      - name: Round-trip through the extractor panel (gate)
+        run: python -m app.lab.run --fixtures ../../tools/ats-lab/fixtures/personas.json --files ../../tools/ats-lab/out/files --out ../../tools/ats-lab/out
+        working-directory: apps/ai
+      - name: Report → job summary
+        if: always()
+        run: cat tools/ats-lab/out/REPORT.md >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: ats-lab-report, path: tools/ats-lab/out/ }

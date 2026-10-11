@@ -1,0 +1,540 @@
+{
+  "ana": {
+    "personalInfo": {
+      "name": "Ana Popescu",
+      "email": "ana.popescu@example.com",
+      "phone": "+40 721 000 111",
+      "photo": "",
+      "linkedin": "https://www.linkedin.com/in/anapopescu",
+      "website": "https://anapopescu.dev",
+      "country": "Romania",
+      "cityState": "Cluj-Napoca"
+    },
+    "summary": {
+      "position": "Frontend Engineer",
+      "valueProposition": "Frontend engineer with 4 years building React and TypeScript products for fintech and SaaS. Shipped a design system used by 6 teams, cut bundle size by 38% and raised Lighthouse performance from 61 to 94."
+    },
+    "work": [
+      {
+        "id": "w1",
+        "role": "Frontend Engineer",
+        "company": "Fintech Labs SRL",
+        "description": "Led migration of a 120k-line React app to TypeScript and Next.js, reducing production incidents by 45%.\nBuilt a component library adopted by 6 product teams.\nMentored 3 junior developers.",
+        "startDate": "September 2021",
+        "endDate": "",
+        "current": true,
+        "country": "Romania",
+        "cityState": "Cluj-Napoca"
+      }
+    ],
+    "education": [
+      {
+        "id": "e1",
+        "institution": "Technical University of Cluj-Napoca",
+        "location": "Cluj-Napoca, Romania",
+        "degree": "BSc Computer Science",
+        "minor": "Mathematics",
+        "startDate": "October 2016",
+        "endDate": "July 2020",
+        "grade": "9.4/10",
+        "additional": "Thesis: real-time collaborative editing with CRDTs."
+      }
+    ],
+    "skills": [
+      "React",
+      "TypeScript",
+      "Next.js",
+      "GraphQL",
+      "Node.js"
+    ],
+    "instruments": [
+      "Figma",
+      "Git",
+      "Jest",
+      "Playwright"
+    ],
+    "softSkills": [
+      "Communication",
+      "Mentoring"
+    ],
+    "languages": [
+      {
+        "id": "l1",
+        "name": "English",
+        "level": "C1"
+      }
+    ],
+    "awards": [],
+    "certifications": [],
+    "publications": [],
+    "volunteering": [],
+    "activities": []
+  },
+  "mihai": {
+    "personalInfo": {
+      "name": "Mihai Ștefănescu",
+      "email": "mihai.stefanescu.dev@example-company.com",
+      "phone": "+373 69 123 456",
+      "photo": "",
+      "linkedin": "https://www.linkedin.com/in/mihai-stefanescu-senior-backend-engineer-7b3c9d/",
+      "website": "https://github.com/mihai-stefanescu",
+      "country": "Moldova",
+      "cityState": "Chișinău"
+    },
+    "summary": {
+      "position": "Senior Backend Engineer",
+      "valueProposition": "Backend engineer with 9 years designing high-throughput payment and logistics platforms in Go, Java and Python. Cut p99 latency from 840 ms to 120 ms and led the migration of 40 services to Kubernetes."
+    },
+    "work": [
+      {
+        "id": "w1",
+        "role": "Senior Backend Engineer",
+        "company": "Endava Moldova",
+        "description": "Designed an event-driven payments workflow processing 2.3M transactions per day on Kafka and PostgreSQL.\nReduced p99 latency from 840 ms to 120 ms by redesigning the offline reconciliation pipeline.\nMentored 5 engineers and ran the backend guild.",
+        "startDate": "March 2021",
+        "endDate": "",
+        "current": true,
+        "country": "Moldova",
+        "cityState": "Chișinău"
+      },
+      {
+        "id": "w2",
+        "role": "Backend Engineer",
+        "company": "Amdaris",
+        "description": "Built logistics routing APIs in Java and Spring Boot used by 300 warehouses.\nIntroduced contract testing, cutting integration defects by 60%.",
+        "startDate": "June 2018",
+        "endDate": "February 2021",
+        "current": false,
+        "country": "Moldova",
+        "cityState": "Chișinău"
+      },
+      {
+        "id": "w3",
+        "role": "Software Developer",
+        "company": "Orange Moldova",
+        "description": "Automated billing reports in Python, saving 20 hours of manual work per week.",
+        "startDate": "September 2016",
+        "endDate": "May 2018",
+        "current": false,
+        "country": "Moldova",
+        "cityState": "Chișinău"
+      }
+    ],
+    "education": [
+      {
+        "id": "e1",
+        "institution": "Universitatea Tehnică a Moldovei",
+        "location": "Chișinău, Moldova",
+        "degree": "MSc Software Engineering",
+        "minor": "",
+        "startDate": "September 2016",
+        "endDate": "June 2018",
+        "grade": "",
+        "additional": ""
+      },
+      {
+        "id": "e2",
+        "institution": "Universitatea „Alexandru Ioan Cuza” din Iași",
+        "location": "Iași, Romania",
+        "degree": "BSc Computer Science",
+        "minor": "Mathematics",
+        "startDate": "October 2012",
+        "endDate": "June 2016",
+        "grade": "",
+        "additional": ""
+      }
+    ],
+    "skills": [
+      "Go",
+      "Java",
+      "Python",
+      "PostgreSQL",
+      "Kafka",
+      "Kubernetes",
+      "gRPC",
+      "C#"
+    ],
+    "instruments": [
+      "Docker",
+      "Terraform",
+      "Grafana"
+    ],
+    "softSkills": [
+      "Leadership",
+      "Mentoring"
+    ],
+    "languages": [
+      {
+        "id": "l1",
+        "name": "Romanian",
+        "level": "Native"
+      },
+      {
+        "id": "l2",
+        "name": "English",
+        "level": "C1"
+      },
+      {
+        "id": "l3",
+        "name": "Russian",
+        "level": "B2"
+      }
+    ],
+    "awards": [
+      {
+        "id": "a1",
+        "title": "Engineering Excellence Award",
+        "description": "",
+        "date": "2023",
+        "organisation": "Endava"
+      }
+    ],
+    "certifications": [
+      {
+        "id": "c1",
+        "title": "Certified Kubernetes Administrator (CKA)",
+        "description": "",
+        "date": "2022",
+        "issuer": "Cloud Native Computing Foundation"
+      }
+    ],
+    "publications": [],
+    "volunteering": [],
+    "activities": []
+  },
+  "amara": {
+    "personalInfo": {
+      "name": "Amara Okafor",
+      "email": "amara.okafor@example.ng",
+      "phone": "+234 803 123 4567",
+      "photo": "",
+      "linkedin": "https://www.linkedin.com/in/amaraokafor",
+      "website": "",
+      "country": "Nigeria",
+      "cityState": "Lagos"
+    },
+    "summary": {
+      "position": "Data Analyst",
+      "valueProposition": "Data analyst with 3 years turning messy operational data into dashboards for fintech and telecom teams. Built a churn model that flagged 18% of at-risk subscribers two months early."
+    },
+    "work": [
+      {
+        "id": "w1",
+        "role": "Data Analyst",
+        "company": "Flutterwave",
+        "description": "Built Power BI and SQL dashboards used daily by 40 operations staff.\nAutomated a weekly reconciliation workflow in Python, saving 12 hours per week.",
+        "startDate": "January 2023",
+        "endDate": "",
+        "current": true,
+        "country": "Nigeria",
+        "cityState": "Lagos"
+      },
+      {
+        "id": "w2",
+        "role": "Junior Data Analyst",
+        "company": "MTN Nigeria",
+        "description": "Cleaned and modelled subscriber data for 2M users; built a churn model with 81% recall.",
+        "startDate": "August 2021",
+        "endDate": "December 2022",
+        "current": false,
+        "country": "Nigeria",
+        "cityState": "Lagos"
+      }
+    ],
+    "education": [
+      {
+        "id": "e1",
+        "institution": "University of Lagos",
+        "location": "Lagos, Nigeria",
+        "degree": "BSc Statistics",
+        "minor": "",
+        "startDate": "September 2016",
+        "endDate": "July 2020",
+        "grade": "First Class",
+        "additional": ""
+      }
+    ],
+    "skills": [
+      "SQL",
+      "Python",
+      "Power BI",
+      "Excel",
+      "Tableau",
+      "R"
+    ],
+    "instruments": [
+      "dbt",
+      "BigQuery"
+    ],
+    "softSkills": [
+      "Stakeholder management",
+      "Storytelling"
+    ],
+    "languages": [
+      {
+        "id": "l1",
+        "name": "English",
+        "level": "Native"
+      },
+      {
+        "id": "l2",
+        "name": "French",
+        "level": "B1"
+      }
+    ],
+    "awards": [],
+    "certifications": [],
+    "publications": [],
+    "volunteering": [
+      {
+        "id": "v1",
+        "title": "Data Science Nigeria",
+        "role": "Mentor",
+        "description": "Mentored 15 students through their first SQL projects.",
+        "date": "March 2022",
+        "location": "Lagos, Nigeria",
+        "endDate": "",
+        "ongoing": true
+      }
+    ],
+    "activities": []
+  },
+  "ion": {
+    "personalInfo": {
+      "name": "Ion Rusu",
+      "email": "ion.rusu@example.md",
+      "phone": "+373 79 555 222",
+      "photo": "",
+      "linkedin": "",
+      "website": "",
+      "country": "Moldova",
+      "cityState": "Bălți"
+    },
+    "summary": {
+      "position": "Junior UX Designer",
+      "valueProposition": "UX designer focused on accessible offline-first mobile flows. Ran 12 usability tests and redesigned a checkout flow that raised conversion by 9%."
+    },
+    "work": [
+      {
+        "id": "w1",
+        "role": "UX Design Intern",
+        "company": "Pentalog",
+        "description": "Redesigned the offline checkout flow in Figma; usability tests showed 9% higher conversion.\nCreated an accessibility checklist adopted by 3 product teams.",
+        "startDate": "June 2025",
+        "endDate": "September 2025",
+        "current": false,
+        "country": "Moldova",
+        "cityState": "Chișinău"
+      }
+    ],
+    "education": [
+      {
+        "id": "e1",
+        "institution": "Universitatea de Stat „Alecu Russo” din Bălți",
+        "location": "Bălți, Moldova",
+        "degree": "BA Graphic Design",
+        "minor": "",
+        "startDate": "September 2022",
+        "endDate": "June 2026",
+        "grade": "",
+        "additional": ""
+      }
+    ],
+    "skills": [
+      "UX",
+      "UI",
+      "Figma",
+      "Prototyping",
+      "Usability testing",
+      "AI",
+      "C++"
+    ],
+    "instruments": [
+      "Figma",
+      "Miro",
+      "Maze"
+    ],
+    "softSkills": [
+      "Empathy",
+      "Workshop facilitation"
+    ],
+    "languages": [
+      {
+        "id": "l1",
+        "name": "Romanian",
+        "level": "Native"
+      },
+      {
+        "id": "l2",
+        "name": "English",
+        "level": "B2"
+      }
+    ],
+    "awards": [],
+    "certifications": [],
+    "publications": [],
+    "volunteering": [],
+    "activities": [
+      {
+        "id": "x1",
+        "title": "Hackathon Moldova",
+        "activityType": "Hackathon",
+        "role": "UX lead",
+        "description": "Designed the winning offline-first ticketing prototype.",
+        "date": "November 2024",
+        "location": "Chișinău, Moldova",
+        "endDate": "",
+        "ongoing": false
+      }
+    ]
+  },
+  "dana": {
+    "personalInfo": {
+      "name": "Dana Ionescu",
+      "email": "dana.ionescu@example.de",
+      "phone": "+49 151 2345 6789",
+      "photo": "",
+      "linkedin": "https://www.linkedin.com/in/danaionescu",
+      "website": "https://danaionescu.eu",
+      "country": "Germany",
+      "cityState": "Berlin"
+    },
+    "summary": {
+      "position": "Head of Engineering",
+      "valueProposition": "Engineering leader with 14 years in payments and retail platforms. Built and led teams of up to 45 engineers across Berlin and Bucharest, delivered PCI-DSS compliant checkout systems processing EUR 3B per year, and reduced cloud spend by 28% without slowing delivery."
+    },
+    "work": [
+      {
+        "id": "w1",
+        "role": "Head of Engineering",
+        "company": "Paywise Europe",
+        "startDate": "January 2023",
+        "endDate": "",
+        "current": true,
+        "country": "Germany",
+        "cityState": "Berlin",
+        "description": "Scaled the platform team from 4 to 11 engineers while keeping on-call load under 2 pages per week.\nDelivered a multi-region checkout rewrite that cut payment failures by 11% across 14 markets.\nIntroduced trunk-based development, feature flags and automated canary releases.\nOwned a budget of EUR 1.2M and a roadmap shared with product, finance and compliance."
+      },
+      {
+        "id": "w2",
+        "role": "Engineering Manager",
+        "company": "Paywise Europe",
+        "startDate": "March 2020",
+        "endDate": "December 2022",
+        "current": false,
+        "country": "Germany",
+        "cityState": "Berlin",
+        "description": "Scaled the platform team from 5 to 13 engineers while keeping on-call load under 2 pages per week.\nDelivered a multi-region checkout rewrite that cut payment failures by 12% across 14 markets.\nIntroduced trunk-based development, feature flags and automated canary releases.\nOwned a budget of EUR 2.2M and a roadmap shared with product, finance and compliance."
+      },
+      {
+        "id": "w3",
+        "role": "Staff Software Engineer",
+        "company": "Kinetic Retail GmbH",
+        "startDate": "May 2017",
+        "endDate": "February 2020",
+        "current": false,
+        "country": "Germany",
+        "cityState": "Berlin",
+        "description": "Scaled the platform team from 6 to 15 engineers while keeping on-call load under 2 pages per week.\nDelivered a multi-region checkout rewrite that cut payment failures by 13% across 14 markets.\nIntroduced trunk-based development, feature flags and automated canary releases.\nOwned a budget of EUR 3.2M and a roadmap shared with product, finance and compliance."
+      },
+      {
+        "id": "w4",
+        "role": "Senior Software Engineer",
+        "company": "Kinetic Retail GmbH",
+        "startDate": "June 2014",
+        "endDate": "April 2017",
+        "current": false,
+        "country": "Germany",
+        "cityState": "Berlin",
+        "description": "Scaled the platform team from 7 to 17 engineers while keeping on-call load under 2 pages per week.\nDelivered a multi-region checkout rewrite that cut payment failures by 14% across 14 markets.\nIntroduced trunk-based development, feature flags and automated canary releases.\nOwned a budget of EUR 4.2M and a roadmap shared with product, finance and compliance."
+      },
+      {
+        "id": "w5",
+        "role": "Software Engineer",
+        "company": "Netropolis SRL",
+        "startDate": "September 2011",
+        "endDate": "May 2014",
+        "current": false,
+        "country": "Romania",
+        "cityState": "Bucharest",
+        "description": "Scaled the platform team from 8 to 19 engineers while keeping on-call load under 2 pages per week.\nDelivered a multi-region checkout rewrite that cut payment failures by 15% across 14 markets.\nIntroduced trunk-based development, feature flags and automated canary releases.\nOwned a budget of EUR 5.2M and a roadmap shared with product, finance and compliance."
+      }
+    ],
+    "education": [
+      {
+        "id": "e1",
+        "institution": "Universitatea Politehnica din București",
+        "location": "Bucharest, Romania",
+        "degree": "MSc Computer Engineering",
+        "minor": "",
+        "startDate": "October 2009",
+        "endDate": "July 2011",
+        "grade": "",
+        "additional": ""
+      }
+    ],
+    "skills": [
+      "Engineering management",
+      "Go",
+      "Kotlin",
+      "Java",
+      "TypeScript",
+      "PostgreSQL",
+      "Kafka",
+      "Kubernetes",
+      "AWS",
+      "GCP",
+      "Terraform",
+      "System design",
+      "Payments",
+      "PCI-DSS",
+      "Observability",
+      "Incident management",
+      "OKRs",
+      "Hiring",
+      "Budgeting",
+      "Vendor management"
+    ],
+    "instruments": [
+      "Jira",
+      "Datadog",
+      "PagerDuty",
+      "Looker"
+    ],
+    "softSkills": [
+      "Coaching",
+      "Negotiation",
+      "Stakeholder management"
+    ],
+    "languages": [
+      {
+        "id": "l1",
+        "name": "Romanian",
+        "level": "Native"
+      },
+      {
+        "id": "l2",
+        "name": "English",
+        "level": "C2"
+      },
+      {
+        "id": "l3",
+        "name": "German",
+        "level": "B2"
+      }
+    ],
+    "awards": [],
+    "certifications": [
+      {
+        "id": "c1",
+        "title": "AWS Certified Solutions Architect – Professional",
+        "description": "",
+        "date": "2021",
+        "issuer": "Amazon Web Services"
+      }
+    ],
+    "publications": [],
+    "volunteering": [],
+    "activities": []
+  }
+}
