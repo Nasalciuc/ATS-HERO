@@ -2804,7 +2804,9 @@ p {
 .complete__score {
   position: absolute;
   top: -6px;
-  right: 0;
+  /* clear the modal's close button (top/right 24px, 32px wide) — at right: 0 the pill sat on
+     top of the ✕, so "close" clicks navigated to the score page instead */
+  right: 48px;
   background: var(--ink);
   color: #fff;
   border-radius: 100px;
