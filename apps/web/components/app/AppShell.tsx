@@ -7,9 +7,12 @@ import { MenuIcon, UserIcon } from "../icons";
 import SignInModal from "../modals/SignInModal";
 import { FeedbackLink } from "./FeedbackLink";
 
-type NavKey = "create" | "improve" | "jobfit" | "tracker";
+type NavKey = "cvs" | "create" | "improve" | "jobfit" | "tracker";
 
 const NAV: { key: NavKey; label: string; to: string }[] = [
+  // The dashboard is "home" (PAGES-DESIGN-SPEC §2). Without this entry the builder had no
+  // in-app way back to the CV list — so no way to start a second CV or switch between CVs.
+  { key: "cvs", label: "Your CVs", to: "/app" },
   { key: "create", label: "Create ATS Resume", to: "/app/create" },
   { key: "improve", label: "Improve My Resume", to: "/app/improve" },
   { key: "jobfit", label: "Check Job Fit", to: "/app/jobfit" },
