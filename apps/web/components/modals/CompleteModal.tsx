@@ -4,6 +4,7 @@ import Modal from "../ui/Modal";
 import { TemplateSelector } from "../cv/TemplateSelector";
 import { AccentPicker } from "../cv/AccentPicker";
 import { ExportButtons } from "../cv/ExportButtons";
+import { AtsReadCheck } from "../cv/AtsReadCheck";
 import { useBuilderStore } from "@/stores/cv-builder-store";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import type { CvData } from "../../lib/types";
@@ -57,6 +58,7 @@ export default function CompleteModal({
           </div>
           <div className="complete__downloads">
             <ExportButtons data={data} />
+            <AtsReadCheck data={data} />
           </div>
         </div>
       </div>

@@ -88,3 +88,35 @@ export interface RegionSignals {
   has_gdpr_clause?: boolean | null;
   languages?: string[];
 }
+
+/** POST /parse-check — what ATS-style readers recover from one CV file (the ATS lab). */
+export type ParseCheckVerdict = "PASS" | "WARN" | "FAIL";
+
+export interface ParseCheckReader {
+  reader: string; // extraction engine: pymupdf | pdfminer | pypdf | python-docx | docx2txt
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  linkedin?: string | null;
+  sections?: string[];
+  jobs?: { start: string; end: string; text: string }[];
+  education?: { start: string; end: string; text: string }[];
+  skills?: string[];
+  verdict?: ParseCheckVerdict; // only when truth was sent
+  score?: number;
+  problems?: string[];
+}
+
+export interface ParseCheckResult {
+  format: "pdf" | "docx";
+  summary: {
+    verdict: ParseCheckVerdict;
+    score_min?: number;
+    score_mean?: number;
+    readers_passing?: number;
+    readers_total: number;
+    disagreements?: string[];
+  };
+  readers: ParseCheckReader[];
+  recommendations: { code: string; severity: Severity; message: string }[];
+}
