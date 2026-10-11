@@ -55,19 +55,25 @@ export function CvPagedPreview({ data, templateId, accent }: { data: CvData; tem
     let task: { cancel: () => void } | null = null;
     let stale = false;
     (async () => {
-      const p = await doc.getPage(page);
-      if (stale || !canvasRef.current) return;
-      const base = p.getViewport({ scale: 1 });
-      const dpr = Math.min(window.devicePixelRatio || 1, 3);
-      const viewport = p.getViewport({ scale: (PAGE_W / base.width) * dpr });
-      const canvas = canvasRef.current;
-      canvas.width = Math.round(viewport.width);
-      canvas.height = Math.round(viewport.height);
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      const render = p.render({ canvasContext: ctx, viewport });
-      task = render;
-      await render.promise.catch(() => undefined);
+      try {
+        const p = await doc.getPage(page);
+        if (stale || !canvasRef.current) return;
+        const base = p.getViewport({ scale: 1 });
+        const dpr = Math.min(window.devicePixelRatio || 1, 3);
+        const viewport = p.getViewport({ scale: (PAGE_W / base.width) * dpr });
+        const canvas = canvasRef.current;
+        canvas.width = Math.round(viewport.width);
+        canvas.height = Math.round(viewport.height);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("no 2d canvas context");
+        const render = p.render({ canvasContext: ctx, viewport });
+        task = render;
+        await render.promise;
+        if (!stale) setState("ready");
+      } catch (err) {
+        // A cancelled render (page flipped, document replaced) is expected; anything else is shown.
+        if (!stale && (err as { name?: string } | null)?.name !== "RenderingCancelledException") setState("error");
+      }
     })();
     return () => {
       stale = true;

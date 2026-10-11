@@ -22,7 +22,9 @@ or missing check — that is the CI gate (`.github/workflows/design-check.yml`).
 | Checked (gate) | Not checked |
 |---|---|
 | position and size of every tagged element, ±2px at the Figma frame size | text widths (they depend on the font the OS has) |
-| font size / weight / line height / letter spacing / colours / radii where the spec lists them | emoji artwork (Apple vs Noto vs Segoe) |
+| font size / weight / line height / letter spacing / colours / radii where the spec lists them | colours, text and styles a spec doesn't list |
+| each tagged element is visible, on top at its centre (not covered) and the only one with its key | icon artwork — compare the screenshot with the Figma export |
+| no uncaught error on the page (console errors are listed in the report, not gated) | emoji artwork (Apple vs Noto vs Segoe) |
 | | the pixel-diff % — informational only |
 
 Fonts: the Figma file uses SF Pro Display (titles, badge), Helvetica (menu, buttons) and Inter
@@ -38,8 +40,10 @@ stack — SF on Apple devices, Segoe UI / Roboto elsewhere. Inter is self-hosted
    Figma instances are leaves in that output, so boxes inside an instance go into the spec by hand
    (`"box": [x, y, w, h]`, `null` = don't check that dimension).
 3. Write `specs/<id>.json`: `frame`, `route`, `viewport`, optional `setup` steps
-   (`{ "click": "<selector>" }`, `{ "fill": ["<selector>", "text"] }`, `{ "wait": ms }`),
-   `reference` (the Figma export PNG) and `checks`.
+   (`{ "click": "<selector>" }`, `{ "fill": ["<selector>", "text"] }`, `{ "press": ["<selector>", "Enter"] }`,
+   `{ "select": ["<selector>", "value"] }`, `{ "wait": ms }`), `reference` (the Figma export PNG) and
+   `checks`. A check with `"relativeTo": "<key>"` compares its x/y as an offset from that element
+   (for content inside a centred pop-up whose height differs from Figma's).
 4. Iterate until it passes, then set `"locked": true`.
 
 ## Icons
@@ -47,6 +51,14 @@ stack — SF on Apple devices, Segoe UI / Roboto elsewhere. Inter is self-hosted
 `components/figma-icons.tsx` is generated from the exact Iconify icons the Figma layers name
 (`icons/manifest.json` → `icons/generate.mjs`; sources and licences in `ICON-SOURCES.md`, which
 also lists the CC BY icons that need credit). Don't hand-edit the generated file.
+
+Where Figma flattened an icon or named the wrong one, the closest Iconify glyph was picked by shape
+(the manifest says which). Approximations, with the stroke matched to the Figma export by counting
+ink pixels (`styles.css`):
+
+- chip × (`iconamoon:close`): stroke 1.33px — the 24px icon drawn at 16px, as in Figma;
+- soft-skill person (`fluent:person-24-regular`): outline thickened by a 1.35 stroke — Figma's is heavier;
+- ATS-score gauge (`streamline-plump:dashboard-gauge-2`): Figma's icon is custom.
 
 ## Screens covered
 
@@ -60,9 +72,10 @@ also lists the CC BY icons that need credit). Don't hand-edit the generated file
 | `builder-skills` | 358:6909 Step 11 | Next ×4, the Figma chips typed in |
 | `builder-activities` | 293:1309 Step 10 | Relevant activities added, reached with Next |
 | `builder-awards` | 291:1321 Step 7 | four optional sections added |
+| `builder-certifications` | 293:891 Step 8 | same, Next to Certifications |
 | `builder-publications` | 293:1094 Step 9 | same, last step |
 | `popup-tips` | 336:6042 Pop-up_Tips | Explore on Personal info |
-| `popup-add-section` | 311:3740 / 331:4891 Pop-up_Add section | "+ Add section" in the stepper |
+| `popup-add-section` | 331:4891 Pop-up_Add section (v2: subtitle + Continue) | "+ Add section" in the stepper |
 | `popup-almost-there` | 358:7402 | Awards added and left empty, then Complete |
 | `popup-complete` | 311:3326 Pop-up_Complete | Preview on Personal info |
 
@@ -71,21 +84,29 @@ also lists the CC BY icons that need credit). Don't hand-edit the generated file
 - **Title / badge font** off Apple devices (system font instead of SF Pro).
 - **Emoji** are the platform's own.
 - **Sidebar extras**: "My Resumes (n)" appears once there is a CV (Figma's variant with a count);
-  "Tracker" only for signed-in users; a small "Feedback" link in the sidebar's empty bottom strip.
-  A guest's first visit shows exactly the Figma sidebar.
+  "Tracker" only for signed-in users; a small "Feedback" link, always shown, in the sidebar's empty
+  bottom strip (the one addition on a guest's first visit).
 - **Builder copy/flow where the Figma file contradicts itself**: placeholders on Awards/Certifications
   /Publications are real examples (Figma reuses "David Smith"/"davidsmith@gmail.com" from step 1);
   the Publications badge says "Publications" (Figma: "Certifications"); "Next step" is hidden on the
   last step (the Skills frame hides it, the Publications frame doesn't); the "Add one more …" icon gap
   is 4px everywhere (one frame uses 8px).
-- **Volunteering** has no Figma frame; it reuses the "Relevant activities" layout.
+- **Volunteering** has no desktop frame (only the mobile wireframe has one); it reuses the
+  "Relevant activities" layout.
 - **Pop-ups** are centred (two Figma frames sit 49px right / 36px up of centre; the third is
   centred). "Add section" lists every section not added yet — 5 on a fresh CV, Figma shows 3 — and
   its "Continue" just closes when nothing is ticked (Figma shows it always enabled). The overlay is
   Figma's solid #2e2e2e (`--modal-overlay`), not see-through.
 - **Complete pop-up**: Figma lists "Style 1–6"; we list our three templates by name and keep the
   accent colours under them. The preview is the real PDF drawn page by page (Figma shows a sample
-  CV); the ATS-score icon is the closest Iconify glyph to Figma's custom one.
-- **Below 1728px** Figma has no frames: the content column shrinks (max 1135px), the gutter
-  tightens under 1280px, the sidebar becomes a drawer under 1024px, phones get a compact stepper.
-  The phone/tablet look is derived and awaits design approval.
+  CV); the ATS-score icon is the closest Iconify glyph to Figma's custom one. "Download DOC" saves
+  a Word .docx. With `NEXT_PUBLIC_ATS_CHECK_ENABLED=true` an "ATS read check" card (not in Figma)
+  appears under the colours; CI doesn't set it, so a local screenshot can differ from CI's.
+- **Below 1728px**: the desktop page (180:17) has no narrower frames. The mobile page (17:1152,
+  marked in progress) is an earlier wireframe in the old style (ATS-Inspector, blue buttons,
+  "TITLE / Text" placeholders), so no spec checks against it yet. Today: the content column shrinks
+  (max 1135px), the gutter tightens under 1280px, the sidebar becomes a drawer under 1024px, phones
+  get a compact stepper; when the steps don't fit, the clipped side fades out and mice get a thin
+  scrollbar. The phone/tablet look awaits design approval.
+- **Contrast**: some Figma colours fail WCAG AA (placeholder #ccc, 12px grey labels, the 12px green
+  step label, Pro Tips body, badge, page count). They are kept as designed pending a design decision.

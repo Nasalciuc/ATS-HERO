@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useNavigate } from "@/lib/router";
 import { useApp } from "../../store/AppContext";
@@ -16,7 +16,7 @@ type NavItem = { key: NavKey; label: string; to: string; count?: number };
 /**
  * Figma "Menu": Create / Improve / Check Job Fit, then "My Resumes (n)" once there is a CV to go
  * back to (the Figma variant with a count). Tracker is ours (not in Figma) and needs an account,
- * so a guest never sees it — a guest's sidebar is exactly the Figma one.
+ * so a guest never sees it. The only other addition is the small Feedback link at the bottom.
  */
 function navItems(cvCount: number, signedIn: boolean, active: NavKey): NavItem[] {
   const items: NavItem[] = [
@@ -49,11 +49,19 @@ export default function AppShell({
 
   const closeMenu = () => setMenuOpen(false);
 
+  // The drawer (under 1024px) closes on Escape like any overlay.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
   return (
     <div className="appshell">
       {menuOpen && <button className="appshell__backdrop" aria-label="Close menu" onClick={closeMenu} />}
 
-      <aside className={`appshell__side${menuOpen ? " is-open" : ""}`} data-figma="sidebar">
+      <aside id="app-menu" className={`appshell__side${menuOpen ? " is-open" : ""}`} data-figma="sidebar">
         <Link href="/" className="appshell__logo" data-figma="logo" onClick={closeMenu}>
           ATS Hero
         </Link>
@@ -114,10 +122,20 @@ export default function AppShell({
 
       <div className="appshell__main">
         <header className="appshell__topbar" data-figma="title-panel">
-          <button className="appshell__menu" type="button" aria-label="Open menu" onClick={() => setMenuOpen(true)}>
+          <button
+            className="appshell__menu"
+            type="button"
+            aria-label="Open menu"
+            aria-controls="app-menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
+          >
             <MenuIcon size={22} />
           </button>
-          <h1 className="appshell__title" data-figma="title">{title}</h1>
+          {/* tabIndex -1: the builder moves focus here when the step changes */}
+          <h1 className="appshell__title" data-figma="title" tabIndex={-1}>
+            {title}
+          </h1>
           <div className="appshell__actions">{actions}</div>
         </header>
         <div className="appshell__content">{children}</div>

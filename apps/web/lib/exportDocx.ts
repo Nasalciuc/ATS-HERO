@@ -90,7 +90,7 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
     if (data.skills.length) c.push(skillLine("Hard skills", data.skills.join(", ")));
     if (data.instruments.length) c.push(skillLine("Tools", data.instruments.join(", ")));
     if (data.softSkills.length) c.push(skillLine("Soft skills", data.softSkills.join(", ")));
-    if (data.languages.length) c.push(skillLine("Languages", data.languages.map((l) => `${l.name} (${l.level})`).join(", ")));
+    if (data.languages.length) c.push(skillLine("Languages", data.languages.map((l) => (l.level ? `${l.name} (${l.level})` : l.name)).join(", ")));
   }
 
   // Work Experience

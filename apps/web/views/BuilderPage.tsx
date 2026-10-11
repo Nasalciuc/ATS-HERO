@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@/lib/router";
 import AppShell from "../components/app/AppShell";
 import ProgressBar, { type Step } from "../components/app/ProgressBar";
@@ -66,6 +66,27 @@ export default function BuilderPage() {
   const [complete, setComplete] = useState(false);
   const [almostThere, setAlmostThere] = useState(false);
   const [addedSections, setAddedSections] = useState<SectionKey[]>([]);
+
+  // Optional sections that already hold entries (a saved CV, a reload) belong in the stepper.
+  useEffect(() => {
+    const withData = OPTIONAL_SECTIONS.map((o) => o.key).filter((k) => {
+      const list = data[k] as unknown[] | undefined;
+      return Array.isArray(list) && list.length > 0;
+    });
+    if (withData.some((k) => !addedSections.includes(k))) {
+      setAddedSections((prev) => [...prev, ...withData.filter((k) => !prev.includes(k))]);
+    }
+  }, [data, addedSections]);
+
+  // A new step is a new page: move focus to its title so keyboard and screen-reader users start
+  // there (the button they pressed may be gone — "Next step" on the last step, a removed section)
+  // and, on phones, the page scrolls back up to it. Not on the first render.
+  const shownStep = useRef(activeKey);
+  useEffect(() => {
+    if (shownStep.current === activeKey) return;
+    shownStep.current = activeKey;
+    document.querySelector<HTMLElement>('[data-figma="title"]')?.focus();
+  }, [activeKey]);
 
   const steps: Step[] = useMemo(() => {
     const optional = (keys: SectionKey[]) =>

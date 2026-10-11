@@ -10,7 +10,9 @@
 //   npm run design:check                 # all specs; BASE_URL defaults to http://localhost:3000
 //   npm run design:check -- builder-step1
 //
-// Exit code 1 when a spec marked "locked" has a failing or missing check (the CI gate).
+// Exit code 1 when a spec marked "locked" has a failing or missing check (the CI gate). A check
+// also fails when its element is hidden, covered by something else at its centre, or not the only
+// element with that key; a spec fails when the page throws an uncaught error.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -77,6 +79,11 @@ for (const spec of specs) {
   const frame = snapshots[spec.frame];
   if (!frame) throw new Error(`${spec.id}: frame ${spec.frame} is not in design-check/figma/*.json`);
   const page = await browser.newPage({ viewport: spec.viewport, deviceScaleFactor: 1 });
+  // The dev error overlay is hidden below, so collect errors here instead.
+  const pageErrors = [];
+  const consoleErrors = [];
+  page.on("pageerror", (err) => pageErrors.push(err.message.split("\n")[0]));
+  page.on("console", (msg) => msg.type() === "error" && consoleErrors.push(msg.text().split("\n")[0].slice(0, 200)));
   await page.goto(BASE + spec.route, { waitUntil: "networkidle" });
   // The Next.js dev-tools badge is not part of the product.
   await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
@@ -85,9 +92,12 @@ for (const spec of specs) {
   await page.waitForTimeout(300);
 
   const measured = await page.evaluate((checks) => {
+    const describe = (n) =>
+      n ? `${n.tagName.toLowerCase()}${n.id ? `#${n.id}` : ""}${n.classList.length ? `.${[...n.classList].join(".")}` : ""}` : "nothing";
     const out = {};
     for (const c of checks) {
-      const el = document.querySelector(`[data-figma="${c.key}"]`);
+      const all = document.querySelectorAll(`[data-figma="${c.key}"]`);
+      const el = all[0];
       if (!el) {
         out[c.key] = null;
         continue;
@@ -96,7 +106,21 @@ for (const spec of specs) {
       const cs = getComputedStyle(el);
       const style = {};
       for (const prop of Object.keys(c.style ?? {})) style[prop] = cs.getPropertyValue(prop).trim();
-      out[c.key] = { box: [r.x + scrollX, r.y + scrollY, r.width, r.height], style };
+      const problems = [];
+      if (all.length > 1) problems.push(`${all.length} elements share this key`);
+      if (!el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) || r.width === 0 || r.height === 0) {
+        problems.push("not visible");
+      } else {
+        // Hit test at the centre: the element (or something inside it) must be on top. An ancestor
+        // is fine too — elements with pointer-events: none are skipped by hit testing.
+        const cx = r.x + r.width / 2;
+        const cy = r.y + r.height / 2;
+        if (cx >= 0 && cy >= 0 && cx < innerWidth && cy < innerHeight) {
+          const hit = document.elementFromPoint(cx, cy);
+          if (!hit || !(el.contains(hit) || hit.contains(el))) problems.push(`covered by ${describe(hit)}`);
+        }
+      }
+      out[c.key] = { box: [r.x + scrollX, r.y + scrollY, r.width, r.height], style, problems };
     }
     return out;
   }, spec.checks);
@@ -107,17 +131,34 @@ for (const spec of specs) {
     const got = measured[c.key];
     if (!got) return { key: c.key, want, got: null, ok: false, problems: ["element with this data-figma key not found"] };
     const tol = c.tolerance ?? spec.tolerance ?? 2;
-    const problems = [];
+    const problems = [...got.problems];
+    // "relativeTo": the box is an offset from another checked element's top-left (for content of
+    // pop-ups whose height, and so whose position, differs from Figma's).
+    let box = got.box;
+    if (c.relativeTo) {
+      const base = measured[c.relativeTo];
+      if (!base) problems.push(`relativeTo element "${c.relativeTo}" not found`);
+      else box = [box[0] - base.box[0], box[1] - base.box[1], box[2], box[3]];
+    }
     ["x", "y", "w", "h"].forEach((dim, i) => {
       if (want[i] === null || want[i] === undefined) return;
-      const d = got.box[i] - want[i];
-      if (Math.abs(d) > tol) problems.push(`${dim} ${got.box[i].toFixed(1)} vs ${want[i]} (${d > 0 ? "+" : ""}${d.toFixed(1)})`);
+      const d = box[i] - want[i];
+      if (Math.abs(d) > tol) problems.push(`${dim} ${box[i].toFixed(1)} vs ${want[i]} (${d > 0 ? "+" : ""}${d.toFixed(1)})`);
     });
     for (const [prop, w] of Object.entries(c.style ?? {})) {
       if (!sameStyle(w, got.style[prop])) problems.push(`${prop} ${got.style[prop]} vs ${w}`);
     }
-    return { key: c.key, want, got: got.box.map((v) => Math.round(v * 10) / 10), ok: problems.length === 0, problems };
+    return {
+      key: c.relativeTo ? `${c.key} (in ${c.relativeTo})` : c.key,
+      want,
+      got: box.map((v) => Math.round(v * 10) / 10),
+      ok: problems.length === 0,
+      problems,
+    };
   });
+  if (pageErrors.length) {
+    rows.push({ key: "(page errors)", want: null, got: null, ok: false, problems: [...new Set(pageErrors)] });
+  }
 
   // Screenshot + diff against the Figma export (visual aid; the numbers above are the gate).
   const shotPath = path.join(OUT, `${spec.id}.png`);
@@ -137,7 +178,17 @@ for (const spec of specs) {
   }
   await page.close();
   const passed = rows.filter((r) => r.ok).length;
-  results.push({ id: spec.id, title: spec.title, frame: spec.frame, locked: !!spec.locked, passed, total: rows.length, pixelDiff, rows });
+  results.push({
+    id: spec.id,
+    title: spec.title,
+    frame: spec.frame,
+    locked: !!spec.locked,
+    passed,
+    total: rows.length,
+    pixelDiff,
+    rows,
+    consoleErrors: [...new Set(consoleErrors)],
+  });
   console.log(`${spec.locked ? "🔒" : "  "} ${spec.id.padEnd(22)} ${String(passed).padStart(3)}/${rows.length} checks within ±${spec.tolerance ?? 2}px` + (pixelDiff !== null ? ` · ${pixelDiff}% pixels differ from the Figma export` : ""));
 }
 await browser.close();
@@ -148,9 +199,12 @@ for (const r of results) {
   if (r.pixelDiff !== null) md.push(`Pixels that differ from the Figma export: **${r.pixelDiff}%** (see \`${r.id}-diff.png\`, \`${r.id}-overlay.png\`).`, "");
   md.push("| key | Figma [x, y, w, h] | ours | |", "|---|---|---|---|");
   for (const row of r.rows) {
-    md.push(`| ${row.key} | ${JSON.stringify(row.want)} | ${row.got ? JSON.stringify(row.got) : "—"} | ${row.ok ? "✅" : "❌ " + row.problems.join("; ")} |`);
+    md.push(`| ${row.key} | ${row.want ? JSON.stringify(row.want) : "—"} | ${row.got ? JSON.stringify(row.got) : "—"} | ${row.ok ? "✅" : "❌ " + row.problems.join("; ")} |`);
   }
   md.push("");
+  if (r.consoleErrors.length) {
+    md.push("Console errors (listed, not gated):", "", ...r.consoleErrors.map((e) => `- \`${e.replace(/`/g, "'")}\``), "");
+  }
 }
 fs.writeFileSync(path.join(OUT, "REPORT.md"), md.join("\n"));
 fs.writeFileSync(path.join(OUT, "results.json"), JSON.stringify(results, null, 2));

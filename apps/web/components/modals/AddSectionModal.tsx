@@ -36,7 +36,7 @@ export default function AddSectionModal({
     <Modal open={open} onClose={onClose} variant="center" panelClassName="modal__panel--dialog">
       <div className="dialog addsection">
         <h2 className="dialog__title" data-figma="dialog-title">Add section</h2>
-        <p className="dialog__text">
+        <p className="dialog__text" data-figma="dialog-text">
           Your resume is ATS-ready.
           <br />
           You can add more sections to improve your chances.

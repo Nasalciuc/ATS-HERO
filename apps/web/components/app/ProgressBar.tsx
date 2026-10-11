@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { PlusOutline, StepRemove } from "../figma-icons";
 
 /** `label` may contain "\n" — the stepper breaks lines where Figma does ("Professional\nsummary"). */
@@ -28,6 +28,38 @@ export default function ProgressBar({
 }) {
   const currentIndex = steps.findIndex((s) => s.key === current);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Which sides have steps scrolled out of view (drives the edge fades in styles.css).
+  const [more, setMore] = useState({ start: false, end: false });
+
+  useEffect(() => {
+    const box = scrollRef.current;
+    if (!box) return;
+    const measure = () => {
+      const start = box.scrollLeft > 1;
+      const end = box.scrollLeft + box.clientWidth < box.scrollWidth - 1;
+      setMore((m) => (m.start === start && m.end === end ? m : { start, end }));
+    };
+    // A plain mouse wheel scrolls the steps sideways while there is room to go; at either end the
+    // page scrolls as usual.
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || box.scrollWidth <= box.clientWidth) return;
+      const canGo = e.deltaY > 0 ? box.scrollLeft + box.clientWidth < box.scrollWidth - 1 : box.scrollLeft > 0;
+      if (!canGo) return;
+      e.preventDefault();
+      box.scrollLeft += e.deltaY;
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    if (box.firstElementChild) ro.observe(box.firstElementChild);
+    box.addEventListener("scroll", measure, { passive: true });
+    box.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      ro.disconnect();
+      box.removeEventListener("scroll", measure);
+      box.removeEventListener("wheel", onWheel);
+    };
+  }, []);
 
   // When the steps overflow (phones, many optional sections), keep the current one in view.
   useEffect(() => {
@@ -42,8 +74,11 @@ export default function ProgressBar({
   }, [current, steps.length]);
 
   return (
-    <div className="progress" data-figma="stepper">
-      <div className="progress__scroll" ref={scrollRef}>
+    <div className={`progress${more.start || more.end ? " is-overflowing" : ""}`} data-figma="stepper">
+      <div
+        className={`progress__scroll${more.start ? " has-more-start" : ""}${more.end ? " has-more-end" : ""}`}
+        ref={scrollRef}
+      >
         <div className="progress__track">
           {steps.map((s, i) => {
             const isCurrent = s.key === current;

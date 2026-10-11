@@ -64,7 +64,7 @@ export default function ModernTemplate({ data, theme }: { data: CvData; theme: T
             {data.languages.length > 0 ? (
               <SideBlock title="LANGUAGES">
                 {data.languages.map((l) => (
-                  <Text key={l.id} style={{ color: white, marginBottom: 2 }}>{l.name} <Text style={{ color: white, opacity: 0.8 }}>({l.level})</Text></Text>
+                  <Text key={l.id} style={{ color: white, marginBottom: 2 }}>{l.name}{l.level ? <Text style={{ color: white, opacity: 0.8 }}> ({l.level})</Text> : null}</Text>
                 ))}
               </SideBlock>
             ) : null}

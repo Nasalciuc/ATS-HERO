@@ -52,7 +52,8 @@ export function AtsReadCheck({ data }: { data: CvData }) {
 
   return (
     <div className="mt-4 rounded-xl border border-solid border-zinc-200 p-3 text-sm" data-testid="ats-read-check">
-      <div className="flex items-center justify-between gap-3">
+      {/* wraps: in the Complete pop-up the card sits in a 185px column */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="font-medium text-zinc-900">ATS read check</div>
           <div className="text-xs text-zinc-500">Runs your exact files through the text readers ATS parsers rely on.</div>

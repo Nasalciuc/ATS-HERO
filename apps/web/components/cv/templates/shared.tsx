@@ -238,7 +238,7 @@ export function SkillsBody({ data, theme, stacked = false }: { data: CvData; the
       {data.instruments.length > 0 ? <Group label="Tools" value={data.instruments.join(sep)} /> : null}
       {data.softSkills.length > 0 ? <Group label="Soft skills" value={data.softSkills.join(sep)} /> : null}
       {!stacked && data.languages.length > 0 ? (
-        <Group label="Languages" value={data.languages.map((l) => `${l.name} (${l.level})`).join(sep)} />
+        <Group label="Languages" value={data.languages.map((l) => (l.level ? `${l.name} (${l.level})` : l.name)).join(sep)} />
       ) : null}
     </View>
   );

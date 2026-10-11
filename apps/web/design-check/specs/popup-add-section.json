@@ -1,8 +1,8 @@
 {
   "id": "popup-add-section",
   "title": "Pop-up · Add section",
-  "frame": "311:3740",
-  "reference": "reference/figma/desktop/popup-add-section-1.png",
+  "frame": "331:4891",
+  "reference": "reference/figma/desktop/popup-add-section-2.png",
   "route": "/app/create",
   "viewport": {
     "width": 1728,
@@ -10,7 +10,7 @@
   },
   "locked": true,
   "tolerance": 2,
-  "note": "Content follows the v2 frame (331:4891: subtitle + Continue); we list every section not added yet (5 vs Figma's 3), so only the frame, title style, button and close are checked.",
+  "note": "Figma v2 (subtitle + Continue). The Figma frame sits 49px right / 36px up of centre; ours is centred, so the panel x is checked at the centre (590) and its content relative to the panel. We list every section not added yet (5 on a fresh CV vs Figma's 3), so the panel height and the button's y are not checked.",
   "setup": [
     {
       "click": ".progress__add"
@@ -30,16 +30,42 @@
       }
     },
     {
+      "key": "modal-close",
+      "relativeTo": "modal-panel",
+      "box": [
+        481,
+        20,
+        44,
+        44
+      ]
+    },
+    {
       "key": "dialog-title",
+      "relativeTo": "modal-panel",
       "box": [
         null,
-        null,
+        48,
         null,
         44
       ],
       "style": {
         "font-size": "40px",
-        "font-weight": "600"
+        "font-weight": "600",
+        "line-height": "44px"
+      }
+    },
+    {
+      "key": "dialog-text",
+      "relativeTo": "modal-panel",
+      "box": [
+        45,
+        112,
+        458,
+        72
+      ],
+      "style": {
+        "font-size": "20px",
+        "line-height": "24px"
       }
     },
     {

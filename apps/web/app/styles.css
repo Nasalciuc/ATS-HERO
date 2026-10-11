@@ -1427,6 +1427,14 @@ p {
   max-width: var(--app-max);
   min-height: 52px;
 }
+.appshell__title:focus {
+  outline: none;
+}
+.appshell__title:focus-visible {
+  outline: 2px solid var(--violet-300);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
 .appshell__title {
   margin: 0;
   min-width: 0;
@@ -1525,6 +1533,41 @@ p {
 }
 .progress__scroll::-webkit-scrollbar {
   display: none;
+}
+/* When the steps don't fit (phones, tablets, many added sections) the clipped side fades out
+   and "Add section" moves 12px away, so a cut label never runs into it (ProgressBar sets the
+   classes). The 16px on the left is the label overhang zone, see the margin above. */
+.progress.is-overflowing .progress__add {
+  margin-left: 12px;
+}
+.progress__scroll.has-more-end {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+}
+.progress__scroll.has-more-start {
+  -webkit-mask-image: linear-gradient(to right, transparent 16px, #000 56px);
+  mask-image: linear-gradient(to right, transparent 16px, #000 56px);
+}
+.progress__scroll.has-more-start.has-more-end {
+  -webkit-mask-image: linear-gradient(to right, transparent 16px, #000 56px, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, transparent 16px, #000 56px, #000 calc(100% - 40px), transparent);
+}
+/* Mouse users get a thin scrollbar as the cue that it scrolls (touch users swipe); the bottom
+   padding keeps it off the labels. */
+@media (pointer: fine) {
+  .progress.is-overflowing .progress__scroll {
+    scrollbar-width: thin;
+    padding-bottom: 12px;
+    margin-bottom: -12px;
+  }
+  .progress.is-overflowing .progress__scroll::-webkit-scrollbar {
+    display: block;
+    height: 6px;
+  }
+  .progress.is-overflowing .progress__scroll::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: #c0c0c0;
+  }
 }
 .progress__track {
   display: flex;
@@ -2189,11 +2232,22 @@ select.field__input {
 .chip__remove:hover {
   color: var(--red);
 }
+/* Ink matched to the Figma export (pixel count): the × is the 24px icon drawn at 16px, so its
+   2px stroke is 1.33px there; Figma's soft-skill person is heavier than fluent:person-regular. */
+.chip__remove path {
+  stroke-width: 1.33;
+}
+.chip__icon--heavy path {
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linejoin: round;
+}
 
 /* ---------------- app shell below the Figma frame ----------------
-   Figma has desktop frames only (1728). Narrower: the content column shrinks first (max 1135),
+   The desktop page (180:17) has 1728px frames only; the mobile page (17:1152) is an earlier
+   wireframe in the old style. Narrower than 1728: the content column shrinks first (max 1135),
    then the gutter tightens, the sidebar becomes a drawer (<1024) and phones get a compact
-   stepper and buttons. The phone/tablet look is derived, pending design approval. */
+   stepper and buttons. The phone/tablet look awaits design approval. */
 @media (max-width: 1279px) {
   :root {
     --app-gap: 32px;
@@ -2258,10 +2312,14 @@ select.field__input {
     height: 100vh;
     height: 100dvh;
     transform: translateX(-105%);
-    transition: transform 0.2s ease;
+    /* hidden (out of the Tab order) once it has slid away */
+    visibility: hidden;
+    transition: transform 0.2s ease, visibility 0s linear 0.2s;
   }
   .appshell__side.is-open {
     transform: none;
+    visibility: visible;
+    transition: transform 0.2s ease;
   }
   .appshell__main {
     padding-top: 24px;
@@ -2401,6 +2459,11 @@ select.field__input {
   .builder__footer__actions {
     flex-wrap: wrap;
     gap: 8px;
+  }
+  /* "Add one more …" and "Delete" don't fit side by side under ~360px */
+  .entry-actions {
+    flex-wrap: wrap;
+    row-gap: 8px;
   }
 }
 .muted {
@@ -3586,6 +3649,14 @@ select.field__input {
 }
 .download-btn:hover:not(:disabled) {
   background: #f4f4f4;
+}
+.complete__error {
+  max-width: 320px;
+  margin: -8px 0 0;
+  font-size: 14px;
+  line-height: 18px;
+  color: var(--red); /* the app's error red, like .analyze-error */
+  text-align: center;
 }
 /* Figma: absolute in the pop-up at (760, 50), i.e. 680px into the content box */
 .complete__score {

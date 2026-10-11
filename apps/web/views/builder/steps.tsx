@@ -1,5 +1,5 @@
 "use client";
-import { useState, type ReactNode } from "react";
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { nanoid } from "nanoid";
 import { Field, TextArea, SelectField } from "../../components/app/Field";
 import {
@@ -25,14 +25,36 @@ import type {
 type StepProps = { data: CvData; update: (patch: Partial<CvData>) => void; framed?: boolean };
 
 /** Figma "Frame 274": the #f8f8f8 form card. `tabbed` squares the corner the entry tabs sit on. */
-function Panel({ framed, tabbed, children }: { framed?: boolean; tabbed?: boolean; children: ReactNode }) {
-  if (!framed) return <div className="step-bare">{children}</div>;
+function Panel({
+  framed,
+  tabbed,
+  id,
+  labelledBy,
+  children,
+}: {
+  framed?: boolean;
+  tabbed?: boolean;
+  id?: string;
+  labelledBy?: string;
+  children: ReactNode;
+}) {
+  const tabpanel = tabbed ? { role: "tabpanel", "aria-labelledby": labelledBy } : {};
+  if (!framed)
+    return (
+      <div className="step-bare" id={id} {...tabpanel}>
+        {children}
+      </div>
+    );
   return (
-    <div className={`builder__panel${tabbed ? " is-tabbed" : ""}`} data-figma="form-card">
+    <div className={`builder__panel${tabbed ? " is-tabbed" : ""}`} data-figma="form-card" id={id} {...tabpanel}>
       {children}
     </div>
   );
 }
+
+/** Nothing typed or ticked yet (ids aside). */
+const isBlankEntry = (item: object) =>
+  Object.entries(item).every(([k, v]) => k === "id" || v === "" || v === false || v == null);
 
 /**
  * Repeatable entries. Figma always shows a form — never an empty state — so with no entries yet a
@@ -93,16 +115,42 @@ function Entries<T extends { id: string }>({
   const idx = Math.min(active, list.length - 1);
   const item = list[idx];
   const many = list.length > 1;
+  const uid = useId();
+  const panelId = `${uid}-panel`;
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const focusFirstField = () =>
+    requestAnimationFrame(() =>
+      document.getElementById(panelId)?.querySelector<HTMLElement>("input, textarea, select")?.focus(),
+    );
   const add = (
     <AddButton
       label={addLabel}
       className={addInLeft ? "entry-add--left" : ""}
       onClick={() => {
+        // An untouched last entry is the one to fill — don't stack blank entries behind it.
+        const last = list.length - 1;
+        if (isBlankEntry(list[last])) {
+          setActive(last);
+          focusFirstField();
+          return;
+        }
         onAdd();
         setActive(list.length);
+        focusFirstField();
       }}
     />
   );
+  const selectTab = (i: number) => {
+    setActive(i);
+    tabRefs.current[i]?.focus();
+  };
+  const onTabKey = (e: KeyboardEvent<HTMLButtonElement>) => {
+    const n = list.length;
+    const next = { ArrowRight: idx + 1, ArrowLeft: idx - 1 + n, Home: 0, End: n - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    selectTab(next % n);
+  };
   const del = many && (
     <button
       type="button"
@@ -128,11 +176,18 @@ function Entries<T extends { id: string }>({
                 key={it.id}
                 type="button"
                 role="tab"
+                id={`${uid}-tab-${i}`}
+                ref={(el) => {
+                  tabRefs.current[i] = el;
+                }}
                 aria-selected={i === idx}
+                aria-controls={panelId}
+                tabIndex={i === idx ? 0 : -1}
                 className={`entry-tab${i === idx ? " is-active" : ""}`}
                 data-figma={`entry-tab-${i}`}
                 title={label}
                 onClick={() => setActive(i)}
+                onKeyDown={onTabKey}
               >
                 <span>{label}</span>
               </button>
@@ -140,7 +195,7 @@ function Entries<T extends { id: string }>({
           })}
         </div>
       )}
-      <Panel framed={framed} tabbed={many}>
+      <Panel framed={framed} tabbed={many} id={panelId} labelledBy={`${uid}-tab-${idx}`}>
         {item && render(item, addInLeft ? add : null)}
         {(!addInLeft || del) && (
           <div className="entry-actions">
@@ -333,7 +388,7 @@ type ChipTone = "hard" | "soft" | "tool" | "lang";
 
 const CHIP_ICONS: Record<ChipTone, ReactNode> = {
   hard: <SkillHardIcon />,
-  soft: <SkillSoftIcon />,
+  soft: <SkillSoftIcon className="chip__icon--heavy" />,
   tool: <SkillToolIcon />,
   lang: (
     <span className="chip__icon20">
@@ -343,7 +398,18 @@ const CHIP_ICONS: Record<ChipTone, ReactNode> = {
 };
 
 /** Figma skill chips: 40px tall, 8px radius, a 20px icon, the label and a violet ×. */
-function Chips({ tone, items, onRemove, figma }: { tone: ChipTone; items: { key: string; label: string }[]; onRemove: (key: string) => void; figma?: string }) {
+function Chips({
+  tone,
+  items,
+  onRemove,
+  figma,
+}: {
+  tone: ChipTone;
+  items: { key: string; label: string }[];
+  /** called after removal; the group puts focus back in its input */
+  onRemove: (key: string) => void;
+  figma?: string;
+}) {
   if (items.length === 0) return null;
   return (
     <div className="chips" data-figma={figma}>
@@ -352,7 +418,7 @@ function Chips({ tone, items, onRemove, figma }: { tone: ChipTone; items: { key:
           {CHIP_ICONS[tone]}
           <span className="chip__label">{it.label}</span>
           <button type="button" className="chip__remove" onClick={() => onRemove(it.key)} aria-label={`Remove ${it.label}`}>
-            {/* iconamoon:close cropped so the × fills 12 of the 16px, as in Figma */}
+            {/* iconamoon:close cropped so the × fills 12 of the 16px, as in Figma (stroke: styles.css) */}
             <ChipClose viewBox="4 4 16 16" />
           </button>
         </span>
@@ -361,7 +427,7 @@ function Chips({ tone, items, onRemove, figma }: { tone: ChipTone; items: { key:
   );
 }
 
-/** Type + Enter adds a chip. */
+/** Type + Enter adds a chip; leaving the field adds what was typed too, so nothing is lost. */
 function ChipInput({ label, tone, values, onAdd, onRemove, figma }: {
   label: string;
   tone: ChipTone;
@@ -370,24 +436,38 @@ function ChipInput({ label, tone, values, onAdd, onRemove, figma }: {
   onRemove: (v: string) => void;
   figma?: string;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const commit = (input: HTMLInputElement) => {
+    if (!input.value.trim()) return;
+    onAdd(input.value);
+    input.value = "";
+  };
   return (
     <div className="chip-group">
       <label className="field" data-figma={figma}>
         <span className="field__label">{label}</span>
         <input
+          ref={inputRef}
           className="field__input"
           placeholder="Add skills"
           enterKeyHint="done"
           onKeyDown={(e) => {
             if (e.key !== "Enter") return;
             e.preventDefault();
-            const input = e.currentTarget;
-            onAdd(input.value);
-            input.value = "";
+            commit(e.currentTarget);
           }}
+          onBlur={(e) => commit(e.currentTarget)}
         />
       </label>
-      <Chips tone={tone} figma={figma && `${figma}-chips`} items={values.map((v) => ({ key: v, label: v }))} onRemove={onRemove} />
+      <Chips
+        tone={tone}
+        figma={figma && `${figma}-chips`}
+        items={values.map((v) => ({ key: v, label: v }))}
+        onRemove={(v) => {
+          onRemove(v);
+          inputRef.current?.focus();
+        }}
+      />
     </div>
   );
 }
@@ -397,17 +477,20 @@ const LANGUAGE_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2", "Native"];
 export function SkillsStep({ data, update, framed }: StepProps) {
   const [lang, setLang] = useState("");
   const [level, setLevel] = useState("");
+  const langRef = useRef<HTMLDivElement>(null);
   const addTo = (key: "skills" | "instruments" | "softSkills", value: string) => {
     const v = value.trim();
     if (v && !data[key].includes(v)) update({ [key]: [...data[key], v] } as Partial<CvData>);
   };
   const removeFrom = (key: "skills" | "instruments" | "softSkills", value: string) =>
     update({ [key]: data[key].filter((x) => x !== value) } as Partial<CvData>);
-  const addLanguage = () => {
-    const name = lang.trim();
-    if (!name) return;
-    const item: LanguageItem = { id: nanoid(), name, level: level || "B2" };
-    update({ languages: [...data.languages.filter((l) => l.name.toLowerCase() !== name.toLowerCase()), item] });
+  // Added on Enter, on picking a level, or on leaving the language field — never silently dropped.
+  // No level picked = no level (the "B2" in the field is only a placeholder).
+  const addLanguage = (name = lang, lvl = level) => {
+    const n = name.trim();
+    if (!n) return;
+    const item: LanguageItem = { id: nanoid(), name: n, level: lvl };
+    update({ languages: [...data.languages.filter((l) => l.name.toLowerCase() !== n.toLowerCase()), item] });
     setLang("");
     setLevel("");
   };
@@ -421,15 +504,21 @@ export function SkillsStep({ data, update, framed }: StepProps) {
         </div>
         <div className="form-col">
           <ChipInput figma="skills-tools" label="INSTRUMENTS" tone="tool" values={data.instruments} onAdd={(v) => addTo("instruments", v)} onRemove={(v) => removeFrom("instruments", v)} />
-          <div className="chip-group">
-            <div className="field-row">
+          <div className="chip-group" ref={langRef}>
+            <div
+              className="field-row"
+              onBlur={(e) => {
+                // leaving the Language + Level pair (not moving between them) adds what was typed
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) addLanguage();
+              }}
+            >
               <Field
                 figma="skills-language"
                 label="LANGUAGE"
                 value={lang}
                 placeholder="English"
                 onChange={setLang}
-                onEnter={addLanguage}
+                onEnter={() => addLanguage()}
               />
               <SelectField
                 figma="skills-level"
@@ -437,14 +526,17 @@ export function SkillsStep({ data, update, framed }: StepProps) {
                 value={level}
                 placeholder="B2"
                 options={LANGUAGE_LEVELS}
-                onChange={(v) => setLevel(v)}
+                onChange={(v) => (lang.trim() ? addLanguage(lang, v) : setLevel(v))}
               />
             </div>
             <Chips
               tone="lang"
               figma="skills-language-chips"
               items={data.languages.map((l) => ({ key: l.id, label: `${l.name} ${l.level}`.trim() }))}
-              onRemove={(id) => update({ languages: data.languages.filter((l) => l.id !== id) })}
+              onRemove={(id) => {
+                update({ languages: data.languages.filter((l) => l.id !== id) });
+                langRef.current?.querySelector("input")?.focus();
+              }}
             />
           </div>
         </div>

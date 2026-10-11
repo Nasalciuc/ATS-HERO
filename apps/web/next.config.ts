@@ -31,8 +31,9 @@ const nextConfig: NextConfig = {
       "img-src 'self' data: blob: https:",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
-      // blob: — the live CV preview (PDFViewer) renders the generated PDF into an iframe whose
-      // src is a blob: URL; blob URLs can only be minted by script already running on our origin.
+      // blob: — only CvTemplatePreview (PDFViewer: the PDF in an iframe with a blob: src) needs
+      // it, and nothing renders that component since the Complete pop-up draws pages with PDF.js
+      // on a canvas. Drop blob: here when CvTemplatePreview is deleted.
       "frame-src 'self' blob: https://challenges.cloudflare.com",
       "worker-src 'self' blob:",
     ].join("; ");
