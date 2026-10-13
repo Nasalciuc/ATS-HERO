@@ -4,8 +4,10 @@ import type { Config } from "tailwindcss";
 // We add Tailwind for the newer component layer (CV template controls, export buttons)
 // WITHOUT resetting that system: `preflight: false` disables Tailwind's global reset, so
 // existing classes keep their exact look while utility classes become available alongside.
+// `container: false`: Tailwind's .container component (width 100%, max-width 1536px at ≥1536)
+// would override the landing's own .container (1200px, Figma), as it did before this flag.
 const config: Config = {
-  corePlugins: { preflight: false },
+  corePlugins: { preflight: false, container: false },
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",

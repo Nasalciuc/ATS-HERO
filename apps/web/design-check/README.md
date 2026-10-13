@@ -102,6 +102,8 @@ ATS Score loading icon is `pepicons-pencil:cv-circle` without its circle).
 | `score-results` | 319:4126 ATS Score_Results | `fixtures/score-report.json` (the Figma numbers) |
 | `score-results-improve` | 383:8025 results with the progress bar | same report, Improve flow |
 | `score-fix` | 383:7664 results, Fix now open | same report, Fix now on the first section |
+| `landing` | 180:19 the landing page (1728×4549) | `/`, first FAQ open |
+| `not-found` | 331:4830 Error (404); geometry in `figma/frame-331-4830.json` | any unknown route |
 
 ## Known, deliberate deviations from Figma
 
@@ -150,5 +152,11 @@ ATS Score loading icon is `pepicons-pencil:cv-circle` without its circle).
   ring turns (it stands still under reduced motion, as drawn in Figma). The Job Fit result (match %, matched and
   missing keywords) has no Figma frame: it reuses the score circle and the badges. Phones have no
   Figma frame either: the builder's phone style.
+- **Landing**: Figma's footer frame sits 10px right of the page grid (and its trophy overhangs the
+  grid by 33px); we keep the grid, so the spec's footer boxes are Figma's minus 10. The FAQ list is
+  2px left of the grid in Figma (within tolerance). Terms / Privacy links (not in Figma) sit in the
+  footer's bottom padding. Wrapping can differ by a word where the font isn't Helvetica
+  ("PDF/" in "Personalized approach"). The feature icons are flattened in Figma: the closest
+  Iconify glyphs at Figma's glyph size (the steps match; gauge and user are stand-ins).
 - **Contrast**: some Figma colours fail WCAG AA (placeholder #ccc, 12px grey labels, the 12px green
   step label, Pro Tips body, badge, page count). They are kept as designed pending a design decision.

@@ -35,7 +35,7 @@ export function UploadTray({ size = 16, ...p }: P) {
   );
 }
 
-/** material-symbols:upload-rounded — Photo 'Upload' button (Personal info) — Figma flattened it to a 16×15 Vector; matched by shape */
+/** material-symbols:upload-rounded — Photo 'Upload' button (Personal info) — Figma flattened it to a 16×15 Vector; matched by shape; landing 'Check your resume ATS score now' (42px) */
 export function UploadRounded({ size = 16, ...p }: P) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
@@ -200,7 +200,7 @@ export function DocFileIcon({ size = 17, ...p }: P) {
   );
 }
 
-/** streamline-plump:dashboard-gauge-2 — Complete pop-up · ATS-score button (Figma 'Icons_button' component; closest Iconify glyph, not exact) */
+/** streamline-plump:dashboard-gauge-2 — Complete pop-up · ATS-score button (Figma 'Icons_button' component; closest Iconify glyph, not exact); landing feature 'In-depth analysis' (Figma's glyph is custom; same stand-in) */
 export function GaugeIcon({ size = 24, ...p }: P) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" focusable="false" {...p}>
@@ -251,6 +251,92 @@ export function MinusThin({ size = 34, ...p }: P) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
       <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 12h12" />
+    </svg>
+  );
+}
+
+/** pepicons-pencil:cv — Landing hero stat '75% of resumes' */
+export function CvFileIcon({ size = 32, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" focusable="false" {...p}>
+      <g fill="none">
+        <path fill="currentColor" d="M6.5 12.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zm0 2.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1z" />
+        <path fill="currentColor" fillRule="evenodd" d="M11.185 1H4.5A1.5 1.5 0 0 0 3 2.5v15A1.5 1.5 0 0 0 4.5 19h11a1.5 1.5 0 0 0 1.5-1.5V7.202a1.5 1.5 0 0 0-.395-1.014l-4.314-4.702A1.5 1.5 0 0 0 11.185 1M4 2.5a.5.5 0 0 1 .5-.5h6.685a.5.5 0 0 1 .369.162l4.314 4.702a.5.5 0 0 1 .132.338V17.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5z" clipRule="evenodd" />
+        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" d="M11.5 2.1v4.7h4.7" />
+        <path fill="currentColor" d="M8.134 6.133a1.067 1.067 0 1 0 0-2.133a1.067 1.067 0 0 0 0 2.133" />
+        <path fill="currentColor" fillRule="evenodd" d="M10.266 8.444c0-1.134-.955-1.955-2.133-1.955S6 7.309 6 8.444v.534a.356.356 0 0 0 .356.355h3.555a.356.356 0 0 0 .355-.355z" clipRule="evenodd" />
+      </g>
+    </svg>
+  );
+}
+
+/** mage:scan — Landing hero stat '1 fast scan' */
+export function ScanIcon({ size = 32, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20.325 8.3V6.45a2.775 2.775 0 0 0-2.775-2.775h-2.775m0 16.65h2.775a2.775 2.775 0 0 0 2.775-2.775V15.7m-16.65 0v1.85a2.775 2.775 0 0 0 2.775 2.775h2.775m0-16.65H6.45A2.775 2.775 0 0 0 3.675 6.45V8.3M2.75 12h18.5" />
+    </svg>
+  );
+}
+
+/** streamline:graph-bar-increase — Landing hero stat '2–3× more likely' */
+export function GraphBarIcon({ size = 32, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" aria-hidden="true" focusable="false" {...p}>
+      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" d="m1.24 6.54l11.5-5.23M10.59.5l2.15.81l-.8 2.15m1.31 10.04h-2.5v-7a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 .5.5zm-5 0h-2.5V8a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 .5.5zm-5 0H.75v-4a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 .5.5z" />
+    </svg>
+  );
+}
+
+/** mage:file-download — Landing hero 'PDF / DOC' badge (Figma flattened it to a Group; the frame is named mage:file-download) */
+export function FileDownloadIcon({ size = 36, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5">
+        <path strokeLinejoin="round" d="M14.186 2.753v3.596c0 .487.194.955.54 1.3a1.85 1.85 0 0 0 1.306.539h4.125" />
+        <path strokeLinejoin="round" d="M20.25 8.568v8.568a4.25 4.25 0 0 1-1.362 2.97a4.28 4.28 0 0 1-3.072 1.14h-7.59a4.3 4.3 0 0 1-3.1-1.124a4.26 4.26 0 0 1-1.376-2.986V6.862a4.25 4.25 0 0 1 1.362-2.97a4.28 4.28 0 0 1 3.072-1.14h5.714a3.5 3.5 0 0 1 2.361.905l2.96 2.722a2.97 2.97 0 0 1 1.031 2.189" />
+        <path strokeMiterlimit="10" d="M12 17.273v-6.774" />
+        <path strokeLinejoin="round" d="m8.894 14.42l2.665 2.666a.62.62 0 0 0 .882 0l2.665-2.665" />
+      </g>
+    </svg>
+  );
+}
+
+/** ic:baseline-block — Landing 'We know what most job seekers struggle with' list */
+export function BlockIcon({ size = 32, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2M4 12c0-4.42 3.58-8 8-8c1.85 0 3.55.63 4.9 1.69L5.69 16.9A7.9 7.9 0 0 1 4 12m8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1A7.9 7.9 0 0 1 20 12c0 4.42-3.58 8-8 8" />
+    </svg>
+  );
+}
+
+/** fluent:step-24-regular — Landing feature 'Guidance at every step' (flattened in Figma; matched by shape) */
+export function StepIcon({ size = 33, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="currentColor" d="M14.5 3.25c0-.69.56-1.25 1.25-1.25h5c.69 0 1.25.56 1.25 1.25v15.5A3.25 3.25 0 0 1 18.75 22H3.25C2.56 22 2 21.44 2 20.75v-5c0-.69.56-1.25 1.25-1.25H8V9.25C8 8.56 8.56 8 9.25 8h5.25zm1.5.25v4.75c0 .69-.56 1.25-1.25 1.25H9.5v5.25c0 .69-.56 1.25-1.25 1.25H3.5v4.5h15.25a1.75 1.75 0 0 0 1.75-1.75V3.5z" />
+    </svg>
+  );
+}
+
+/** hugeicons:user-02 — Landing feature 'Personalized approach' (flattened in Figma; closest shape) */
+export function UserRoundIcon({ size = 32, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+        <circle cx="12" cy="7" r="4" />
+        <path d="M12 14c-5 0-8 2.5-8 5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2c0-2.5-3-5-8-5" />
+      </g>
+    </svg>
+  );
+}
+
+/** mynaui:star-solid — Landing review stars (Figma layer 'mynaui:star', filled) */
+export function StarSolid({ size = 24, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="currentColor" d="M13.51 3.139c-.652-1.185-2.368-1.185-3.021 0a28 28 0 0 0-2.114 4.894a.35.35 0 0 1-.33.223a30 30 0 0 0-4.375.436c-1.337.233-1.926 1.837-.91 2.83q.192.188.388.374a32 32 0 0 0 3.103 2.587a.274.274 0 0 1 .11.31a27.6 27.6 0 0 0-1.172 5.065c-.19 1.424 1.318 2.298 2.495 1.694a29.3 29.3 0 0 0 4.085-2.537a.4.4 0 0 1 .462 0a29 29 0 0 0 4.085 2.537c1.177.604 2.685-.27 2.495-1.694a27.6 27.6 0 0 0-1.171-5.065a.274.274 0 0 1 .11-.31a32 32 0 0 0 3.49-2.96c1.016-.994.427-2.598-.91-2.831a30 30 0 0 0-4.376-.436a.35.35 0 0 1-.329-.223a27.7 27.7 0 0 0-2.114-4.894" />
     </svg>
   );
 }

@@ -31,7 +31,8 @@
   --hairline: rgba(0, 0, 0, 0.1);
 
   /* Type */
-  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* Figma sets the landing and the app text in Helvetica (Helvetica Neue is wider and re-wraps it) */
+  --font-sans: Helvetica, "Helvetica Neue", Arial, sans-serif;
   /* Figma's three families. SF Pro can't be shipped (Apple licence): the display stack is SF on
      Apple devices and the platform UI font elsewhere. Inter is self-hosted (see @font-face below). */
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -239,28 +240,34 @@ p {
   background: var(--white);
   box-shadow: 0 0 30px 0 rgba(215, 208, 250, 0.4);
 }
+/* Figma 180:104: logo and links at y=31, "Log in" (140×39) at y=21 */
 .nav__inner {
   height: 100%;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  align-items: start;
 }
 .nav__logo {
+  justify-self: start;
+  margin-top: 31px;
   font-weight: 700;
   font-size: 20px;
-  letter-spacing: -0.02em;
+  line-height: 23px;
+  letter-spacing: -0.4px;
   color: var(--ink);
 }
 .nav__links {
   display: flex;
   align-items: center;
-  gap: 44px;
+  gap: 47px;
   justify-self: center;
+  margin-top: 31px;
 }
 .nav__links a {
   font-weight: 700;
   font-size: 16px;
-  letter-spacing: -0.02em;
+  line-height: 18px;
+  letter-spacing: -0.32px;
   color: var(--ink);
 }
 .nav__links a:hover {
@@ -270,13 +277,16 @@ p {
   background: var(--ink);
   color: var(--white);
   border-radius: 100px;
+  min-width: 140px;
   height: 39px;
-  padding: 0 28px;
+  margin-top: 21px;
+  padding: 0 20px;
   font-weight: 700;
   font-size: 16px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.32px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   justify-self: end;
 }
 .nav__account {
@@ -284,14 +294,20 @@ p {
   align-items: center;
   gap: 12px;
   justify-self: end;
+  margin-top: 21px;
+}
+.nav__account .nav__login {
+  margin-top: 0;
 }
 .nav__account .nav__login {
   justify-self: auto;
+  min-width: 0;
 }
 .nav__menu {
   display: none;
   align-items: center;
   justify-content: center;
+  align-self: center;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -305,22 +321,25 @@ p {
    ============================================================ */
 .hero {
   background: var(--bg-page);
-  padding: 80px 0 64px;
+  padding: 80px 0;
   overflow: visible;
 }
+/* Figma: the text column starts on the page grid (264 at 1728) and the art (577) sticks out 35px
+   past the grid's right edge. */
 .hero__grid {
-  --hero-art-scale: 1.12;
+  --hero-art-scale: 1;
   display: grid;
-  grid-template-columns: 602px calc(577px * var(--hero-art-scale));
+  grid-template-columns: 602px 577px;
   gap: 56px;
   align-items: start;
-  width: min(calc(602px + 56px + 577px * var(--hero-art-scale)), calc(100% - 48px));
-  max-width: calc(602px + 56px + 577px * var(--hero-art-scale));
+  width: 1235px;
+  max-width: none;
+  margin: 0 0 0 max(24px, calc((100% - var(--container)) / 2));
 }
 .hero__left {
   display: flex;
   flex-direction: column;
-  min-height: calc(616px * var(--hero-art-scale));
+  min-height: 625px;
   max-width: 602px;
   overflow: visible;
 }
@@ -331,10 +350,14 @@ p {
   background: var(--white);
   border: 1px solid var(--green);
   border-radius: 100px;
-  padding: 10px;
+  width: 331px;
+  height: 38px;
+  padding: 0 10px;
   box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.02);
   color: var(--green);
   font-size: 16px;
+  line-height: 18px;
+  white-space: nowrap;
   align-self: flex-start;
 }
 .hero__badge-dot {
@@ -345,7 +368,7 @@ p {
   background: var(--green);
 }
 .hero__title {
-  margin: 32px 0 0;
+  margin: 26px 0 0;
   font-family: var(--font-sans);
   font-weight: 700;
   font-size: 57px;
@@ -404,10 +427,10 @@ p {
   top: 68px;
 }
 .hero__lead {
-  margin-top: 32px;
+  margin-top: 26px;
   max-width: 450px;
   font-size: 20px;
-  line-height: 1.2;
+  line-height: 24px;
   color: var(--ink);
 }
 .hero__cta {
@@ -423,13 +446,14 @@ p {
 }
 .hero__stats {
   margin-top: auto;
-  padding-top: 48px;
+  padding-top: 0;
   display: flex;
   align-items: stretch;
-  gap: 32px;
+  gap: 24px;
+  align-self: flex-start;
 }
 .stat {
-  width: 168px;
+  width: 153px;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -443,6 +467,8 @@ p {
   min-height: 122px;
 }
 .stat__icon {
+  display: flex;
+  height: 32px;
   color: var(--green);
 }
 .stat__body {
@@ -453,14 +479,17 @@ p {
 .stat__num {
   font-weight: 700;
   font-size: 20px;
-  line-height: 1;
-  letter-spacing: -0.02em;
+  line-height: 20px;
+  white-space: nowrap;
   color: var(--ink);
 }
 .stat__desc {
   font-size: 16px;
-  line-height: 1.2;
+  line-height: 18px;
   color: var(--ink);
+}
+.stat:first-child .stat__desc {
+  max-width: 140px;
 }
 
 /* hero CV mockup + floating badges */
@@ -468,6 +497,7 @@ p {
   position: relative;
   width: calc(577px * var(--hero-art-scale));
   height: calc(616px * var(--hero-art-scale));
+  margin-top: 5px; /* Figma Group 5 sits 5 under the text column */
   flex: none;
   overflow: visible;
 }
@@ -647,7 +677,7 @@ p {
 }
 .badge-pdf__icon {
   flex: none;
-  color: var(--violet-600);
+  color: var(--violet-300);
 }
 .badge-pdf__label {
   flex: none;
@@ -668,13 +698,13 @@ p {
   background: var(--white);
   border: 1px solid var(--violet-200);
   border-radius: 100px;
-  padding: 10px 14px;
+  padding: 9px;
   box-shadow: 0 0 50px 0 rgba(0, 0, 0, 0.1);
   font-family: var(--font-inter);
   font-weight: 700;
   font-size: 20px;
-  letter-spacing: -0.02em;
-  line-height: 1;
+  letter-spacing: -0.4px;
+  line-height: 24px;
   color: var(--ink);
   white-space: nowrap;
 }
@@ -697,14 +727,14 @@ p {
 }
 .problem__grid {
   display: grid;
-  grid-template-columns: 454px 1fr;
+  grid-template-columns: 454px minmax(0, 462px);
   gap: 156px;
 }
 .problem__title {
   font-weight: 700;
   font-size: 40px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 46px;
+  letter-spacing: -0.8px;
   color: var(--ink);
   margin: 0;
 }
@@ -712,15 +742,18 @@ p {
   margin-top: 32px;
   max-width: 404px;
   font-size: 20px;
-  line-height: 1.2;
+  line-height: 24px;
   color: var(--ink);
 }
 .problem__eyebrow {
   font-size: 16px;
+  line-height: 18px;
   color: var(--gray-500);
 }
 .problem__list {
-  margin-top: 22px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -728,9 +761,10 @@ p {
 .problem__item {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  min-height: 32px;
   font-size: 20px;
-  line-height: 1.2;
+  line-height: 24px;
   color: var(--ink);
 }
 .problem__item svg {
@@ -746,26 +780,30 @@ p {
   color: var(--white);
   padding: 80px 0;
 }
+.tool__inner {
+  width: 1202px;
+}
 .tool__title {
   font-weight: 700;
   font-size: 40px;
-  letter-spacing: -0.02em;
+  line-height: 46px;
+  letter-spacing: -0.8px;
   margin: 0 0 40px;
 }
 .tool__grid {
   display: grid;
   /* minmax(0, …) lets cards shrink below their nowrap-button min-content width. */
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
+  grid-template-columns: minmax(0, 389fr) minmax(0, 386fr) minmax(0, 385fr);
+  gap: 21px;
 }
 .tool__card {
   display: flex;
   flex-direction: column;
 }
 .tool__img {
+  height: 291px;
   border-radius: 20px;
   overflow: hidden;
-  aspect-ratio: 386 / 289;
   background: #1f1f1f;
 }
 .tool__img img {
@@ -776,15 +814,38 @@ p {
 .tool__desc {
   margin-top: 24px;
   font-size: 20px;
-  line-height: 1.2;
+  line-height: 24px;
   color: var(--white);
   flex: 1;
 }
 .tool__actions {
-  margin-top: 24px;
+  margin-top: 32px;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* Figma: 223 + 8 + 155 = 386, 1px wider than the third card */
   gap: 8px;
+}
+@media (max-width: 1279px) {
+  .tool__actions {
+    flex-wrap: wrap;
+  }
+}
+.tool__actions .btn {
+  height: 52px;
+  padding: 0 15px;
+}
+.tool__actions .btn--white {
+  width: 223px;
+}
+.tool__actions .btn--outline-light {
+  width: 155px;
+}
+/* "How it works ↓" (famicons arrow-up, turned); it points up while the steps are open */
+.tool__how-arrow {
+  flex: none;
+  transform: rotate(180deg);
+}
+.tool__how-arrow.is-open {
+  transform: none;
 }
 
 /* ============================================================
@@ -802,33 +863,46 @@ p {
 .features__title {
   font-weight: 700;
   font-size: 40px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  line-height: 46px;
+  letter-spacing: -0.8px;
   color: var(--ink);
   margin: 0;
   max-width: 548px;
 }
+/* 548×345, the title and the dashed drop zone centred (24 apart) */
 .upload-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  max-width: 548px;
+  height: 345px;
   margin-top: 32px;
   background: var(--white);
   border-radius: 20px;
-  padding: 70px;
-  box-shadow: 0 0 15px 10px rgba(198, 238, 212, 1);
+  padding: 0 24px;
+  box-shadow: 0 0 15px 10px #c6eed4;
 }
 .upload-card__title {
+  width: 410px;
+  max-width: 100%;
   font-family: var(--font-inter);
   font-weight: 700;
   font-size: 25px;
-  letter-spacing: -0.02em;
+  line-height: 30px;
+  letter-spacing: -0.5px;
   text-align: center;
   color: var(--ink);
   margin: 0;
 }
 .upload-card__drop {
-  margin-top: 24px;
+  width: 379px;
+  max-width: 100%;
+  height: 151px;
   border: 2px dashed var(--ink);
   border-radius: 20px;
-  padding: 33px 10px;
+  padding: 31px 10px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -837,23 +911,27 @@ p {
 }
 .upload-card__hint {
   font-size: 16px;
+  line-height: 18px;
   color: var(--gray-500);
 }
 .feature-list {
   display: flex;
   flex-direction: column;
   gap: 19px;
+  max-width: 587px;
 }
+/* each feature: the 64px icon tile, 32 above the title (30px), 16 above the text */
 .feature {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 .feature__icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
   background: var(--white);
+  box-shadow: 0 0 15px 0 rgba(151, 213, 174, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -863,15 +941,16 @@ p {
   font-family: var(--font-inter);
   font-weight: 700;
   font-size: 30px;
-  letter-spacing: -0.02em;
+  line-height: 36px;
+  letter-spacing: -0.6px;
   color: var(--ink);
-  margin: 0 0 8px;
+  margin: 0 0 16px;
 }
 .feature__body {
   font-size: 20px;
-  line-height: 1.2;
+  line-height: 24px;
   color: var(--ink);
-  max-width: 520px;
+  max-width: 587px;
 }
 
 /* ============================================================
@@ -879,21 +958,21 @@ p {
    ============================================================ */
 .testimonials {
   background: var(--bg-page);
-  padding: 80px 0;
+  padding: 80px 0 56px;
 }
 .testimonials__inner {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  max-width: 1202px;
+  width: 1202px;
 }
 .testimonials__title {
   margin: 0;
   font-family: var(--font-sans);
   font-weight: 700;
   font-size: 40px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 46px;
+  letter-spacing: -0.8px;
   color: var(--ink);
 }
 .testimonials__content {
@@ -905,7 +984,7 @@ p {
 }
 .testimonials__row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 20px;
   width: 100%;
 }
@@ -920,15 +999,10 @@ p {
   flex-direction: column;
   gap: 24px;
 }
-.tcard--tall {
-  height: 311px;
-}
-.tcard--center {
-  justify-content: center;
-}
+/* Figma: three 387×311 cards, the body (stars, text · date) 183 tall */
+.tcard--tall,
 .tcard--short {
-  flex: 1 1 0;
-  align-self: center;
+  height: 311px;
 }
 .tcard__head {
   display: flex;
@@ -969,26 +1043,21 @@ p {
   font-family: var(--font-sans);
   font-weight: 700;
   font-size: 20px;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.4px;
+  line-height: 23px;
   color: var(--ink);
 }
 .tcard__body {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   flex: 1;
   min-height: 0;
-}
-.tcard--tall .tcard__body {
-  justify-content: space-between;
-}
-.tcard--short .tcard__body {
-  flex: none;
-  gap: 13px;
 }
 .tcard__review {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
 }
 .tcard__stars {
@@ -1002,13 +1071,13 @@ p {
   max-width: 345px;
   font-family: var(--font-sans);
   font-size: 20px;
-  line-height: 1.2;
+  line-height: 24px;
   color: var(--ink);
 }
 .tcard__time {
   font-family: var(--font-sans);
   font-size: 16px;
-  line-height: 1.2;
+  line-height: 18px;
   color: var(--gray-500);
 }
 .testimonials__nav {
@@ -1041,34 +1110,50 @@ p {
   padding: 80px 0;
 }
 .faq__list {
-  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.faq__list::after {
+  content: "";
+  height: 1px;
+  background: var(--line);
 }
 .faq__item {
-  border-bottom: 1px solid var(--line);
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.faq__item.is-open {
+  margin-bottom: 8px;
 }
 .faq__q {
   width: 100%;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 24px 0;
+  padding: 0;
   text-align: left;
   font-weight: 700;
   font-size: 20px;
-  letter-spacing: -0.02em;
+  line-height: 20px;
   color: var(--ink);
 }
 .faq__toggle {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  border: 1px solid var(--violet-300);
+  box-shadow: inset 0 0 0 2px var(--violet-300);
   color: var(--violet-300);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+.faq__toggle svg {
+  width: 34px;
+  height: 34px;
 }
 .faq__a {
   overflow: hidden;
@@ -1078,11 +1163,19 @@ p {
 .faq__item.is-open .faq__a {
   max-height: 480px;
 }
+.faq__item.is-open .faq__a {
+  margin-top: 8px;
+}
+@media (max-width: 1279px) {
+  .faq__br {
+    display: none;
+  }
+}
 .faq__a-inner {
-  padding: 0 0 24px;
+  padding: 0;
   max-width: 793px;
   font-size: 20px;
-  line-height: 1.4;
+  line-height: 24px;
   color: var(--ink);
 }
 
@@ -1090,30 +1183,42 @@ p {
    FOOTER
    ============================================================ */
 .footer {
+  position: relative;
   background: var(--bg-dark);
   color: var(--white);
   padding: 80px 0;
 }
+/* brand + heading (387) · 226 · the three buttons (282) · the trophy, bottom right */
 .footer__grid {
-  display: grid;
-  grid-template-columns: 387px 282px 1fr;
-  gap: 171px;
-  align-items: flex-end;
+  display: flex;
+  align-items: flex-start;
+}
+.footer__grid > :nth-child(1) {
+  width: 387px;
+  flex: none;
+}
+.footer__grid > :nth-child(2) {
+  width: 282px;
+  flex: none;
+  margin-left: 226px;
 }
 .footer__brand {
   font-weight: 700;
   font-size: 20px;
-  letter-spacing: -0.02em;
+  line-height: 23px;
+  letter-spacing: -0.4px;
 }
 .footer__heading {
-  margin-top: 44px;
+  margin: 44px 0 0;
   font-weight: 700;
   font-size: 40px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 46px;
+  letter-spacing: -0.8px;
 }
 .footer__col-label {
   font-size: 16px;
+  line-height: 18px;
+  white-space: nowrap;
   color: var(--gray-500);
   margin-bottom: 33px;
 }
@@ -1125,9 +1230,16 @@ p {
 }
 .footer__actions .btn {
   width: 100%;
+  height: 52px;
 }
 .footer__trophy {
-  justify-self: end;
+  align-self: flex-end;
+  margin-left: auto;
+}
+@media (min-width: 1280px) {
+  .footer__trophy {
+    margin-right: -33px; /* Figma's rotated trophy overhangs the grid by 33 */
+  }
 }
 .footer__trophy img {
   width: 145px;
@@ -1182,13 +1294,32 @@ p {
     gap: 48px;
   }
   .features__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 40px;
   }
   .footer__grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 48px;
-    align-items: flex-start;
+  }
+  .footer__grid > :nth-child(1) {
+    width: auto;
+    max-width: 387px;
+  }
+  .footer__grid > :nth-child(2) {
+    width: auto;
+    margin-left: 0;
+  }
+  .footer__col-label {
+    white-space: normal;
+  }
+  .footer__trophy {
+    align-self: flex-start;
+    margin-left: 0;
+  }
+  /* the legal links go back into the flow under the stacked columns */
+  .footer__legal {
+    position: static;
+    padding-top: 28px;
   }
 }
 
@@ -1230,12 +1361,23 @@ p {
     flex-direction: column;
     align-items: stretch;
   }
-  .tcard--tall {
+  .tcard,
+  .tcard--tall,
+  .tcard--short {
+    flex: none;
     height: auto;
     min-height: 0;
   }
-  .tcard--short {
-    align-self: stretch;
+  .tcard__body {
+    gap: 13px;
+  }
+  .hero__badge {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    min-height: 38px;
+    padding: 9px 10px;
+    white-space: normal;
   }
   .hero__title {
     font-size: 44px;
@@ -4168,16 +4310,16 @@ select.field__input {
 }
 
 
-/* 404 page not found */
+/* 404 (Figma "Error" 331:4830): the 534×587 illustration 121 from the top, the text 53 up into it */
 .notfound {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
-  padding: 40px 24px;
-  background: #fcfbfD;
+  padding: clamp(40px, 12.1vh, 121px) 24px 40px;
+  background: #fcfbfd;
 }
 .notfound__illustration {
   display: block;
@@ -4193,18 +4335,20 @@ select.field__input {
   width: min(424px, 100%);
 }
 .notfound__title {
+  align-self: stretch;
   margin: 0;
-  font-family: "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: var(--font-display);
   font-size: 40px;
   font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.0102em;
+  line-height: 44px;
+  letter-spacing: -0.408px;
   color: var(--ink);
 }
 .notfound__details {
   display: flex;
   flex-direction: column;
   align-items: center;
+  align-self: stretch;
   gap: 12px;
 }
 .notfound__text {
@@ -4214,6 +4358,7 @@ select.field__input {
   color: var(--black);
 }
 .notfound__code {
+  align-self: stretch;
   margin: 0;
   font-size: 20px;
   line-height: 1.2;
@@ -4905,11 +5050,16 @@ select.field__input {
 }
 
 /* ---------------- footer legal links (s5) ---------------- */
+/* Not in Figma: in the footer's bottom padding, so the 411px footer keeps its height */
 .footer__legal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 24px;
   display: flex;
   gap: 20px;
-  padding-top: 28px;
   font-size: 14px;
+  line-height: 16px;
 }
 .footer__legal a {
   color: inherit;

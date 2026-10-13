@@ -7,7 +7,7 @@
 //   npm i --no-save @iconify-json/ep @iconify-json/f7 @iconify-json/famicons @iconify-json/fluent \
 //     @iconify-json/hugeicons @iconify-json/ic @iconify-json/iconamoon @iconify-json/iconoir @iconify-json/mage \
 //     @iconify-json/material-symbols @iconify-json/mingcute @iconify-json/mynaui @iconify-json/pepicons-pencil \
-//     @iconify-json/proicons @iconify-json/streamline-plump @iconify-json/typcn
+//     @iconify-json/proicons @iconify-json/streamline @iconify-json/streamline-plump @iconify-json/typcn
 //   node design-check/icons/generate.mjs
 //
 // (or point ICONIFY_SETS at a node_modules folder that has them). SVG bodies are emitted as JSX —

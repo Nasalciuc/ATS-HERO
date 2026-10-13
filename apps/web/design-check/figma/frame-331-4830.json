@@ -1,0 +1,18 @@
+{
+  "page": "180:17",
+  "name": "Error (404), exported on its own: the frame was added after page-180-17.json was snapshotted",
+  "frames": {
+    "331:4830": {
+      "name": "Error",
+      "size": [1728.0, 1000.0],
+      "nodes": {
+        "331:4992": { "name": "image 10", "type": "rounded-rectangle", "box": [597.0, 121.0, 534.0, 587.0] },
+        "331:5000": { "name": "Frame 346", "type": "frame", "box": [652.0, 655.0, 424.0, 155.0] },
+        "331:4999": { "name": "Page not found", "type": "text", "box": [652.0, 655.0, 424.0, 44.0] },
+        "331:5005": { "name": "Frame 327", "type": "frame", "box": [652.0, 726.0, 424.0, 84.0] },
+        "331:5006": { "name": "Oops! It seems this page didn’t make it here. Try another route to find what you’re looking for.", "type": "text", "box": [652.0, 726.0, 424.0, 48.0] },
+        "331:5007": { "name": "Error 404", "type": "text", "box": [652.0, 786.0, 424.0, 24.0] }
+      }
+    }
+  }
+}

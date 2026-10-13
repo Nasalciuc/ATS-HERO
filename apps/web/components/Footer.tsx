@@ -4,25 +4,35 @@ import { useNavigate } from "@/lib/router";
 export default function Footer() {
   const navigate = useNavigate();
   return (
-    <footer className="footer">
+    <footer className="footer" data-figma="footer">
       <div className="container footer__grid">
         <div>
-          <div className="footer__brand">ATS Hero</div>
-          <h2 className="footer__heading">
-            We’re here to make your skills visible and appreciated by recruiters
+          <div className="footer__brand" data-figma="footer-logo">
+            ATS Hero
+          </div>
+          <h2 className="footer__heading" data-figma="footer-tagline">
+            We’re here to make your skills visible and appreciated
+            <br />
+            by recruiters
           </h2>
         </div>
 
         <div>
-          <p className="footer__col-label">How do you want to land your next interview?</p>
+          <p className="footer__col-label" data-figma="footer-label">How do you want to land your next interview?</p>
           <div className="footer__actions">
-            <button className="btn btn--white" onClick={() => navigate("/app/create")}>Create ATS Resume</button>
-            <button className="btn btn--mint" onClick={() => navigate("/app/improve")}>Improve My Resume</button>
-            <button className="btn btn--ghost-light" onClick={() => navigate("/app/jobfit")}>Check Job Fit</button>
+            <button className="btn btn--white" data-figma="footer-create" onClick={() => navigate("/app/create")}>
+              Create ATS Resume
+            </button>
+            <button className="btn btn--mint" data-figma="footer-improve" onClick={() => navigate("/app/improve")}>
+              Improve My Resume
+            </button>
+            <button className="btn btn--ghost-light" data-figma="footer-jobfit" onClick={() => navigate("/app/jobfit")}>
+              Check Job Fit
+            </button>
           </div>
         </div>
 
-        <div className="footer__trophy">
+        <div className="footer__trophy" data-figma="footer-art">
           <img src="/images/trophy.svg" alt="" aria-hidden="true" />
         </div>
       </div>

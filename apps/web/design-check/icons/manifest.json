@@ -23,7 +23,7 @@
       "icon": "material-symbols:upload-rounded",
       "export": "UploadRounded",
       "size": 16,
-      "use": "Photo 'Upload' button (Personal info) — Figma flattened it to a 16×15 Vector; matched by shape"
+      "use": "Photo 'Upload' button (Personal info) — Figma flattened it to a 16×15 Vector; matched by shape; landing 'Check your resume ATS score now' (42px)"
     },
     {
       "icon": "ep:user",
@@ -125,7 +125,7 @@
       "icon": "streamline-plump:dashboard-gauge-2",
       "export": "GaugeIcon",
       "size": 24,
-      "use": "Complete pop-up · ATS-score button (Figma 'Icons_button' component; closest Iconify glyph, not exact)"
+      "use": "Complete pop-up · ATS-score button (Figma 'Icons_button' component; closest Iconify glyph, not exact); landing feature 'In-depth analysis' (Figma's glyph is custom; same stand-in)"
     },
     {
       "icon": "mingcute:edit-line",
@@ -153,6 +153,54 @@
       "export": "MinusThin",
       "size": 34,
       "use": "Score row toggle when open (Figma 'mynaui:plus' frame showing the minus)"
+    },
+    {
+      "icon": "pepicons-pencil:cv",
+      "export": "CvFileIcon",
+      "size": 32,
+      "use": "Landing hero stat '75% of resumes'"
+    },
+    {
+      "icon": "mage:scan",
+      "export": "ScanIcon",
+      "size": 32,
+      "use": "Landing hero stat '1 fast scan'"
+    },
+    {
+      "icon": "streamline:graph-bar-increase",
+      "export": "GraphBarIcon",
+      "size": 32,
+      "use": "Landing hero stat '2–3× more likely'"
+    },
+    {
+      "icon": "mage:file-download",
+      "export": "FileDownloadIcon",
+      "size": 36,
+      "use": "Landing hero 'PDF / DOC' badge (Figma flattened it to a Group; the frame is named mage:file-download)"
+    },
+    {
+      "icon": "ic:baseline-block",
+      "export": "BlockIcon",
+      "size": 32,
+      "use": "Landing 'We know what most job seekers struggle with' list"
+    },
+    {
+      "icon": "fluent:step-24-regular",
+      "export": "StepIcon",
+      "size": 33,
+      "use": "Landing feature 'Guidance at every step' (flattened in Figma; matched by shape)"
+    },
+    {
+      "icon": "hugeicons:user-02",
+      "export": "UserRoundIcon",
+      "size": 32,
+      "use": "Landing feature 'Personalized approach' (flattened in Figma; closest shape)"
+    },
+    {
+      "icon": "mynaui:star-solid",
+      "export": "StarSolid",
+      "size": 24,
+      "use": "Landing review stars (Figma layer 'mynaui:star', filled)"
     }
   ]
 }

@@ -1,0 +1,50 @@
+{
+  "id": "not-found",
+  "title": "Page not found (404)",
+  "frame": "331:4830",
+  "reference": "reference/figma/desktop/page-not-found.png",
+  "route": "/this-page-does-not-exist",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "checks": [
+    {
+      "key": "notfound-image",
+      "node": "331:4992"
+    },
+    {
+      "key": "notfound-copy",
+      "node": "331:5000"
+    },
+    {
+      "key": "notfound-title",
+      "node": "331:4999",
+      "style": {
+        "font-size": "40px",
+        "font-weight": "600"
+      }
+    },
+    {
+      "key": "notfound-text",
+      "box": [
+        null,
+        726,
+        null,
+        48
+      ],
+      "style": {
+        "font-size": "20px"
+      }
+    },
+    {
+      "key": "notfound-code",
+      "node": "331:5007",
+      "style": {
+        "color": "rgb(156, 156, 156)"
+      }
+    }
+  ]
+}
