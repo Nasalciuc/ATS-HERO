@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+# AWS Lambda image for apps/ai (Graviton / arm64). Same code as ./Dockerfile; only the entry point
+# differs: app.lambda_handler.handler (Mangum) instead of uvicorn. boto3, used by
+# app/rate_limit.py, comes with the base image.
+# Build: docker buildx build --platform linux/arm64 -f Dockerfile.lambda -t atshero-python-api .
+FROM public.ecr.aws/lambda/python:3.12-arm64
+
+COPY requirements.txt ${LAMBDA_TASK_ROOT}/
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt "mangum>=0.19,<1" \
+      --target "${LAMBDA_TASK_ROOT}"
+
+COPY app ${LAMBDA_TASK_ROOT}/app
+COPY data ${LAMBDA_TASK_ROOT}/data
+
+# Lambda's file system is read-only, so Python can't cache bytecode at run time. pip already
+# compiles the packages it installs; this also compiles our own code, so no cold start compiles.
+RUN python -m compileall -q ${LAMBDA_TASK_ROOT}
+
+CMD ["app.lambda_handler.handler"]
