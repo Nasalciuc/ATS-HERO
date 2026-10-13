@@ -42,6 +42,9 @@ const BASE_STEPS: { key: SectionKey; label: string; emoji: string }[] = [
 // Figma breaks this optional section's stepper label too.
 const STEPPER_LABELS: Partial<Record<SectionKey, string>> = { activities: "Relevant\nactivities" };
 
+// Figma mobile frames (17:1152) use a shorter title where the desktop one wraps on a phone.
+const PHONE_TITLES: Partial<Record<SectionKey, string>> = { work: "Work experience" };
+
 // Page heading = Pro Tips badge (Figma); it can differ from the compact stepper label.
 const STEP_TITLES: Partial<Record<SectionKey, string>> = {
   personalInfo: "Personal Info",
@@ -115,6 +118,7 @@ export default function BuilderPage() {
   };
 
   const hasUnfilledOptional = addedSections.some((k) => !isSectionFilled(data, k));
+  const skillCount = data.skills.length + data.softSkills.length + data.instruments.length;
 
   const finish = () => {
     markDoneAnd();
@@ -191,11 +195,15 @@ export default function BuilderPage() {
   return (
     <AppShell
       title={pageTitle}
+      phoneTitle={PHONE_TITLES[activeKey]}
       active="create"
+      // phones: "‹ Back" in the top bar is the previous step; on the first step it leaves for /app
+      onBack={activeIndex > 0 ? back : () => navigate("/app")}
       actions={
         <>
+          {/* on phones these shrink to icon circles; the label stays for screen readers */}
           <button className="topbtn topbtn--title topbtn--ghost" data-figma="btn-preview" onClick={() => setComplete(true)}>
-            <EyeOptic /> Preview
+            <EyeOptic /> <span className="topbtn__label">Preview</span>
           </button>
           <button
             className="topbtn topbtn--title topbtn--dark"
@@ -203,7 +211,7 @@ export default function BuilderPage() {
             onClick={() => void save()}
             title={saveError ? `Not saved: ${saveError}` : undefined}
           >
-            <SaveDisk /> {saving ? "Saving…" : saveError ? "Retry save" : "Save"}
+            <SaveDisk /> <span className="topbtn__label">{saving ? "Saving…" : saveError ? "Retry save" : "Save"}</span>
           </button>
         </>
       }
@@ -222,6 +230,8 @@ export default function BuilderPage() {
         <ProTips
           badge={pageTitle}
           onExplore={() => setTips(true)}
+          // phones only (Figma mobile Skills): how many skills so far, against the 6–12 the score wants
+          note={activeKey === "skills" ? `${Math.min(skillCount, 10)}/10 skills added` : undefined}
           extra={
             showActivitiesPrompt
               ? {
@@ -246,7 +256,12 @@ export default function BuilderPage() {
         </div>
         <div className="builder__footer__actions">
           {!isLast && (
-            <button className="topbtn topbtn--step topbtn--ghost" data-figma="btn-next" onClick={next}>
+            // phones: the only button on the core steps, so it becomes the filled primary (Figma "Continue")
+            <button
+              className={`topbtn topbtn--step topbtn--ghost${canComplete ? "" : " topbtn--phone-primary"}`}
+              data-figma="btn-next"
+              onClick={next}
+            >
               Next step <ArrowUp className="topbtn__arrow--right" />
             </button>
           )}

@@ -5,13 +5,22 @@ import { useNavigate } from "@/lib/router";
 import { useApp } from "../../store/AppContext";
 import { useCvs } from "@/hooks/use-cvs";
 import { MenuIcon } from "../icons";
-import { UserOutline } from "../figma-icons";
+import { ChevronUp, UserOutline } from "../figma-icons";
 import SignInModal from "../modals/SignInModal";
 import { FeedbackLink } from "./FeedbackLink";
 
 type NavKey = "cvs" | "create" | "improve" | "jobfit" | "tracker";
 
 type NavItem = { key: NavKey; label: string; to: string; count?: number };
+
+/** Phones: the short section name in the top bar (Figma mobile "Create CV"). */
+const SECTION: Record<NavKey, string> = {
+  create: "Create CV",
+  improve: "Improve CV",
+  jobfit: "Job Fit",
+  tracker: "Tracker",
+  cvs: "My Resumes",
+};
 
 /**
  * Figma "Menu": Create / Improve / Check Job Fit, then "My Resumes (n)" once there is a CV to go
@@ -34,11 +43,20 @@ export default function AppShell({
   active,
   actions,
   children,
+  section,
+  onBack,
+  phoneTitle,
 }: {
   title: string;
+  /** phones: a shorter page title when the Figma mobile frame has one ("Work experience") */
+  phoneTitle?: string;
   active: NavKey;
   actions?: ReactNode;
   children: ReactNode;
+  /** phones: the label centred in the top bar (defaults to the section of `active`) */
+  section?: string;
+  /** phones: what "‹ Back" does (defaults to the home screen, /app) */
+  onBack?: () => void;
 }) {
   const { user, logout } = useApp();
   const cvs = useCvs();
@@ -132,9 +150,25 @@ export default function AppShell({
           >
             <MenuIcon size={22} />
           </button>
+          {/* Phones (Figma mobile page 17:1152): "‹ Back · Create CV" on top, the page title under it.
+              Both are hidden above 720px, where the sidebar / drawer does the navigation. */}
+          <button type="button" className="appshell__back" data-figma="m-back" onClick={onBack ?? (() => navigate("/app"))}>
+            <ChevronUp width={16} height={16} className="appshell__back-icon" />
+            <span data-figma="m-back-label">Back</span>
+          </button>
+          <span className="appshell__section" data-figma="m-section" aria-hidden="true">
+            {section ?? SECTION[active]}
+          </span>
           {/* tabIndex -1: the builder moves focus here when the step changes */}
           <h1 className="appshell__title" data-figma="title" tabIndex={-1}>
-            {title}
+            {phoneTitle && phoneTitle !== title ? (
+              <>
+                <span className="appshell__title-wide">{title}</span>
+                <span className="appshell__title-phone">{phoneTitle}</span>
+              </>
+            ) : (
+              title
+            )}
           </h1>
           <div className="appshell__actions">{actions}</div>
         </header>

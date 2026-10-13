@@ -1407,6 +1407,12 @@ p {
   color: var(--ink);
   flex: none;
 }
+/* phones only (Figma mobile 17:1152): "‹ Back", the section name and a shorter page title */
+.appshell__back,
+.appshell__section,
+.appshell__title-phone {
+  display: none;
+}
 .appshell__backdrop {
   display: none;
   position: fixed;
@@ -1521,10 +1527,10 @@ p {
 .progress__scroll {
   flex: 1;
   min-width: 0;
-  /* Labels wider than their 64px tab ("Personal info") overhang to the left and the remove ×
-     sits 19px above the circles, as in Figma: widen the clip box without moving the steps. */
-  margin: -20px 0 0 -16px;
-  padding: 20px 0 0 16px;
+  /* Labels wider than their 64px tab ("Personal info", "Add section") overhang the tab and the
+     remove × sits 19px above the circles, as in Figma: widen the clip box without moving them. */
+  margin: -20px -16px 0;
+  padding: 20px 16px 0;
   align-self: stretch;
   overflow-x: auto;
   overflow-y: hidden;
@@ -1534,23 +1540,19 @@ p {
 .progress__scroll::-webkit-scrollbar {
   display: none;
 }
-/* When the steps don't fit (phones, tablets, many added sections) the clipped side fades out
-   and "Add section" moves 12px away, so a cut label never runs into it (ProgressBar sets the
-   classes). The 16px on the left is the label overhang zone, see the margin above. */
-.progress.is-overflowing .progress__add {
-  margin-left: 12px;
-}
+/* When the steps don't fit (tablets, many added sections) the clipped side fades out
+   (ProgressBar sets the classes). The 16px on each side is the label overhang zone. */
 .progress__scroll.has-more-end {
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
-  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent calc(100% - 16px));
+  mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent calc(100% - 16px));
 }
 .progress__scroll.has-more-start {
   -webkit-mask-image: linear-gradient(to right, transparent 16px, #000 56px);
   mask-image: linear-gradient(to right, transparent 16px, #000 56px);
 }
 .progress__scroll.has-more-start.has-more-end {
-  -webkit-mask-image: linear-gradient(to right, transparent 16px, #000 56px, #000 calc(100% - 40px), transparent);
-  mask-image: linear-gradient(to right, transparent 16px, #000 56px, #000 calc(100% - 40px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent 16px, #000 56px, #000 calc(100% - 56px), transparent calc(100% - 16px));
+  mask-image: linear-gradient(to right, transparent 16px, #000 56px, #000 calc(100% - 56px), transparent calc(100% - 16px));
 }
 /* Mouse users get a thin scrollbar as the cue that it scrolls (touch users swipe); the bottom
    padding keeps it off the labels. */
@@ -1829,6 +1831,9 @@ p {
   flex: none;
   height: 250px;
 }
+.protips__note {
+  display: none; /* phones: "4/10 skills added" (Figma mobile Skills) */
+}
 .protips-extra {
   display: flex;
   flex-direction: column;
@@ -2037,6 +2042,9 @@ select.field__input {
 }
 
 /* entries: tabs on top of the card, "Add one more …" + "Delete" under the form */
+.entry-cards {
+  display: none; /* phones: the other entries as cards (Figma mobile 77:15) */
+}
 .entries {
   flex: 1 0 auto;
   display: flex;
@@ -2182,6 +2190,12 @@ select.field__input {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+.chip-input {
+  position: relative;
+}
+.chip-input__add {
+  display: none; /* phones: "+" inside the field (Figma mobile Skills) */
 }
 .chips {
   display: flex;
@@ -2339,131 +2353,470 @@ select.field__input {
     margin-top: 32px;
   }
 }
-@media (max-width: 980px) {
+/* ================= PHONE (≤720px) =================
+   Structure of the Figma mobile wireframe (page 17:1152: 390px frames), style of the desktop
+   page (180:17), as approved on 13 Oct 2026 (propunere-mobil-v2-vs-figma.png). Geometry checked
+   by design-check/specs/phone-*.json at 390px. Tablets (721–1023) keep the desktop layout with
+   the drawer and a two-column form. */
+@media (max-width: 720px) {
+  :root {
+    --app-gap: 16px;
+  }
+
+  /* ---- shell: no sidebar or drawer; "‹ Back · Create CV · actions", then the page title ---- */
+  .appshell__side,
+  .appshell__menu,
+  .appshell__backdrop {
+    display: none !important;
+  }
+  .appshell__main {
+    padding: 34px 16px 40px;
+  }
+  .appshell__topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas:
+      "back section actions"
+      "title title title";
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 27px; /* Figma: bar text at y=45, title at y=105 */
+    min-height: 0;
+  }
+  .appshell__back {
+    grid-area: back;
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px; /* tap target; the text row is Figma's 22px */
+    padding: 0 0 0 1px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 22px;
+    letter-spacing: -0.32px;
+    color: var(--ink);
+  }
+  .appshell__back-icon {
+    transform: rotate(-90deg);
+  }
+  .appshell__back:focus-visible {
+    outline: 2px solid var(--violet-600);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  .appshell__section {
+    grid-area: section;
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 17px;
+    line-height: 20px;
+    letter-spacing: -0.34px;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+  .appshell__actions {
+    grid-area: actions;
+    justify-self: end;
+    gap: 6px;
+  }
+  .appshell__title {
+    grid-area: title;
+    font-size: 28px;
+    line-height: 33px;
+    letter-spacing: -0.28px;
+  }
+  .appshell__title-wide {
+    display: none;
+  }
+  .appshell__title-phone {
+    display: inline;
+  }
+  .appshell__content {
+    margin-top: 30px;
+  }
+  /* Preview / Save become 36px icon circles; the label stays for screen readers */
+  .appshell__actions .topbtn {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    gap: 0;
+  }
+  .appshell__actions .topbtn svg {
+    width: 20px;
+    height: 20px;
+  }
+  .appshell__actions .topbtn__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .topbtn--no-phone {
+    display: none;
+  }
+
+  /* ---- stepper: 62px circles, 60px connectors, edge to edge, current step centred ---- */
+  .progress {
+    height: 90px;
+    margin-bottom: 13px; /* Figma: stepper at y=168, tips card at y=271 */
+  }
+  .progress__scroll,
+  .progress__scroll.has-more-start,
+  .progress__scroll.has-more-end {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .progress__step,
+  .progress__add {
+    flex: 0 0 62px;
+    width: 62px;
+  }
+  .progress__node,
+  .progress__add-node {
+    width: 62px;
+    height: 62px;
+  }
+  .progress__emoji {
+    width: 44px;
+    height: 44px;
+    font-size: 30px;
+    line-height: 44px;
+  }
+  .progress__add-node svg {
+    width: 40px;
+    height: 40px;
+  }
+  .progress__line {
+    flex: 0 0 60px;
+    height: 62px;
+  }
+  .progress__line::before {
+    top: 31px;
+  }
+  .progress__line.is-filled::before {
+    top: 30px;
+  }
+  .progress__line--tail {
+    flex: 1 0 60px;
+  }
+  .progress__label,
+  .progress__add-label {
+    font-size: 10px;
+    line-height: 12px;
+    letter-spacing: -0.2px;
+  }
+  .progress__remove {
+    top: -17px;
+  }
+
+  /* ---- Pro Tips: the 105px "ATS-Tips" card; the whole card opens the tips ---- */
+  .builder {
+    row-gap: 30px;
+  }
+  /* Figma mobile Skills: 24 under the taller tips card (126, with the count) */
+  .builder:has(.protips__note) {
+    row-gap: 24px;
+  }
+  .protips-col {
+    gap: 8px;
+  }
+  .protips,
+  .protips--compact {
+    flex: none;
+    height: auto;
+    min-height: 105px;
+    padding: 17px 56px 16px 23px; /* + the 1px border: title 18 below the top, as in Figma */
+  }
+  .protips__badge,
+  .protips__bulb {
+    display: none;
+  }
+  .protips__title {
+    margin: 0;
+    width: auto;
+    font-size: 16px;
+    line-height: 19px;
+    letter-spacing: -0.32px;
+  }
+  .protips__body {
+    margin-top: 11px;
+    width: auto;
+    max-width: 220px;
+    font-size: 12px;
+    line-height: 15px;
+    letter-spacing: -0.24px;
+  }
+  .protips__note {
+    display: block;
+    margin-top: 16px;
+    font-family: var(--font-inter);
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 15px;
+    letter-spacing: -0.24px;
+    color: var(--ink);
+  }
+  .protips__explore {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    margin: 0;
+    height: auto;
+    justify-content: flex-end;
+    padding-right: 14px;
+    border-radius: 10px;
+    font-size: 0; /* "Explore" stays the accessible name */
+  }
+  .protips__explore:focus-visible {
+    outline: 2px solid var(--violet-600);
+    outline-offset: 2px;
+  }
+  .protips-extra {
+    padding: 14px 16px 14px 23px;
+  }
+  .protips-extra__title {
+    width: auto;
+    font-size: 16px;
+    line-height: 19px;
+    letter-spacing: -0.32px;
+  }
+  .protips-extra__body {
+    margin-top: 6px;
+    width: auto;
+    font-size: 12px;
+    line-height: 15px;
+    letter-spacing: -0.24px;
+  }
+  .protips-extra__add {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 17px;
+  }
+
+  /* ---- form: no card; 51px fields 10px apart, one column ---- */
+  .builder__panel,
+  .builder__panel.is-tabbed {
+    min-height: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
   .form-grid {
     grid-template-columns: minmax(0, 1fr);
-    row-gap: 16px;
+    row-gap: 10px;
   }
   /* one column: the two Figma columns flow into one list, "Add one more …" goes last */
   .form-grid > .form-col {
     display: contents;
   }
-  .entry-add--left {
-    order: 1;
-    justify-self: start;
-  }
-  .entry-add-low > .entry-add {
-    margin-top: 3px;
+  .form-col,
+  .form-single {
+    gap: 10px;
   }
   .form-single {
     max-width: none;
   }
-}
-@media (max-width: 720px) {
-  :root {
-    --app-gap: 16px;
+  .field__input {
+    padding: 0 13px;
+    background: #f8f8f8;
+    font-size: 16px; /* under 16px iOS zooms into the field */
+    line-height: 19px;
+    letter-spacing: -0.32px;
   }
-  .appshell__main {
-    padding-top: 16px;
-    padding-bottom: 32px;
+  input.field__input,
+  select.field__input {
+    height: 51px;
   }
-  .appshell__title {
-    font-size: 28px;
-    line-height: 32px;
-    letter-spacing: -0.28px;
+  .field__textarea {
+    padding: 14px 13px;
   }
-  .appshell__content {
-    margin-top: 24px;
+  .field-row {
+    column-gap: 10px;
   }
-  .topbtn {
-    height: 44px;
-    padding: 0 16px;
-    font-size: 15px;
+  .field--half {
+    width: calc((100% - 10px) / 2);
   }
-  .topbtn svg {
-    width: 20px;
-    height: 20px;
+  .field--photo-gap {
+    order: 1; /* Personal info: the optional photo goes last in one column */
+    margin-top: 0;
   }
-  .topbtn--title,
-  .topbtn--step {
-    width: auto;
+
+  /* ---- entries: the other entries as cards with Delete and Edit; no tabs ---- */
+  .entry-tabs {
+    display: none;
   }
-  .progress {
-    height: 80px;
-    margin-bottom: 24px;
+  .entry-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: -13px 0 30px; /* Figma 77:15: 17 under the tips card, 30 above the first field */
+    padding: 0;
+    list-style: none;
   }
-  .progress__step,
-  .progress__add {
-    flex-basis: 52px;
-    width: 52px;
+  .entry-card {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 82px;
+    padding: 16px 10px 16px 17px;
+    border: 2px solid var(--green);
+    border-radius: 10px;
+    background: var(--white);
   }
-  .progress__node,
-  .progress__add-node {
-    width: 52px;
-    height: 52px;
-  }
-  .progress__emoji {
-    width: 36px;
-    height: 36px;
-    font-size: 24px;
-    line-height: 36px;
-  }
-  .progress__add-node svg {
-    width: 36px;
-    height: 36px;
-  }
-  .progress__line {
-    flex-basis: 24px;
-    height: 52px;
-  }
-  .progress__line::before {
-    top: 25px;
-  }
-  .progress__line.is-filled::before {
-    top: 24px;
-  }
-  .progress__line--tail {
-    flex: 1 0 24px;
-  }
-  .progress__label,
-  .progress__add-label {
-    font-size: 11px;
-    line-height: 13px;
-  }
-  .protips {
-    padding: 16px 112px 16px 16px;
-  }
-  .protips__title {
-    margin-top: 12px;
-    font-size: 24px;
-    line-height: 29px;
-  }
-  .protips__body {
-    margin-top: 8px;
-    font-size: 14px;
-    line-height: 17px;
-  }
-  .protips__explore {
-    margin-top: 12px;
-  }
-  .protips__bulb {
-    right: 8px;
-    width: 96px;
-    height: 96px;
-  }
-  .builder__panel {
-    padding: 20px 16px;
-    border-radius: 16px;
-  }
-  .builder__footer,
-  .builder__footer__actions {
-    flex-wrap: wrap;
+  .entry-card__txt {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
   }
-  /* "Add one more …" and "Delete" don't fit side by side under ~360px */
+  .entry-card__txt b,
+  .entry-card__txt span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .entry-card__txt b {
+    font-family: var(--font-inter);
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 19px;
+    letter-spacing: -0.32px;
+  }
+  .entry-card__txt span {
+    font-family: var(--font-inter);
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 17px;
+    letter-spacing: -0.28px;
+    color: var(--gray-700);
+  }
+  .entry-card__delete {
+    flex: none;
+    width: 39px;
+    height: 39px;
+    border-radius: 10px;
+    background: #f8f8f8;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .entry-card__edit {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 39px;
+    padding: 0 8px 0 10px; /* Figma: a 65px pill */
+    border-radius: 100px;
+    background: var(--ink);
+    color: var(--white);
+    font-family: var(--font-helvetica);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 19px;
+    letter-spacing: -0.32px;
+  }
+  .entry-card__chev {
+    transform: rotate(90deg);
+  }
+  .entry-card__delete:focus-visible,
+  .entry-card__edit:focus-visible {
+    outline: 2px solid var(--violet-600);
+    outline-offset: 2px;
+  }
   .entry-actions {
-    flex-wrap: wrap;
-    row-gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 30px;
+  }
+  .entries:has(.entry-add--left) .entry-actions {
+    margin-top: 8px;
+  }
+  .entry-add,
+  .entry-delete {
+    justify-content: center;
+    width: 100%;
+    height: 51px;
+    margin: 0;
+    font-family: var(--font-helvetica);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 19px;
+    letter-spacing: -0.32px;
+  }
+  .entry-add--left {
+    order: 1;
+    margin-top: 20px; /* + the 10px row gap = Figma's 30 under the last field */
+  }
+  .entry-add-low > .entry-add {
+    margin-top: 20px;
+  }
+
+  /* ---- skills: "+" in the field, groups 32px apart ---- */
+  .chip-input__add {
+    position: absolute;
+    right: 10px;
+    bottom: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    color: var(--violet-600);
+  }
+  .chip-input__add:focus-visible {
+    outline: 2px solid var(--violet-600);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+  .chip-input .field__input {
+    padding-right: 44px;
+  }
+  .form-grid > .form-col > .chip-group {
+    margin-top: 22px;
+  }
+  .form-grid > .form-col:first-child > .chip-group:first-child {
+    margin-top: 0;
+  }
+
+  /* ---- footer: "Back" is in the top bar; Next / Complete full width at the end ---- */
+  .builder__footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin: 30px 0 0;
+  }
+  .builder:has(.entry-actions .entry-add, .entry-add--left) + .builder__footer {
+    margin-top: 8px;
+  }
+  .builder__footer > div:first-child {
+    display: none;
+  }
+  .builder__footer__actions {
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+  }
+  .builder__footer .topbtn--step {
+    width: 100%;
+    height: 51px;
+  }
+  .topbtn--phone-primary {
+    background: var(--ink);
+    color: var(--white);
+  }
+  .topbtn--phone-primary:hover {
+    background: #000;
   }
 }
 .muted {
@@ -3824,7 +4177,12 @@ select.field__input {
     font-size: 30px;
     line-height: 34px;
   }
+  /* the dialog takes the panel's width, so its 458px text wraps and full-width buttons fit */
+  .dialog {
+    align-self: stretch;
+  }
   .dialog__text {
+    width: auto;
     font-size: 17px;
     line-height: 21px;
   }
@@ -3919,6 +4277,9 @@ select.field__input {
   min-height: 100vh;
   background: var(--bg-page);
   padding: 32px 0 80px;
+}
+.hub {
+  display: none; /* phones: the home screen from the Figma mobile flow (PhoneHub) */
 }
 .dash__inner {
   display: flex;
@@ -4186,6 +4547,296 @@ select.field__input {
   color: var(--gray-500);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* PHONE (≤720px) home: PhoneHub replaces the desktop dashboard (Figma mobile 55:322). After the
+   dashboard rules so it wins over them. */
+@media (max-width: 720px) {
+  .dash {
+    padding: 0;
+    background: var(--white);
+  }
+  .dash__inner {
+    display: none;
+  }
+  .hub {
+    display: block;
+    padding: 49px 30px 40px 29px; /* Figma: content 29…360 */
+  }
+  .hub__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 33px;
+  }
+  .hub__title {
+    margin: 0;
+    font-family: var(--font-helvetica);
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 33px;
+    letter-spacing: -0.56px;
+    color: var(--ink);
+  }
+  .hub__account {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 33px;
+    height: 33px;
+  }
+  .hub__account--btn {
+    width: 33px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px var(--ink);
+    color: var(--ink);
+  }
+  .hub__banner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 18px;
+    min-height: 168px;
+    margin-top: 25px;
+    padding: 24px 19px;
+    border-radius: 14px;
+    background: var(--ink);
+  }
+  .hub__banner p {
+    margin: 0;
+    font-family: var(--font-helvetica);
+    font-size: 16px;
+    line-height: 22px;
+    letter-spacing: -0.32px;
+    color: var(--gray-500);
+  }
+  .hub__signin {
+    display: inline-flex;
+    align-items: center;
+    gap: 13px;
+    height: 46px;
+    padding: 0 28px;
+    border-radius: 100px;
+    box-shadow: inset 0 0 0 1px var(--white);
+    color: var(--white);
+    font-family: var(--font-helvetica);
+    font-size: 16px;
+    line-height: 18px;
+    letter-spacing: -0.32px;
+  }
+  .hub__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .hub-act {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    min-height: 124px;
+    padding: 26px 19px 20px; /* + 1px border = Figma's 124 */
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #f8f8f8;
+    color: var(--ink);
+    text-align: left;
+  }
+  .hub-act:focus-visible,
+  .hub__signin:focus-visible,
+  .hub__account--btn:focus-visible,
+  .hub-cv button:focus-visible {
+    outline: 2px solid var(--violet-600);
+    outline-offset: 2px;
+  }
+  .hub-act__icon {
+    flex: none;
+    width: 65px;
+    height: 65px;
+    margin-top: 3px;
+    border-radius: 50%;
+    background: var(--white);
+    box-shadow: inset 0 0 0 1px var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-emoji);
+    font-size: 30px;
+    line-height: 1;
+  }
+  .hub-act__txt {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+  .hub-act__txt b {
+    font-family: var(--font-inter);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 22px;
+    letter-spacing: -0.32px;
+  }
+  .hub-act__txt span {
+    font-family: var(--font-inter);
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 22px;
+    letter-spacing: -0.28px;
+    color: var(--gray-700);
+  }
+  .hub-act__txt em {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-family: var(--font-inter);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 22px;
+    letter-spacing: -0.32px;
+    color: var(--green);
+  }
+  .hub-act__chev {
+    transform: rotate(90deg);
+  }
+  .hub__tracker {
+    align-self: flex-start;
+    margin-top: 4px;
+    font-family: var(--font-inter);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--violet-600);
+  }
+  .hub__history {
+    margin-top: 45px;
+  }
+  .hub__history-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .hub__history-head h2 {
+    margin: 0;
+    font-family: var(--font-helvetica);
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 28px;
+    letter-spacing: -0.48px;
+  }
+  .hub__see-all {
+    font-family: var(--font-inter);
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 22px;
+    color: var(--violet-600);
+  }
+  .hub__empty {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--gray-700);
+  }
+  .hub__cvs {
+    display: flex;
+    gap: 9px;
+    margin: 11px -30px 0 0;
+    padding: 0 30px 4px 0;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .hub__cvs::-webkit-scrollbar {
+    display: none;
+  }
+  .hub__cvs.is-all {
+    flex-wrap: wrap;
+    margin-right: 0;
+    padding-right: 0;
+    overflow: visible;
+  }
+  .hub-cv {
+    position: relative;
+    flex: 0 0 188px;
+    display: flex;
+    flex-direction: column;
+    height: 240px;
+    padding: 26px 14px 20px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #f8f8f8;
+    scroll-snap-align: start;
+  }
+  .hub-cv__title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    padding: 0 52px 0 0;
+    text-align: left;
+    font-family: var(--font-inter);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 22px;
+    letter-spacing: -0.32px;
+    color: var(--ink);
+  }
+  .hub-cv__score {
+    margin-top: 6px;
+    font-family: var(--font-inter);
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--gray-700);
+  }
+  .hub-cv__score strong {
+    color: var(--green);
+  }
+  .hub-cv__date {
+    font-family: var(--font-inter);
+    font-size: 12px;
+    line-height: 22px;
+    color: var(--gray-400);
+  }
+  .hub-cv__pdf {
+    align-self: flex-start;
+    margin-top: auto;
+    font-family: var(--font-inter);
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 22px;
+    color: var(--violet-600);
+  }
+  .hub-cv__pdf:disabled {
+    opacity: 0.6;
+  }
+  .hub-cv__tools {
+    position: absolute;
+    top: 18px;
+    right: 10px;
+    display: flex;
+    gap: 4px;
+  }
+  .hub-cv__tools button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hub-cv__tools button:last-child {
+    color: var(--red);
+  }
+  .hub__foot {
+    margin-top: 40px;
+  }
+  .hub__foot .appshell__feedback {
+    position: static;
+  }
 }
 
 /* ---------------- delete account danger zone (s6) ---------------- */

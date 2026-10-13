@@ -1,0 +1,115 @@
+{
+  "id": "phone-awards",
+  "title": "Phone · Awards",
+  "frame": "86:1618",
+  "reference": "reference/figma/mobile/screen-86-1618.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 390,
+    "height": 883
+  },
+  "touch": true,
+  "locked": true,
+  "tolerance": 2,
+  "note": "Our Awards step also has the photo upload (desktop); the buttons still land where Figma has them.",
+  "setup": [
+    {
+      "click": ".progress__add"
+    },
+    {
+      "click": ".addsection__check:has-text('Awards')"
+    },
+    {
+      "click": ".addsection__confirm"
+    },
+    {
+      "wait": 300
+    }
+  ],
+  "checks": [
+    {
+      "key": "m-back-label",
+      "box": [
+        41,
+        45,
+        null,
+        22
+      ]
+    },
+    {
+      "key": "m-section",
+      "box": [
+        null,
+        45,
+        null,
+        20
+      ]
+    },
+    {
+      "key": "title",
+      "box": [
+        18,
+        105,
+        null,
+        33
+      ]
+    },
+    {
+      "key": "stepper",
+      "box": [
+        null,
+        168,
+        null,
+        90
+      ]
+    },
+    {
+      "key": "tips",
+      "box": [
+        18,
+        271,
+        358,
+        105
+      ]
+    },
+    {
+      "key": "field-title",
+      "box": [
+        18,
+        406,
+        358,
+        70
+      ]
+    },
+    {
+      "key": "field-date",
+      "box": [
+        18,
+        566,
+        174,
+        70
+      ]
+    },
+    {
+      "key": "entry-add",
+      "box": [
+        16,
+        738,
+        358,
+        51
+      ]
+    },
+    {
+      "key": "btn-complete",
+      "box": [
+        16,
+        797,
+        358,
+        51
+      ],
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    }
+  ]
+}

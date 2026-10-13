@@ -17,7 +17,7 @@ Figma file uses (its layers are named after the Iconify icon, e.g. `ep:arrow-up`
 | `famicons:arrow-up` | `ArrowUp` | Next step / Back buttons (rotated) | [MIT](https://github.com/familyjs/famicons/blob/main/LICENSE) | [Family](https://github.com/familyjs/famicons) | 1.2.2 |
 | `material-symbols:business-center-outline` | `SkillHardIcon` | Skills · hard-skill chips | [Apache 2.0](https://github.com/google/material-design-icons/blob/master/LICENSE) | [Google](https://github.com/google/material-design-icons) | 1.2.95 |
 | `fluent:person-24-regular` | `SkillSoftIcon` | Skills · soft-skill chips — Figma kept the layer name of the hard-skill icon; matched by shape | [MIT](https://github.com/microsoft/fluentui-system-icons/blob/main/LICENSE) | [Microsoft Corporation](https://github.com/microsoft/fluentui-system-icons) | 1.2.59 |
-| `hugeicons:app-window-mac` | `SkillToolIcon` | Skills · instrument chips — Figma layer says software-license; matched by shape | [MIT](undefined) | [Hugeicons](https://icon-sets.iconify.design/icon-sets/hugeicons/) | 1.2.35 |
+| `hugeicons:app-window-mac` | `SkillToolIcon` | Skills · instrument chips — Figma layer says software-license; matched by shape | MIT | [Hugeicons](https://icon-sets.iconify.design/icon-sets/hugeicons/) | 1.2.35 |
 | `iconoir:language` | `LanguageIcon` | Skills · language chips | [MIT](https://github.com/iconoir-icons/iconoir/blob/main/LICENSE) | [Luca Burgio](https://github.com/iconoir-icons/iconoir) | 1.2.12 |
 | `iconamoon:close` | `ChipClose` | Skills · chip remove × (flattened vector; matched by shape) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Dariush Habibpour](https://github.com/dariushhpg1/IconaMoon) | 1.2.2 |
 | `iconamoon:close-duotone` | `StepRemove` | Stepper · remove an added section | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Dariush Habibpour](https://github.com/dariushhpg1/IconaMoon) | 1.2.2 |
@@ -27,6 +27,7 @@ Figma file uses (its layers are named after the Iconify icon, e.g. `ep:arrow-up`
 | `proicons:pdf` | `PdfFileIcon` | Complete pop-up · Download PDF (flattened group; matched by shape) | [MIT](https://github.com/ProCode-Software/proicons/blob/main/LICENSE) | [ProCode](https://github.com/ProCode-Software/proicons) | 1.2.20 |
 | `f7:doc` | `DocFileIcon` | Complete pop-up · Download DOC (flattened vector; matched by shape) | [MIT](https://github.com/framework7io/framework7-icons/blob/master/LICENSE) | [Vladimir Kharlampidi](https://github.com/framework7io/framework7-icons) | 1.2.2 |
 | `streamline-plump:dashboard-gauge-2` | `GaugeIcon` | Complete pop-up · ATS-score button (Figma 'Icons_button' component; closest Iconify glyph, not exact) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Streamline](https://github.com/webalys-hq/streamline-vectors) | 1.2.0 |
+| `mingcute:edit-line` | `EditLine` | Phone home (Figma mobile 55:322) · My Resumes card edit | [Apache 2.0](https://github.com/Richard9394/MingCute/blob/main/LICENSE) | [MingCute Design](https://github.com/Richard9394/MingCute) | 1.2.8 |
 
 ## Attribution required
 

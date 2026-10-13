@@ -3,6 +3,7 @@ import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "rea
 import { nanoid } from "nanoid";
 import { Field, TextArea, SelectField } from "../../components/app/Field";
 import {
+  ChevronUp,
   ChipClose,
   LanguageIcon,
   PlusThin,
@@ -52,6 +53,10 @@ function Panel({
   );
 }
 
+/** "Investment Analyst · 2022 – 2025": the non-empty parts, for an entry card's second line. */
+const line = (...parts: (string | undefined)[]) => parts.filter((x) => x && x.trim()).join(" · ");
+const span = (from?: string, to?: string) => [from, to].filter((x) => x && x.trim()).join(" – ");
+
 /** Nothing typed or ticked yet (ids aside). */
 const isBlankEntry = (item: object) =>
   Object.entries(item).every(([k, v]) => k === "id" || v === "" || v === false || v == null);
@@ -96,6 +101,7 @@ function Entries<T extends { id: string }>({
   framed,
   list,
   tabLabel,
+  cardSub,
   addLabel,
   onAdd,
   onRemove,
@@ -105,6 +111,8 @@ function Entries<T extends { id: string }>({
   framed?: boolean;
   list: T[];
   tabLabel: (item: T) => string;
+  /** phones: the second line of a saved entry's card */
+  cardSub?: (item: T) => string;
   addLabel: string;
   onAdd: () => void;
   onRemove: (id: string) => void;
@@ -165,8 +173,52 @@ function Entries<T extends { id: string }>({
       <TrashOutline width={17} height={18} viewBox="3.295 2.75 17.41 18.5" preserveAspectRatio="none" overflow="visible" /> Delete
     </button>
   );
+  // Phones (Figma mobile 77:15): the other entries are cards above the form, with Delete and
+  // "Edit"; the tabs are hidden there (and the cards above 720px).
+  const cards = many && (
+    <ul className="entry-cards" data-figma="entry-cards">
+      {list.map((it, i) => {
+        if (i === idx) return null;
+        const title = tabLabel(it) || `Entry ${i + 1}`;
+        const sub = cardSub?.(it);
+        return (
+          <li key={it.id} className="entry-card" data-figma={`entry-card-${i}`}>
+            <span className="entry-card__txt">
+              <b>{title}</b>
+              {sub && <span>{sub}</span>}
+            </span>
+            <button
+              type="button"
+              className="entry-card__delete"
+              data-figma={`entry-card-delete-${i}`}
+              aria-label={`Delete ${title}`}
+              onClick={() => {
+                onRemove(it.id);
+                if (i < idx) setActive(idx - 1);
+              }}
+            >
+              <TrashOutline width={21} height={21} />
+            </button>
+            <button
+              type="button"
+              className="entry-card__edit"
+              data-figma={`entry-card-edit-${i}`}
+              aria-label={`Edit ${title}`}
+              onClick={() => {
+                setActive(i);
+                focusFirstField();
+              }}
+            >
+              Edit <ChevronUp width={16} height={16} className="entry-card__chev" />
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
   return (
     <div className="entries">
+      {cards}
       {many && (
         <div className="entry-tabs" role="tablist" data-figma="entry-tabs">
           {list.map((it, i) => {
@@ -305,6 +357,7 @@ export function WorkStep({ data, update, framed }: StepProps) {
       framed={framed}
       list={list}
       tabLabel={(w) => w.company || w.role}
+      cardSub={(w) => line(w.company ? w.role : "", w.current ? span(w.startDate, "Present") : span(w.startDate, w.endDate))}
       addLabel="Add one more work experience"
       onAdd={add}
       onRemove={remove}
@@ -352,6 +405,7 @@ export function EducationStep({ data, update, framed }: StepProps) {
       framed={framed}
       list={list}
       tabLabel={(e) => e.institution || e.degree}
+      cardSub={(e) => line(e.institution ? e.degree : "", span(e.startDate, e.endDate))}
       addLabel="Add one more education"
       onAdd={add}
       onRemove={remove}
@@ -444,21 +498,39 @@ function ChipInput({ label, tone, values, onAdd, onRemove, figma }: {
   };
   return (
     <div className="chip-group">
-      <label className="field" data-figma={figma}>
-        <span className="field__label">{label}</span>
-        <input
-          ref={inputRef}
-          className="field__input"
-          placeholder="Add skills"
-          enterKeyHint="done"
-          onKeyDown={(e) => {
-            if (e.key !== "Enter") return;
-            e.preventDefault();
-            commit(e.currentTarget);
+      <div className="chip-input">
+        <label className="field" data-figma={figma}>
+          <span className="field__label">{label}</span>
+          <input
+            ref={inputRef}
+            className="field__input"
+            placeholder="Add skills"
+            enterKeyHint="done"
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              commit(e.currentTarget);
+            }}
+            onBlur={(e) => commit(e.currentTarget)}
+          />
+        </label>
+        {/* phones (Figma mobile Skills): a "+" in the field, since a phone keyboard has no obvious Enter */}
+        <button
+          type="button"
+          className="chip-input__add"
+          data-figma={figma && `${figma}-add`}
+          aria-label={`Add to ${label.toLowerCase()}`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            const input = inputRef.current;
+            if (!input) return;
+            commit(input);
+            input.focus();
           }}
-          onBlur={(e) => commit(e.currentTarget)}
-        />
-      </label>
+        >
+          <PlusThin size={24} />
+        </button>
+      </div>
       <Chips
         tone={tone}
         figma={figma && `${figma}-chips`}
@@ -562,6 +634,7 @@ export function AwardsStep({ data, update, framed }: StepProps) {
       list={list}
       addInLeft
       tabLabel={(it) => it.title}
+      cardSub={(it) => line(it.organisation, it.date)}
       addLabel="Add one more award"
       onAdd={add}
       onRemove={remove}
@@ -590,6 +663,7 @@ export function CertificationsStep({ data, update, framed }: StepProps) {
       list={list}
       addInLeft
       tabLabel={(it) => it.title}
+      cardSub={(it) => line(it.issuer, it.date)}
       addLabel="Add one more certification"
       onAdd={add}
       onRemove={remove}
@@ -618,6 +692,7 @@ export function PublicationsStep({ data, update, framed }: StepProps) {
       list={list}
       addInLeft
       tabLabel={(it) => it.title}
+      cardSub={(it) => line(it.publisher, it.date)}
       addLabel="Add one more publication"
       onAdd={add}
       onRemove={remove}
@@ -649,6 +724,7 @@ export function ActivitiesStep({ data, update, framed }: StepProps) {
       list={list}
       addInLeft
       tabLabel={(it) => it.title || it.activityType || ""}
+      cardSub={(it) => line(it.role, it.ongoing ? span(it.date, "Present") : span(it.date, it.endDate))}
       addLabel="Add one more activity"
       onAdd={add}
       onRemove={remove}
@@ -699,6 +775,7 @@ export function VolunteeringStep({ data, update, framed }: StepProps) {
       list={list}
       addInLeft
       tabLabel={(it) => it.title}
+      cardSub={(it) => line(it.role, span(it.date, it.endDate))}
       addLabel="Add one more volunteering entry"
       onAdd={add}
       onRemove={remove}

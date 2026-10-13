@@ -1,0 +1,337 @@
+{
+  "id": "phone-skills",
+  "title": "Phone · Skills",
+  "frame": "83:536",
+  "reference": "reference/figma/mobile/screen-83-536.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 390,
+    "height": 1168
+  },
+  "touch": true,
+  "locked": true,
+  "tolerance": 2,
+  "note": "Figma mobile Skills with the same chips typed in; Certifications is added first, as in the frame's stepper. We also show Language + Level (desktop), so the final buttons' y isn't checked. The whole tips card is a transparent button on phones, so the count under it is not hit-tested.",
+  "setup": [
+    {
+      "click": ".progress__add"
+    },
+    {
+      "click": ".addsection__check:has-text('Certifications')"
+    },
+    {
+      "click": ".addsection__confirm"
+    },
+    {
+      "wait": 300
+    },
+    {
+      "click": "[data-figma=step-0]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "Typography"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "Creative coding"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "Agile Methodologies"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "User Research"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "Design Systems"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "HTML/CSS"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-soft] input",
+        "Collaboration"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-soft] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-soft] input",
+        "Adaptability"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-soft] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-soft] input",
+        "Teamwork"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-soft] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-soft] input",
+        "Problem-solving"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-soft] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-tools] input",
+        "FIgma"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-tools] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-tools] input",
+        "Webfow"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-tools] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-tools] input",
+        "Adobe Photoshop"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-tools] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-tools] input",
+        "Adobe After Effects"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-tools] input",
+        "Enter"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "key": "m-back-label",
+      "box": [
+        41,
+        45,
+        null,
+        22
+      ]
+    },
+    {
+      "key": "m-section",
+      "box": [
+        null,
+        45,
+        null,
+        20
+      ]
+    },
+    {
+      "key": "title",
+      "box": [
+        18,
+        105,
+        null,
+        33
+      ]
+    },
+    {
+      "key": "step-4",
+      "box": [
+        166,
+        168,
+        62,
+        62
+      ]
+    },
+    {
+      "key": "tips",
+      "box": [
+        18,
+        271,
+        358,
+        126
+      ]
+    },
+    {
+      "key": "tips-note",
+      "box": [
+        41,
+        365,
+        null,
+        15
+      ],
+      "hit": false
+    },
+    {
+      "key": "skills-hard",
+      "box": [
+        18,
+        421,
+        358,
+        70
+      ]
+    },
+    {
+      "key": "skills-hard-add",
+      "relativeTo": "skills-hard",
+      "box": [
+        324,
+        32,
+        24,
+        24
+      ]
+    },
+    {
+      "key": "skills-hard-chips",
+      "relativeTo": "skills-hard",
+      "box": [
+        0,
+        86,
+        null,
+        136
+      ]
+    },
+    {
+      "key": "skills-soft",
+      "relativeTo": "skills-hard",
+      "box": [
+        0,
+        254,
+        358,
+        70
+      ]
+    },
+    {
+      "key": "skills-soft-chips",
+      "relativeTo": "skills-soft",
+      "box": [
+        0,
+        86,
+        null,
+        88
+      ]
+    },
+    {
+      "key": "skills-tools",
+      "relativeTo": "skills-soft",
+      "box": [
+        0,
+        206,
+        358,
+        70
+      ]
+    },
+    {
+      "key": "btn-complete",
+      "box": [
+        17,
+        null,
+        358,
+        51
+      ]
+    }
+  ]
+}

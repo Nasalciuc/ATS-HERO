@@ -49,8 +49,13 @@ function sameStyle(want, got) {
 
 // Setup steps put the screen into the state the Figma frame shows:
 //   { "click": sel } { "fill": [sel, text] } { "press": [sel, key] } { "select": [sel, value] } { "wait": ms }
+//   { "goto": "/path" } (same origin)
 async function runSetup(page, steps = []) {
   for (const s of steps) {
+    if (s.goto) {
+      await page.goto(BASE + s.goto, { waitUntil: "networkidle" });
+      await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
+    }
     if (s.click) await page.locator(s.click).first().click();
     if (s.fill) await page.locator(s.fill[0]).first().fill(s.fill[1]);
     if (s.press) await page.locator(s.press[0]).first().press(s.press[1]);
@@ -78,7 +83,12 @@ const browser = await chromium.launch();
 for (const spec of specs) {
   const frame = snapshots[spec.frame];
   if (!frame) throw new Error(`${spec.id}: frame ${spec.frame} is not in design-check/figma/*.json`);
-  const page = await browser.newPage({ viewport: spec.viewport, deviceScaleFactor: 1 });
+  // "touch": true emulates a phone (touch, coarse pointer) for the 390px specs
+  const page = await browser.newPage({
+    viewport: spec.viewport,
+    deviceScaleFactor: 1,
+    ...(spec.touch ? { isMobile: true, hasTouch: true } : {}),
+  });
   // The dev error overlay is hidden below, so collect errors here instead.
   const pageErrors = [];
   const consoleErrors = [];
@@ -112,10 +122,11 @@ for (const spec of specs) {
         problems.push("not visible");
       } else {
         // Hit test at the centre: the element (or something inside it) must be on top. An ancestor
-        // is fine too — elements with pointer-events: none are skipped by hit testing.
+        // is fine too — elements with pointer-events: none are skipped by hit testing. A check can
+        // opt out with "hit": false when a transparent control is meant to cover it.
         const cx = r.x + r.width / 2;
         const cy = r.y + r.height / 2;
-        if (cx >= 0 && cy >= 0 && cx < innerWidth && cy < innerHeight) {
+        if (c.hit !== false && cx >= 0 && cy >= 0 && cx < innerWidth && cy < innerHeight) {
           const hit = document.elementFromPoint(cx, cy);
           if (!hit || !(el.contains(hit) || hit.contains(el))) problems.push(`covered by ${describe(hit)}`);
         }

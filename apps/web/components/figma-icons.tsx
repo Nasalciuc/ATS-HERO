@@ -212,3 +212,12 @@ export function GaugeIcon({ size = 24, ...p }: P) {
     </svg>
   );
 }
+
+/** mingcute:edit-line — Phone home (Figma mobile 55:322) · My Resumes card edit */
+export function EditLine({ size = 24, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="M20 11v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h8m7 0L10 14" />
+    </svg>
+  );
+}

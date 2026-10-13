@@ -126,6 +126,12 @@
       "export": "GaugeIcon",
       "size": 24,
       "use": "Complete pop-up · ATS-score button (Figma 'Icons_button' component; closest Iconify glyph, not exact)"
+    },
+    {
+      "icon": "mingcute:edit-line",
+      "export": "EditLine",
+      "size": 24,
+      "use": "Phone home (Figma mobile 55:322) · My Resumes card edit"
     }
   ]
 }

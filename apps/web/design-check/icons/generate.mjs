@@ -20,6 +20,8 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url)); // apps/web/design-check/icons
 const WEB = path.resolve(HERE, "../..");
 const manifest = JSON.parse(fs.readFileSync(path.join(HERE, "manifest.json"), "utf8"));
+// Markdown link, or plain text when the set's info.json has no URL (e.g. hugeicons' licence).
+const link = (text, url) => (url ? `[${text}](${url})` : text);
 const require = createRequire(path.join(process.env.ICONIFY_SETS ?? WEB, "noop.js"));
 
 const sets = new Map();
@@ -147,7 +149,7 @@ for (const entry of manifest.icons) {
   );
   const { info, version } = icon.set;
   rows.push(
-    `| \`${entry.icon}\` | \`${entry.export}\` | ${entry.use.replace(/\|/g, "\\|")} | [${info.license.title}](${info.license.url}) | [${info.author.name}](${info.author.url}) | ${version} |`,
+    `| \`${entry.icon}\` | \`${entry.export}\` | ${entry.use.replace(/\|/g, "\\|")} | ${link(info.license.title, info.license.url)} | ${link(info.author.name, info.author.url)} | ${version} |`,
   );
 }
 fs.writeFileSync(path.join(WEB, "components/figma-icons.tsx"), tsx.join("\n"));

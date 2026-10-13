@@ -132,7 +132,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
       active={active}
       actions={
         <button className="topbtn topbtn--dark" onClick={saveDraft}>
-          <Save size={18} /> Save
+          <Save size={18} /> <span className="topbtn__label">Save</span>
         </button>
       }
     >

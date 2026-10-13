@@ -7,7 +7,8 @@ export type Step = { key: string; label: string; emoji: string };
 
 /**
  * Figma "Progressbar": 64px tabs (circle + label) joined by 46px connectors; the last connector
- * stretches so "Add section" sits at the right edge. Steps scroll sideways when they don't fit.
+ * stretches so "Add section" sits at the right edge. Steps scroll sideways when they don't fit
+ * ("Add section" scrolls with them), and the current step is kept in the middle (Figma mobile).
  */
 export default function ProgressBar({
   steps,
@@ -61,16 +62,18 @@ export default function ProgressBar({
     };
   }, []);
 
-  // When the steps overflow (phones, many optional sections), keep the current one in view.
+  // When the steps overflow (phones, tablets, many optional sections), centre the current one,
+  // as the Figma mobile screens do. Nothing moves when everything fits (desktop).
   useEffect(() => {
     const box = scrollRef.current;
     const node = box?.querySelector<HTMLElement>(".progress__node.is-current");
-    if (!box || !node) return;
+    if (!box || !node || box.scrollWidth <= box.clientWidth) return;
     const b = box.getBoundingClientRect();
     const n = node.getBoundingClientRect();
-    if (n.left >= b.left && n.right <= b.right) return;
+    const left = box.scrollLeft + n.left - b.left - (b.width - n.width) / 2;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    box.scrollTo({ left: box.scrollLeft + n.left - b.left - (b.width - n.width) / 2, behavior: reduce ? "auto" : "smooth" });
+    box.scrollTo({ left, behavior: reduce || !box.dataset.shown ? "auto" : "smooth" });
+    box.dataset.shown = "1"; // first placement without animation
   }, [current, steps.length]);
 
   return (
@@ -127,15 +130,14 @@ export default function ProgressBar({
             className={`progress__line progress__line--tail${currentIndex === steps.length - 1 ? " is-filled" : ""}`}
             aria-hidden="true"
           />
+          <button type="button" className="progress__add" onClick={onAddSection}>
+            <span className="progress__add-node" data-figma="step-add">
+              <PlusOutline />
+            </span>
+            <span className="progress__add-label">Add section</span>
+          </button>
         </div>
       </div>
-
-      <button type="button" className="progress__add" onClick={onAddSection}>
-        <span className="progress__add-node" data-figma="step-add">
-          <PlusOutline />
-        </span>
-        <span className="progress__add-label">Add section</span>
-      </button>
     </div>
   );
 }

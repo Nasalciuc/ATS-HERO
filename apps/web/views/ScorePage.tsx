@@ -130,7 +130,8 @@ export default function ScorePage() {
 
   const headerActions = loading || fixing ? (
     <>
-      <button className="topbtn topbtn--ghost" onClick={() => navigate(backHref)}>
+      {/* phones use the top bar's "‹ Back" (same target) */}
+      <button className="topbtn topbtn--ghost topbtn--no-phone" onClick={() => navigate(backHref)}>
         <ArrowLeft size={18} /> Back
       </button>
       <button
@@ -138,20 +139,20 @@ export default function ScorePage() {
         onClick={() => void save()}
         title={saveError ? `Not saved: ${saveError}` : undefined}
       >
-        <Save size={18} /> {saving ? "Saving…" : saveError ? "Retry save" : "Save"}
+        <Save size={18} /> <span className="topbtn__label">{saving ? "Saving…" : saveError ? "Retry save" : "Save"}</span>
       </button>
     </>
   ) : (
     <>
       <button className="topbtn topbtn--ghost" onClick={() => navigate("/app/create")}>
-        <Eye size={18} /> Preview
+        <Eye size={18} /> <span className="topbtn__label">Preview</span>
       </button>
       <button
         className="topbtn topbtn--dark"
         onClick={() => void save()}
         title={saveError ? `Not saved: ${saveError}` : undefined}
       >
-        <Save size={18} /> {saving ? "Saving…" : saveError ? "Retry save" : "Save"}
+        <Save size={18} /> <span className="topbtn__label">{saving ? "Saving…" : saveError ? "Retry save" : "Save"}</span>
       </button>
     </>
   );
@@ -160,6 +161,8 @@ export default function ScorePage() {
     <AppShell
       title={loading ? "ATS Score Estimation" : "ATS Score Results"}
       active={flow}
+      section="ATS Score"
+      onBack={() => navigate(backHref)}
       actions={headerActions}
     >
       {loading || !report ? (

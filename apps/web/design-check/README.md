@@ -1,7 +1,7 @@
 # Figma design check
 
 "Pixel-perfect" as a number, not an opinion. For every spec in `specs/*.json` the runner opens the
-route at the Figma frame size (1728×1000 for the desktop frames), finds each element tagged
+route at the Figma frame size (1728×1000 for the desktop frames, 390 wide for the phone ones), finds each element tagged
 `data-figma="<key>"`, and compares its box `[x, y, w, h]` (±2px) and selected computed styles with
 the Figma geometry. It also saves a screenshot, a pixel diff and a 50/50 overlay against the Figma
 export in `reference/figma/` so a human can see what the numbers mean.
@@ -37,13 +37,17 @@ stack — SF on Apple devices, Segoe UI / Roboto elsewhere. Inter is self-hosted
 1. Tag the elements: `data-figma="<key>"` (see `components/app/AppShell.tsx`, `ProgressBar.tsx`).
 2. Snapshot the Figma geometry (Figma MCP `get_metadata` on the page, then
    `python3 figma/xml_to_json.py <metadata.xml|tool-result.json> > figma/page-<id>.json`).
-   Figma instances are leaves in that output, so boxes inside an instance go into the spec by hand
-   (`"box": [x, y, w, h]`, `null` = don't check that dimension).
-3. Write `specs/<id>.json`: `frame`, `route`, `viewport`, optional `setup` steps
-   (`{ "click": "<selector>" }`, `{ "fill": ["<selector>", "text"] }`, `{ "press": ["<selector>", "Enter"] }`,
-   `{ "select": ["<selector>", "value"] }`, `{ "wait": ms }`), `reference` (the Figma export PNG) and
-   `checks`. A check with `"relativeTo": "<key>"` compares its x/y as an offset from that element
-   (for content inside a centred pop-up whose height differs from Figma's).
+   `page-180-17.json` is the desktop page, `page-17-1152.json` the mobile one. Figma instances are
+   leaves in that output, so boxes inside an instance go into the spec by hand
+   (`"box": [x, y, w, h]`, `null` = don't check that dimension). Groups are resolved in their
+   parent's coordinates (the converter tells a group from a frame by its children's bounds).
+3. Write `specs/<id>.json`: `frame`, `route`, `viewport` (`"touch": true` emulates a phone),
+   optional `setup` steps (`{ "click": "<selector>" }`, `{ "fill": ["<selector>", "text"] }`,
+   `{ "press": ["<selector>", "Enter"] }`, `{ "select": ["<selector>", "value"] }`, `{ "wait": ms }`,
+   `{ "goto": "/path" }`), `reference` (the Figma export PNG) and `checks`. A check with
+   `"relativeTo": "<key>"` compares its x/y as an offset from that element (for content inside a
+   centred pop-up whose height differs from Figma's); `"hit": false` skips the "on top" test where a
+   transparent control deliberately covers the element (the phone Pro Tips card).
 4. Iterate until it passes, then set `"locked": true`.
 
 ## Icons
@@ -78,6 +82,11 @@ ink pixels (`styles.css`):
 | `popup-add-section` | 331:4891 Pop-up_Add section (v2: subtitle + Continue) | "+ Add section" in the stepper |
 | `popup-almost-there` | 358:7402 | Awards added and left empty, then Complete |
 | `popup-complete` | 311:3326 Pop-up_Complete | Preview on Personal info |
+| `phone-work` | 77:190 (mobile) Work experience | 390px; Relevant activities added, Next to Work |
+| `phone-skills` | 83:536 (mobile) Skills | 390px; Certifications added, the Figma chips typed in |
+| `phone-education-card` | 77:15 (mobile) Education with a saved entry | 390px; two entries, the first as a card |
+| `phone-awards` | 86:1618 (mobile) Awards | 390px; Awards added |
+| `phone-hub` | 55:322 (mobile) home | 390px; one CV saved, then /app |
 
 ## Known, deliberate deviations from Figma
 
@@ -102,11 +111,18 @@ ink pixels (`styles.css`):
   CV); the ATS-score icon is the closest Iconify glyph to Figma's custom one. "Download DOC" saves
   a Word .docx. With `NEXT_PUBLIC_ATS_CHECK_ENABLED=true` an "ATS read check" card (not in Figma)
   appears under the colours; CI doesn't set it, so a local screenshot can differ from CI's.
-- **Below 1728px**: the desktop page (180:17) has no narrower frames. The mobile page (17:1152,
-  marked in progress) is an earlier wireframe in the old style (ATS-Inspector, blue buttons,
-  "TITLE / Text" placeholders), so no spec checks against it yet. Today: the content column shrinks
-  (max 1135px), the gutter tightens under 1280px, the sidebar becomes a drawer under 1024px, phones
-  get a compact stepper; when the steps don't fit, the clipped side fades out and mice get a thin
-  scrollbar. The phone/tablet look awaits design approval.
+- **Phones (≤720px)** follow the mobile page (17:1152, marked in progress): an earlier wireframe in
+  the old style (ATS-Inspector, blue buttons, "TITLE / Text" placeholders). We take its structure and
+  geometry — "‹ Back · Create CV" bar, title, 62px stepper with the current step centred, the 105px
+  tips card, 51px fields 10 apart, saved entries as cards, full-width buttons at the end, the home
+  screen — in the desktop style and the desktop step order (approved 13 Oct 2026). Where the
+  wireframe frames disagree with each other (the tips card at 256/271/275, the gap under it 24 or
+  30), the majority wins and the specs say which frame they follow. Preview and Save stay in the
+  bar as icons; the photo upload, Language + Level and the Activities suggestion are desktop
+  features the wireframe doesn't have.
+- **Tablets (721–1023px)**: the desktop layout with the drawer, a wide Pro Tips banner and the
+  two-column form; between 1024 and 1728 the content column shrinks (max 1135px) and the gutter
+  tightens under 1280px. When the steps don't fit, the clipped side fades out and mice get a thin
+  scrollbar; "Add section" scrolls with the steps.
 - **Contrast**: some Figma colours fail WCAG AA (placeholder #ccc, 12px grey labels, the 12px green
   step label, Pro Tips body, badge, page count). They are kept as designed pending a design decision.
