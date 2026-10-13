@@ -49,7 +49,7 @@ export default function Faq() {
                   <span data-figma={`faq-${i}-q`}>{item.q}</span>
                   <span className="faq__toggle" data-figma={`faq-${i}-toggle`}>{isOpen ? <MinusThin /> : <PlusThin size={34} />}</span>
                 </button>
-                <div className="faq__a">
+                <div className="faq__a" aria-hidden={!isOpen} inert={!isOpen}>
                   <p className="faq__a-inner" data-figma={`faq-${i}-a`}>
                     {item.a.split("\n").map((part, k) => (
                       <Fragment key={k}>

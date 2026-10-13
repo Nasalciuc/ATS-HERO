@@ -155,7 +155,11 @@ export function PhoneHub({
                     {title}
                   </button>
                   <span className="hub-cv__score">
-                    ATS score <strong>{score == null ? "—" : Math.round(score)}</strong>/100
+                    ATS score{" "}
+                    <strong className={score == null || score >= 80 ? undefined : score >= 50 ? "is-fair" : "is-poor"}>
+                      {score == null ? "—" : Math.round(score)}
+                    </strong>
+                    /100
                   </span>
                   <span className="hub-cv__date">Updated {formatDate(cv.updatedAt)}</span>
                   <button type="button" className="hub-cv__pdf" disabled={busy !== null || !cv.data} onClick={() => void download(cv)}>

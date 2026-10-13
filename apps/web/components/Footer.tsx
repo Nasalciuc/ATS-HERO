@@ -11,8 +11,8 @@ export default function Footer() {
             ATS Hero
           </div>
           <h2 className="footer__heading" data-figma="footer-tagline">
-            We’re here to make your skills visible and appreciated
-            <br />
+            We’re here to make your skills visible and appreciated{" "}
+            <br className="footer__br" />
             by recruiters
           </h2>
         </div>
@@ -40,6 +40,7 @@ export default function Footer() {
       <div className="container footer__legal">
         <a href="/terms">Terms and Conditions</a>
         <a href="/privacy">Privacy Policy</a>
+        <a href="/credits">Credits</a>
       </div>
     </footer>
   );

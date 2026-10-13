@@ -102,6 +102,7 @@ function ScoreRow({
       type="button"
       className={`topbtn topbtn--title topbtn--dark score-row__fix${phone ? " score-row__fix--phone" : ""}`}
       data-figma={phone ? undefined : key("row-fix")}
+      data-fix={s.key}
       onClick={onFix}
     >
       Fix now
@@ -142,12 +143,29 @@ function ScoreRow({
           {s.critical.length > 0 && <Group tone="critical" items={s.critical} figma={key("badge-critical")} />}
           {s.suggestions.length > 0 && <Group tone="suggestion" items={s.suggestions} figma={key("badge-suggestion")} />}
           {s.goodPractices.length > 0 && <Group tone="good" items={s.goodPractices} figma={key("badge-good")} />}
-          {/* phones: "Fix now" under the advice (the row is too narrow for it) */}
+          {/* under 1280px: "Fix now" under the advice (the row is too narrow for it) */}
           {!fixing && fix(true)}
-          {fixing && <div className="score-row__fixform">{form}</div>}
+          {fixing && (
+            <div className="score-row__fixform" id={`score-fix-${s.key}`}>
+              {form}
+            </div>
+          )}
         </div>
       )}
     </li>
+  );
+}
+
+/** Improve / Job Fit: the score comes from the pasted text, so "Fix now" edits that text. */
+function TextFix({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="builder__panel score-textfix" data-figma="form-card">
+      <label className="field__label" htmlFor="score-textfix">
+        YOUR CV TEXT
+      </label>
+      <textarea id="score-textfix" className="analyze-textarea score-textfix__area" value={value} onChange={(e) => onChange(e.target.value)} />
+      <p className="score-textfix__hint">Save re-scores the edited text; Back leaves it as it was.</p>
+    </div>
   );
 }
 
@@ -190,20 +208,32 @@ export default function ScorePage() {
   const [jobFit, setJobFit] = useState<JobFitReport | null>(null);
   const [open, setOpen] = useState<SectionKey | null>(null);
   const [fixing, setFixing] = useState<SectionKey | null>(null);
+  const [draft, setDraft] = useState(""); // Improve / Job Fit: the text being fixed
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false); // Improve / Job Fit: "Saved" for a moment
+  const savedTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(savedTimer.current), []);
   const [secondsLeft, setSecondsLeft] = useState(30);
   const [flow, setFlow] = useState<AtsFlow>("create");
+  // Improve / Job Fit with the analysed text kept: "Fix now" edits that text
+  const [textFlow, setTextFlow] = useState(false);
   const started = useRef(false);
   // before paint, so the Improve / Job Fit progress bar doesn't pop in a frame late
-  useLayoutEffect(() => setFlow(getAtsFlow()), []);
+  useLayoutEffect(() => {
+    const f = getAtsFlow();
+    setFlow(f);
+    setTextFlow(f !== "create" && sessionStorage.getItem("ats_text") !== null);
+  }, []);
   const fromAnalyze = flow === "improve" || flow === "jobfit";
 
   const backHref = flow === "jobfit" ? "/app/jobfit" : flow === "improve" ? "/app/improve" : "/app/create";
 
-  const show = (r: ScoreReport) => {
+  // first show: the first section open; after a re-score (`keep` given): the same one, or none
+  const show = (r: ScoreReport, keep?: SectionKey | null) => {
     setReport(r);
-    setOpen(r.sections[0]?.key ?? null);
+    if (keep === undefined) setOpen(r.sections[0]?.key ?? null);
+    else setOpen(keep && r.sections.some((x) => x.key === keep) ? keep : null);
   };
 
   const compute = async () => {
@@ -262,7 +292,7 @@ export default function ScorePage() {
 
   // Improve / Job Fit score the text that was analysed (kept by the analyze page); the builder
   // flow scores the CV being edited.
-  const recalculate = async () => {
+  const recalculate = async (keep: SectionKey | null = open) => {
     setBusy(true);
     try {
       const text = fromAnalyze ? sessionStorage.getItem("ats_text") : null;
@@ -275,12 +305,12 @@ export default function ScorePage() {
           sessionStorage.setItem("ats_jobfit", JSON.stringify(fit));
           setJobFit(fit);
         }
-        show(fresh);
+        show(fresh, keep);
       } else {
         sessionStorage.removeItem("ats_report");
         sessionStorage.removeItem("ats_jobfit");
         setJobFit(null);
-        show((await api.score({ data })).report);
+        show((await api.score({ data })).report, keep);
       }
     } finally {
       setBusy(false);
@@ -288,21 +318,63 @@ export default function ScorePage() {
   };
 
   // Figma 383:7664: while a section is being fixed the title buttons are "Back" (close the form)
-  // and "Save" (save the CV); both re-score.
-  const finishFix = async (persist: boolean) => {
+  // and "Save". Builder flow: the form edits the CV as you type, so both re-score (Save also saves
+  // the CV). Improve / Job Fit: Save re-scores the edited text, Back drops the edit.
+  const startFix = (key: SectionKey) => {
+    if (textFlow) setDraft(sessionStorage.getItem("ats_text") ?? "");
+    setFixing(key);
+  };
+  const finishFix = async (persist: boolean, keep: SectionKey | null = open) => {
     setFixing(null);
-    if (persist) await save();
-    await recalculate();
+    if (textFlow) {
+      if (!persist) return;
+      sessionStorage.setItem("ats_text", draft);
+      // a draft saved with Save follows the edit, so the analyze page doesn't show an older text
+      if (sessionStorage.getItem(`ats_${flow}_cv`) !== null) sessionStorage.setItem(`ats_${flow}_cv`, draft);
+    } else if (persist) {
+      await save();
+    }
+    await recalculate(keep);
   };
 
+  // Focus follows the form: into its first field when it opens, back to the section's
+  // "Fix now" when it closes (the button under focus would otherwise vanish).
+  const lastFixed = useRef<SectionKey | null>(null);
+  useEffect(() => {
+    if (fixing) {
+      lastFixed.current = fixing;
+      document.querySelector<HTMLElement>(`#score-fix-${fixing} :is(input, textarea, select, button)`)?.focus();
+    } else if (lastFixed.current) {
+      const key = lastFixed.current;
+      lastFixed.current = null;
+      const visible = [...document.querySelectorAll<HTMLElement>(`[data-fix="${key}"]`)].find((b) => b.offsetParent !== null);
+      visible?.focus();
+    }
+  }, [fixing]);
+
+  // Improve / Job Fit have no builder CV to save: Save keeps the analysed text as the analyze
+  // page's draft (it used to create an empty CV for a guest).
+  const saveText = () => {
+    const text = sessionStorage.getItem("ats_text") ?? "";
+    sessionStorage.setItem(`ats_${flow}_cv`, text);
+    if (flow === "jobfit") sessionStorage.setItem("ats_jobfit_jd", sessionStorage.getItem("ats_jd") ?? "");
+    setSaved(true);
+    window.clearTimeout(savedTimer.current); // a second click restarts the 1.6 s, not cut it short
+    savedTimer.current = window.setTimeout(() => setSaved(false), 1600);
+  };
   const saveButton = (
     <button
       className="topbtn topbtn--title topbtn--dark"
       data-figma="btn-save"
-      onClick={() => void (fixing ? finishFix(true) : save())}
-      title={saveError ? `Not saved: ${saveError}` : undefined}
+      onClick={() => void (fixing ? finishFix(true) : textFlow ? saveText() : save())}
+      title={!textFlow && saveError ? `Not saved: ${saveError}` : undefined}
     >
-      <SaveDisk /> <span className="topbtn__label">{saving ? "Saving…" : saveError ? "Retry save" : "Save"}</span>
+      <SaveDisk />{" "}
+      {/* live only where the label confirms a click ("Saved"); in the builder flow it would read
+          out every autosave's "Saving…" */}
+      <span className="topbtn__label" aria-live={textFlow ? "polite" : undefined}>
+        {textFlow ? (saved ? "Saved" : "Save") : saving ? "Saving…" : saveError ? "Retry save" : "Save"}
+      </span>
     </button>
   );
   // phones use the top bar's "‹ Back" (same action)
@@ -387,11 +459,13 @@ export default function ScorePage() {
                 open={open === s.key}
                 fixing={fixing === s.key}
                 onToggle={() => {
-                  if (fixing === s.key) setFixing(null);
-                  setOpen(open === s.key ? null : s.key);
+                  const next = open === s.key ? null : s.key;
+                  setOpen(next);
+                  // opening or closing any section ends a fix the way Back does
+                  if (fixing) void finishFix(false, next);
                 }}
-                onFix={() => setFixing(s.key)}
-                form={fixing === s.key ? renderSectionForm(s.key) : null}
+                onFix={() => startFix(s.key)}
+                form={fixing === s.key ? (textFlow ? <TextFix value={draft} onChange={setDraft} /> : renderSectionForm(s.key)) : null}
               />
             ))}
           </ul>

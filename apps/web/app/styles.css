@@ -781,7 +781,7 @@ p {
   padding: 80px 0;
 }
 .tool__inner {
-  width: 1202px;
+  width: calc(var(--container) + 2px); /* Figma: 1202 */
 }
 .tool__title {
   font-weight: 700;
@@ -964,7 +964,7 @@ p {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  width: 1202px;
+  width: calc(var(--container) + 2px); /* Figma: 1202 */
 }
 .testimonials__title {
   margin: 0;
@@ -1167,7 +1167,8 @@ p {
   margin-top: 8px;
 }
 @media (max-width: 1279px) {
-  .faq__br {
+  .faq__br,
+  .footer__br {
     display: none;
   }
 }
@@ -1427,6 +1428,9 @@ p {
   .testimonials__title,
   .footer__heading {
     font-size: 32px;
+  }
+  .faq__q {
+    line-height: 24px;
   }
 }
 
@@ -3572,6 +3576,23 @@ select.field__input {
   width: 867px;
   max-width: 100%;
 }
+/* Improve / Job Fit: the pasted CV text in the same card */
+.score-textfix {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.score-textfix__area {
+  min-height: 320px;
+  resize: vertical;
+}
+.score-textfix__hint {
+  margin-top: 8px;
+  font-family: var(--font-inter);
+  font-size: 12px;
+  line-height: 15px;
+  color: #757575;
+}
 
 /* narrower than the Figma frame: the entry score goes under the label */
 @media (max-width: 1279px) {
@@ -3601,6 +3622,13 @@ select.field__input {
   }
   .score-row__score {
     grid-area: score;
+  }
+  /* no room in the row for "Fix now": it goes under the advice, so every row's columns line up */
+  .score-row__head > .score-row__fix {
+    display: none;
+  }
+  .score-row__fix--phone {
+    display: inline-flex;
   }
 }
 
@@ -3709,11 +3737,7 @@ select.field__input {
     line-height: 16px;
     letter-spacing: -0.26px;
   }
-  .score-row__head > .score-row__fix {
-    display: none;
-  }
   .score-row__fix--phone {
-    display: inline-flex;
     width: 100%;
     height: 51px;
   }
@@ -4323,7 +4347,7 @@ select.field__input {
 }
 .notfound__illustration {
   display: block;
-  width: min(534px, 100%);
+  width: min(534px, 100%, 58vh);
   height: auto;
   margin-bottom: -53px;
 }
@@ -5048,6 +5072,17 @@ select.field__input {
   color: var(--muted);
   font-size: 14px;
 }
+.legal__list {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.legal a {
+  color: var(--violet-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
 /* ---------------- footer legal links (s5) ---------------- */
 /* Not in Figma: in the footer's bottom padding, so the 411px footer keeps its height */
@@ -5328,6 +5363,13 @@ select.field__input {
   }
   .hub-cv__score strong {
     color: var(--green);
+  }
+  /* the score page's colours: amber from 50, red below */
+  .hub-cv__score strong.is-fair {
+    color: #e8a91d;
+  }
+  .hub-cv__score strong.is-poor {
+    color: var(--red);
   }
   .hub-cv__date {
     font-family: var(--font-inter);

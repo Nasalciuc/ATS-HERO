@@ -148,7 +148,9 @@ ATS Score loading icon is `pepicons-pencil:cv-circle` without its circle).
   is #f90 instead of #ffc107). The general score's arc is the score's share of the circle (Figma
   draws ~58% for 61.3). "Fix now" centres its text (Figma keeps room for an empty icon slot, 4px
   off-centre). The Fix-now form is the builder's step form; Figma also outlines the fields behind
-  each issue red/orange, which needs the scorer to name the field (it doesn't yet). The loading
+  each issue red/orange, which needs the scorer to name the field (it doesn't yet). In Improve /
+  Job Fit there is no structured CV behind the score, so Fix now opens the pasted CV text in the
+  same card and Save re-scores it. Under 1280px "Fix now" sits under the advice, not in the row. The loading
   ring turns (it stands still under reduced motion, as drawn in Figma). The Job Fit result (match %, matched and
   missing keywords) has no Figma frame: it reuses the score circle and the badges. Phones have no
   Figma frame either: the builder's phone style.
@@ -159,4 +161,6 @@ ATS Score loading icon is `pepicons-pencil:cv-circle` without its circle).
   ("PDF/" in "Personalized approach"). The feature icons are flattened in Figma: the closest
   Iconify glyphs at Figma's glyph size (the steps match; gauge and user are stand-ins).
 - **Contrast**: some Figma colours fail WCAG AA (placeholder #ccc, 12px grey labels, the 12px green
-  step label, Pro Tips body, badge, page count). They are kept as designed pending a design decision.
+  step label, Pro Tips body, badge, page count; on the score page the amber #ffc107 / #ff9f0a scores
+  (1.6–1.9:1), the green and red ones (2.0–2.9:1), the badge texts and the #9c9c9c entry score).
+  They are kept as designed pending a design decision.

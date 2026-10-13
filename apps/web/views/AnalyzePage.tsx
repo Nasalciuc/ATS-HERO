@@ -10,6 +10,10 @@ import { guardAndExtractPdf, GUARD_MSG } from "../lib/pdf-guard";
 
 type Mode = "improve" | "jobfit";
 
+/** the text files the picker offers (its accept list); anything else has to be a PDF */
+const TEXT_FILE = /\.(txt|md|json|csv)$/i;
+const NOT_TEXT = "Upload a PDF or a text file (.txt, .md, .csv, .json).";
+
 /** Figma "Frame 347": INSERT TEXT (778×134) · "or" · Upload file — 16 apart. */
 function TextOrUpload({
   value,
@@ -43,7 +47,18 @@ function TextOrUpload({
         onChange(res.text);
         return;
       }
-      onChange(await file.text());
+      // "All files" in the picker lets anything through: read only text files, and not binary
+      // content with a text name (a NUL byte), so an image never lands in the field as gibberish
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError(GUARD_MSG.TOO_LARGE);
+        return;
+      }
+      const text = TEXT_FILE.test(file.name) || file.type.startsWith("text/") ? await file.text() : null;
+      if (text === null || text.includes("\u0000")) {
+        setUploadError(NOT_TEXT);
+        return;
+      }
+      onChange(text);
     } catch {
       setUploadError(GUARD_MSG.PARSE_FAILED);
     } finally {
@@ -104,8 +119,10 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const draftCv = sessionStorage.getItem(`ats_${mode}_cv`);
-    const draftJob = sessionStorage.getItem("ats_jobfit_jd");
+    // a saved draft, else the text this flow last analysed (Back from the results)
+    const analysed = sessionStorage.getItem("ats_flow") === mode;
+    const draftCv = sessionStorage.getItem(`ats_${mode}_cv`) ?? (analysed ? sessionStorage.getItem("ats_text") : null);
+    const draftJob = sessionStorage.getItem("ats_jobfit_jd") ?? (analysed ? sessionStorage.getItem("ats_jd") : null);
     if (draftCv) setCvText(draftCv);
     if (mode === "jobfit" && draftJob) setJobText(draftJob);
   }, [mode]);
@@ -139,9 +156,11 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
         ]);
         sessionStorage.setItem("ats_report", JSON.stringify(report));
         sessionStorage.setItem("ats_jobfit", JSON.stringify(fit.report));
-        // kept for "Recalculate Score" on the results page
+        // kept for "Recalculate Score" on the results page; it replaces an older saved draft
         sessionStorage.setItem("ats_text", cvText);
         sessionStorage.setItem("ats_jd", jobText);
+        sessionStorage.removeItem("ats_jobfit_cv");
+        sessionStorage.removeItem("ats_jobfit_jd");
       } else {
         sessionStorage.setItem("ats_flow", "improve");
         const { report } = await api.score({ text: cvText });
@@ -149,6 +168,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
         sessionStorage.removeItem("ats_jobfit");
         sessionStorage.setItem("ats_text", cvText);
         sessionStorage.removeItem("ats_jd");
+        sessionStorage.removeItem("ats_improve_cv");
       }
       navigate("/app/score");
     } catch (e) {

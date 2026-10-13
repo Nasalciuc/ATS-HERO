@@ -42,7 +42,7 @@ Figma file uses (its layers are named after the Iconify icon, e.g. `ep:arrow-up`
 
 ## Attribution required
 
-CC BY / CC BY-SA icons need credit wherever the app lists third-party notices (e.g. a /credits or legal page):
+CC BY / CC BY-SA icons need credit: the app's /credits page lists every set (components/icon-credits.ts, generated here):
 
 - **Plump free icons** by Streamline (https://github.com/webalys-hq/streamline-vectors) — CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
 - **Typicons** by Stephen Hutchings (https://github.com/stephenhutchings/typicons.font) — CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
