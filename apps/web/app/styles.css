@@ -2824,113 +2824,236 @@ select.field__input {
   font-size: 15px;
 }
 
-/* ---------------- analyze (Function 2/3) ---------------- */
+/* ---------------- analyze: Figma "Function 2" (230:685, Improve) and "Function 3" (398:8400, Job Fit) ----------------
+   Same shell as the builder, with the title panel at y=40; a 504px three-step progress bar, the
+   #f8f8f8 card (1133 wide, 455 / 611 tall) with INSERT TEXT · "or" · Upload file, and
+   "Check ATS Score" (205×52) under its right edge. Checked by design-check/specs/analyze-*.json. */
+.appshell--analyze .appshell__main {
+  padding-top: 40px;
+}
 .analyze-steps {
   display: flex;
-  margin: 28px auto 24px;
-  max-width: 680px;
-  width: 100%;
+  align-items: flex-start;
+  width: 504px;
+  max-width: 100%;
+  margin: 0 0 32px;
+  padding: 0;
+  list-style: none;
 }
 .analyze-step {
+  flex: 0 0 64px;
+  width: 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
-  position: relative;
-  min-width: 0;
+  gap: 4px;
 }
 .analyze-step__line {
+  position: relative;
+  flex: 1 1 156px;
+  min-width: 24px;
+  height: 62px;
+}
+.analyze-step__line::before {
+  content: "";
   position: absolute;
-  top: 15px;
-  right: 50%;
-  width: 100%;
+  left: 0;
+  right: 0;
+  top: 30px;
+  height: 1px;
+  background: #c0c0c0;
+}
+.analyze-step__line.is-filled::before {
+  top: 29px;
   height: 2px;
-  background: var(--line);
-  z-index: 0;
-}
-.analyze-step__line.is-filled {
   background: var(--green);
-}
-.analyze-step__node.is-done {
-  box-shadow: inset 0 0 0 2px var(--green);
-  background: #eafff2;
-}
-.analyze-step__node.is-done.is-solid,
-.analyze-step__node.is-current.is-solid {
-  background: var(--green);
-  box-shadow: none;
-}
-.analyze-step__node.is-current.is-solid .analyze-step__icon {
-  display: none;
 }
 .analyze-step__node {
-  width: 30px;
-  height: 30px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: #ececec;
-  box-shadow: none;
-  z-index: 1;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .analyze-step__node.is-current {
+  background: var(--bg-mint);
   box-shadow: inset 0 0 0 2px var(--green);
-  background: #eafff2;
+}
+.analyze-step__node.is-done {
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+.analyze-step__emoji {
+  width: 44px;
+  height: 44px;
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 44px;
+  letter-spacing: -0.6px;
+  text-align: center;
 }
 .analyze-step__label {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--gray-600);
+  width: max-content;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  color: #757575;
+  white-space: nowrap;
 }
 .analyze-step__label.is-current {
-  color: var(--green);
   font-weight: 600;
+  color: var(--green);
 }
-.analyze-panel {
+.analyze-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 32px;
+  width: 100%;
+  max-width: 1133px;
+  min-height: 455px;
+  /* Figma: content 44 in from the frame (its stroke takes no room); the Job Fit card's content
+     fills its 611 exactly, leaving 40 at the bottom */
+  padding: 43px 43px 40px;
   background: #f8f8f8;
   border: 1px solid var(--line);
   border-radius: 20px;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
+}
+.analyze-card--two {
+  min-height: 611px;
 }
 .analyze-block {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 100%;
+}
+.analyze-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 778px;
+  max-width: 100%;
+  height: 134px;
 }
 .analyze-textarea {
-  margin-top: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 10px;
   background: var(--white);
-  border: 1px solid #e6e6e6;
-  border-radius: 12px;
-  padding: 16px;
-  min-height: 120px;
-  font-family: inherit;
-  font-size: 15px;
-  line-height: 1.4;
-  resize: vertical;
+  font-family: var(--font-inter);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+  letter-spacing: -0.28px;
+  color: var(--ink);
+  resize: none;
+}
+.analyze-textarea::placeholder {
+  color: #cccccc;
+  opacity: 1;
 }
 .analyze-textarea:focus {
   outline: none;
-  border-color: var(--violet-600);
+  box-shadow: inset 0 0 0 1px var(--violet-600);
 }
 .analyze-or {
-  font-weight: 700;
-  font-size: 22px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 44px;
+  letter-spacing: -0.408px;
   color: var(--ink);
-  margin: 16px 0 12px;
+}
+.analyze-upload {
+  justify-content: center;
+  width: 129px;
+  padding: 0 10px;
 }
 .analyze-footer {
   display: flex;
   justify-content: flex-end;
+  width: 100%;
+  max-width: var(--app-max);
   margin-top: 24px;
+}
+.analyze-check {
+  width: 205px;
 }
 .analyze-error {
   color: var(--red);
   margin-top: 14px;
   font-size: 14px;
+}
+
+/* PHONE (≤720px): Improve / Job Fit in the builder's phone style (no Figma mobile frame) */
+@media (max-width: 720px) {
+  .appshell--analyze .appshell__main {
+    padding-top: 34px;
+  }
+  .analyze-steps {
+    width: 100%;
+    margin-bottom: 30px;
+  }
+  .analyze-step {
+    flex-basis: 62px;
+    width: 62px;
+  }
+  .analyze-step__node {
+    width: 62px;
+    height: 62px;
+  }
+  .analyze-step__line::before {
+    top: 31px;
+  }
+  .analyze-step__line.is-filled::before {
+    top: 30px;
+  }
+  .analyze-step__label {
+    font-size: 10px;
+    line-height: 12px;
+    letter-spacing: -0.2px;
+  }
+  .analyze-card,
+  .analyze-card--two {
+    gap: 30px;
+    min-height: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  .analyze-block,
+  .analyze-field {
+    width: 100%;
+  }
+  .analyze-textarea {
+    padding: 14px 13px;
+    background: #f8f8f8;
+    font-size: 16px; /* under 16px iOS zooms into the field */
+    line-height: 19px;
+    letter-spacing: -0.32px;
+  }
+  .analyze-or {
+    font-size: 32px;
+    line-height: 36px;
+  }
+  .analyze-footer {
+    margin-top: 30px;
+  }
+  .analyze-check {
+    width: 100%;
+    height: 51px;
+  }
 }
 
 /* ---------------- score page ---------------- */
@@ -4111,11 +4234,6 @@ select.field__input {
   }
   .score-row__score {
     width: auto;
-  }
-  .analyze-steps {
-    max-width: none;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
   }
   .modal--side .modal__panel {
     width: min(690px, 100%);

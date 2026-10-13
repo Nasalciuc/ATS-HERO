@@ -1,24 +1,31 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
+import { useId, useRef, useState, useEffect } from "react";
 import { useNavigate } from "@/lib/router";
 import AppShell from "../components/app/AppShell";
 import AnalyzeSteps from "../components/app/AnalyzeSteps";
-import { Save, ArrowRight, Upload } from "../components/icons";
+import { ArrowUp, SaveDisk, UploadRounded } from "../components/figma-icons";
 import { api } from "../lib/api";
 import { isPdfFile } from "../lib/pdf";
 import { guardAndExtractPdf, GUARD_MSG } from "../lib/pdf-guard";
 
 type Mode = "improve" | "jobfit";
 
+/** Figma "Frame 347": INSERT TEXT (778×134) · "or" · Upload file — 16 apart. */
 function TextOrUpload({
   value,
   onChange,
   placeholder,
+  figma,
+  what,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
+  figma: string;
+  /** read out after the visible label, so the two Job Fit fields don't share one name */
+  what: string;
 }) {
+  const id = useId();
   const fileRef = useRef<HTMLInputElement>(null);
   const [parsing, setParsing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -45,19 +52,39 @@ function TextOrUpload({
   };
 
   return (
-    <div className="analyze-block">
-      <label className="field__label">INSERT TEXT</label>
-      <textarea
-        className="analyze-textarea"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <div className="analyze-or">or</div>
-      <button className="field__upload" onClick={() => fileRef.current?.click()} disabled={parsing}>
-        <Upload size={16} /> {parsing ? "Extracting…" : "Upload file"}
+    <div className="analyze-block" data-figma={figma}>
+      <div className="analyze-field" data-figma={`${figma}-field`}>
+        <label className="field__label" htmlFor={id}>
+          INSERT TEXT<span className="sr-only">: {what}</span>
+        </label>
+        <textarea
+          id={id}
+          className="analyze-textarea"
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </div>
+      <p className="analyze-or" data-figma={`${figma}-or`}>
+        or
+      </p>
+      <button
+        type="button"
+        className="field__upload analyze-upload"
+        data-figma={`${figma}-upload`}
+        onClick={() => fileRef.current?.click()}
+        disabled={parsing}
+      >
+        {/* the same flattened 16×15 upload glyph as the builder's photo button */}
+        <UploadRounded width={16} height={15} viewBox="4 4.425 16 15.575" preserveAspectRatio="none" />{" "}
+        {parsing ? "Extracting…" : "Upload file"}
+        <span className="sr-only"> ({what})</span>
       </button>
-      {uploadError && <p className="analyze-error">{uploadError}</p>}
+      {uploadError && (
+        <p className="analyze-error" role="alert">
+          {uploadError}
+        </p>
+      )}
       <input
         ref={fileRef}
         type="file"
@@ -130,26 +157,37 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
     <AppShell
       title={title}
       active={active}
+      variant="analyze"
       actions={
-        <button className="topbtn topbtn--dark" onClick={saveDraft}>
-          <Save size={18} /> <span className="topbtn__label">Save</span>
+        <button className="topbtn topbtn--title topbtn--dark" data-figma="btn-save" onClick={saveDraft}>
+          <SaveDisk /> <span className="topbtn__label">Save</span>
         </button>
       }
     >
       <AnalyzeSteps current={0} />
 
-      <div className="analyze-panel">
-        <TextOrUpload value={cvText} onChange={setCvText} placeholder="Paste your CV text here…" />
+      <div className={`analyze-card${mode === "jobfit" ? " analyze-card--two" : ""}`} data-figma="analyze-card">
+        <TextOrUpload figma="analyze-cv" what="your CV" value={cvText} onChange={setCvText} placeholder="Paste your CV text here…" />
         {mode === "jobfit" && (
-          <TextOrUpload value={jobText} onChange={setJobText} placeholder="Paste the job description here…" />
+          <TextOrUpload
+            figma="analyze-job"
+            what="the job description"
+            value={jobText}
+            onChange={setJobText}
+            placeholder="Paste the job description here…"
+          />
         )}
       </div>
 
-      {error && <p className="analyze-error">{error}</p>}
+      {error && (
+        <p className="analyze-error" role="alert">
+          {error}
+        </p>
+      )}
 
       <div className="analyze-footer">
-        <button className="topbtn topbtn--dark" onClick={run} disabled={busy}>
-          {busy ? "Analyzing…" : "Check ATS Score"} <ArrowRight size={18} />
+        <button className="topbtn topbtn--dark analyze-check" data-figma="btn-check" onClick={run} disabled={busy}>
+          {busy ? "Analyzing…" : "Check ATS Score"} <ArrowUp className="topbtn__arrow--right" />
         </button>
       </div>
     </AppShell>

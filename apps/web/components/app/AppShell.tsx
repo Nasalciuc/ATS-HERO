@@ -46,8 +46,11 @@ export default function AppShell({
   section,
   onBack,
   phoneTitle,
+  variant,
 }: {
   title: string;
+  /** "analyze": Figma "Function 2/3" frames put the title panel 3px higher (y=40, not 43) */
+  variant?: "analyze";
   /** phones: a shorter page title when the Figma mobile frame has one ("Work experience") */
   phoneTitle?: string;
   active: NavKey;
@@ -76,7 +79,7 @@ export default function AppShell({
   }, [menuOpen]);
 
   return (
-    <div className="appshell">
+    <div className={`appshell${variant ? ` appshell--${variant}` : ""}`}>
       {menuOpen && <button className="appshell__backdrop" aria-label="Close menu" onClick={closeMenu} />}
 
       <aside id="app-menu" className={`appshell__side${menuOpen ? " is-open" : ""}`} data-figma="sidebar">
@@ -138,7 +141,7 @@ export default function AppShell({
         </div>
       </aside>
 
-      <div className="appshell__main">
+      <main className="appshell__main">
         <header className="appshell__topbar" data-figma="title-panel">
           <button
             className="appshell__menu"
@@ -173,7 +176,7 @@ export default function AppShell({
           <div className="appshell__actions">{actions}</div>
         </header>
         <div className="appshell__content">{children}</div>
-      </div>
+      </main>
 
       <SignInModal
         open={signIn}
