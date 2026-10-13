@@ -1,0 +1,580 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  ATS Hero - foundation (one per AWS account, deployed by a human with SSO credentials).
+  Identity without long-lived keys (GitHub Actions OIDC, Vercel OIDC), the CloudFormation
+  execution role and the boundary on every role it creates, the artifacts bucket and ECR
+  repository, cost guardrails, the alerts topics, and the account's watch: CloudTrail,
+  GuardDuty (with RDS login monitoring) and IAM Access Analyzer, with findings sent by e-mail.
+
+Parameters:
+  GitHubRepo:
+    Type: String
+    Default: Nasalciuc/ATS-HERO
+    Description: owner/repo allowed to deploy (only jobs running in its "production" environment)
+  ExistingGitHubOidcProviderArn:
+    Type: String
+    Default: ""
+    Description: Leave empty to create the GitHub OIDC provider; an account can hold only one per URL
+  ExistingAnomalyMonitorArn:
+    Type: String
+    Default: ""
+    Description: >
+      Leave empty to create the "AWS services" cost monitor. An account can have only one, and AWS
+      creates it by itself once Cost Explorer is on: then pass its ARN (aws ce get-anomaly-monitors).
+  VercelTeamSlug:
+    Type: String
+    AllowedPattern: "[a-z0-9-]+"
+    Description: The team slug from the Vercel team URL (OIDC issuer mode "Team")
+  AlertEmail:
+    Type: String
+    Description: Where budget, anomaly and CloudWatch alerts go
+  MonthlyBudgetUsd:
+    Type: Number
+    Default: 25
+  CreateAuditTrail:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "true"
+    Description: >
+      false if the account already has a trail that logs management events (only the first copy is
+      free; a second trail is billed per event)
+  CreateGuardDutyDetector:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "true"
+    Description: false if GuardDuty is already on in this Region (one detector per Region)
+  CreateAccessAnalyzer:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "true"
+    Description: false if the account already has an external-access analyzer in this Region
+
+Conditions:
+  CreateGitHubProvider: !Equals [!Ref ExistingGitHubOidcProviderArn, ""]
+  CreateAnomalyMonitor: !Equals [!Ref ExistingAnomalyMonitorArn, ""]
+  CreateTrail: !Equals [!Ref CreateAuditTrail, "true"]
+  CreateDetector: !Equals [!Ref CreateGuardDutyDetector, "true"]
+  CreateAnalyzer: !Equals [!Ref CreateAccessAnalyzer, "true"]
+
+Resources:
+  # ---------- identity: who may act in this account, without access keys ----------
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateGitHubProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+      Tags: [{ Key: project, Value: atshero }]
+
+  VercelOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: !Sub https://oidc.vercel.com/${VercelTeamSlug}
+      ClientIdList: [!Sub "https://vercel.com/${VercelTeamSlug}"]
+      Tags: [{ Key: project, Value: atshero }]
+
+  # The ceiling on every role an app stack creates. Whatever policy a template gives such a role,
+  # the role can never do more than this. It lists every permission the app roles use, nothing else.
+  AppRoleBoundary:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: atshero-app-boundary
+      Description: Permissions boundary required on every role created by the atshero app stacks
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: Logs
+            Effect: Allow
+            Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
+            Resource: "*"
+          - Sid: RateLimitTables
+            Effect: Allow
+            Action: [dynamodb:GetItem, dynamodb:UpdateItem]
+            Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/atshero-*
+          - Sid: Bedrock
+            Effect: Allow
+            Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream]
+            Resource: "*"
+          - Sid: Email
+            Effect: Allow
+            Action: [ses:SendEmail, ses:SendRawEmail]
+            Resource: "*"
+          - Sid: DatabaseIamLogin
+            Effect: Allow
+            Action: rds-db:connect
+            Resource: !Sub arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/atshero_*
+          - Sid: JobQueues
+            Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:ChangeMessageVisibility
+              - sqs:GetQueueAttributes
+            Resource: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:atshero-*
+          - Sid: UserAssets
+            Effect: Allow
+            Action: [s3:GetObject, s3:PutObject]
+            Resource: !Sub arn:aws:s3:::atshero-*-assets-${AWS::AccountId}/*
+
+  # CloudFormation acts with this role when CI deploys the app stacks (atshero-dev, atshero-prod).
+  # PowerUserAccess has no IAM; IAM is added only for app roles that carry AppRoleBoundary, and an
+  # explicit deny keeps the role to the services the app template uses (no Secrets Manager, RDS,
+  # EC2 or SSM, so a template can't reach the database or its master secret).
+  CfnExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: atshero-cfn-exec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: cloudformation.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/PowerUserAccess
+      Policies:
+        - PolicyName: app-stacks-only
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AppRolesOnlyWithTheBoundary
+                Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:UpdateAssumeRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                  - iam:PutRolePermissionsBoundary
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/atshero-*
+                Condition:
+                  StringEquals:
+                    iam:PermissionsBoundary: !Ref AppRoleBoundary
+              - Sid: ReadAndTagAppRoles
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:UpdateRole
+                  - iam:TagRole
+                  - iam:UntagRole
+                  - iam:ListRoleTags
+                  - iam:GetRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:ListAttachedRolePolicies
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/atshero-*
+              - Sid: PassAppRolesToLambdaOnly
+                Effect: Allow
+                Action: iam:PassRole
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/atshero-*
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: lambda.amazonaws.com
+              - Sid: NeverTheDeployRoles
+                Effect: Deny
+                Action: iam:*
+                Resource:
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/atshero-cfn-exec
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/atshero-github-deploy
+              - Sid: NeverRemoveTheBoundary
+                Effect: Deny
+                Action: iam:DeleteRolePermissionsBoundary
+                Resource: "*"
+              - Sid: OnlyTheServicesOfTheAppTemplate
+                Effect: Deny
+                NotAction:
+                  - lambda:*
+                  - apigateway:*
+                  - dynamodb:*
+                  - logs:*
+                  - cloudwatch:*
+                  - sqs:*
+                  - s3:*
+                  - ecr:*
+                  - iam:*
+                  - cloudformation:*
+                  - tag:*
+                Resource: "*"
+              - Sid: NeverTheBackupArtifactAndAuditBuckets
+                Effect: Deny
+                Action: s3:*
+                Resource:
+                  - !Sub arn:aws:s3:::atshero-backups-${AWS::AccountId}
+                  - !Sub arn:aws:s3:::atshero-backups-${AWS::AccountId}/*
+                  - !Sub arn:aws:s3:::atshero-artifacts-${AWS::AccountId}
+                  - !Sub arn:aws:s3:::atshero-artifacts-${AWS::AccountId}/*
+                  - !Sub arn:aws:s3:::atshero-trail-${AWS::AccountId}
+                  - !Sub arn:aws:s3:::atshero-trail-${AWS::AccountId}/*
+      Tags: [{ Key: project, Value: atshero }]
+
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: atshero-github-deploy
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - CreateGitHubProvider
+                - !Ref GitHubOidcProvider
+                - !Ref ExistingGitHubOidcProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                # Only jobs that run in the "production" environment (required reviewer: Scaler,
+                # deployment branch: main). The repo is public: pull requests, forks and other
+                # jobs on main get nothing.
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepo}:environment:production
+      Policies:
+        - PolicyName: deploy-app-stacks
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AppStacksOnly
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:DeleteChangeSet
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:GetTemplate
+                  - cloudformation:GetTemplateSummary
+                  - cloudformation:ListStackResources
+                  - cloudformation:TagResource
+                  - cloudformation:UntagResource
+                Resource:
+                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/atshero-dev/*
+                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/atshero-prod/*
+              - Sid: TagTheChangeSetsItCreates
+                Effect: Allow
+                Action: [cloudformation:TagResource, cloudformation:UntagResource]
+                Resource: !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:changeSet/*/*
+              - Sid: SamTransform
+                Effect: Allow
+                Action: cloudformation:CreateChangeSet
+                Resource: !Sub arn:aws:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31
+              - Effect: Allow
+                Action: cloudformation:ValidateTemplate
+                Resource: "*"
+              - Sid: PassTheExecutionRoleToCloudFormationOnly
+                Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt CfnExecutionRole.Arn
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: [s3:PutObject, s3:GetObject]
+                Resource: !Sub ${ArtifactsBucket.Arn}/*
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt ArtifactsBucket.Arn
+              - Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeImages
+                  - ecr:DescribeRepositories
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: !GetAtt PythonApiRepository.Arn
+              # SnapStart bills every published version that still exists, so after each deploy
+              # the workflow deletes the versions the "live" alias no longer points to.
+              - Sid: FindOldLambdaVersions
+                Effect: Allow
+                Action: [lambda:ListVersionsByFunction, lambda:GetAlias]
+                Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:atshero-*-python-api
+              - Sid: DeleteOldLambdaVersionsOnly
+                Effect: Allow
+                Action: lambda:DeleteFunction
+                # ":*" matches qualified ARNs only (one version); the function itself can't be deleted
+                Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:atshero-*-python-api:*
+      Tags: [{ Key: project, Value: atshero }]
+
+  # ---------- where deploys put their packages ----------
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    # Kept if the stack is deleted, but removed if the very first create rolls back
+    # (otherwise every retry would fail on the existing bucket name).
+    DeletionPolicy: RetainExceptOnCreate
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub atshero-artifacts-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-old-packages
+            Status: Enabled
+            ExpirationInDays: 30
+      Tags: [{ Key: project, Value: atshero }]
+
+  PythonApiRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: atshero-python-api
+      ImageScanningConfiguration: { ScanOnPush: true }
+      ImageTagMutability: MUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"keep the last 10 images",
+          "selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},
+          "action":{"type":"expire"}}]}
+      # The statement Lambda would otherwise add by itself on the first deploy (drift).
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: LambdaECRImageRetrievalPolicy
+            Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: [ecr:BatchGetImage, ecr:GetDownloadUrlForLayer]
+            Condition:
+              StringLike:
+                aws:sourceArn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
+      Tags: [{ Key: project, Value: atshero }]
+
+  # ---------- money and alerts ----------
+  AlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: atshero-alerts
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlertEmail
+      Tags: [{ Key: project, Value: atshero }]
+
+  # Expected spend is about $22-25 a month (GuardDuty included), so 50 % / 80 % alerts would fire
+  # every month.
+  # The forecast alert warns early; the actual one says the limit was crossed.
+  MonthlyBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: atshero-monthly
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit: { Amount: !Ref MonthlyBudgetUsd, Unit: USD }
+      NotificationsWithSubscribers:
+        - Notification: { NotificationType: FORECASTED, ComparisonOperator: GREATER_THAN, Threshold: 100 }
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+        - Notification: { NotificationType: ACTUAL, ComparisonOperator: GREATER_THAN, Threshold: 100 }
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+
+  CostAnomalyMonitor:
+    Type: AWS::CE::AnomalyMonitor
+    Condition: CreateAnomalyMonitor
+    Properties:
+      MonitorName: atshero-services
+      MonitorType: DIMENSIONAL
+      MonitorDimension: SERVICE
+
+  CostAnomalySubscription:
+    Type: AWS::CE::AnomalySubscription
+    Properties:
+      SubscriptionName: atshero-anomalies
+      Frequency: DAILY
+      MonitorArnList:
+        - !If [CreateAnomalyMonitor, !Ref CostAnomalyMonitor, !Ref ExistingAnomalyMonitorArn]
+      Subscribers: [{ Type: EMAIL, Address: !Ref AlertEmail }]
+      ThresholdExpression: >-
+        {"Dimensions":{"Key":"ANOMALY_TOTAL_IMPACT_ABSOLUTE","MatchOptions":["GREATER_THAN_OR_EQUAL"],"Values":["5"]}}
+
+  # ---------- the account's watch: who did what, threats, and access from outside ----------
+  # CloudTrail: the free first copy of management events, kept a year (the console keeps 90 days).
+  # IAM Access Analyzer's policy generation (F5) reads it.
+  AuditTrailBucket:
+    Type: AWS::S3::Bucket
+    Condition: CreateTrail
+    DeletionPolicy: RetainExceptOnCreate
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub atshero-trail-${AWS::AccountId}
+      OwnershipControls:
+        Rules: [{ ObjectOwnership: BucketOwnerEnforced }]
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      LifecycleConfiguration:
+        Rules:
+          - Id: cold-after-90-days
+            Status: Enabled
+            Transitions:
+              - { StorageClass: GLACIER_IR, TransitionInDays: 90 }
+            ExpirationInDays: 365
+      Tags: [{ Key: project, Value: atshero }]
+
+  AuditTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: CreateTrail
+    Properties:
+      Bucket: !Ref AuditTrailBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: CloudTrailAclCheck
+            Effect: Allow
+            Principal: { Service: cloudtrail.amazonaws.com }
+            Action: s3:GetBucketAcl
+            Resource: !GetAtt AuditTrailBucket.Arn
+            Condition:
+              StringEquals:
+                aws:SourceArn: !Sub arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/atshero-trail
+          - Sid: CloudTrailWrite
+            Effect: Allow
+            Principal: { Service: cloudtrail.amazonaws.com }
+            Action: s3:PutObject
+            Resource: !Sub ${AuditTrailBucket.Arn}/AWSLogs/${AWS::AccountId}/*
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+                aws:SourceArn: !Sub arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/atshero-trail
+          - Sid: TlsOnly
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !GetAtt AuditTrailBucket.Arn
+              - !Sub ${AuditTrailBucket.Arn}/*
+            Condition:
+              Bool: { aws:SecureTransport: "false" }
+
+  AuditTrail:
+    Type: AWS::CloudTrail::Trail
+    Condition: CreateTrail
+    DependsOn: AuditTrailBucketPolicy
+    Properties:
+      TrailName: atshero-trail
+      S3BucketName: !Ref AuditTrailBucket
+      IsLogging: true
+      IsMultiRegionTrail: true # a stolen key used in another Region is still recorded
+      IncludeGlobalServiceEvents: true
+      EnableLogFileValidation: true
+      Tags: [{ Key: project, Value: atshero }]
+
+  # GuardDuty: leaked credentials, unusual API calls, and RDS logins (the database is public, so a
+  # leaked password used from a new place shows up here). 30 days free; afterwards about
+  # $2.5-3 a month at this size, most of it RDS login monitoring ($1 per vCPU, 2 vCPUs).
+  GuardDutyDetector:
+    Type: AWS::GuardDuty::Detector
+    Condition: CreateDetector
+    Properties:
+      Enable: true
+      FindingPublishingFrequency: FIFTEEN_MINUTES
+      Features:
+        - { Name: S3_DATA_EVENTS, Status: ENABLED }
+        - { Name: RDS_LOGIN_EVENTS, Status: ENABLED }
+        - { Name: LAMBDA_NETWORK_LOGS, Status: ENABLED }
+        - { Name: EKS_AUDIT_LOGS, Status: DISABLED }
+        - { Name: EBS_MALWARE_PROTECTION, Status: DISABLED }
+        - { Name: RUNTIME_MONITORING, Status: DISABLED }
+      Tags: [{ Key: project, Value: atshero }]
+
+  # IAM Access Analyzer (free): a finding for every resource reachable from outside the account -
+  # e.g. a role whose trust policy someone opened to another account. The GitHub and Vercel roles
+  # trust OIDC providers, so findings for them on day one are expected: check them once, archive.
+  ExternalAccessAnalyzer:
+    Type: AWS::AccessAnalyzer::Analyzer
+    Condition: CreateAnalyzer
+    Properties:
+      AnalyzerName: atshero-external-access
+      Type: ACCOUNT
+      Tags: [{ Key: project, Value: atshero }]
+
+  SecurityAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: atshero-security-alerts
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlertEmail
+      Tags: [{ Key: project, Value: atshero }]
+
+  SecurityAlertsTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics: [!Ref SecurityAlertsTopic]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: EventBridgeRulesOfThisAccount
+            Effect: Allow
+            Principal: { Service: events.amazonaws.com }
+            Action: sns:Publish
+            Resource: !Ref SecurityAlertsTopic
+            Condition:
+              StringEquals: { aws:SourceAccount: !Ref AWS::AccountId }
+
+  GuardDutyFindingsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: atshero-guardduty-findings
+      Description: GuardDuty findings of medium severity or higher, by e-mail
+      EventPattern:
+        source: [aws.guardduty]
+        detail-type: [GuardDuty Finding]
+        detail:
+          severity: [{ numeric: [">=", 4] }]
+      Targets:
+        - Id: security-alerts
+          Arn: !Ref SecurityAlertsTopic
+
+  ExternalAccessFindingsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: atshero-external-access-findings
+      Description: New IAM Access Analyzer findings (something reachable from outside the account), by e-mail
+      EventPattern:
+        source: [aws.access-analyzer]
+        detail-type: [Access Analyzer Finding]
+        detail:
+          status: [ACTIVE]
+      Targets:
+        - Id: security-alerts
+          Arn: !Ref SecurityAlertsTopic
+
+Outputs:
+  GitHubDeployRoleArn:
+    Value: !GetAtt GitHubDeployRole.Arn
+    Description: GitHub variable AWS_DEPLOY_ROLE_ARN (not a secret - an ARN)
+  CfnExecutionRoleArn:
+    Value: !GetAtt CfnExecutionRole.Arn
+  AppRoleBoundaryArn:
+    Value: !Ref AppRoleBoundary
+    Export: { Name: atshero-app-boundary-arn }
+  VercelOidcProviderArn:
+    Value: !Ref VercelOidcProvider
+    Export: { Name: atshero-vercel-oidc-provider-arn }
+  AlertsTopicArn:
+    Value: !Ref AlertsTopic
+    Export: { Name: atshero-alerts-topic-arn }
+  ArtifactsBucketName:
+    Value: !Ref ArtifactsBucket
+  PythonApiRepositoryUri:
+    Value: !GetAtt PythonApiRepository.RepositoryUri
+  SecurityAlertsTopicArn:
+    Value: !Ref SecurityAlertsTopic
