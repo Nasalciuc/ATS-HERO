@@ -49,8 +49,9 @@ export default function AppShell({
   variant,
 }: {
   title: string;
-  /** "analyze": Figma "Function 2/3" frames put the title panel 3px higher (y=40, not 43) */
-  variant?: "analyze";
+  /** "analyze": Figma "Function 2/3" frames put the title panel 3px higher (y=40, not 43);
+   *  "score": the ATS Score frames start the content 32px under the title panel (not 44) */
+  variant?: "analyze" | "score";
   /** phones: a shorter page title when the Figma mobile frame has one ("Work experience") */
   phoneTitle?: string;
   active: NavKey;

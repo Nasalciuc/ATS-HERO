@@ -10,7 +10,7 @@ import AddSectionModal from "../components/modals/AddSectionModal";
 import CompleteModal from "../components/modals/CompleteModal";
 import AlmostThereModal from "../components/modals/AlmostThereModal";
 import { useApp } from "../store/AppContext";
-import { OPTIONAL_SECTIONS, type CvData, type SectionKey, type SimpleEntry } from "../lib/types";
+import { OPTIONAL_SECTIONS, SECTION_EMOJI, type CvData, type SectionKey, type SimpleEntry } from "../lib/types";
 import {
   PersonalInfoStep,
   EducationStep,
@@ -32,11 +32,11 @@ function isSectionFilled(data: CvData, key: SectionKey): boolean {
 
 // Stepper labels break where Figma breaks them ("Professional⏎summary").
 const BASE_STEPS: { key: SectionKey; label: string; emoji: string }[] = [
-  { key: "personalInfo", label: "Personal info", emoji: "🪪" },
-  { key: "education", label: "Education", emoji: "🎓" },
-  { key: "summary", label: "Professional\nsummary", emoji: "📋" },
-  { key: "work", label: "Work\nexperience", emoji: "💼" },
-  { key: "skills", label: "Skills", emoji: "💪" },
+  { key: "personalInfo", label: "Personal info", emoji: SECTION_EMOJI.personalInfo },
+  { key: "education", label: "Education", emoji: SECTION_EMOJI.education },
+  { key: "summary", label: "Professional\nsummary", emoji: SECTION_EMOJI.summary },
+  { key: "work", label: "Work\nexperience", emoji: SECTION_EMOJI.work },
+  { key: "skills", label: "Skills", emoji: SECTION_EMOJI.skills },
 ];
 
 // Figma breaks this optional section's stepper label too.

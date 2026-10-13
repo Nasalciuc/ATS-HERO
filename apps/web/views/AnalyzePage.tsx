@@ -139,11 +139,16 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
         ]);
         sessionStorage.setItem("ats_report", JSON.stringify(report));
         sessionStorage.setItem("ats_jobfit", JSON.stringify(fit.report));
+        // kept for "Recalculate Score" on the results page
+        sessionStorage.setItem("ats_text", cvText);
+        sessionStorage.setItem("ats_jd", jobText);
       } else {
         sessionStorage.setItem("ats_flow", "improve");
         const { report } = await api.score({ text: cvText });
         sessionStorage.setItem("ats_report", JSON.stringify(report));
         sessionStorage.removeItem("ats_jobfit");
+        sessionStorage.setItem("ats_text", cvText);
+        sessionStorage.removeItem("ats_jd");
       }
       navigate("/app/score");
     } catch (e) {

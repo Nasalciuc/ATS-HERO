@@ -95,7 +95,7 @@
       "icon": "mynaui:plus",
       "export": "PlusThin",
       "size": 17,
-      "use": "'Add one more …' buttons, Activities 'Add section'"
+      "use": "'Add one more …' buttons, Activities 'Add section'; score row toggle (34px)"
     },
     {
       "icon": "mage:trash",
@@ -132,6 +132,27 @@
       "export": "EditLine",
       "size": 24,
       "use": "Phone home (Figma mobile 55:322) · My Resumes card edit"
+    },
+    {
+      "icon": "pepicons-pencil:cv-circle",
+      "export": "CvDocument",
+      "size": 148,
+      "omit": [
+        5
+      ],
+      "use": "ATS Score loading circle (Figma 'pepicons-pencil:cv-circle' with its circle hidden: only the inner Group is visible)"
+    },
+    {
+      "icon": "mingcute:alert-line",
+      "export": "AlertLine",
+      "size": 24,
+      "use": "Score badges: Critical mistakes / Suggestions / Good practices (Figma 'Component 2', flattened; matched by shape)"
+    },
+    {
+      "icon": "mynaui:minus",
+      "export": "MinusThin",
+      "size": 34,
+      "use": "Score row toggle when open (Figma 'mynaui:plus' frame showing the minus)"
     }
   ]
 }

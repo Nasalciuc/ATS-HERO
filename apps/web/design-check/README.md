@@ -41,10 +41,14 @@ stack — SF on Apple devices, Segoe UI / Roboto elsewhere. Inter is self-hosted
    leaves in that output, so boxes inside an instance go into the spec by hand
    (`"box": [x, y, w, h]`, `null` = don't check that dimension). Groups are resolved in their
    parent's coordinates (the converter tells a group from a frame by its children's bounds).
-3. Write `specs/<id>.json`: `frame`, `route`, `viewport` (`"touch": true` emulates a phone),
-   optional `setup` steps (`{ "click": "<selector>" }`, `{ "fill": ["<selector>", "text"] }`,
+3. Write `specs/<id>.json`: `frame`, `route`, `viewport` (`"touch": true` emulates a phone,
+   `"reducedMotion": true` stops spinners that have a reduced-motion fallback), optional `setup`
+   steps (`{ "click": "<selector>" }`, `{ "fill": ["<selector>", "text"] }`,
    `{ "press": ["<selector>", "Enter"] }`, `{ "select": ["<selector>", "value"] }`, `{ "wait": ms }`,
-   `{ "goto": "/path" }`), `reference` (the Figma export PNG) and `checks`. A check with
+   `{ "goto": "/path" }`, `{ "session": { "key": value } }` — sessionStorage for the next page, an
+   object stored as JSON and `{ "$file": "fixtures/<name>.json" }` as that file's JSON —, and
+   `{ "clock": "pause" }`, which freezes the page's timers to hold a loading screen), `reference`
+   (the Figma export PNG) and `checks`. A check with
    `"relativeTo": "<key>"` compares its x/y as an offset from that element (for content inside a
    centred pop-up whose height differs from Figma's); `"hit": false` skips the "on top" test where a
    transparent control deliberately covers the element (the phone Pro Tips card).
@@ -62,7 +66,11 @@ ink pixels (`styles.css`):
 
 - chip × (`iconamoon:close`): stroke 1.33px — the 24px icon drawn at 16px, as in Figma;
 - soft-skill person (`fluent:person-24-regular`): outline thickened by a 1.35 stroke — Figma's is heavier;
-- ATS-score gauge (`streamline-plump:dashboard-gauge-2`): Figma's icon is custom.
+- ATS-score gauge (`streamline-plump:dashboard-gauge-2`): Figma's icon is custom;
+- score badges (`mingcute:alert-line`): Figma flattened them; the same triangle for all three.
+
+A manifest entry can drop shapes Figma hides: `"omit": [5]` removes the icon's sixth shape (the
+ATS Score loading icon is `pepicons-pencil:cv-circle` without its circle).
 
 ## Screens covered
 
@@ -87,6 +95,13 @@ ink pixels (`styles.css`):
 | `phone-education-card` | 77:15 (mobile) Education with a saved entry | 390px; two entries, the first as a card |
 | `phone-awards` | 86:1618 (mobile) Awards | 390px; Awards added |
 | `phone-hub` | 55:322 (mobile) home | 390px; one CV saved, then /app |
+| `analyze-improve` | 230:685 Function 2 · Improve CV | /app/improve |
+| `analyze-jobfit` | 398:8400 Function 3 · Check Job Fit | /app/jobfit |
+| `score-loading` | 319:3807 ATS Score Estimation (loading) | builder flow; timers paused |
+| `score-loading-improve` | 331:5590 loading with the progress bar | Improve flow; timers paused |
+| `score-results` | 319:4126 ATS Score_Results | `fixtures/score-report.json` (the Figma numbers) |
+| `score-results-improve` | 383:8025 results with the progress bar | same report, Improve flow |
+| `score-fix` | 383:7664 results, Fix now open | same report, Fix now on the first section |
 
 ## Known, deliberate deviations from Figma
 
@@ -124,5 +139,16 @@ ink pixels (`styles.css`):
   two-column form; between 1024 and 1728 the content column shrinks (max 1135px) and the gutter
   tightens under 1280px. When the steps don't fit, the clipped side fades out and mice get a thin
   scrollbar; "Add section" scrolls with the steps.
+- **Improve / Job Fit**: the fields' placeholders say what to paste (Figma repeats "Graduated with
+  honors, final grade 1.3" from the builder).
+- **ATS Score**: one colour rule for every score — green from 80, amber from 50, red below (Figma's
+  sample rows disagree: the same 80/100 is amber in one row and green in others, and one amber ring
+  is #f90 instead of #ffc107). The general score's arc is the score's share of the circle (Figma
+  draws ~58% for 61.3). "Fix now" centres its text (Figma keeps room for an empty icon slot, 4px
+  off-centre). The Fix-now form is the builder's step form; Figma also outlines the fields behind
+  each issue red/orange, which needs the scorer to name the field (it doesn't yet). The loading
+  ring turns (it stands still under reduced motion, as drawn in Figma). The Job Fit result (match %, matched and
+  missing keywords) has no Figma frame: it reuses the score circle and the badges. Phones have no
+  Figma frame either: the builder's phone style.
 - **Contrast**: some Figma colours fail WCAG AA (placeholder #ccc, 12px grey labels, the 12px green
   step label, Pro Tips body, badge, page count). They are kept as designed pending a design decision.

@@ -149,7 +149,7 @@ export function StepRemove({ size = 24, ...p }: P) {
   );
 }
 
-/** mynaui:plus — 'Add one more …' buttons, Activities 'Add section' */
+/** mynaui:plus — 'Add one more …' buttons, Activities 'Add section'; score row toggle (34px) */
 export function PlusThin({ size = 17, ...p }: P) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
@@ -218,6 +218,39 @@ export function EditLine({ size = 24, ...p }: P) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
       <path fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="M20 11v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h8m7 0L10 14" />
+    </svg>
+  );
+}
+
+/** pepicons-pencil:cv-circle (without shape 5) — ATS Score loading circle (Figma 'pepicons-pencil:cv-circle' with its circle hidden: only the inner Group is visible) */
+export function CvDocument({ size = 148, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 26 26" aria-hidden="true" focusable="false" {...p}>
+      <g fill="none">
+        <path fill="currentColor" d="M9.5 15.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zm0 2.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1z" />
+        <path fill="currentColor" fillRule="evenodd" d="M14.185 4H7.5A1.5 1.5 0 0 0 6 5.5v15A1.5 1.5 0 0 0 7.5 22h11a1.5 1.5 0 0 0 1.5-1.5V10.202a1.5 1.5 0 0 0-.395-1.014l-4.314-4.702A1.5 1.5 0 0 0 14.185 4M7 5.5a.5.5 0 0 1 .5-.5h6.685a.5.5 0 0 1 .369.162l4.314 4.702a.5.5 0 0 1 .132.338V20.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5z" clipRule="evenodd" />
+        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" d="M14.5 5.1v4.7h4.7" />
+        <path fill="currentColor" d="M11.134 9.133a1.067 1.067 0 1 0 0-2.133a1.067 1.067 0 0 0 0 2.133" />
+        <path fill="currentColor" fillRule="evenodd" d="M13.266 11.444c0-1.134-.955-1.955-2.133-1.955S9 10.309 9 11.444v.534a.356.356 0 0 0 .356.355h3.555a.356.356 0 0 0 .355-.355z" clipRule="evenodd" />
+      </g>
+    </svg>
+  );
+}
+
+/** mingcute:alert-line — Score badges: Critical mistakes / Suggestions / Good practices (Figma 'Component 2', flattened; matched by shape) */
+export function AlertLine({ size = 24, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v4m0 3h.002m-8.636 3.353h17.268a.5.5 0 0 0 .433-.75L12.433 3.648a.5.5 0 0 0-.866 0L2.933 18.603a.5.5 0 0 0 .433.75" />
+    </svg>
+  );
+}
+
+/** mynaui:minus — Score row toggle when open (Figma 'mynaui:plus' frame showing the minus) */
+export function MinusThin({ size = 34, ...p }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...p}>
+      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 12h12" />
     </svg>
   );
 }

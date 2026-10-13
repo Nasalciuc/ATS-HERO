@@ -50,8 +50,24 @@ function sameStyle(want, got) {
 // Setup steps put the screen into the state the Figma frame shows:
 //   { "click": sel } { "fill": [sel, text] } { "press": [sel, key] } { "select": [sel, value] } { "wait": ms }
 //   { "goto": "/path" } (same origin)
+//   { "session": { key: value } } sessionStorage for the next page; an object value is stored as JSON,
+//     { "$file": "fixtures/x.json" } as that file's JSON (paths relative to design-check/)
+//   { "clock": "pause" } freezes the page's timers from here on (holds a loading screen)
 async function runSetup(page, steps = []) {
   for (const s of steps) {
+    if (s.session) {
+      const items = Object.fromEntries(
+        Object.entries(s.session).map(([k, v]) => [
+          k,
+          typeof v === "string" ? v : JSON.stringify(v?.$file ? JSON.parse(fs.readFileSync(path.join(ROOT, v.$file), "utf8")) : v),
+        ]),
+      );
+      await page.evaluate((all) => Object.entries(all).forEach(([k, v]) => sessionStorage.setItem(k, v)), items);
+    }
+    if (s.clock === "pause") {
+      await page.clock.install();
+      await page.clock.pauseAt(Date.now() + 1000);
+    }
     if (s.goto) {
       await page.goto(BASE + s.goto, { waitUntil: "networkidle" });
       await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
@@ -83,11 +99,13 @@ const browser = await chromium.launch();
 for (const spec of specs) {
   const frame = snapshots[spec.frame];
   if (!frame) throw new Error(`${spec.id}: frame ${spec.frame} is not in design-check/figma/*.json`);
-  // "touch": true emulates a phone (touch, coarse pointer) for the 390px specs
+  // "touch": true emulates a phone (touch, coarse pointer) for the 390px specs;
+  // "reducedMotion": true stops CSS animations that have a reduced-motion fallback (spinners)
   const page = await browser.newPage({
     viewport: spec.viewport,
     deviceScaleFactor: 1,
     ...(spec.touch ? { isMobile: true, hasTouch: true } : {}),
+    ...(spec.reducedMotion ? { reducedMotion: "reduce" } : {}),
   });
   // The dev error overlay is hidden below, so collect errors here instead.
   const pageErrors = [];

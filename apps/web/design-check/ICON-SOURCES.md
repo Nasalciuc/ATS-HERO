@@ -21,13 +21,16 @@ Figma file uses (its layers are named after the Iconify icon, e.g. `ep:arrow-up`
 | `iconoir:language` | `LanguageIcon` | Skills · language chips | [MIT](https://github.com/iconoir-icons/iconoir/blob/main/LICENSE) | [Luca Burgio](https://github.com/iconoir-icons/iconoir) | 1.2.12 |
 | `iconamoon:close` | `ChipClose` | Skills · chip remove × (flattened vector; matched by shape) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Dariush Habibpour](https://github.com/dariushhpg1/IconaMoon) | 1.2.2 |
 | `iconamoon:close-duotone` | `StepRemove` | Stepper · remove an added section | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Dariush Habibpour](https://github.com/dariushhpg1/IconaMoon) | 1.2.2 |
-| `mynaui:plus` | `PlusThin` | 'Add one more …' buttons, Activities 'Add section' | [MIT](https://github.com/praveenjuge/mynaui-icons/blob/main/LICENSE) | [Praveen Juge](https://github.com/praveenjuge/mynaui-icons) | 1.2.19 |
+| `mynaui:plus` | `PlusThin` | 'Add one more …' buttons, Activities 'Add section'; score row toggle (34px) | [MIT](https://github.com/praveenjuge/mynaui-icons/blob/main/LICENSE) | [Praveen Juge](https://github.com/praveenjuge/mynaui-icons) | 1.2.19 |
 | `mage:trash` | `TrashOutline` | Entry 'Delete' button (flattened group; matched by shape) | [Apache 2.0](https://github.com/Mage-Icons/mage-icons/blob/main/License.txt) | [MageIcons](https://github.com/Mage-Icons/mage-icons) | 1.2.4 |
 | `mynaui:chevron-down` | `ChevronDown` | Select fields (Level, Activity type) | [MIT](https://github.com/praveenjuge/mynaui-icons/blob/main/LICENSE) | [Praveen Juge](https://github.com/praveenjuge/mynaui-icons) | 1.2.19 |
 | `proicons:pdf` | `PdfFileIcon` | Complete pop-up · Download PDF (flattened group; matched by shape) | [MIT](https://github.com/ProCode-Software/proicons/blob/main/LICENSE) | [ProCode](https://github.com/ProCode-Software/proicons) | 1.2.20 |
 | `f7:doc` | `DocFileIcon` | Complete pop-up · Download DOC (flattened vector; matched by shape) | [MIT](https://github.com/framework7io/framework7-icons/blob/master/LICENSE) | [Vladimir Kharlampidi](https://github.com/framework7io/framework7-icons) | 1.2.2 |
 | `streamline-plump:dashboard-gauge-2` | `GaugeIcon` | Complete pop-up · ATS-score button (Figma 'Icons_button' component; closest Iconify glyph, not exact) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Streamline](https://github.com/webalys-hq/streamline-vectors) | 1.2.0 |
 | `mingcute:edit-line` | `EditLine` | Phone home (Figma mobile 55:322) · My Resumes card edit | [Apache 2.0](https://github.com/Richard9394/MingCute/blob/main/LICENSE) | [MingCute Design](https://github.com/Richard9394/MingCute) | 1.2.8 |
+| `pepicons-pencil:cv-circle` | `CvDocument` | ATS Score loading circle (Figma 'pepicons-pencil:cv-circle' with its circle hidden: only the inner Group is visible) | [CC BY 4.0](https://github.com/CyCraft/pepicons/blob/dev/LICENSE) | [CyCraft](https://github.com/CyCraft/pepicons) | 1.2.4 |
+| `mingcute:alert-line` | `AlertLine` | Score badges: Critical mistakes / Suggestions / Good practices (Figma 'Component 2', flattened; matched by shape) | [Apache 2.0](https://github.com/Richard9394/MingCute/blob/main/LICENSE) | [MingCute Design](https://github.com/Richard9394/MingCute) | 1.2.8 |
+| `mynaui:minus` | `MinusThin` | Score row toggle when open (Figma 'mynaui:plus' frame showing the minus) | [MIT](https://github.com/praveenjuge/mynaui-icons/blob/main/LICENSE) | [Praveen Juge](https://github.com/praveenjuge/mynaui-icons) | 1.2.19 |
 
 ## Attribution required
 
@@ -36,3 +39,4 @@ CC BY / CC BY-SA icons need credit wherever the app lists third-party notices (e
 - **Plump free icons** by Streamline (https://github.com/webalys-hq/streamline-vectors) — CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
 - **Typicons** by Stephen Hutchings (https://github.com/stephenhutchings/typicons.font) — CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
 - **IconaMoon** by Dariush Habibpour (https://github.com/dariushhpg1/IconaMoon) — CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
+- **Pepicons Pencil** by CyCraft (https://github.com/CyCraft/pepicons) — CC BY 4.0, https://github.com/CyCraft/pepicons/blob/dev/LICENSE

@@ -1,0 +1,153 @@
+{
+  "id": "score-loading-improve",
+  "title": "ATS Score loading (Improve / Job Fit)",
+  "frame": "331:5590",
+  "reference": "reference/figma/desktop/ats-score-loading-2.png",
+  "route": "/app",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "reducedMotion": true,
+  "setup": [
+    {
+      "session": {
+        "ats_flow": "improve"
+      }
+    },
+    {
+      "clock": "pause"
+    },
+    {
+      "goto": "/app/score"
+    },
+    {
+      "wait": 1500
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1000
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "title",
+      "box": [
+        331,
+        43,
+        null,
+        44
+      ],
+      "style": {
+        "font-size": "40px",
+        "font-weight": "600"
+      }
+    },
+    {
+      "key": "btn-back",
+      "box": [
+        1169,
+        43,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "analyze-steps",
+      "box": [
+        331,
+        139,
+        504,
+        83
+      ]
+    },
+    {
+      "key": "analyze-step-0",
+      "box": [
+        331,
+        139,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "analyze-step-1",
+      "box": [
+        551,
+        139,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "analyze-step-2",
+      "box": [
+        771,
+        139,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "loading",
+      "box": [
+        735,
+        312,
+        327,
+        337
+      ]
+    },
+    {
+      "key": "loading-circle",
+      "box": [
+        781.5,
+        312,
+        234,
+        234
+      ]
+    },
+    {
+      "key": "loading-msg",
+      "box": [
+        null,
+        589,
+        null,
+        24
+      ]
+    },
+    {
+      "key": "loading-time",
+      "box": [
+        735,
+        625,
+        327,
+        24
+      ]
+    }
+  ]
+}

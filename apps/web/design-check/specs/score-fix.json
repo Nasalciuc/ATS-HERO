@@ -1,0 +1,148 @@
+{
+  "id": "score-fix",
+  "title": "ATS Score: Fix now (the section's form)",
+  "frame": "383:7664",
+  "reference": "reference/figma/desktop/ats-score-results-2.png",
+  "route": "/app",
+  "viewport": {
+    "width": 1728,
+    "height": 2124
+  },
+  "locked": true,
+  "tolerance": 2,
+  "setup": [
+    {
+      "session": {
+        "ats_report": {
+          "$file": "fixtures/score-report.json"
+        }
+      }
+    },
+    {
+      "goto": "/app/score"
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "click": "[data-figma=row-fix]"
+    },
+    {
+      "wait": 400
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        2124
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "title",
+      "box": [
+        331,
+        43,
+        null,
+        44
+      ],
+      "style": {
+        "font-size": "40px",
+        "font-weight": "600"
+      }
+    },
+    {
+      "key": "btn-back",
+      "box": [
+        1169,
+        43,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "score-circle",
+      "box": [
+        331,
+        127,
+        157,
+        157
+      ]
+    },
+    {
+      "key": "score-list",
+      "box": [
+        331,
+        326,
+        1135,
+        1715
+      ]
+    },
+    {
+      "key": "row-0",
+      "box": [
+        331,
+        326,
+        1135,
+        81
+      ]
+    },
+    {
+      "key": "row-toggle",
+      "box": [
+        1422,
+        345,
+        44,
+        44
+      ]
+    },
+    {
+      "key": "badge-good",
+      "box": [
+        414,
+        699,
+        134,
+        28
+      ]
+    },
+    {
+      "key": "form-card",
+      "box": [
+        414,
+        845,
+        867,
+        455
+      ]
+    },
+    {
+      "key": "row-1",
+      "box": [
+        331,
+        1328,
+        1135,
+        81
+      ]
+    }
+  ]
+}

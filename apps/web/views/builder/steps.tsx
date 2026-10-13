@@ -22,7 +22,7 @@ import type {
   WorkItem,
 } from "../../lib/types";
 
-/** `framed`: the builder shows each step in the Figma form card; the score page's inline "Fix now" doesn't. */
+/** `framed`: the step in the Figma form card (the builder, and the score page's "Fix now"); unframed, just the fields. */
 type StepProps = { data: CvData; update: (patch: Partial<CvData>) => void; framed?: boolean };
 
 /** Figma "Frame 274": the #f8f8f8 form card. `tabbed` squares the corner the entry tabs sit on. */
