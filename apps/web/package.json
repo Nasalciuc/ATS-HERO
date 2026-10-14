@@ -23,6 +23,7 @@
     "@clerk/nextjs": "^7.5.8",
     "@paddle/paddle-node-sdk": "^3.10.0",
     "@react-pdf/renderer": "^4.5.1",
+    "@vercel/functions": "^3.9.9",
     "ai": "^4.0.0",
     "clsx": "^2.1.1",
     "docx": "^9.7.1",
