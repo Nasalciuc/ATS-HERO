@@ -24,7 +24,7 @@ export default function MinimalTemplate({ data, theme }: { data: CvData; theme: 
     <Document title={`${p.name || "Resume"} — CV`} author={p.name || "ATS Hero"} creator="ATS Hero" producer="ATS Hero">
       <Page size="A4" style={[st.page, { color: theme.text }]}>
         {/* 12pt less: the name's letter-spacing adds up to that on a long word */}
-        <Text style={st.name}>{breakLongWords(p.name || "Your Name", theme.column - 12, 21, true)}</Text>
+        {p.name ? <Text style={st.name}>{breakLongWords(p.name, theme.column - 12, 21, true)}</Text> : null}
         {data.summary.position ? <Text style={[st.role, { color: theme.muted }]}>{breakLongWords(data.summary.position, theme.column, 11.5)}</Text> : null}
         <ContactBar p={p} theme={theme} maxTextWidth={theme.column - CONTACT_ICON_W} />
 

@@ -5,10 +5,17 @@
 // contact in the BODY (not header/footer), uses real bullets and tab-stop alignment, and has
 // no tables or text boxes. Accent shows only on heading color (brand without hurting parsing).
 import {
-  Document, Paragraph, TextRun, TabStopType, TabStopPosition, BorderStyle,
+  Document, Paragraph, TextRun, TabStopType, BorderStyle,
 } from "docx";
 import type { CvData, SimpleEntry } from "@/lib/types";
 import { displayUrl, printableCv } from "@/lib/cv-print";
+
+// A4 in twips (1/20 pt) and the side margins; the right tab stop sits on the right margin.
+// (TabStopPosition.MAX is 9026 — Letter-sized defaults — 54pt short of this page's text edge, so
+// a long title pushed its dates onto a second line.)
+const PAGE_W = 11906;
+const MARGIN_X = 900;
+const TEXT_W = PAGE_W - 2 * MARGIN_X;
 
 const ACCENTS = ["725BFE", "0EA5A4", "2563EB", "00A862", "E5484D", "B7791F"];
 const TEXT = "2E2E2E";
@@ -43,7 +50,7 @@ function split(left: string, right: string, opts: { bold?: boolean; before?: num
   return new Paragraph({
     keepNext: opts.keepNext || undefined, // `false` would be written out as an explicit w:val
     widowControl: true,
-    tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+    tabStops: [{ type: TabStopType.RIGHT, position: TEXT_W }],
     spacing: { before: opts.before ?? 0, after: 20 },
     children: [
       new TextRun({ text: left, bold: opts.bold, color: opts.bold ? TEXT : MUTED, size: 20 }),
@@ -78,7 +85,7 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
   const c: Paragraph[] = [];
 
   // Header — name, role, contact (all in the BODY, never header/footer)
-  c.push(new Paragraph({ spacing: { after: 20 }, children: [new TextRun({ text: p.name || "Your Name", bold: true, color: TEXT, size: 44 })] }));
+  if (p.name) c.push(new Paragraph({ spacing: { after: 20 }, children: [new TextRun({ text: p.name, bold: true, color: TEXT, size: 44 })] }));
   if (data.summary.position) c.push(new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: data.summary.position, color: MUTED, size: 24 })] }));
   // Two short lines, not one long one: readers that paginate the DOCX (and Word itself) wrapped
   // the single long line inside the LinkedIn URL, so parsers read a truncated slug (ATS lab).
@@ -110,9 +117,10 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
     data.work.forEach((w, i) => {
       const loc = [w.cityState, w.country].filter(Boolean).join(", ");
       const content = bullets(w.description);
-      const second = !!(w.company || loc);
-      c.push(split(w.role || "—", dateRange(w.startDate, w.endDate, w.current), { bold: true, before: i === 0 ? 0 : 140, keepNext: second || content.length > 0 }));
-      if (second) c.push(split(w.company, loc, { keepNext: content.length > 0 }));
+      const sub = w.role ? w.company : ""; // no role: the company is the title
+      const second = !!(sub || loc);
+      c.push(split(w.role || w.company, dateRange(w.startDate, w.endDate, w.current), { bold: true, before: i === 0 ? 0 : 140, keepNext: second || content.length > 0 }));
+      if (second) c.push(split(sub, loc, { keepNext: content.length > 0 }));
       c.push(...content);
     });
   }
@@ -122,9 +130,15 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
     c.push(heading("Education", a));
     data.education.forEach((e, i) => {
       const right = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join("   ·   ");
-      const second = !!((e.degree && e.institution) || right);
-      c.push(split(e.degree || e.institution || "—", dateRange(e.startDate, e.endDate), { bold: true, before: i === 0 ? 0 : 140, keepNext: second || !!e.additional }));
-      if (second) c.push(split(e.degree ? e.institution : "", right, { keepNext: !!e.additional }));
+      const sub = e.degree ? e.institution : "";
+      const second = !!(sub || right);
+      // The minor gets its own line: on the title row it pushed the dates onto a second line in
+      // readers that lay the page out narrower than A4 (PyMuPDF in the ATS lab).
+      const minor = e.minor ? `Minor in ${e.minor}` : "";
+      const more = !!(minor || e.additional);
+      c.push(split(e.degree || e.institution || minor, dateRange(e.startDate, e.endDate), { bold: true, before: i === 0 ? 0 : 140, keepNext: second || more }));
+      if (second) c.push(split(sub, right, { keepNext: more }));
+      if (minor && (e.degree || e.institution)) c.push(para(minor, TEXT, 20, !!e.additional));
       if (e.additional) c.push(para(e.additional));
     });
   }
@@ -140,9 +154,14 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
     if (!items.length) continue;
     c.push(heading(title, a));
     items.forEach((it, i) => {
-      const right = [it.organisation || it.issuer || it.publisher, it.date].filter(Boolean).join("   ·   ");
+      // volunteering / activities also have a role, a type, a place and an end date
+      const right = [it.organisation || it.issuer || it.publisher, dateRange(it.date, it.endDate, it.ongoing)].filter(Boolean).join("   ·   ");
+      const sub = [it.title ? it.role : "", it.activityType].filter(Boolean).join("   ·   ");
+      const second = !!(sub || it.location);
       const content = bullets(it.description, !!it.link);
-      c.push(split(it.title || it.role || "—", right, { bold: true, before: i === 0 ? 0 : 120, keepNext: content.length > 0 || !!it.link }));
+      const more = content.length > 0 || !!it.link;
+      c.push(split(it.title || it.role || "", right, { bold: true, before: i === 0 ? 0 : 120, keepNext: second || more }));
+      if (second) c.push(split(sub, it.location ?? "", { keepNext: more }));
       c.push(...content);
       if (it.link) c.push(para(it.link, FAINT, 18));
     });
@@ -153,7 +172,7 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
     title: `${p.name || "Resume"} — CV`,
     styles: { default: { document: { run: { font: "Calibri" } } } },
     sections: [{
-      properties: { page: { margin: { top: 720, bottom: 720, left: 900, right: 900 } } },
+      properties: { page: { size: { width: PAGE_W, height: 16838 }, margin: { top: 720, bottom: 720, left: MARGIN_X, right: MARGIN_X } } },
       children: c,
     }],
   });

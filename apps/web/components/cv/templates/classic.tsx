@@ -33,7 +33,7 @@ export default function ClassicTemplate({ data, theme }: { data: CvData; theme: 
         <View style={st.header}>
           <Avatar src={p.photo} size={PHOTO} radius={10} />
           <View style={{ flex: 1 }}>
-            <Text style={st.name}>{breakLongWords(p.name || "Your Name", headerW, 22, true)}</Text>
+            {p.name ? <Text style={st.name}>{breakLongWords(p.name, headerW, 22, true)}</Text> : null}
             {data.summary.position ? <Text style={[st.role, { color: theme.muted }]}>{breakLongWords(data.summary.position, headerW, 12)}</Text> : null}
             <ContactBar p={p} theme={theme} maxTextWidth={headerW - CONTACT_ICON_W} />
           </View>

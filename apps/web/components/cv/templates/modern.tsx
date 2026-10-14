@@ -38,8 +38,7 @@ export default function ModernTemplate({ data, theme }: { data: CvData; theme: T
   // to fit (ContactBar); one that does not fit even at the smallest size wraps in the sidebar.
   // (Moving such contacts to the main column was tried: it reordered the text that ATS parsers
   // read across the two columns, and the ATS lab lost the job list of a real-looking CV.)
-  const name = p.name || "Your Name";
-  const nameSize = fitWordsFontSize(name, SIDE_TEXT_W, NAME_SIZE, NAME_MIN, true);
+  const nameSize = fitWordsFontSize(p.name, SIDE_TEXT_W, NAME_SIZE, NAME_MIN, true);
   const side = (text: string) => breakLongWords(text, SIDE_TEXT_W);
   const languages: Entry[] = data.languages.length > 0 ? [{
     key: "languages",
@@ -60,7 +59,7 @@ export default function ModernTemplate({ data, theme }: { data: CvData; theme: T
           {/* Sidebar */}
           <View style={st.sidebar}>
             <Avatar src={p.photo} size={88} radius={8} />
-            <Text style={[st.name, { color: white, fontSize: nameSize }]}>{breakLongWords(name, SIDE_TEXT_W, nameSize, true)}</Text>
+            {p.name ? <Text style={[st.name, { color: white, fontSize: nameSize }]}>{breakLongWords(p.name, SIDE_TEXT_W, nameSize, true)}</Text> : null}
             {data.summary.position ? <Text style={[st.role, { color: white }]}>{breakLongWords(data.summary.position, SIDE_TEXT_W, 11)}</Text> : null}
 
             <ContactBar p={p} theme={theme} color={white} direction="column" maxTextWidth={SIDE_TEXT_W - CONTACT_ICON_W} />

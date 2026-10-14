@@ -4,7 +4,7 @@
 // colored section headings with a rule, consistent section spacing.
 import { View, Text, Image, Svg, Path, StyleSheet } from "@react-pdf/renderer";
 import type { CvData, SimpleEntry } from "@/lib/types";
-import { breakLongWords, displayUrl, fitFontSize, textWidth } from "@/lib/cv-print";
+import { breakLongWords, degreeLine, displayUrl, fitFontSize, textWidth } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
 
 /* ---------------------------------------------------------------- spacing scale */
@@ -221,6 +221,34 @@ const meta = StyleSheet.create({
   date: { fontSize: 9, textAlign: "right" },
 });
 
+/** An entry's two header rows: the title (bold) with dates, then the muted line (company,
+ *  school, role) with the place. A row with nothing in it is left out, and an entry without a
+ *  title prints none: the "—" that stood in for a missing title looked like a typo. */
+function headRows(
+  theme: TemplateTheme, title: string, right: string, sub: string, subRight: string,
+  stacked = theme.meta === "stacked",
+) {
+  if (stacked) {
+    const line = [right, sub, subRight].filter(Boolean).join(SEP);
+    return (
+      <>
+        {title ? <Text style={[meta.title, { color: theme.text }]}>{breakLongWords(title, theme.column, 10, true)}</Text> : null}
+        {line ? <Text style={{ color: theme.muted }}>{asBody(line, theme)}</Text> : null}
+      </>
+    );
+  }
+  return (
+    <>
+      {title || right ? (
+        <SplitRow left={<Text style={[meta.title, { color: theme.text }]}>{asTitle(title, theme)}</Text>} right={right} theme={theme} />
+      ) : null}
+      {sub || subRight ? (
+        <SplitRow left={<Text style={{ color: theme.muted }}>{asLeft(sub, theme)}</Text>} right={subRight} theme={theme} />
+      ) : null}
+    </>
+  );
+}
+
 /** Text pieces of an entry, with long words made wrappable for where they sit. */
 const asTitle = (s: string, theme: TemplateTheme) => breakLongWords(s, leftWidth(theme), 10, true);
 const asLeft = (s: string, theme: TemplateTheme) => breakLongWords(s, leftWidth(theme));
@@ -243,54 +271,17 @@ export function textEntries(key: string, text: string, color: string, width: num
 
 export function experienceEntries(data: CvData, theme: TemplateTheme): Entry[] {
   return data.work.map((w) => {
-    const dates = dateRange(w.startDate, w.endDate, w.current);
     const loc = [w.cityState, w.country].filter(Boolean).join(", ");
-    const head = theme.meta === "stacked" ? (
-      <>
-        <Text style={[meta.title, { color: theme.text }]}>{breakLongWords(w.role || w.company || "—", theme.column, 10, true)}</Text>
-        <Text style={{ color: theme.muted }}>{asBody([dates, w.role ? w.company : "", loc].filter(Boolean).join(SEP), theme)}</Text>
-      </>
-    ) : (
-      <>
-        <SplitRow
-          left={<Text style={[meta.title, { color: theme.text }]}>{asTitle(w.role || "—", theme)}</Text>}
-          right={dates}
-          theme={theme}
-        />
-        <SplitRow
-          left={<Text style={{ color: theme.muted }}>{asLeft(w.company, theme)}</Text>}
-          right={loc}
-          theme={theme}
-        />
-      </>
-    );
+    const head = headRows(theme, w.role || w.company, dateRange(w.startDate, w.endDate, w.current), w.role ? w.company : "", loc);
     return { key: w.id, head, body: bullets(w.description, theme) };
   });
 }
 
 export function educationEntries(data: CvData, theme: TemplateTheme): Entry[] {
   return data.education.map((e) => {
-    const dates = dateRange(e.startDate, e.endDate);
-    const right = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP);
-    const head = theme.meta === "stacked" ? (
-      <>
-        <Text style={[meta.title, { color: theme.text }]}>{breakLongWords(e.degree || e.institution || "—", theme.column, 10, true)}</Text>
-        <Text style={{ color: theme.muted }}>{asBody([dates, e.degree ? e.institution : "", e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP), theme)}</Text>
-      </>
-    ) : (
-      <>
-        <SplitRow
-          left={<Text style={[meta.title, { color: theme.text }]}>{asTitle(e.degree || e.institution || "—", theme)}</Text>}
-          right={dates}
-          theme={theme}
-        />
-        <SplitRow
-          left={<Text style={{ color: theme.muted }}>{asLeft(e.degree ? e.institution : "", theme)}</Text>}
-          right={right}
-          theme={theme}
-        />
-      </>
-    );
+    const degree = degreeLine(e);
+    const place = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP);
+    const head = headRows(theme, degree || e.institution, dateRange(e.startDate, e.endDate), degree ? e.institution : "", place);
     const body = e.additional ? <Text style={{ color: theme.text, marginTop: 1 }}>{asBody(e.additional, theme)}</Text> : null;
     return { key: e.id, head, body };
   });
@@ -317,20 +308,19 @@ export function SkillsBody({ data, theme, stacked = false }: { data: CvData; the
   );
 }
 
+/** Awards, certifications, publications (title · issuer · date) and volunteering / activities,
+ *  which also have a role, a type, a place and an end date (or "Present") — those were
+ *  collected by the builder but never printed. */
 export function simpleEntries(items: SimpleEntry[], theme: TemplateTheme): Entry[] {
   return items.map((it) => {
-    const right = [it.organisation || it.issuer || it.publisher, it.date].filter(Boolean).join(SEP);
+    const right = [it.organisation || it.issuer || it.publisher, dateRange(it.date, it.endDate, it.ongoing)].filter(Boolean).join(SEP);
+    const sub = [it.title ? it.role : "", it.activityType].filter(Boolean).join(SEP);
     const desc = bullets(it.description, theme);
     const link = it.link ? <Text style={{ fontSize: 9, color: theme.faint, marginTop: 1 }}>{breakLongWords(it.link, theme.column, 9)}</Text> : null;
     return {
       key: it.id,
-      head: (
-        <SplitRow
-          left={<Text style={[meta.title, { color: theme.text }]}>{asTitle(it.title || it.role || "—", theme)}</Text>}
-          right={right}
-          theme={theme}
-        />
-      ),
+      // always title row + right column, as before (the lab's "stacked" variant covers jobs and schools)
+      head: headRows(theme, it.title || it.role || "", right, sub, it.location ?? "", false),
       body: desc || link ? <>{desc}{link}</> : null,
     };
   });

@@ -24,6 +24,11 @@ export function printableCv(d: CvData): CvData {
   };
 }
 
+/** "BSc Computer Science, Minor in Mathematics" — the minor used to be collected, never printed. */
+export function degreeLine(e: { degree: string; minor: string }): string {
+  return [e.degree, e.minor ? `Minor in ${e.minor}` : ""].filter(Boolean).join(", ");
+}
+
 /** Paper form of a URL — no scheme, no "www.", no trailing slash ("linkedin.com/in/ana").
  *  Shorter on the page and still recognised by ATS parsers. A LinkedIn link also loses its
  *  "?utm_…" / "#…" tail (share links carry one; the profile is the path). Non-URLs pass
