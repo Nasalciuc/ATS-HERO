@@ -5,7 +5,7 @@
 // contact in the BODY (not header/footer), uses real bullets and tab-stop alignment, and has
 // no tables or text boxes. Accent shows only on heading color (brand without hurting parsing).
 import {
-  Document, Paragraph, TextRun, TabStopType, BorderStyle,
+  Document, Paragraph, TextRun, TabStopType, BorderStyle, HeadingLevel,
 } from "docx";
 import type { CvData, SimpleEntry } from "@/lib/types";
 import { displayUrl, printableCv } from "@/lib/cv-print";
@@ -38,8 +38,11 @@ function descLines(text?: string): string[] {
 // tests/cv-page-breaks.test.tsx checks both):
 // a heading and an entry's header rows keep with what follows them (keepNext), a bullet never
 // splits across pages (keepLines), and no paragraph leaves a single line behind (widowControl).
+// Section headings use Word's "Heading 1" style (restyled below to look as before): parsers and
+// Word's navigation pane recognise sections by it, not by bold capitals.
 function heading(text: string, accent: string): Paragraph {
   return new Paragraph({
+    heading: HeadingLevel.HEADING_1,
     keepNext: true,
     spacing: { before: 240, after: 80 },
     border: { bottom: { color: accent, style: BorderStyle.SINGLE, size: 8, space: 2 } },
@@ -167,10 +170,23 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
     });
   }
 
+  // The person is the document's author (Word: File > Info); it said "ATS Hero" before.
+  const name = p.name.trim();
   return new Document({
-    creator: "ATS Hero",
-    title: `${p.name || "Resume"} — CV`,
-    styles: { default: { document: { run: { font: "Calibri" } } } },
+    creator: name,
+    lastModifiedBy: name,
+    title: name ? `${name} — CV` : "CV",
+    subject: data.summary.position || undefined,
+    styles: {
+      default: {
+        document: { run: { font: "Calibri", language: { value: "en-US" } } },
+        // what heading() sets explicitly, so the style adds nothing of its own (no blue, no 16pt)
+        heading1: {
+          run: { font: "Calibri", bold: true, size: 22, color: TEXT },
+          paragraph: { spacing: { before: 240, after: 80 }, keepNext: true },
+        },
+      },
+    },
     sections: [{
       properties: { page: { size: { width: PAGE_W, height: 16838 }, margin: { top: 720, bottom: 720, left: MARGIN_X, right: MARGIN_X } } },
       children: c,

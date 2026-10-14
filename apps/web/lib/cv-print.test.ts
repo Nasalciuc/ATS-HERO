@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { printableCv, displayUrl, textWidth, fitFontSize, fitWordsFontSize, breakLongWords, BREAK } from "./cv-print";
+import { printableCv, displayUrl, textWidth, fitFontSize, fitWordsFontSize, breakLongWords, BREAK, telHref, webHref } from "./cv-print";
 import { hyphenationCallback } from "@/components/cv/templates/fonts";
 import { emptyCvData, type CvData } from "./types";
 
@@ -45,6 +45,21 @@ describe("displayUrl", () => {
   ])("%s → %s", (input, expected) => {
     expect(displayUrl(input)).toBe(expected);
   });
+});
+
+describe("links in the PDF", () => {
+  it.each([
+    ["+373 69 123 456", "tel:+37369123456"],
+    ["+44 (0) 20 7946 0958 ext. 12345", "tel:+442079460958"],
+    ["0721 234 567", "tel:0721234567"],
+    ["(555) 010-2030 x12", "tel:5550102030"],
+  ])("phone %s → %s", (input, expected) => expect(telHref(input)).toBe(expected));
+
+  it.each([
+    ["ana.dev", "https://ana.dev"],
+    ["https://ana.dev/cv", "https://ana.dev/cv"],
+    ["http://old.example", "http://old.example"],
+  ])("web %s → %s", (input, expected) => expect(webHref(input)).toBe(expected));
 });
 
 describe("textWidth / fitFontSize", () => {

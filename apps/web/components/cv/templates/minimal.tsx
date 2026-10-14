@@ -6,7 +6,7 @@ import { breakLongWords } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, LAYOUT, type TemplateTheme } from "./theme";
 import {
   ContactBar, Section, summaryEntries, skillsEntries, experienceEntries,
-  educationEntries, simpleEntries, ALL_SIMPLE, GAP, CONTACT_ICON_W,
+  educationEntries, simpleEntries, documentProps, ALL_SIMPLE, GAP, CONTACT_ICON_W,
 } from "./shared";
 
 const st = StyleSheet.create({
@@ -21,7 +21,7 @@ export default function MinimalTemplate({ data, theme }: { data: CvData; theme: 
   const p = data.personalInfo;
 
   return (
-    <Document title={`${p.name || "Resume"} — CV`} author={p.name || "ATS Hero"} creator="ATS Hero" producer="ATS Hero">
+    <Document {...documentProps(data)}>
       <Page size="A4" style={[st.page, { color: theme.text }]}>
         {/* 12pt less: the name's letter-spacing adds up to that on a long word */}
         {p.name ? <Text style={st.name}>{breakLongWords(p.name, theme.column - 12, 21, true)}</Text> : null}

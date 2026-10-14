@@ -6,7 +6,7 @@ import { breakLongWords, fitWordsFontSize } from "@/lib/cv-print";
 import { A4_WIDTH, FONT, FONT_BOLD, LAYOUT, type TemplateTheme } from "./theme";
 import {
   Avatar, ContactBar, Section, summaryEntries, experienceEntries, educationEntries,
-  simpleEntries, textEntries, ALL_SIMPLE, GAP, CONTACT_ICON_W, type Entry,
+  simpleEntries, textEntries, documentProps, ALL_SIMPLE, GAP, CONTACT_ICON_W, type Entry,
 } from "./shared";
 
 const L = LAYOUT.modern;
@@ -52,7 +52,7 @@ export default function ModernTemplate({ data, theme }: { data: CvData; theme: T
   }] : [];
 
   return (
-    <Document title={`${p.name || "Resume"} — CV`} author={p.name || "ATS Hero"} creator="ATS Hero" producer="ATS Hero">
+    <Document {...documentProps(data)}>
       <Page size="A4" style={[st.page, { color: theme.text }]}>
         <View fixed style={[st.sidebarBg, { backgroundColor: theme.primary }]} />
         <View style={st.row}>

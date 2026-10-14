@@ -6,7 +6,7 @@ import { breakLongWords } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, LAYOUT, type TemplateTheme } from "./theme";
 import {
   Avatar, ContactBar, Section, summaryEntries, skillsEntries, experienceEntries,
-  educationEntries, simpleEntries, ALL_SIMPLE, GAP, CONTACT_ICON_W,
+  educationEntries, simpleEntries, documentProps, ALL_SIMPLE, GAP, CONTACT_ICON_W,
 } from "./shared";
 
 const PHOTO = 68;
@@ -28,7 +28,7 @@ export default function ClassicTemplate({ data, theme }: { data: CvData; theme: 
   const headerW = theme.column - (p.photo ? PHOTO + PHOTO_GAP : 0); // the text beside the photo
 
   return (
-    <Document title={`${p.name || "Resume"} — CV`} author={p.name || "ATS Hero"} creator="ATS Hero" producer="ATS Hero">
+    <Document {...documentProps(data)}>
       <Page size="A4" style={[st.page, { color: theme.text }]}>
         <View style={st.header}>
           <Avatar src={p.photo} size={PHOTO} radius={10} />

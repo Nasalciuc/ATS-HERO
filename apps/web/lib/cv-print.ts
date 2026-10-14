@@ -24,6 +24,20 @@ export function printableCv(d: CvData): CvData {
   };
 }
 
+/** A phone number as a link: digits and "+" only, without an extension ("ext. 12", "x12") and
+ *  without the "(0)" that is not dialled after a country code ("+44 (0) 20 …"). */
+export function telHref(phone: string): string {
+  let p = phone.replace(/\s*(?:ext\.?|extension|x|#)\s*\d+\s*$/i, "");
+  if (p.trim().startsWith("+")) p = p.replace(/\(0\)/g, "");
+  return `tel:${p.replace(/[^\d+]/g, "")}`;
+}
+
+/** A link a reader can click: an address typed without "https://" gets it. */
+export function webHref(url: string): string {
+  const u = url.trim();
+  return /^[a-z][a-z0-9+.-]*:/i.test(u) ? u : `https://${u}`;
+}
+
 /** "BSc Computer Science, Minor in Mathematics" — the minor used to be collected, never printed. */
 export function degreeLine(e: { degree: string; minor: string }): string {
   return [e.degree, e.minor ? `Minor in ${e.minor}` : ""].filter(Boolean).join(", ");

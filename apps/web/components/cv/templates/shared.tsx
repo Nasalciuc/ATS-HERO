@@ -2,9 +2,9 @@
 // @react-pdf design language (RR v4 also uses @react-pdf): profile picture, icon
 // contact items, justified split-row meta (title left / dates right), bullet lists,
 // colored section headings with a rule, consistent section spacing.
-import { View, Text, Image, Svg, Path, StyleSheet } from "@react-pdf/renderer";
+import { View, Text, Image, Svg, Path, StyleSheet, Link } from "@react-pdf/renderer";
 import type { CvData, SimpleEntry } from "@/lib/types";
-import { breakLongWords, degreeLine, displayUrl, fitFontSize, textWidth } from "@/lib/cv-print";
+import { breakLongWords, degreeLine, displayUrl, fitFontSize, telHref, textWidth, webHref } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
 
 /* ---------------------------------------------------------------- spacing scale */
@@ -58,16 +58,38 @@ function descLines(text?: string): string[] {
   return (text || "").split(/\r?\n/).map((s) => s.trim().replace(/^[•\-*]\s*/, "")).filter(Boolean);
 }
 
-type ContactPair = { icon: string; text: string };
+/** PDF metadata of a CV: the person is the author (it used to say "ATS Hero" when the name
+ *  was empty); PDF 1.4 because the templates use transparency, which 1.3 does not have;
+ *  the document language for screen readers and parsers. */
+export function documentProps(d: CvData) {
+  const name = d.personalInfo.name.trim();
+  return {
+    title: name ? `${name} — CV` : "CV",
+    author: name || undefined,
+    subject: d.summary.position || undefined,
+    creator: "ATS Hero",
+    producer: "ATS Hero",
+    language: "en",
+    pdfVersion: "1.4" as const,
+  };
+}
+
+/** A contact line; `href` makes it clickable in the PDF (the text layer stays the same). */
+type ContactPair = { icon: string; text: string; href?: string };
 export function contactPairs(p: CvData["personalInfo"]): ContactPair[] {
   const loc = [p.cityState, p.country].filter(Boolean).join(", ");
   return [
-    p.email ? { icon: "mail", text: p.email } : null,
-    p.phone ? { icon: "phone", text: p.phone } : null,
+    p.email ? { icon: "mail", text: p.email, href: `mailto:${p.email.trim()}` } : null,
+    p.phone ? { icon: "phone", text: p.phone, href: telHref(p.phone) } : null,
     loc ? { icon: "pin", text: loc } : null,
-    p.website ? { icon: "globe", text: displayUrl(p.website) } : null,
-    p.linkedin ? { icon: "link", text: displayUrl(p.linkedin) } : null,
+    p.website ? { icon: "globe", text: displayUrl(p.website), href: webHref(p.website) } : null,
+    p.linkedin ? { icon: "link", text: displayUrl(p.linkedin), href: webHref(displayUrl(p.linkedin)) } : null,
   ].filter(Boolean) as ContactPair[];
+}
+
+/** Clickable text that looks like the text around it (react-pdf links default to blue). */
+function Linked({ href, color, children }: { href?: string; color: string; children: string }) {
+  return href ? <Link src={href} style={{ color, textDecoration: "none" }}>{children}</Link> : <>{children}</>;
 }
 
 /* ------------------------------------------------------------------- contact    */
@@ -99,7 +121,7 @@ export function ContactBar({
           <View key={i} style={{ flexDirection: "row", alignItems: "center", columnGap: 4 }}>
             <Icon name={it.icon} color={c} />
             <Text style={[{ fontSize: size, color: c, lineHeight: direction === "row" ? 1 : 1.2 }, fits ? {} : { width: maxTextWidth }]}>
-              {fits ? it.text : breakLongWords(it.text, maxTextWidth, size)}
+              <Linked href={it.href} color={c}>{fits ? it.text : breakLongWords(it.text, maxTextWidth, size)}</Linked>
             </Text>
           </View>
         );
@@ -316,7 +338,11 @@ export function simpleEntries(items: SimpleEntry[], theme: TemplateTheme): Entry
     const right = [it.organisation || it.issuer || it.publisher, dateRange(it.date, it.endDate, it.ongoing)].filter(Boolean).join(SEP);
     const sub = [it.title ? it.role : "", it.activityType].filter(Boolean).join(SEP);
     const desc = bullets(it.description, theme);
-    const link = it.link ? <Text style={{ fontSize: 9, color: theme.faint, marginTop: 1 }}>{breakLongWords(it.link, theme.column, 9)}</Text> : null;
+    const link = it.link ? (
+      <Text style={{ fontSize: 9, color: theme.faint, marginTop: 1 }}>
+        <Linked href={webHref(it.link)} color={theme.faint}>{breakLongWords(it.link, theme.column, 9)}</Linked>
+      </Text>
+    ) : null;
     return {
       key: it.id,
       // always title row + right column, as before (the lab's "stacked" variant covers jobs and schools)
