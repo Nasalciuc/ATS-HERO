@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { api } from "../lib/api";
+import { claimGuestWork } from "../lib/claim";
 import { getGuestId } from "../lib/guest";
 import { isClerkPublicConfigured } from "../lib/clerk-config";
 import { emptyCvData, type Cv, type CvData, type User } from "../lib/types";
@@ -172,8 +173,10 @@ function AppProviderCore({
     claimingRef.current = true;
     (async () => {
       try {
-        await api.ensureUser(user ? { email: user.email } : undefined);
-        await api.claimGuest(getGuestId());
+        await claimGuestWork({
+          ensureUser: () => api.ensureUser(user ? { email: user.email } : undefined),
+          claimGuest: () => api.claimGuest(getGuestId()),
+        });
       } catch (e) {
         claimedRef.current = false;
         console.error("Account claim failed", e);
