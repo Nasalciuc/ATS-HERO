@@ -4,7 +4,7 @@
 // colored section headings with a rule, consistent section spacing.
 import { View, Text, Image, Svg, Path, StyleSheet, Link } from "@react-pdf/renderer";
 import type { CvData, SimpleEntry } from "@/lib/types";
-import { breakLongWords, degreeLine, displayUrl, fitFontSize, telHref, textWidth, webHref } from "@/lib/cv-print";
+import { breakLongWords, degreeLine, descLines, displayUrl, fitFontSize, telHref, textWidth, webHref } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
 
 /* ---------------------------------------------------------------- spacing scale */
@@ -54,9 +54,6 @@ export function hasSkills(d: CvData): boolean {
   return d.skills.length > 0 || d.instruments.length > 0 || d.softSkills.length > 0 || d.languages.length > 0;
 }
 
-function descLines(text?: string): string[] {
-  return (text || "").split(/\r?\n/).map((s) => s.trim().replace(/^[•\-*]\s*/, "")).filter(Boolean);
-}
 
 /** PDF metadata of a CV: the person is the author (it used to say "ATS Hero" when the name
  *  was empty); PDF 1.4 because the templates use transparency, which 1.3 does not have;

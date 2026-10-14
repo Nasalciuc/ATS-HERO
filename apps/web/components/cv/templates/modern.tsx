@@ -4,6 +4,7 @@ import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { CvData } from "@/lib/types";
 import { breakLongWords, fitWordsFontSize } from "@/lib/cv-print";
 import { A4_WIDTH, FONT, FONT_BOLD, LAYOUT, type TemplateTheme } from "./theme";
+import { pdfData } from "./glyphs";
 import {
   Avatar, ContactBar, Section, summaryEntries, experienceEntries, educationEntries,
   simpleEntries, textEntries, documentProps, ALL_SIMPLE, GAP, CONTACT_ICON_W, type Entry,
@@ -30,7 +31,8 @@ const st = StyleSheet.create({
   sideBlock: { marginTop: 16 },
 });
 
-export default function ModernTemplate({ data, theme }: { data: CvData; theme: TemplateTheme }) {
+export default function ModernTemplate({ data: typed, theme }: { data: CvData; theme: TemplateTheme }) {
+  const data = pdfData(typed); // only what Inter can draw (glyphs.ts)
   const p = data.personalInfo;
   const white = theme.onPrimary;
   // White text that runs past the sidebar disappears on the white page. A long name gets smaller

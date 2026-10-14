@@ -8,7 +8,7 @@ import {
   Document, Paragraph, TextRun, TabStopType, BorderStyle, HeadingLevel,
 } from "docx";
 import type { CvData, SimpleEntry } from "@/lib/types";
-import { displayUrl, printableCv } from "@/lib/cv-print";
+import { descLines, displayUrl, printableCv } from "@/lib/cv-print";
 
 // A4 in twips (1/20 pt) and the side margins; the right tab stop sits on the right margin.
 // (TabStopPosition.MAX is 9026 — Letter-sized defaults — 54pt short of this page's text edge, so
@@ -29,9 +29,6 @@ function hexAccent(accent?: number | string): string {
 }
 function dateRange(start?: string, end?: string, ongoing?: boolean): string {
   return [start, ongoing ? "Present" : end].filter(Boolean).join(" – ");
-}
-function descLines(text?: string): string[] {
-  return (text || "").split(/\r?\n/).map((s) => s.trim().replace(/^[•\-*]\s*/, "")).filter(Boolean);
 }
 
 // Page breaks (Word and LibreOffice honour these; the PDF templates follow the same rules,

@@ -24,6 +24,16 @@ export function printableCv(d: CvData): CvData {
   };
 }
 
+// Bullet markers people paste in front of a line (Word's Symbol / Wingdings bullets arrive as
+// private-use characters U+F0A7, U+F0B7, U+F0D8, U+F0FC, U+F076, U+F06E). The templates and the
+// DOCX draw their own bullet, so the pasted one would show twice.
+const PASTED_MARKER = /^(?:[•·\-*▪■□●◦○‣⁃➤►▶▸→⇒➔➜➝➞✓✔✗✘★☆♦◆❖❯›»\uF0A7\uF0B7\uF0D8\uF0FC\uF076\uF06E]\s*)+/;
+
+/** A description's lines, one bullet each: trimmed, pasted markers removed, blank lines dropped. */
+export function descLines(text?: string): string[] {
+  return (text || "").split(/\r?\n/).map((s) => s.trim().replace(PASTED_MARKER, "").trim()).filter(Boolean);
+}
+
 /** A phone number as a link: digits and "+" only, without an extension ("ext. 12", "x12") and
  *  without the "(0)" that is not dialled after a country code ("+44 (0) 20 …"). */
 export function telHref(phone: string): string {

@@ -4,6 +4,7 @@ import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { CvData } from "@/lib/types";
 import { breakLongWords } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, LAYOUT, type TemplateTheme } from "./theme";
+import { pdfData } from "./glyphs";
 import {
   ContactBar, Section, summaryEntries, skillsEntries, experienceEntries,
   educationEntries, simpleEntries, documentProps, ALL_SIMPLE, GAP, CONTACT_ICON_W,
@@ -17,7 +18,8 @@ const st = StyleSheet.create({
   sections: { marginTop: GAP.section, rowGap: GAP.section + 2 },
 });
 
-export default function MinimalTemplate({ data, theme }: { data: CvData; theme: TemplateTheme }) {
+export default function MinimalTemplate({ data: typed, theme }: { data: CvData; theme: TemplateTheme }) {
+  const data = pdfData(typed); // only what Inter can draw (glyphs.ts)
   const p = data.personalInfo;
 
   return (

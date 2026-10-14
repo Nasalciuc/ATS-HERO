@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { printableCv, displayUrl, textWidth, fitFontSize, fitWordsFontSize, breakLongWords, BREAK, telHref, webHref } from "./cv-print";
+import { printableCv, displayUrl, textWidth, fitFontSize, fitWordsFontSize, breakLongWords, BREAK, telHref, webHref, descLines } from "./cv-print";
 import { hyphenationCallback } from "@/components/cv/templates/fonts";
 import { emptyCvData, type CvData } from "./types";
 
@@ -44,6 +44,15 @@ describe("displayUrl", () => {
     ["https://ana.dev/work?id=3", "ana.dev/work?id=3"],
   ])("%s → %s", (input, expected) => {
     expect(displayUrl(input)).toBe(expected);
+  });
+});
+
+describe("descLines", () => {
+  it("one bullet per line, without the marker pasted in front", () => {
+    expect(descLines("• Led a team\n- Built X\n▪ Shipped Y\n✓ Cut Z\n\uF0B7 From Word\n  \n➤ ✓ Twice")).toEqual(
+      ["Led a team", "Built X", "Shipped Y", "Cut Z", "From Word", "Twice"],
+    );
+    expect(descLines("Reduced costs by 40% - in 2023")).toEqual(["Reduced costs by 40% - in 2023"]);
   });
 });
 
