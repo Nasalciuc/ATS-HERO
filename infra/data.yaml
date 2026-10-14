@@ -125,7 +125,9 @@ Resources:
             NoncurrentVersionExpiration: { NoncurrentDays: 30 }
       Tags: [{ Key: project, Value: atshero }]
 
-  # Pre-registered triggers: connections > 60 -> RDS Proxy; disk < 4 GB; CPU > 80 % for 15 min.
+  # Pre-registered triggers: connections > 60 -> InstanceClass db.t4g.small (twice the memory, so
+  # twice the connections; RDS Proxy can't be public, so Vercel could not reach it);
+  # disk < 4 GB; CPU > 80 % for 15 min.
   ConnectionsAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
