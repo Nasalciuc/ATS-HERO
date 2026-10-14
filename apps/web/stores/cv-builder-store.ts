@@ -3,6 +3,7 @@
 // the ephemeral builder chrome (which step, which optional sections, save status, the
 // chosen template). Do NOT put CvData here — that's the Reactive-Resume mistake we avoid.
 import { create } from "zustand";
+import { DEFAULT_ACCENT } from "@/lib/cv-defaults";
 
 export type OptionalSection =
   | "languages" | "awards" | "certifications" | "publications" | "volunteering" | "activities";
@@ -37,7 +38,7 @@ const initial = {
   isDirty: false,
   isSaving: false,
   templateId: "classic",
-  accent: 1,
+  accent: DEFAULT_ACCENT,
 };
 
 export const useBuilderStore = create<BuilderState>((set, get) => ({

@@ -12,6 +12,7 @@ import { resolveTheme } from "../components/cv/templates/theme";
 import { hyphenationCallback, resetGlyphCache } from "../components/cv/templates/fonts";
 import { buildCvDocx } from "../lib/exportDocx";
 import { printableCv } from "../lib/cv-print";
+import { DEFAULT_ACCENT } from "../lib/cv-defaults";
 import type { CvData } from "../lib/types";
 
 const WEB = path.resolve(__dirname, "..");
@@ -31,9 +32,10 @@ async function main() {
   for (const [id, data] of Object.entries(personas)) {
     for (const t of TEMPLATES) {
       const Template = t.component;
-      // `<id>--<template>.pdf` is EXACTLY what production renders (theme untouched), and the gate
-      // judges it. `-split` / `-stacked` is the other meta placement, rendered for comparison.
-      const production = resolveTheme(t.id);
+      // `<id>--<template>.pdf` is EXACTLY what a default export renders (the accent a new CV
+      // starts with), and the gate judges it. `-split` / `-stacked` is the other meta placement,
+      // rendered for comparison.
+      const production = resolveTheme(t.id, DEFAULT_ACCENT);
       const alt = production.meta === "stacked" ? "split" : "stacked";
       for (const [suffix, theme] of [["", production], [`-${alt}`, { ...production, meta: alt }]] as const) {
         const file = path.join(outDir, `${id}--${t.id}${suffix}.pdf`);
@@ -43,7 +45,7 @@ async function main() {
       }
     }
     const docx = path.join(outDir, `${id}--docx.docx`);
-    fs.writeFileSync(docx, await Packer.toBuffer(buildCvDocx(data)));
+    fs.writeFileSync(docx, await Packer.toBuffer(buildCvDocx(data, DEFAULT_ACCENT)));
     written.push(docx);
   }
   console.log(`rendered ${written.length} files → ${outDir}`);
