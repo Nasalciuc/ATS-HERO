@@ -12,14 +12,14 @@ import path from "node:path";
 import { Font, renderToBuffer } from "@react-pdf/renderer";
 import { Packer } from "docx";
 import JSZip from "jszip"; // `docx` zips the document with it
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { TEMPLATES } from "@/components/cv/templates";
 import { resolveTheme } from "@/components/cv/templates/theme";
-import { resetGlyphCache } from "@/components/cv/templates/fonts";
+import { hyphenationCallback, resetGlyphCache } from "@/components/cv/templates/fonts";
 import { BULLET } from "@/components/cv/templates/shared";
 import { buildCvDocx } from "@/lib/exportDocx";
 import { printableCv } from "@/lib/cv-print";
 import { emptyCvData, type CvData, type WorkItem } from "@/lib/types";
+import { pdfItems, rowsOf, rowText, type PdfItem } from "./pdf-text";
 
 /* ------------------------------------------------------------------ fixture */
 const LONG = [
@@ -67,8 +67,7 @@ function sweepCv(k: number): CvData {
 }
 
 /* ------------------------------------------------------------- PDF reading */
-type Item = { str: string; x: number; y: number };
-type Row = { kind: "heading" | "title" | "meta" | "bullet" | "lone-marker" | "plain"; text: string; x: number; y: number; items: Item[] };
+type Row = { kind: "heading" | "title" | "meta" | "bullet" | "lone-marker" | "plain"; text: string; x: number; y: number; items: PdfItem[] };
 
 const A4_H = 841.89;
 const MAIN_X: Record<string, number> = { classic: 0, minimal: 0, modern: 595.28 * 0.34 }; // Modern: main column only
@@ -88,28 +87,12 @@ function classify(text: string): Row["kind"] {
 
 /** Rows of the main column, top to bottom, for every page. */
 async function pagesOf(buf: Buffer, templateId: string): Promise<Row[][]> {
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), useSystemFonts: true, verbosity: 0 }).promise;
-  const pages: Row[][] = [];
-  for (let p = 1; p <= doc.numPages; p++) {
-    const { items } = await (await doc.getPage(p)).getTextContent();
-    const its: Item[] = items
-      .filter((it): it is Extract<typeof it, { str: string }> => "str" in it && it.str.trim() !== "")
-      .map((it) => ({ str: it.str, x: it.transform[4], y: it.transform[5] }))
-      .filter((it) => it.x >= MAIN_X[templateId]);
-    its.sort((a, b) => b.y - a.y || a.x - b.x);
-    const rows: Item[][] = [];
-    for (const it of its) {
-      const last = rows[rows.length - 1];
-      if (last && Math.abs(last[0].y - it.y) < 2) last.push(it);
-      else rows.push([it]);
-    }
-    pages.push(rows.map((r) => {
-      r.sort((a, b) => a.x - b.x);
-      const text = r.map((i) => i.str).join(" ").replace(/\s+/g, " ").trim();
+  return (await pdfItems(buf)).map((items) =>
+    rowsOf(items.filter((it) => it.x >= MAIN_X[templateId])).map((r) => {
+      const text = rowText(r);
       return { kind: classify(text), text, x: r[0].x, y: r[0].y, items: r };
-    }));
-  }
-  return pages;
+    }),
+  );
 }
 
 const first0 = (rows: Row[]) => rows[0]?.text ?? "";
@@ -143,7 +126,7 @@ describe("CV page breaks", () => {
     // Same families as fonts.ts, from disk (fonts.ts uses browser URLs).
     Font.register({ family: "CvSans", src: path.join(process.cwd(), "public/fonts/Inter-Regular.ttf") });
     Font.register({ family: "CvSansBold", src: path.join(process.cwd(), "public/fonts/Inter-Bold.ttf") });
-    Font.registerHyphenationCallback((w) => [w]);
+    Font.registerHyphenationCallback(hyphenationCallback);
   });
 
   for (const t of TEMPLATES) {

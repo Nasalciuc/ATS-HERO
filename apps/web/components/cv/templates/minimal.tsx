@@ -2,14 +2,15 @@
 // no photo. The most ATS-conservative; justified meta + bullets like the others.
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { CvData } from "@/lib/types";
-import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
+import { breakLongWords } from "@/lib/cv-print";
+import { FONT, FONT_BOLD, LAYOUT, type TemplateTheme } from "./theme";
 import {
   ContactBar, Section, summaryEntries, skillsEntries, experienceEntries,
-  educationEntries, simpleEntries, ALL_SIMPLE, GAP,
+  educationEntries, simpleEntries, ALL_SIMPLE, GAP, CONTACT_ICON_W,
 } from "./shared";
 
 const st = StyleSheet.create({
-  page: { paddingVertical: 46, paddingHorizontal: 54, fontFamily: FONT, fontSize: 10, lineHeight: 1.5 },
+  page: { paddingVertical: LAYOUT.minimal.padY, paddingHorizontal: LAYOUT.minimal.padX, fontFamily: FONT, fontSize: 10, lineHeight: 1.5 },
   name: { fontSize: 21, fontFamily: FONT_BOLD, letterSpacing: 0.3, lineHeight: 1.25 },
   role: { fontSize: 11.5, marginTop: 5 },
   // A gap, not a bottom margin: see classic.tsx.
@@ -22,9 +23,10 @@ export default function MinimalTemplate({ data, theme }: { data: CvData; theme: 
   return (
     <Document title={`${p.name || "Resume"} — CV`} author={p.name || "ATS Hero"} creator="ATS Hero" producer="ATS Hero">
       <Page size="A4" style={[st.page, { color: theme.text }]}>
-        <Text style={st.name}>{p.name || "Your Name"}</Text>
-        {data.summary.position ? <Text style={[st.role, { color: theme.muted }]}>{data.summary.position}</Text> : null}
-        <ContactBar p={p} theme={theme} />
+        {/* 12pt less: the name's letter-spacing adds up to that on a long word */}
+        <Text style={st.name}>{breakLongWords(p.name || "Your Name", theme.column - 12, 21, true)}</Text>
+        {data.summary.position ? <Text style={[st.role, { color: theme.muted }]}>{breakLongWords(data.summary.position, theme.column, 11.5)}</Text> : null}
+        <ContactBar p={p} theme={theme} maxTextWidth={theme.column - CONTACT_ICON_W} />
 
         <View style={st.sections}>
           <Section title="SUMMARY" variant="minimal" theme={theme} entries={summaryEntries(data, theme)} />

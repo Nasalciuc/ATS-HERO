@@ -7,7 +7,7 @@ import { Font, renderToBuffer } from "@react-pdf/renderer";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { TEMPLATES } from "@/components/cv/templates";
 import { resolveTheme } from "@/components/cv/templates/theme";
-import { resetGlyphCache } from "@/components/cv/templates/fonts";
+import { hyphenationCallback, resetGlyphCache } from "@/components/cv/templates/fonts";
 import { printableCv } from "@/lib/cv-print";
 import { emptyCvData, type CvData } from "@/lib/types";
 
@@ -34,7 +34,7 @@ describe("PDF export keeps every letter when several CVs render in one session",
     // Same families as fonts.ts, from disk (fonts.ts uses browser URLs).
     Font.register({ family: "CvSans", src: path.join(process.cwd(), "public/fonts/Inter-Regular.ttf") });
     Font.register({ family: "CvSansBold", src: path.join(process.cwd(), "public/fonts/Inter-Bold.ttf") });
-    Font.registerHyphenationCallback((w) => [w]);
+    Font.registerHyphenationCallback(hyphenationCallback);
   });
 
   const first = cv("Mihai Ionescu", "Backend developer, Iğdır office, it’s fine.", "M.Sc. Data Science");

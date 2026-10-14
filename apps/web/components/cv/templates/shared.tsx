@@ -4,7 +4,7 @@
 // colored section headings with a rule, consistent section spacing.
 import { View, Text, Image, Svg, Path, StyleSheet } from "@react-pdf/renderer";
 import type { CvData, SimpleEntry } from "@/lib/types";
-import { displayUrl, fitFontSize } from "@/lib/cv-print";
+import { breakLongWords, displayUrl, fitFontSize, textWidth } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
 
 /* ---------------------------------------------------------------- spacing scale */
@@ -38,10 +38,11 @@ export function Avatar({ src, size = 64, radius }: { src?: string; size?: number
   return <Image src={src} style={{ width: size, height: size, borderRadius: radius ?? size / 2, objectFit: "cover" }} />;
 }
 
-/** Separator between inline items. SINGLE spaces on purpose: react-pdf's textkit treats only a
- *  single " " as a breakable space — a double space becomes an in-word break point, and a line
- *  wrapping there gets a fake hyphen ("Kafka ·-", caught by the ATS lab on a 20-skill CV). */
-export const SEP = " · ";
+/** Separator between inline items. A no-break space before the dot keeps "·" at the END of a
+ *  line when a list wraps (a line used to start with "· GCP"); the space after it is the only
+ *  place to wrap. Never two ASCII spaces: react-pdf treats a double space as an in-word break
+ *  point and adds a fake hyphen there ("Kafka ·-", caught by the ATS lab on a 20-skill CV). */
+export const SEP = "\u00A0· ";
 
 /* --------------------------------------------------------------------- helpers  */
 export function dateRange(start?: string, end?: string, ongoing?: boolean): string {
@@ -70,12 +71,16 @@ export function contactPairs(p: CvData["personalInfo"]): ContactPair[] {
 }
 
 /* ------------------------------------------------------------------- contact    */
+/** Width the contact icon and its gap take in front of the text (pt). */
+export const CONTACT_ICON_W = 13;
+const CONTACT_MIN_SIZE = 6.5;
+
 export function ContactBar({
-  p, theme, color, direction = "row", columnTextWidth,
+  p, theme, color, direction = "row", maxTextWidth,
 }: {
   p: CvData["personalInfo"]; theme: TemplateTheme; color?: string; direction?: "row" | "column";
-  /** Width (pt) available to the text in a narrow column — long tokens shrink to fit it. */
-  columnTextWidth?: number;
+  /** Width (pt) one contact's text may take (the line minus CONTACT_ICON_W). */
+  maxTextWidth: number;
 }) {
   const c = color ?? theme.muted;
   const items = contactPairs(p);
@@ -83,24 +88,22 @@ export function ContactBar({
     <View style={direction === "row"
       ? { flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 3, marginTop: 6 }
       : { flexDirection: "column", rowGap: 4, marginTop: 8 }}>
-      {items.map((it, i) =>
-        direction === "column" ? (
-          // Narrow column (Modern sidebar): ONE Text per contact item, never split or wrapped —
-          // the ATS lab showed a wrapped/split e-mail or URL is lost by every extractor (pdf.js
-          // even joins split pieces with spaces). Long tokens shrink to fit one line instead.
+      {items.map((it, i) => {
+        // ONE line per contact, never split: the ATS lab showed a wrapped e-mail or URL is lost by
+        // every extractor (pdf.js even joins the pieces with spaces). A long one shrinks to fit;
+        // only what does not fit even at CONTACT_MIN_SIZE may wrap, rather than run off the page.
+        // (The wrapping Text gets an exact width — see SplitRow for why.)
+        const size = fitFontSize(it.text, maxTextWidth, 9, CONTACT_MIN_SIZE);
+        const fits = textWidth(it.text, size) <= maxTextWidth;
+        return (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", columnGap: 4 }}>
             <Icon name={it.icon} color={c} />
-            <Text style={{ fontSize: columnTextWidth ? fitFontSize(it.text, columnTextWidth) : 9, color: c, lineHeight: 1.2 }}>
-              {it.text}
+            <Text style={[{ fontSize: size, color: c, lineHeight: direction === "row" ? 1 : 1.2 }, fits ? {} : { width: maxTextWidth }]}>
+              {fits ? it.text : breakLongWords(it.text, maxTextWidth, size)}
             </Text>
           </View>
-        ) : (
-          <View key={i} style={{ flexDirection: "row", alignItems: "center", columnGap: 4 }}>
-            <Icon name={it.icon} color={c} />
-            <Text style={{ fontSize: 9, color: c, lineHeight: 1 }}>{it.text}</Text>
-          </View>
-        )
-      )}
+        );
+      })}
     </View>
   );
 }
@@ -160,11 +163,28 @@ export function Section({
 }
 
 /* ----------------------------------------------------------------- split row    */
-export function SplitRow({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
+// The right side (dates, place, issuer; 9pt) takes the width of its text, up to half the row;
+// longer text wraps inside that half, right-aligned. It used to never shrink, so a long issuer
+// squeezed the title into one word per line or ran over it. The wrapping box gets an exact
+// width: inside a box that is only capped (maxWidth), react-pdf measures the text wider than
+// the box and it runs past the margin.
+const RIGHT_SHARE = 0.5;
+const SPLIT_GAP = 12;
+
+/** Widths (pt) a long word must fit in a SplitRow of `theme`'s column (see breakLongWords). */
+const leftWidth = (theme: TemplateTheme) => theme.column * (1 - RIGHT_SHARE) - SPLIT_GAP;
+const rightWidth = (theme: TemplateTheme) => theme.column * RIGHT_SHARE;
+
+export function SplitRow({ left, right, theme }: { left: React.ReactNode; right?: string; theme: TemplateTheme }) {
+  const fits = !!right && textWidth(right, 9) <= rightWidth(theme);
   return (
-    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", columnGap: 12 }}>
+    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", columnGap: SPLIT_GAP }}>
       <View style={{ flex: 1 }}>{left}</View>
-      {right ? <View style={{ flexShrink: 0 }}>{right}</View> : null}
+      {right ? (
+        <View style={fits ? { flexShrink: 0 } : { width: rightWidth(theme) }}>
+          <Text style={[meta.date, { color: theme.faint }]}>{fits ? right : breakLongWords(right, rightWidth(theme), 9)}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -182,13 +202,13 @@ export const BULLET = { indent: 9.7412109375, track: 2.1875 };
 export function bullets(text: string | undefined, theme: TemplateTheme): React.ReactNode | null {
   const lines = descLines(text);
   if (lines.length === 0) return null;
-  if (lines.length === 1) return <Text style={{ color: theme.text, marginTop: 1 }}>{lines[0]}</Text>;
+  if (lines.length === 1) return <Text style={{ color: theme.text, marginTop: 1 }}>{breakLongWords(lines[0], theme.column)}</Text>;
   return (
     <View style={{ marginTop: 2, rowGap: 2 }}>
       {lines.map((l, i) => (
         <Text key={i} style={{ color: theme.text, marginLeft: BULLET.indent }}>
           <Text style={{ color: theme.primary, fontFamily: FONT_BOLD, letterSpacing: BULLET.track, textIndent: -BULLET.indent }}>•</Text>
-          {` ${l}`}
+          {` ${breakLongWords(l, theme.column - BULLET.indent)}`}
         </Text>
       ))}
     </View>
@@ -198,22 +218,27 @@ export function bullets(text: string | undefined, theme: TemplateTheme): React.R
 const meta = StyleSheet.create({
   title: { fontFamily: FONT_BOLD },
   sub: {},
-  date: { fontSize: 9 },
+  date: { fontSize: 9, textAlign: "right" },
 });
+
+/** Text pieces of an entry, with long words made wrappable for where they sit. */
+const asTitle = (s: string, theme: TemplateTheme) => breakLongWords(s, leftWidth(theme), 10, true);
+const asLeft = (s: string, theme: TemplateTheme) => breakLongWords(s, leftWidth(theme));
+const asBody = (s: string, theme: TemplateTheme) => breakLongWords(s, theme.column);
 
 /* ---------------------------------------------------------------- entries      */
 export function summaryEntries(data: CvData, theme: TemplateTheme): Entry[] {
   if (!data.summary.valueProposition) return [];
-  return [{ key: "summary", body: <Text style={{ color: theme.text }}>{data.summary.valueProposition}</Text> }];
+  return [{ key: "summary", body: <Text style={{ color: theme.text }}>{asBody(data.summary.valueProposition, theme)}</Text> }];
 }
 
 export function skillsEntries(data: CvData, theme: TemplateTheme): Entry[] {
   return hasSkills(data) ? [{ key: "skills", body: <SkillsBody data={data} theme={theme} /> }] : [];
 }
 
-/** A single paragraph in a narrow column (Modern sidebar blocks). */
-export function textEntries(key: string, text: string, color: string): Entry[] {
-  return text ? [{ key, body: <Text style={{ color }}>{text}</Text> }] : [];
+/** A single paragraph in a narrow column of `width` pt (Modern sidebar blocks). */
+export function textEntries(key: string, text: string, color: string, width: number): Entry[] {
+  return text ? [{ key, body: <Text style={{ color }}>{breakLongWords(text, width)}</Text> }] : [];
 }
 
 export function experienceEntries(data: CvData, theme: TemplateTheme): Entry[] {
@@ -222,18 +247,20 @@ export function experienceEntries(data: CvData, theme: TemplateTheme): Entry[] {
     const loc = [w.cityState, w.country].filter(Boolean).join(", ");
     const head = theme.meta === "stacked" ? (
       <>
-        <Text style={[meta.title, { color: theme.text }]}>{w.role || w.company || "—"}</Text>
-        <Text style={{ color: theme.muted }}>{[dates, w.role ? w.company : "", loc].filter(Boolean).join(SEP)}</Text>
+        <Text style={[meta.title, { color: theme.text }]}>{breakLongWords(w.role || w.company || "—", theme.column, 10, true)}</Text>
+        <Text style={{ color: theme.muted }}>{asBody([dates, w.role ? w.company : "", loc].filter(Boolean).join(SEP), theme)}</Text>
       </>
     ) : (
       <>
         <SplitRow
-          left={<Text style={[meta.title, { color: theme.text }]}>{w.role || "—"}</Text>}
-          right={dates ? <Text style={[meta.date, { color: theme.faint }]}>{dates}</Text> : null}
+          left={<Text style={[meta.title, { color: theme.text }]}>{asTitle(w.role || "—", theme)}</Text>}
+          right={dates}
+          theme={theme}
         />
         <SplitRow
-          left={<Text style={{ color: theme.muted }}>{w.company}</Text>}
-          right={loc ? <Text style={[meta.date, { color: theme.faint }]}>{loc}</Text> : null}
+          left={<Text style={{ color: theme.muted }}>{asLeft(w.company, theme)}</Text>}
+          right={loc}
+          theme={theme}
         />
       </>
     );
@@ -247,22 +274,24 @@ export function educationEntries(data: CvData, theme: TemplateTheme): Entry[] {
     const right = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP);
     const head = theme.meta === "stacked" ? (
       <>
-        <Text style={[meta.title, { color: theme.text }]}>{e.degree || e.institution || "—"}</Text>
-        <Text style={{ color: theme.muted }}>{[dates, e.degree ? e.institution : "", e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP)}</Text>
+        <Text style={[meta.title, { color: theme.text }]}>{breakLongWords(e.degree || e.institution || "—", theme.column, 10, true)}</Text>
+        <Text style={{ color: theme.muted }}>{asBody([dates, e.degree ? e.institution : "", e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP), theme)}</Text>
       </>
     ) : (
       <>
         <SplitRow
-          left={<Text style={[meta.title, { color: theme.text }]}>{e.degree || e.institution || "—"}</Text>}
-          right={dates ? <Text style={[meta.date, { color: theme.faint }]}>{dates}</Text> : null}
+          left={<Text style={[meta.title, { color: theme.text }]}>{asTitle(e.degree || e.institution || "—", theme)}</Text>}
+          right={dates}
+          theme={theme}
         />
         <SplitRow
-          left={<Text style={{ color: theme.muted }}>{e.degree ? e.institution : ""}</Text>}
-          right={right ? <Text style={[meta.date, { color: theme.faint }]}>{right}</Text> : null}
+          left={<Text style={{ color: theme.muted }}>{asLeft(e.degree ? e.institution : "", theme)}</Text>}
+          right={right}
+          theme={theme}
         />
       </>
     );
-    const body = e.additional ? <Text style={{ color: theme.text, marginTop: 1 }}>{e.additional}</Text> : null;
+    const body = e.additional ? <Text style={{ color: theme.text, marginTop: 1 }}>{asBody(e.additional, theme)}</Text> : null;
     return { key: e.id, head, body };
   });
 }
@@ -273,7 +302,7 @@ export function SkillsBody({ data, theme, stacked = false }: { data: CvData; the
   const Group = ({ label, value }: { label: string; value: string }) => (
     <Text style={{ color: theme.text }}>
       <Text style={{ fontFamily: FONT_BOLD, color: theme.text }}>{label}: </Text>
-      {value}
+      {asBody(value, theme)}
     </Text>
   );
   return (
@@ -292,13 +321,14 @@ export function simpleEntries(items: SimpleEntry[], theme: TemplateTheme): Entry
   return items.map((it) => {
     const right = [it.organisation || it.issuer || it.publisher, it.date].filter(Boolean).join(SEP);
     const desc = bullets(it.description, theme);
-    const link = it.link ? <Text style={{ fontSize: 9, color: theme.faint, marginTop: 1 }}>{it.link}</Text> : null;
+    const link = it.link ? <Text style={{ fontSize: 9, color: theme.faint, marginTop: 1 }}>{breakLongWords(it.link, theme.column, 9)}</Text> : null;
     return {
       key: it.id,
       head: (
         <SplitRow
-          left={<Text style={[meta.title, { color: theme.text }]}>{it.title || it.role || "—"}</Text>}
-          right={right ? <Text style={[meta.date, { color: theme.faint }]}>{right}</Text> : null}
+          left={<Text style={[meta.title, { color: theme.text }]}>{asTitle(it.title || it.role || "—", theme)}</Text>}
+          right={right}
+          theme={theme}
         />
       ),
       body: desc || link ? <>{desc}{link}</> : null,

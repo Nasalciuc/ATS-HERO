@@ -10,6 +10,7 @@
 //   public/fonts/Inter-Bold.ttf
 // (Download from https://github.com/rsms/inter or reuse the files behind your UI font.)
 import { Font } from "@react-pdf/renderer";
+import { BREAK } from "@/lib/cv-print";
 
 let registered = false;
 
@@ -20,14 +21,29 @@ export function registerFonts(): void {
   Font.register({ family: "CvSans", src: "/fonts/Inter-Regular.ttf" });
   Font.register({ family: "CvSansBold", src: "/fonts/Inter-Bold.ttf" });
 
-  // Names/words shouldn't break mid-word with a hyphen (e.g. "Nasalci-uc").
-  Font.registerHyphenationCallback((word) => [word]);
+  Font.registerHyphenationCallback(hyphenationCallback);
 
   // NOTE on server-side export: a "/fonts/..." URL resolves in the browser (client-side
   // download). If you render the PDF in an API route, pass an absolute URL or a filesystem
   // path instead, e.g. `${process.env.NEXT_PUBLIC_APP_URL}/fonts/Inter-Regular.ttf`.
 
   registered = true;
+}
+
+/**
+ * How react-pdf may split a word across lines. Never with a hyphen (names looked broken:
+ * "Nasalci-uc"); a word marked by breakLongWords() (lib/cv-print.ts) may wrap at its BREAK
+ * marks: the "" between the pieces is a zero-width space to react-pdf's line breaker, and the
+ * marks themselves are dropped. Every renderer (app, ATS lab, tests) registers this function.
+ */
+export function hyphenationCallback(word: string): string[] {
+  if (!word.includes(BREAK)) return [word];
+  const parts: string[] = [];
+  word.split(BREAK).forEach((piece, i) => {
+    if (i > 0) parts.push("");
+    if (piece) parts.push(piece);
+  });
+  return parts;
 }
 
 /**

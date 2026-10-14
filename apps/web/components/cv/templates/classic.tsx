@@ -2,15 +2,19 @@
 // Inspired by Reactive Resume's Onyx/Rhyhorn. Safe, recruiter-friendly default.
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { CvData } from "@/lib/types";
-import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
+import { breakLongWords } from "@/lib/cv-print";
+import { FONT, FONT_BOLD, LAYOUT, type TemplateTheme } from "./theme";
 import {
   Avatar, ContactBar, Section, summaryEntries, skillsEntries, experienceEntries,
-  educationEntries, simpleEntries, ALL_SIMPLE, GAP,
+  educationEntries, simpleEntries, ALL_SIMPLE, GAP, CONTACT_ICON_W,
 } from "./shared";
 
+const PHOTO = 68;
+const PHOTO_GAP = 16;
+
 const st = StyleSheet.create({
-  page: { paddingVertical: 38, paddingHorizontal: 44, fontFamily: FONT, fontSize: 10, lineHeight: 1.45 },
-  header: { flexDirection: "row", alignItems: "center", columnGap: 16, marginBottom: GAP.section },
+  page: { paddingVertical: LAYOUT.classic.padY, paddingHorizontal: LAYOUT.classic.padX, fontFamily: FONT, fontSize: 10, lineHeight: 1.45 },
+  header: { flexDirection: "row", alignItems: "center", columnGap: PHOTO_GAP, marginBottom: GAP.section },
   name: { fontSize: 22, fontFamily: FONT_BOLD, lineHeight: 1.25 },
   role: { fontSize: 12, marginTop: 5 },
   // Space between sections is a gap of the column, not a bottom margin: react-pdf moves a node to
@@ -21,16 +25,17 @@ const st = StyleSheet.create({
 
 export default function ClassicTemplate({ data, theme }: { data: CvData; theme: TemplateTheme }) {
   const p = data.personalInfo;
+  const headerW = theme.column - (p.photo ? PHOTO + PHOTO_GAP : 0); // the text beside the photo
 
   return (
     <Document title={`${p.name || "Resume"} — CV`} author={p.name || "ATS Hero"} creator="ATS Hero" producer="ATS Hero">
       <Page size="A4" style={[st.page, { color: theme.text }]}>
         <View style={st.header}>
-          <Avatar src={p.photo} size={68} radius={10} />
+          <Avatar src={p.photo} size={PHOTO} radius={10} />
           <View style={{ flex: 1 }}>
-            <Text style={st.name}>{p.name || "Your Name"}</Text>
-            {data.summary.position ? <Text style={[st.role, { color: theme.muted }]}>{data.summary.position}</Text> : null}
-            <ContactBar p={p} theme={theme} />
+            <Text style={st.name}>{breakLongWords(p.name || "Your Name", headerW, 22, true)}</Text>
+            {data.summary.position ? <Text style={[st.role, { color: theme.muted }]}>{breakLongWords(data.summary.position, headerW, 12)}</Text> : null}
+            <ContactBar p={p} theme={theme} maxTextWidth={headerW - CONTACT_ICON_W} />
           </View>
         </View>
 

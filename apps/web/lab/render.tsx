@@ -9,7 +9,7 @@ import { Font, renderToFile } from "@react-pdf/renderer";
 import { Packer } from "docx";
 import { TEMPLATES } from "../components/cv/templates";
 import { resolveTheme } from "../components/cv/templates/theme";
-import { resetGlyphCache } from "../components/cv/templates/fonts";
+import { hyphenationCallback, resetGlyphCache } from "../components/cv/templates/fonts";
 import { buildCvDocx } from "../lib/exportDocx";
 import { printableCv } from "../lib/cv-print";
 import type { CvData } from "../lib/types";
@@ -22,7 +22,7 @@ const outDir = process.argv[3] ?? path.join(REPO, "tools/ats-lab/out/files");
 // Same families as fonts.ts, but filesystem paths (fonts.ts uses browser URLs "/fonts/…").
 Font.register({ family: "CvSans", src: path.join(WEB, "public/fonts/Inter-Regular.ttf") });
 Font.register({ family: "CvSansBold", src: path.join(WEB, "public/fonts/Inter-Bold.ttf") });
-Font.registerHyphenationCallback((word) => [word]);
+Font.registerHyphenationCallback(hyphenationCallback);
 
 async function main() {
   const personas = JSON.parse(fs.readFileSync(fixtures, "utf8")) as Record<string, CvData>;
