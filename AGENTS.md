@@ -139,7 +139,8 @@ graphify update .             # after every change; `graphify explain <Node>` be
 
 - `next dev` rewrites `apps/web/next-env.d.ts`. Restore it with `git checkout -- apps/web/next-env.d.ts`; it is not a change.
 - On Windows the design check's text boxes can differ by a few px (fonts). The CI run on Linux is the referee.
-- The ATS lab's numbers are the baseline: classic 97.3, minimal 97.9, DOCX 100, modern 84.4. A drop needs a reason.
+- The ATS lab's numbers are the baseline: classic 97.3, minimal 97.9, DOCX 100, modern 84.1. A drop needs a reason.
+  - Modern was 84.4 before `fix(cv): long names, links and lists stay inside their column`. A 63-character LinkedIn link that used to run invisibly past the sidebar now wraps, and the extractors read it in two pieces.
 
 ## Where the decisions are
 
