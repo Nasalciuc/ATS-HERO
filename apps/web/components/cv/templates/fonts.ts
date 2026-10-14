@@ -30,5 +30,23 @@ export function registerFonts(): void {
   registered = true;
 }
 
+/**
+ * Clears fontkit's per-font glyph cache. Call it before every render.
+ *
+ * fontkit 2.0.4 (used by @react-pdf 4.5) caches each glyph with the characters of the first text
+ * that needed it. Inter builds some glyphs from others (’ from the comma shape, "." in Bold,
+ * ı + dot for "i"), so after one render those cached parts carry no characters and the next PDF
+ * in the same session silently drops letters: "B.Sc." becomes ".Sc.", "I’m" becomes "’m".
+ * A fresh cache per render keeps every export identical to a first render.
+ */
+export function resetGlyphCache(): void {
+  for (const family of Object.values(Font.getRegisteredFonts())) {
+    for (const source of family.sources) {
+      const font = source.data as { _glyphs?: Record<number, unknown> } | null;
+      if (font?._glyphs) font._glyphs = {};
+    }
+  }
+}
+
 export const FONT = "CvSans";
 export const FONT_BOLD = "CvSansBold";

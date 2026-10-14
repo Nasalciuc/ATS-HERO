@@ -9,6 +9,7 @@ import { Font, renderToFile } from "@react-pdf/renderer";
 import { Packer } from "docx";
 import { TEMPLATES } from "../components/cv/templates";
 import { resolveTheme } from "../components/cv/templates/theme";
+import { resetGlyphCache } from "../components/cv/templates/fonts";
 import { buildCvDocx } from "../lib/exportDocx";
 import { printableCv } from "../lib/cv-print";
 import type { CvData } from "../lib/types";
@@ -36,6 +37,7 @@ async function main() {
       const alt = production.meta === "stacked" ? "split" : "stacked";
       for (const [suffix, theme] of [["", production], [`-${alt}`, { ...production, meta: alt }]] as const) {
         const file = path.join(outDir, `${id}--${t.id}${suffix}.pdf`);
+        resetGlyphCache(); // as the app does before every export (fonts.ts)
         await renderToFile(<Template data={printableCv(data)} theme={theme} />, file);
         written.push(file);
       }
