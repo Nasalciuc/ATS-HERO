@@ -4,6 +4,8 @@
 # prints no secrets (no passwords, no secret keys, no full access-key IDs, no secret ARNs).
 # Paste the output back for the design review.
 set -uo pipefail
+# Under Git Bash on Windows, AWS CLI text output ends lines with \r\n; every value captured
+# with $( ) is passed through `tr -d '\r'`, or the \r ends up inside the next call's argument.
 R="${AWS_REGION:-us-east-1}"
 say() { printf '\n== %s\n' "$1"; }
 run() { "$@" 2>&1 | sed 's/^/  /' || true; }
@@ -41,7 +43,7 @@ run aws sesv2 get-account --region "$R" --query '{productionAccess:ProductionAcc
 run aws sesv2 list-email-identities --region "$R" --query 'EmailIdentities[].{identity:IdentityName,type:IdentityType,verified:VerificationStatus}' --output table
 
 say "money and alerts: budgets, cost anomaly monitors, SNS topics, alarms"
-ACC=$(aws sts get-caller-identity --query Account --output text 2>/dev/null)
+ACC=$(aws sts get-caller-identity --query Account --output text 2>/dev/null | tr -d '\r')
 run aws budgets describe-budgets --account-id "$ACC" --query 'Budgets[].{name:BudgetName,limit:BudgetLimit.Amount}' --output table
 echo "  (only one 'AWS services' monitor can exist; if one is listed, F1 passes its ARN)"
 run aws ce get-anomaly-monitors --region us-east-1 --query 'AnomalyMonitors[].{arn:MonitorArn,name:MonitorName,type:MonitorType,dimension:MonitorDimension}' --output table
@@ -54,7 +56,7 @@ run aws guardduty list-detectors --region "$R" --query 'DetectorIds' --output te
 run aws accessanalyzer list-analyzers --region "$R" --query 'analyzers[].{name:name,type:type,status:status}' --output table
 
 say "IAM: users and their access keys (status and age only), atshero roles, OIDC providers"
-for u in $(aws iam list-users --query 'Users[].UserName' --output text 2>/dev/null); do
+for u in $(aws iam list-users --query 'Users[].UserName' --output text 2>/dev/null | tr -d '\r'); do
   echo "  user: $u"
   run aws iam list-access-keys --user-name "$u" --query 'AccessKeyMetadata[].{status:Status,created:CreateDate}' --output table
 done
