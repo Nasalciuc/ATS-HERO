@@ -4,8 +4,8 @@ import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { CvData } from "@/lib/types";
 import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
 import {
-  Avatar, ContactBar, SectionHeading, SummaryBody, ExperienceBody, EducationBody,
-  SimpleSection, ALL_SIMPLE, GAP,
+  Avatar, ContactBar, Section, summaryEntries, experienceEntries, educationEntries,
+  simpleEntries, textEntries, ALL_SIMPLE, GAP, type Entry,
 } from "./shared";
 
 const SIDEBAR_RATIO = 0.34;
@@ -15,29 +15,32 @@ const SIDEBAR_PAD_X = 18;
 const CONTACT_TEXT_W = 595.28 * SIDEBAR_RATIO - 2 * SIDEBAR_PAD_X - 13;
 
 const st = StyleSheet.create({
-  page: { fontFamily: FONT, fontSize: 10, lineHeight: 1.45 },
+  // The vertical margin belongs to the PAGE: on a column it is dropped where the column continues
+  // on the next page, and the text there started at the very top edge.
+  page: { fontFamily: FONT, fontSize: 10, lineHeight: 1.45, paddingVertical: 30 },
   sidebarBg: { position: "absolute", top: 0, left: 0, bottom: 0, width: SIDEBAR_W },
   row: { flexDirection: "row" },
-  sidebar: { width: SIDEBAR_W, paddingVertical: 30, paddingHorizontal: SIDEBAR_PAD_X },
-  main: { width: "66%", paddingVertical: 30, paddingHorizontal: 24 },
+  sidebar: { width: SIDEBAR_W, paddingHorizontal: SIDEBAR_PAD_X },
+  // A gap between sections, not a bottom margin: see classic.tsx.
+  main: { width: "66%", paddingHorizontal: 24, rowGap: GAP.section },
   name: { fontSize: 17, fontFamily: FONT_BOLD, marginTop: 12, lineHeight: 1.25 },
   role: { fontSize: 11, marginTop: 4 },
   sideBlock: { marginTop: 16 },
-  section: { marginBottom: GAP.section },
 });
 
 export default function ModernTemplate({ data, theme }: { data: CvData; theme: TemplateTheme }) {
   const p = data.personalInfo;
   const white = theme.onPrimary;
-
-  const SideBlock = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <View style={st.sideBlock}>
-      <SectionHeading title={title} theme={theme} variant="onPrimary" />
-      {children}
-    </View>
-  );
-  const Section = ({ title, children, show }: { title: string; children: React.ReactNode; show: boolean }) =>
-    show ? <View style={st.section}><SectionHeading title={title} theme={theme} variant="primary" />{children}</View> : null;
+  const languages: Entry[] = data.languages.length > 0 ? [{
+    key: "languages",
+    body: (
+      <View style={{ rowGap: 2, paddingBottom: 2 }}>
+        {data.languages.map((l) => (
+          <Text key={l.id} style={{ color: white }}>{l.name}{l.level ? <Text style={{ color: white, opacity: 0.8 }}> ({l.level})</Text> : null}</Text>
+        ))}
+      </View>
+    ),
+  }] : [];
 
   return (
     <Document title={`${p.name || "Resume"} — CV`} author={p.name || "ATS Hero"} creator="ATS Hero" producer="ATS Hero">
@@ -52,33 +55,19 @@ export default function ModernTemplate({ data, theme }: { data: CvData; theme: T
 
             <ContactBar p={p} theme={theme} color={white} direction="column" columnTextWidth={CONTACT_TEXT_W} />
 
-            {data.skills.length > 0 ? (
-              <SideBlock title="SKILLS"><Text style={{ color: white }}>{data.skills.join(", ")}</Text></SideBlock>
-            ) : null}
-            {data.instruments.length > 0 ? (
-              <SideBlock title="TOOLS"><Text style={{ color: white }}>{data.instruments.join(", ")}</Text></SideBlock>
-            ) : null}
-            {data.softSkills.length > 0 ? (
-              <SideBlock title="SOFT SKILLS"><Text style={{ color: white }}>{data.softSkills.join(", ")}</Text></SideBlock>
-            ) : null}
-            {data.languages.length > 0 ? (
-              <SideBlock title="LANGUAGES">
-                {data.languages.map((l) => (
-                  <Text key={l.id} style={{ color: white, marginBottom: 2 }}>{l.name}{l.level ? <Text style={{ color: white, opacity: 0.8 }}> ({l.level})</Text> : null}</Text>
-                ))}
-              </SideBlock>
-            ) : null}
+            <Section title="SKILLS" variant="onPrimary" theme={theme} style={st.sideBlock} entries={textEntries("skills", data.skills.join(", "), white)} />
+            <Section title="TOOLS" variant="onPrimary" theme={theme} style={st.sideBlock} entries={textEntries("tools", data.instruments.join(", "), white)} />
+            <Section title="SOFT SKILLS" variant="onPrimary" theme={theme} style={st.sideBlock} entries={textEntries("soft", data.softSkills.join(", "), white)} />
+            <Section title="LANGUAGES" variant="onPrimary" theme={theme} style={st.sideBlock} entries={languages} />
           </View>
 
           {/* Main */}
           <View style={st.main}>
-            <Section title="SUMMARY" show={!!data.summary.valueProposition}><SummaryBody data={data} theme={theme} /></Section>
-            <Section title="EXPERIENCE" show={data.work.length > 0}><ExperienceBody data={data} theme={theme} /></Section>
-            <Section title="EDUCATION" show={data.education.length > 0}><EducationBody data={data} theme={theme} /></Section>
+            <Section title="SUMMARY" theme={theme} entries={summaryEntries(data, theme)} />
+            <Section title="EXPERIENCE" theme={theme} entries={experienceEntries(data, theme)} />
+            <Section title="EDUCATION" theme={theme} entries={educationEntries(data, theme)} />
             {ALL_SIMPLE.map(({ key, title }) => (
-              <Section key={key} title={title} show={(data[key] as unknown[]).length > 0}>
-                <SimpleSection items={data[key] as any} theme={theme} />
-              </Section>
+              <Section key={key} title={title} theme={theme} entries={simpleEntries(data[key] as any, theme)} />
             ))}
           </View>
         </View>

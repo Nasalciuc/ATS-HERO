@@ -119,6 +119,46 @@ export function SectionHeading({ title, theme, variant = "primary" }: { title: s
   );
 }
 
+/* ------------------------------------------------------------- page breaks    */
+// How a CV may break across pages — what a recruiter expects, checked by
+// tests/cv-page-breaks.test.tsx:
+//  - a section heading never ends a page: it is laid out together with its first entry's header;
+//  - an entry's header (title, dates, company…) never ends a page: it keeps at least three lines
+//    of its content on the same page (KEEP_AHEAD = the 2pt gap + 3 lines of at most 15pt);
+//  - a bullet is ONE Text (marker included), so the marker never stays behind, and a bullet or
+//    paragraph of 2–3 lines never splits (react-pdf's default orphans = widows = 2).
+// react-pdf ignores minPresenceAhead on a node that has nothing before it on the page, hence the
+// zero-height <View /> that opens every entry.
+const KEEP_AHEAD = 47;
+
+/** One entry of a section: `head` never splits and keeps KEEP_AHEAD of `body` with it. */
+export type Entry = { key: string; head?: React.ReactNode; body?: React.ReactNode };
+
+export function Section({
+  title, theme, variant = "primary", style, entries,
+}: {
+  title: string; theme: TemplateTheme; variant?: HeadingVariant;
+  style?: React.ComponentProps<typeof View>["style"]; entries: Entry[];
+}) {
+  if (entries.length === 0) return null;
+  return (
+    <View style={style}>
+      <View style={{ rowGap: GAP.entry }}>
+        {entries.map((e, i) => (
+          <View key={e.key}>
+            <View />
+            <View wrap={false} minPresenceAhead={e.body ? KEEP_AHEAD : 0}>
+              {i === 0 ? <SectionHeading title={title} theme={theme} variant={variant} /> : null}
+              {e.head}
+            </View>
+            {e.body}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 /* ----------------------------------------------------------------- split row    */
 export function SplitRow({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
   return (
@@ -130,17 +170,26 @@ export function SplitRow({ left, right }: { left: React.ReactNode; right?: React
 }
 
 /* ----------------------------------------------------------------- bullets      */
-export function BulletList({ text, theme }: { text?: string; theme: TemplateTheme }) {
+// The marker sits in a hanging indent: Inter Bold "•" is 4.7412pt wide at the 10pt body size;
+// + 2.1875pt letter-spacing + one space (2.8125pt) puts the text at 9.7412pt, exactly where the
+// wrapped lines start (the same place as before bullets became one Text). The test checks these
+// numbers against the font files and the alignment in a rendered PDF.
+// react-pdf takes a paragraph's indent from its FIRST run (here the marker) and textIndent is
+// not inherited, so the marker carries it.
+export const BULLET = { indent: 9.7412109375, track: 2.1875 };
+
+/** A description as bullets (one line of text = one bullet); null when there is no text. */
+export function bullets(text: string | undefined, theme: TemplateTheme): React.ReactNode | null {
   const lines = descLines(text);
   if (lines.length === 0) return null;
   if (lines.length === 1) return <Text style={{ color: theme.text, marginTop: 1 }}>{lines[0]}</Text>;
   return (
     <View style={{ marginTop: 2, rowGap: 2 }}>
       {lines.map((l, i) => (
-        <View key={i} style={{ flexDirection: "row", columnGap: 5, alignItems: "flex-start" }}>
-          <Text style={{ color: theme.primary, fontFamily: FONT_BOLD }}>•</Text>
-          <Text style={{ color: theme.text, flex: 1 }}>{l}</Text>
-        </View>
+        <Text key={i} style={{ color: theme.text, marginLeft: BULLET.indent }}>
+          <Text style={{ color: theme.primary, fontFamily: FONT_BOLD, letterSpacing: BULLET.track, textIndent: -BULLET.indent }}>•</Text>
+          {` ${l}`}
+        </Text>
       ))}
     </View>
   );
@@ -152,88 +201,83 @@ const meta = StyleSheet.create({
   date: { fontSize: 9 },
 });
 
-/* ----------------------------------------------------------------- bodies       */
-export function SummaryBody({ data, theme }: { data: CvData; theme: TemplateTheme }) {
-  if (!data.summary.valueProposition) return null;
-  return <Text style={{ color: theme.text }}>{data.summary.valueProposition}</Text>;
+/* ---------------------------------------------------------------- entries      */
+export function summaryEntries(data: CvData, theme: TemplateTheme): Entry[] {
+  if (!data.summary.valueProposition) return [];
+  return [{ key: "summary", body: <Text style={{ color: theme.text }}>{data.summary.valueProposition}</Text> }];
 }
 
-export function ExperienceBody({ data, theme }: { data: CvData; theme: TemplateTheme }) {
-  return (
-    <View style={{ rowGap: GAP.entry }}>
-      {data.work.map((w) => {
-        const dates = dateRange(w.startDate, w.endDate, w.current);
-        const loc = [w.cityState, w.country].filter(Boolean).join(", ");
-        if (theme.meta === "stacked") {
-          return (
-            <View key={w.id}>
-              <Text style={[meta.title, { color: theme.text }]}>{w.role || w.company || "—"}</Text>
-              <Text style={{ color: theme.muted }}>{[dates, w.role ? w.company : "", loc].filter(Boolean).join(SEP)}</Text>
-              <BulletList text={w.description} theme={theme} />
-            </View>
-          );
-        }
-        return (
-          <View key={w.id}>
-            <SplitRow
-              left={<Text style={[meta.title, { color: theme.text }]}>{w.role || "—"}</Text>}
-              right={dates ? <Text style={[meta.date, { color: theme.faint }]}>{dates}</Text> : null}
-            />
-            <SplitRow
-              left={<Text style={{ color: theme.muted }}>{w.company}</Text>}
-              right={loc ? <Text style={[meta.date, { color: theme.faint }]}>{loc}</Text> : null}
-            />
-            <BulletList text={w.description} theme={theme} />
-          </View>
-        );
-      })}
-    </View>
-  );
+export function skillsEntries(data: CvData, theme: TemplateTheme): Entry[] {
+  return hasSkills(data) ? [{ key: "skills", body: <SkillsBody data={data} theme={theme} /> }] : [];
 }
 
-export function EducationBody({ data, theme }: { data: CvData; theme: TemplateTheme }) {
-  return (
-    <View style={{ rowGap: GAP.entry }}>
-      {data.education.map((e) => {
-        const dates = dateRange(e.startDate, e.endDate);
-        const right = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP);
-        if (theme.meta === "stacked") {
-          return (
-            <View key={e.id}>
-              <Text style={[meta.title, { color: theme.text }]}>{e.degree || e.institution || "—"}</Text>
-              <Text style={{ color: theme.muted }}>{[dates, e.degree ? e.institution : "", e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP)}</Text>
-              {e.additional ? <Text style={{ color: theme.text, marginTop: 1 }}>{e.additional}</Text> : null}
-            </View>
-          );
-        }
-        return (
-          <View key={e.id}>
-            <SplitRow
-              left={<Text style={[meta.title, { color: theme.text }]}>{e.degree || e.institution || "—"}</Text>}
-              right={dates ? <Text style={[meta.date, { color: theme.faint }]}>{dates}</Text> : null}
-            />
-            <SplitRow
-              left={<Text style={{ color: theme.muted }}>{e.degree ? e.institution : ""}</Text>}
-              right={right ? <Text style={[meta.date, { color: theme.faint }]}>{right}</Text> : null}
-            />
-            {e.additional ? <Text style={{ color: theme.text, marginTop: 1 }}>{e.additional}</Text> : null}
-          </View>
-        );
-      })}
-    </View>
-  );
+/** A single paragraph in a narrow column (Modern sidebar blocks). */
+export function textEntries(key: string, text: string, color: string): Entry[] {
+  return text ? [{ key, body: <Text style={{ color }}>{text}</Text> }] : [];
+}
+
+export function experienceEntries(data: CvData, theme: TemplateTheme): Entry[] {
+  return data.work.map((w) => {
+    const dates = dateRange(w.startDate, w.endDate, w.current);
+    const loc = [w.cityState, w.country].filter(Boolean).join(", ");
+    const head = theme.meta === "stacked" ? (
+      <>
+        <Text style={[meta.title, { color: theme.text }]}>{w.role || w.company || "—"}</Text>
+        <Text style={{ color: theme.muted }}>{[dates, w.role ? w.company : "", loc].filter(Boolean).join(SEP)}</Text>
+      </>
+    ) : (
+      <>
+        <SplitRow
+          left={<Text style={[meta.title, { color: theme.text }]}>{w.role || "—"}</Text>}
+          right={dates ? <Text style={[meta.date, { color: theme.faint }]}>{dates}</Text> : null}
+        />
+        <SplitRow
+          left={<Text style={{ color: theme.muted }}>{w.company}</Text>}
+          right={loc ? <Text style={[meta.date, { color: theme.faint }]}>{loc}</Text> : null}
+        />
+      </>
+    );
+    return { key: w.id, head, body: bullets(w.description, theme) };
+  });
+}
+
+export function educationEntries(data: CvData, theme: TemplateTheme): Entry[] {
+  return data.education.map((e) => {
+    const dates = dateRange(e.startDate, e.endDate);
+    const right = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP);
+    const head = theme.meta === "stacked" ? (
+      <>
+        <Text style={[meta.title, { color: theme.text }]}>{e.degree || e.institution || "—"}</Text>
+        <Text style={{ color: theme.muted }}>{[dates, e.degree ? e.institution : "", e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP)}</Text>
+      </>
+    ) : (
+      <>
+        <SplitRow
+          left={<Text style={[meta.title, { color: theme.text }]}>{e.degree || e.institution || "—"}</Text>}
+          right={dates ? <Text style={[meta.date, { color: theme.faint }]}>{dates}</Text> : null}
+        />
+        <SplitRow
+          left={<Text style={{ color: theme.muted }}>{e.degree ? e.institution : ""}</Text>}
+          right={right ? <Text style={[meta.date, { color: theme.faint }]}>{right}</Text> : null}
+        />
+      </>
+    );
+    const body = e.additional ? <Text style={{ color: theme.text, marginTop: 1 }}>{e.additional}</Text> : null;
+    return { key: e.id, head, body };
+  });
 }
 
 export function SkillsBody({ data, theme, stacked = false }: { data: CvData; theme: TemplateTheme; stacked?: boolean }) {
   const sep = stacked ? ", " : SEP;
+  const space = stacked ? 4 : 2; // a gap + padding, not a bottom margin (see classic.tsx)
   const Group = ({ label, value }: { label: string; value: string }) => (
-    <Text style={{ color: theme.text, marginBottom: stacked ? 4 : 2 }}>
+    <Text style={{ color: theme.text }}>
       <Text style={{ fontFamily: FONT_BOLD, color: theme.text }}>{label}: </Text>
       {value}
     </Text>
   );
   return (
-    <View>
+    <View style={{ rowGap: space, paddingBottom: space }}>
       {data.skills.length > 0 ? <Group label="Hard skills" value={data.skills.join(sep)} /> : null}
       {data.instruments.length > 0 ? <Group label="Tools" value={data.instruments.join(sep)} /> : null}
       {data.softSkills.length > 0 ? <Group label="Soft skills" value={data.softSkills.join(sep)} /> : null}
@@ -244,25 +288,22 @@ export function SkillsBody({ data, theme, stacked = false }: { data: CvData; the
   );
 }
 
-export function SimpleSection({ items, theme }: { items: SimpleEntry[]; theme: TemplateTheme }) {
-  if (items.length === 0) return null;
-  return (
-    <View style={{ rowGap: GAP.entry }}>
-      {items.map((it) => {
-        const right = [it.organisation || it.issuer || it.publisher, it.date].filter(Boolean).join(SEP);
-        return (
-          <View key={it.id}>
-            <SplitRow
-              left={<Text style={[meta.title, { color: theme.text }]}>{it.title || it.role || "—"}</Text>}
-              right={right ? <Text style={[meta.date, { color: theme.faint }]}>{right}</Text> : null}
-            />
-            <BulletList text={it.description} theme={theme} />
-            {it.link ? <Text style={{ fontSize: 9, color: theme.faint, marginTop: 1 }}>{it.link}</Text> : null}
-          </View>
-        );
-      })}
-    </View>
-  );
+export function simpleEntries(items: SimpleEntry[], theme: TemplateTheme): Entry[] {
+  return items.map((it) => {
+    const right = [it.organisation || it.issuer || it.publisher, it.date].filter(Boolean).join(SEP);
+    const desc = bullets(it.description, theme);
+    const link = it.link ? <Text style={{ fontSize: 9, color: theme.faint, marginTop: 1 }}>{it.link}</Text> : null;
+    return {
+      key: it.id,
+      head: (
+        <SplitRow
+          left={<Text style={[meta.title, { color: theme.text }]}>{it.title || it.role || "—"}</Text>}
+          right={right ? <Text style={[meta.date, { color: theme.faint }]}>{right}</Text> : null}
+        />
+      ),
+      body: desc || link ? <>{desc}{link}</> : null,
+    };
+  });
 }
 
 export const ALL_SIMPLE: { key: keyof CvData; title: string }[] = [

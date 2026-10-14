@@ -27,15 +27,22 @@ function descLines(text?: string): string[] {
   return (text || "").split(/\r?\n/).map((s) => s.trim().replace(/^[•\-*]\s*/, "")).filter(Boolean);
 }
 
+// Page breaks (Word and LibreOffice honour these; the PDF templates follow the same rules,
+// tests/cv-page-breaks.test.tsx checks both):
+// a heading and an entry's header rows keep with what follows them (keepNext), a bullet never
+// splits across pages (keepLines), and no paragraph leaves a single line behind (widowControl).
 function heading(text: string, accent: string): Paragraph {
   return new Paragraph({
+    keepNext: true,
     spacing: { before: 240, after: 80 },
     border: { bottom: { color: accent, style: BorderStyle.SINGLE, size: 8, space: 2 } },
     children: [new TextRun({ text: text.toUpperCase(), bold: true, color: accent, size: 22 })],
   });
 }
-function split(left: string, right: string, opts: { bold?: boolean; before?: number } = {}): Paragraph {
+function split(left: string, right: string, opts: { bold?: boolean; before?: number; keepNext?: boolean } = {}): Paragraph {
   return new Paragraph({
+    keepNext: opts.keepNext || undefined, // `false` would be written out as an explicit w:val
+    widowControl: true,
     tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
     spacing: { before: opts.before ?? 0, after: 20 },
     children: [
@@ -44,17 +51,21 @@ function split(left: string, right: string, opts: { bold?: boolean; before?: num
     ],
   });
 }
-function para(text: string, color = TEXT, size = 20): Paragraph {
-  return new Paragraph({ spacing: { after: 30 }, children: [new TextRun({ text, color, size })] });
+function para(text: string, color = TEXT, size = 20, keepNext = false): Paragraph {
+  return new Paragraph({ keepNext: keepNext || undefined, widowControl: true, spacing: { after: 30 }, children: [new TextRun({ text, color, size })] });
 }
-function bullets(text?: string): Paragraph[] {
+/** `keepLast`: keep the last paragraph with the one after it (an entry's link line). */
+function bullets(text?: string, keepLast = false): Paragraph[] {
   const lines = descLines(text);
   if (lines.length === 0) return [];
-  if (lines.length === 1) return [para(lines[0])];
-  return lines.map((l) => new Paragraph({ bullet: { level: 0 }, spacing: { after: 20 }, children: [new TextRun({ text: l, color: TEXT, size: 20 })] }));
+  if (lines.length === 1) return [para(lines[0], TEXT, 20, keepLast)];
+  return lines.map((l, i) => new Paragraph({
+    bullet: { level: 0 }, keepLines: true, keepNext: (keepLast && i === lines.length - 1) || undefined, widowControl: true,
+    spacing: { after: 20 }, children: [new TextRun({ text: l, color: TEXT, size: 20 })],
+  }));
 }
 function skillLine(label: string, value: string): Paragraph {
-  return new Paragraph({ spacing: { after: 20 }, children: [
+  return new Paragraph({ widowControl: true, spacing: { after: 20 }, children: [
     new TextRun({ text: `${label}: `, bold: true, color: TEXT, size: 20 }),
     new TextRun({ text: value, color: TEXT, size: 20 }),
   ] });
@@ -97,10 +108,12 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
   if (data.work.length) {
     c.push(heading("Work Experience", a));
     data.work.forEach((w, i) => {
-      c.push(split(w.role || "—", dateRange(w.startDate, w.endDate, w.current), { bold: true, before: i === 0 ? 0 : 140 }));
       const loc = [w.cityState, w.country].filter(Boolean).join(", ");
-      if (w.company || loc) c.push(split(w.company, loc));
-      c.push(...bullets(w.description));
+      const content = bullets(w.description);
+      const second = !!(w.company || loc);
+      c.push(split(w.role || "—", dateRange(w.startDate, w.endDate, w.current), { bold: true, before: i === 0 ? 0 : 140, keepNext: second || content.length > 0 }));
+      if (second) c.push(split(w.company, loc, { keepNext: content.length > 0 }));
+      c.push(...content);
     });
   }
 
@@ -108,9 +121,10 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
   if (data.education.length) {
     c.push(heading("Education", a));
     data.education.forEach((e, i) => {
-      c.push(split(e.degree || e.institution || "—", dateRange(e.startDate, e.endDate), { bold: true, before: i === 0 ? 0 : 140 }));
       const right = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join("   ·   ");
-      if ((e.degree && e.institution) || right) c.push(split(e.degree ? e.institution : "", right));
+      const second = !!((e.degree && e.institution) || right);
+      c.push(split(e.degree || e.institution || "—", dateRange(e.startDate, e.endDate), { bold: true, before: i === 0 ? 0 : 140, keepNext: second || !!e.additional }));
+      if (second) c.push(split(e.degree ? e.institution : "", right, { keepNext: !!e.additional }));
       if (e.additional) c.push(para(e.additional));
     });
   }
@@ -127,8 +141,9 @@ export function buildCvDocx(input: CvData, accent?: number | string): Document {
     c.push(heading(title, a));
     items.forEach((it, i) => {
       const right = [it.organisation || it.issuer || it.publisher, it.date].filter(Boolean).join("   ·   ");
-      c.push(split(it.title || it.role || "—", right, { bold: true, before: i === 0 ? 0 : 120 }));
-      c.push(...bullets(it.description));
+      const content = bullets(it.description, !!it.link);
+      c.push(split(it.title || it.role || "—", right, { bold: true, before: i === 0 ? 0 : 120, keepNext: content.length > 0 || !!it.link }));
+      c.push(...content);
       if (it.link) c.push(para(it.link, FAINT, 18));
     });
   }

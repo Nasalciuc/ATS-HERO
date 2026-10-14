@@ -118,6 +118,7 @@ graphify update .             # after every change; `graphify explain <Node>` be
    - Run the ATS lab and look at the PDFs.
    - Contacts never break across lines, blank entries never print, and every PDF is rendered by `renderCvPdfBlob()`, which resets the font glyph cache (`resetGlyphCache()` in `fonts.ts`).
    - Never render PDFs another way.
+   - Page breaks follow the rules in `shared.tsx` ("page breaks"; `tests/cv-page-breaks.test.tsx` checks them): build sections with `Section` + entries, and space blocks with the parent's `rowGap`, never a bottom margin (react-pdf moves a node whose bottom margin does not fit to the next page).
 8. **Components.** Don't move, rename or delete components or icons without telling Liubovi first.
 9. **Generated files.** Regenerate instead of editing:
    - `node design-check/icons/generate.mjs` produces `components/figma-icons.tsx`, `components/icon-credits.ts` and `design-check/ICON-SOURCES.md`.
