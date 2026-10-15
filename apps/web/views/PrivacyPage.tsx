@@ -49,7 +49,7 @@ const journey: Step[] = [
     points: [
       "The first time you open the app, your browser gets a random guest code, and your CVs are saved under it.",
       "What you type in the builder is saved to our database as you go.",
-      "A file or text you check in Improve My Resume or Check Job Fit is read inside your browser and never uploaded.",
+      "A CV you check (on the home page, in Improve My Resume or in Check Job Fit) is read inside your browser and never uploaded, whether it is a PDF, a Word file or text.",
       "PDF and Word downloads are made in your browser too.",
     ],
     keep: `Guest CVs: deleted ${GUEST_RETENTION_DAYS} days after your last edit`,

@@ -5,6 +5,7 @@ import AppShell from "../components/app/AppShell";
 import AnalyzeSteps from "../components/app/AnalyzeSteps";
 import { ArrowUp, SaveDisk, UploadRounded } from "../components/figma-icons";
 import { api } from "../lib/api";
+import { startImprove } from "../lib/analyze-flow";
 import { CV_FILE_ACCEPT, CV_FILE_MSG, droppedFile, isFileDrag, readCvFile } from "../lib/cv-file";
 
 type Mode = "improve" | "jobfit";
@@ -159,13 +160,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
         sessionStorage.removeItem("ats_jobfit_cv");
         sessionStorage.removeItem("ats_jobfit_jd");
       } else {
-        sessionStorage.setItem("ats_flow", "improve");
-        const { report } = await api.score({ text: cvText });
-        sessionStorage.setItem("ats_report", JSON.stringify(report));
-        sessionStorage.removeItem("ats_jobfit");
-        sessionStorage.setItem("ats_text", cvText);
-        sessionStorage.removeItem("ats_jd");
-        sessionStorage.removeItem("ats_improve_cv");
+        startImprove(cvText);
       }
       navigate("/app/score");
     } catch (e) {

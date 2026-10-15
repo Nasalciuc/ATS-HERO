@@ -915,11 +915,37 @@ p {
   align-items: center;
   gap: 14px;
   color: var(--ink);
+  /* a button (it opens the file picker, Enter and Space too) that looks like Figma's drop box */
+  background: transparent;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.upload-card__drop:hover,
+.upload-card__drop.is-over {
+  border-color: var(--green);
+  background: var(--green-tint);
+}
+.upload-card__drop:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+.upload-card__drop:disabled {
+  cursor: progress;
 }
 .upload-card__hint {
   font-size: 16px;
   line-height: 18px;
   color: var(--gray-500);
+}
+.upload-card__error {
+  max-width: 379px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--red-text);
 }
 .feature-list {
   display: flex;
