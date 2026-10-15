@@ -27,6 +27,8 @@
   --violet-200: #d9d2ff;
   --violet-600: #725bfe;
   --red: #ff6161;
+  /* --red is 2.9:1 on white: fine for icons and borders, too light for text. Messages use this (5.4:1). */
+  --red-text: #c4352f;
   --line: #e3e2e2;
   --hairline: rgba(0, 0, 0, 0.1);
 
@@ -3150,9 +3152,14 @@ select.field__input {
   width: 205px;
 }
 .analyze-error {
-  color: var(--red);
+  color: var(--red-text);
   margin-top: 14px;
   font-size: 14px;
+}
+/* a file dragged over the field: drop it here (lib/cv-file.ts reads it) */
+.analyze-block.is-over .analyze-textarea {
+  background: var(--green-tint);
+  box-shadow: inset 0 0 0 2px var(--green);
 }
 
 /* PHONE (≤720px): Improve / Job Fit in the builder's phone style (no Figma mobile frame) */

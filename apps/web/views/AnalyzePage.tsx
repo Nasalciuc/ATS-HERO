@@ -5,14 +5,9 @@ import AppShell from "../components/app/AppShell";
 import AnalyzeSteps from "../components/app/AnalyzeSteps";
 import { ArrowUp, SaveDisk, UploadRounded } from "../components/figma-icons";
 import { api } from "../lib/api";
-import { isPdfFile } from "../lib/pdf";
-import { guardAndExtractPdf, GUARD_MSG } from "../lib/pdf-guard";
+import { CV_FILE_ACCEPT, CV_FILE_MSG, droppedFile, isFileDrag, readCvFile } from "../lib/cv-file";
 
 type Mode = "improve" | "jobfit";
-
-/** the text files the picker offers (its accept list); anything else has to be a PDF */
-const TEXT_FILE = /\.(txt|md|json|csv)$/i;
-const NOT_TEXT = "Upload a PDF or a text file (.txt, .md, .csv, .json).";
 
 /** Figma "Frame 347": INSERT TEXT (778×134) · "or" · Upload file — 16 apart. */
 function TextOrUpload({
@@ -32,42 +27,40 @@ function TextOrUpload({
   const id = useId();
   const fileRef = useRef<HTMLInputElement>(null);
   const [parsing, setParsing] = useState(false);
+  const [over, setOver] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // PDF, Word or text, read in the browser (lib/cv-file.ts); a scan, an old .doc or a picture
+  // gets a message saying what to do instead of an empty field
   const onFile = async (file: File) => {
     setParsing(true);
     setUploadError(null);
-    try {
-      if (isPdfFile(file)) {
-        const res = await guardAndExtractPdf(file);
-        if (!res.ok) {
-          setUploadError(GUARD_MSG[res.error]);
-          return;
-        }
-        onChange(res.text);
-        return;
-      }
-      // "All files" in the picker lets anything through: read only text files, and not binary
-      // content with a text name (a NUL byte), so an image never lands in the field as gibberish
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError(GUARD_MSG.TOO_LARGE);
-        return;
-      }
-      const text = TEXT_FILE.test(file.name) || file.type.startsWith("text/") ? await file.text() : null;
-      if (text === null || text.includes("\u0000")) {
-        setUploadError(NOT_TEXT);
-        return;
-      }
-      onChange(text);
-    } catch {
-      setUploadError(GUARD_MSG.PARSE_FAILED);
-    } finally {
-      setParsing(false);
-    }
+    const res = await readCvFile(file);
+    setParsing(false);
+    if (res.ok) onChange(res.text);
+    else setUploadError(CV_FILE_MSG[res.error]);
   };
 
   return (
-    <div className="analyze-block" data-figma={figma}>
+    <div
+      className={`analyze-block${over ? " is-over" : ""}`}
+      data-figma={figma}
+      onDragOver={(e) => {
+        if (!isFileDrag(e)) return; // dragged text still drops into the field as text
+        e.preventDefault(); // without it the browser opens the dropped file instead of the site
+        setOver(true);
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(false);
+      }}
+      onDrop={(e) => {
+        const file = droppedFile(e);
+        if (!file) return;
+        e.preventDefault();
+        setOver(false);
+        void onFile(file);
+      }}
+    >
       <div className="analyze-field" data-figma={`${figma}-field`}>
         <label className="field__label" htmlFor={id}>
           INSERT TEXT<span className="sr-only">: {what}</span>
@@ -103,9 +96,13 @@ function TextOrUpload({
       <input
         ref={fileRef}
         type="file"
-        accept=".txt,.md,.json,.csv,.pdf"
+        accept={CV_FILE_ACCEPT}
         hidden
-        onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = ""; // the browser fires no change for the same file twice otherwise
+          if (file) void onFile(file);
+        }}
       />
     </div>
   );
