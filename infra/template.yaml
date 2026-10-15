@@ -1,0 +1,508 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ATS Hero - application stack, one per environment (atshero-dev, atshero-prod).
+  Python Tier 2 API (Lambda container behind an HTTP API with the Clerk JWT authorizer),
+  the rate-limit table, the role Vercel functions assume through OIDC, and alarms.
+  Workers (SQS) and the assets bucket exist only when their trigger flips the parameter.
+  Every role here carries the atshero-app-boundary permissions boundary (atshero-foundation):
+  the CloudFormation execution role can't create a role without it.
+
+Parameters:
+  Env:
+    Type: String
+    AllowedValues: [dev, prod]
+  VercelTeamSlug:
+    Type: String
+    AllowedPattern: "[a-z0-9-]+"
+  VercelProjectName:
+    Type: String
+    Default: ats-hero
+  ClerkIssuer:
+    Type: String
+    AllowedPattern: "^https://[^/]+$"
+    ConstraintDescription: the Clerk Frontend API URL, https://<host> with no path and no trailing slash
+    Description: >
+      The Clerk instance's issuer (Frontend API URL). Until the domain exists, both stacks use the
+      development instance (https://<slug>.clerk.accounts.dev), the one the live site runs on.
+  ClerkAudience:
+    Type: String
+    Default: atshero-api
+    Description: The "aud" claim of the Clerk JWT template the browser requests for this API
+  AllowedOrigins:
+    Type: CommaDelimitedList
+    Description: Exact web origins allowed to call the API (CORS), e.g. https://ats-hero-xi.vercel.app
+  PythonApiImageUri:
+    Type: String
+    Description: ECR image (built for linux/arm64 by CI, tagged with the git SHA)
+  EnableSnapStart:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "false"
+    Description: >
+      Turn on when the measured p95 cold start of the Python API is above 3 s. The workflow passes
+      it for prod only; each published version with SnapStart is billed while it exists.
+  EnableWorkers:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "false"
+    Description: Trigger - the first asynchronous job (an agent, bulk e-mail)
+  EnableAssets:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "false"
+    Description: Trigger - photo upload ships (private bucket, presigned URLs, malware scan)
+  BedrockResourceArns:
+    Type: CommaDelimitedList
+    Default: ""
+    Description: Inference-profile and foundation-model ARNs the web app may invoke (empty = none)
+  SesIdentityArn:
+    Type: String
+    Default: ""
+    Description: The verified SES domain identity (empty until the domain exists)
+  DbResourceId:
+    Type: String
+    Default: ""
+    Description: RDS DbiResourceId, to let the web app log in with IAM tokens instead of a password
+
+Conditions:
+  IsProd: !Equals [!Ref Env, prod]
+  SnapStartOn: !Equals [!Ref EnableSnapStart, "true"]
+  WorkersOn: !Equals [!Ref EnableWorkers, "true"]
+  AssetsOn: !Equals [!Ref EnableAssets, "true"]
+  HasBedrock: !Not [!Equals [!Join ["", !Ref BedrockResourceArns], ""]]
+  HasSes: !Not [!Equals [!Ref SesIdentityArn, ""]]
+  HasDbIam: !Not [!Equals [!Ref DbResourceId, ""]]
+
+Globals:
+  Function:
+    PermissionsBoundary: !ImportValue atshero-app-boundary-arn
+    Tags:
+      project: atshero
+      env: !Ref Env
+
+Resources:
+  # ---------- Tier 2: Users -> API Gateway -> Lambda ----------
+  PythonApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/atshero-${Env}-python-api
+      RetentionInDays: !If [IsProd, 30, 7]
+
+  PythonApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub atshero-${Env}-python-api
+      Description: FastAPI + spaCy (apps/ai) through Mangum
+      PackageType: Image
+      ImageUri: !Ref PythonApiImageUri
+      Architectures: [arm64]
+      MemorySize: 1024
+      Timeout: 29
+      AutoPublishAlias: live
+      SnapStart:
+        ApplyOn: !If [SnapStartOn, PublishedVersions, None]
+      LoggingConfig:
+        LogGroup: !Ref PythonApiLogGroup
+        LogFormat: JSON # every line carries the Lambda requestId; REPORT lines keep initDurationMs
+        ApplicationLogLevel: INFO
+        SystemLogLevel: INFO # INFO keeps the start/report lines (cold-start measurement)
+      Environment:
+        Variables:
+          ALLOWED_ORIGINS: !Join [",", !Ref AllowedOrigins]
+          # per-user limit shared by every instance (app/rate_limit.py); the key holds the minute
+          RATE_LIMIT_TABLE: !Ref RateLimitTable
+          TIER2_LIMIT_PER_MINUTE: "30"
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: dynamodb:UpdateItem
+              Resource: !GetAtt RateLimitTable.Arn
+
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /atshero/${Env}/api-access
+      RetentionInDays: !If [IsProd, 30, 7]
+
+  # The HTTP API is written in plain CloudFormation, not as AWS::Serverless::HttpApi: SAM copies
+  # parameter values into its CORS block at transform time, where a CommaDelimitedList can arrive
+  # as one string. Here CloudFormation itself resolves AllowedOrigins to a list.
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub atshero-${Env}-api
+      Description: !Sub ATS Hero Tier 2 API (${Env})
+      ProtocolType: HTTP
+      # With no OPTIONS route, API Gateway answers every CORS preflight itself (no authorizer runs),
+      # adds these headers to the Lambda's responses (429 included) and ignores the app's own.
+      CorsConfiguration:
+        AllowOrigins: !Ref AllowedOrigins
+        AllowHeaders: [authorization, content-type]
+        AllowMethods: [GET, POST, OPTIONS]
+        # Without this the browser can't read them: neither is a CORS-safelisted response header.
+        # apigw-requestid is the error code a user can quote; it is the access log's requestId.
+        ExposeHeaders: [retry-after, apigw-requestid]
+        MaxAge: 600
+      Tags:
+        project: atshero
+        env: !Ref Env
+
+  # Checks the Clerk token (signature through the issuer's JWKS, iss, aud, exp) before Lambda runs.
+  ClerkJwtAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref HttpApi
+      Name: clerk-jwt
+      AuthorizerType: JWT
+      IdentitySource: [$request.header.Authorization]
+      JwtConfiguration:
+        Issuer: !Ref ClerkIssuer
+        Audience: [!Ref ClerkAudience]
+
+  PythonApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Ref PythonApiFunction.Alias # the "live" alias, i.e. the last published version
+      PayloadFormatVersion: "2.0"
+      TimeoutInMillis: 29000
+
+  HealthRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: GET /health
+      AuthorizationType: NONE # the only public route
+      Target: !Sub integrations/${PythonApiIntegration}
+
+  ApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: POST /{proxy+}
+      AuthorizationType: JWT
+      AuthorizerId: !Ref ClerkJwtAuthorizer
+      Target: !Sub integrations/${PythonApiIntegration}
+
+  DefaultStage:
+    Type: AWS::ApiGatewayV2::Stage
+    DependsOn: [HealthRoute, ApiRoute]
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings:
+        # a ceiling for each route (not per user); the per-user limit is in the Lambda (RateLimitTable)
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiAccessLogGroup.Arn
+        # lambdaRequestId joins this line to the Lambda's JSON logs; no request bodies are logged
+        Format: '{"requestId":"$context.requestId","lambdaRequestId":"$context.integration.requestId","ip":"$context.identity.sourceIp","route":"$context.routeKey","status":"$context.status","integrationStatus":"$context.integration.status","latencyMs":"$context.responseLatency","integrationLatencyMs":"$context.integration.latency","error":"$context.error.message","integrationError":"$context.integration.error","user":"$context.authorizer.claims.sub"}'
+      Tags:
+        project: atshero
+        env: !Ref Env
+
+  ApiInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PythonApiFunction.Alias
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*
+
+  # ---------- fast, disposable state (the diagram's DynamoDB) ----------
+  # Rate-limit counters only (key = action#user-or-ip#minute; TTL just deletes old keys, it can lag
+  # by days). Anything that is money or truth (ai_usage, subscriptions) stays in Postgres.
+  RateLimitTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub atshero-${Env}-ratelimit
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+      Tags:
+        - { Key: project, Value: atshero }
+        - { Key: env, Value: !Ref Env }
+
+  # ---------- what Vercel functions may do in AWS (OIDC, no keys) ----------
+  VercelRuntimeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub atshero-${Env}-vercel-runtime
+      MaxSessionDuration: 3600
+      PermissionsBoundary: !ImportValue atshero-app-boundary-arn
+      # The condition keys contain the team slug, so the document is built as a JSON string.
+      # prod trusts only Production deployments; dev trusts only Preview deployments.
+      AssumeRolePolicyDocument: !Sub
+        - |
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Principal": { "Federated": "${ProviderArn}" },
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "StringEquals": {
+                  "oidc.vercel.com/${VercelTeamSlug}:aud": "https://vercel.com/${VercelTeamSlug}",
+                  "oidc.vercel.com/${VercelTeamSlug}:sub": "owner:${VercelTeamSlug}:project:${VercelProjectName}:environment:${VercelEnv}"
+                }
+              }
+            }]
+          }
+        - ProviderArn: !ImportValue atshero-vercel-oidc-provider-arn
+          VercelEnv: !If [IsProd, production, preview]
+      Policies:
+        - PolicyName: runtime
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:UpdateItem, dynamodb:GetItem]
+                Resource: !GetAtt RateLimitTable.Arn
+              - !If
+                - HasBedrock
+                - Effect: Allow
+                  Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream]
+                  Resource: !Ref BedrockResourceArns
+                - !Ref AWS::NoValue
+              - !If
+                - HasSes
+                - Effect: Allow
+                  Action: [ses:SendEmail, ses:SendRawEmail]
+                  Resource: !Ref SesIdentityArn
+                - !Ref AWS::NoValue
+              - !If
+                - HasDbIam
+                - Effect: Allow
+                  Action: rds-db:connect
+                  # each environment logs in as its own Postgres role (granted rds_iam), never the other's
+                  Resource: !Sub
+                    - arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:${DbResourceId}/${DbUser}
+                    - DbUser: !If [IsProd, atshero_app_iam, atshero_dev_app_iam]
+                - !Ref AWS::NoValue
+              - !If
+                - WorkersOn
+                - Effect: Allow
+                  Action: sqs:SendMessage
+                  Resource: !GetAtt JobsQueue.Arn
+                - !Ref AWS::NoValue
+              - !If
+                - AssetsOn
+                - Effect: Allow
+                  Action: [s3:PutObject, s3:GetObject]
+                  Resource: !Sub ${AssetsBucket.Arn}/*
+                - !Ref AWS::NoValue
+      Tags:
+        - { Key: project, Value: atshero }
+        - { Key: env, Value: !Ref Env }
+
+  # ---------- trigger: asynchronous jobs (the diagram's SQS -> Worker) ----------
+  JobsDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Condition: WorkersOn
+    Properties:
+      QueueName: !Sub atshero-${Env}-jobs-dlq
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+
+  JobsQueue:
+    Type: AWS::SQS::Queue
+    Condition: WorkersOn
+    Properties:
+      QueueName: !Sub atshero-${Env}-jobs
+      VisibilityTimeout: 360
+      SqsManagedSseEnabled: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt JobsDeadLetterQueue.Arn
+        maxReceiveCount: 3
+
+  WorkerFunction:
+    Type: AWS::Serverless::Function
+    Condition: WorkersOn
+    Properties:
+      FunctionName: !Sub atshero-${Env}-worker
+      Runtime: python3.12
+      Architectures: [arm64]
+      Handler: index.handler
+      MemorySize: 512
+      Timeout: 60
+      # Placeholder until the first real job type ships. Failing keeps messages safe in the DLQ.
+      InlineCode: |
+        def handler(event, context):
+            raise NotImplementedError("no worker code deployed yet")
+      Events:
+        Jobs:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt JobsQueue.Arn
+            BatchSize: 1 # one job per invocation: its own timeout, its own retry
+            ScalingConfig:
+              MaximumConcurrency: 2 # protects RDS connections and AI spend
+            FunctionResponseTypes: [ReportBatchItemFailures]
+
+  JobsDlqAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: WorkersOn
+    Properties:
+      AlarmName: !Sub atshero-${Env}-jobs-dlq-not-empty
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions: [{ Name: QueueName, Value: !GetAtt JobsDeadLetterQueue.QueueName }]
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue atshero-alerts-topic-arn]
+
+  # ---------- S3 (database backups live in atshero-data) ----------
+  AssetsBucket:
+    Type: AWS::S3::Bucket
+    Condition: AssetsOn
+    DeletionPolicy: RetainExceptOnCreate
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub atshero-${Env}-assets-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [PUT, GET]
+            AllowedOrigins: !Ref AllowedOrigins
+            AllowedHeaders: ["*"]
+            MaxAge: 600
+      LifecycleConfiguration:
+        Rules:
+          - Id: drop-abandoned-uploads
+            Status: Enabled
+            Prefix: incoming/
+            ExpirationInDays: 1
+      Tags:
+        - { Key: project, Value: atshero }
+        - { Key: env, Value: !Ref Env }
+
+  # ---------- CloudWatch ----------
+  PythonApiErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub atshero-${Env}-python-api-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref PythonApiFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue atshero-alerts-topic-arn]
+
+  PythonApiThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub atshero-${Env}-python-api-throttles
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions: [{ Name: FunctionName, Value: !Ref PythonApiFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue atshero-alerts-topic-arn]
+
+  # Counters read from the API access log (JSON): requests stopped by a limit, and requests
+  # without a valid Clerk token. First 10 custom metrics are free.
+  RateLimitedMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref ApiAccessLogGroup
+      FilterPattern: '{ $.status = "429" }'
+      MetricTransformations:
+        - MetricNamespace: !Sub ATSHero/${Env}
+          MetricName: RateLimited
+          MetricValue: "1"
+
+  UnauthorizedMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref ApiAccessLogGroup
+      FilterPattern: '{ $.status = "401" }'
+      MetricTransformations:
+        - MetricNamespace: !Sub ATSHero/${Env}
+          MetricName: Unauthorized
+          MetricValue: "1"
+
+  # One page per environment (the first 3 dashboards are free): API, Lambda, limits, database.
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub atshero-${Env}
+      DashboardBody: !Sub |
+        {"widgets":[
+          {"type":"metric","x":0,"y":0,"width":12,"height":6,"properties":{"title":"API: requests, 4xx, 5xx","region":"${AWS::Region}","stat":"Sum","period":300,"view":"timeSeries",
+            "metrics":[["AWS/ApiGateway","Count","ApiId","${HttpApi}","Stage","$default"],[".","4xx",".",".",".","."],[".","5xx",".",".",".","."]]}},
+          {"type":"metric","x":12,"y":0,"width":12,"height":6,"properties":{"title":"API latency p50 / p95 / p99 (ms)","region":"${AWS::Region}","period":300,"view":"timeSeries",
+            "metrics":[["AWS/ApiGateway","Latency","ApiId","${HttpApi}","Stage","$default",{"stat":"p50"}],["...",{"stat":"p95"}],["...",{"stat":"p99"}]]}},
+          {"type":"metric","x":0,"y":6,"width":12,"height":6,"properties":{"title":"Python API (Lambda): invocations, errors, throttles","region":"${AWS::Region}","stat":"Sum","period":300,"view":"timeSeries",
+            "metrics":[["AWS/Lambda","Invocations","FunctionName","${PythonApiFunction}"],[".","Errors",".","."],[".","Throttles",".","."]]}},
+          {"type":"metric","x":12,"y":6,"width":12,"height":6,"properties":{"title":"Python API duration p50 / p95 / p99 (ms)","region":"${AWS::Region}","period":300,"view":"timeSeries",
+            "metrics":[["AWS/Lambda","Duration","FunctionName","${PythonApiFunction}",{"stat":"p50"}],["...",{"stat":"p95"}],["...",{"stat":"p99"}]]}},
+          {"type":"metric","x":0,"y":12,"width":8,"height":6,"properties":{"title":"Stopped by a limit (429) / no valid token (401)","region":"${AWS::Region}","stat":"Sum","period":300,"view":"timeSeries",
+            "metrics":[["ATSHero/${Env}","RateLimited"],[".","Unauthorized"]]}},
+          {"type":"metric","x":8,"y":12,"width":8,"height":6,"properties":{"title":"RDS atshero (shared): connections, CPU %","region":"${AWS::Region}","stat":"Maximum","period":300,"view":"timeSeries",
+            "metrics":[["AWS/RDS","DatabaseConnections","DBInstanceIdentifier","atshero"],[".","CPUUtilization",".",".",{"stat":"Average","yAxis":"right"}]]}},
+          {"type":"metric","x":16,"y":12,"width":8,"height":6,"properties":{"title":"RDS read / write latency (s)","region":"${AWS::Region}","stat":"Average","period":300,"view":"timeSeries",
+            "metrics":[["AWS/RDS","ReadLatency","DBInstanceIdentifier","atshero"],[".","WriteLatency",".","."]]}}
+        ]}
+
+  Api5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub atshero-${Env}-api-5xx
+      Namespace: AWS/ApiGateway
+      MetricName: 5xx
+      Dimensions:
+        - { Name: ApiId, Value: !Ref HttpApi }
+        - { Name: Stage, Value: $default }
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue atshero-alerts-topic-arn]
+
+Outputs:
+  ApiUrl:
+    Description: NEXT_PUBLIC_AI_URL for this environment
+    Value: !GetAtt HttpApi.ApiEndpoint
+  VercelRuntimeRoleArn:
+    Description: AWS_ROLE_ARN in Vercel - the full ARN (Production for prod, Preview for dev)
+    Value: !GetAtt VercelRuntimeRole.Arn
+  RateLimitTableName:
+    Value: !Ref RateLimitTable
+  DashboardUrl:
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards/dashboard/atshero-${Env}
+  JobsQueueUrl:
+    Condition: WorkersOn
+    Value: !Ref JobsQueue
+  AssetsBucketName:
+    Condition: AssetsOn
+    Value: !Ref AssetsBucket

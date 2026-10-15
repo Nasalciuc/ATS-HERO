@@ -6,6 +6,9 @@ export async function guardAndExtractPdf(file: File): Promise<{ ok: true; text: 
   if (String.fromCharCode(...head) !== "%PDF-") return { ok: false, error: "NOT_PDF" };
   try {
     const pdfjs = await import("pdfjs-dist");
+    // In-thread worker (sets globalThis.pdfjsWorker): no worker URL, nothing for the CSP to block.
+    // @ts-expect-error — the worker bundle ships without type declarations
+    await import("pdfjs-dist/build/pdf.worker.min.mjs");
     const doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
     if (doc.numPages > 50) return { ok: false, error: "TOO_MANY_PAGES" };
     let text = "";

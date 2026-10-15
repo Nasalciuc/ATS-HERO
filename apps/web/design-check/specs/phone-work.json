@@ -1,0 +1,134 @@
+{
+  "id": "phone-work",
+  "title": "Phone · Work experience",
+  "frame": "77:190",
+  "reference": "reference/figma/mobile/screen-77-190.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 390,
+    "height": 1084
+  },
+  "touch": true,
+  "locked": true,
+  "tolerance": 2,
+  "note": "Figma mobile wireframe (17:1152), structure only: our Work form has more fields than the wireframe, so the buttons' y isn't checked. Relevant activities is added first so the desktop's Activities suggestion card (not in the mobile frame) is gone. The current step is centred (Figma: 15px right of centre in this frame).",
+  "setup": [
+    {
+      "click": ".progress__add"
+    },
+    {
+      "click": ".addsection__check:has-text('Relevant activities')"
+    },
+    {
+      "click": ".addsection__confirm"
+    },
+    {
+      "wait": 300
+    },
+    {
+      "click": "[data-figma=step-0]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    }
+  ],
+  "checks": [
+    {
+      "key": "m-back-label",
+      "box": [
+        41,
+        45,
+        null,
+        22
+      ]
+    },
+    {
+      "key": "m-section",
+      "box": [
+        null,
+        45,
+        null,
+        20
+      ]
+    },
+    {
+      "key": "title",
+      "box": [
+        null,
+        105,
+        null,
+        33
+      ],
+      "style": {
+        "font-size": "28px"
+      }
+    },
+    {
+      "key": "stepper",
+      "box": [
+        null,
+        168,
+        null,
+        90
+      ]
+    },
+    {
+      "key": "step-3",
+      "box": [
+        null,
+        168,
+        62,
+        62
+      ]
+    },
+    {
+      "key": "tips",
+      "box": [
+        18,
+        271,
+        358,
+        105
+      ],
+      "style": {
+        "border-radius": "10px"
+      }
+    },
+    {
+      "key": "field-role",
+      "box": [
+        18,
+        406,
+        358,
+        70
+      ]
+    },
+    {
+      "key": "entry-add",
+      "box": [
+        16,
+        null,
+        358,
+        51
+      ]
+    },
+    {
+      "key": "btn-next",
+      "relativeTo": "entry-add",
+      "box": [
+        0,
+        59,
+        358,
+        51
+      ],
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    }
+  ]
+}

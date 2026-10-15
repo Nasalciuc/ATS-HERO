@@ -15,3 +15,8 @@ server/data/db.json
 .playwright-mcp/
 *.tsbuildinfo
 tools/audit_result.txt
+
+# ATS lab output + graphify graph (local analysis)
+tools/ats-lab/out/
+apps/web/design-check/out/
+graphify-out/

@@ -127,12 +127,26 @@ export type JobFitReport = {
   message: string;
 };
 
+/** Each section's emoji (Figma "Icons_tabs"): the builder's stepper and the score page's rows. */
+export const SECTION_EMOJI: Record<SectionKey, string> = {
+  personalInfo: "🪪",
+  education: "🎓",
+  summary: "📋",
+  work: "💼",
+  skills: "💪",
+  awards: "🏆",
+  certifications: "📜",
+  publications: "📰",
+  volunteering: "🤝",
+  activities: "🚀",
+};
+
 export const OPTIONAL_SECTIONS: { key: SectionKey; label: string; emoji: string }[] = [
-  { key: "awards", label: "Awards", emoji: "🏆" },
-  { key: "certifications", label: "Certifications", emoji: "📜" },
-  { key: "publications", label: "Publications", emoji: "📚" },
-  { key: "volunteering", label: "Volunteering", emoji: "🤝" },
-  { key: "activities", label: "Relevant activities", emoji: "🚀" },
+  { key: "awards", label: "Awards", emoji: SECTION_EMOJI.awards },
+  { key: "certifications", label: "Certifications", emoji: SECTION_EMOJI.certifications },
+  { key: "publications", label: "Publications", emoji: SECTION_EMOJI.publications },
+  { key: "volunteering", label: "Volunteering", emoji: SECTION_EMOJI.volunteering },
+  { key: "activities", label: "Relevant activities", emoji: SECTION_EMOJI.activities },
 ];
 
 export function emptyCvData(): CvData {

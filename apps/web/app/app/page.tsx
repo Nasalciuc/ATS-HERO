@@ -10,6 +10,7 @@ import { useCvs, useCvMutations } from "@/hooks/use-cvs";
 import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { useApp } from "@/store/AppContext";
 import { isClerkPublicConfigured } from "@/lib/clerk-config";
+import { PhoneHub } from "@/components/app/PhoneHub";
 
 function formatDate(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
@@ -41,6 +42,16 @@ export default function DashboardPage() {
 
   return (
     <main className="dash">
+      {/* phones: the home screen from the Figma mobile flow (hidden above 720px) */}
+      <PhoneHub
+        cvs={cvs}
+        signedIn={isSignedIn}
+        account={isSignedIn && clerkReady ? <UserButton /> : undefined}
+        onSignIn={() => setSignInOpen(true)}
+        onNew={newCv}
+        onOpen={(id) => void open(id)}
+        onDelete={(id) => void remove(id)}
+      />
       <div className="container dash__inner">
         <div className="dash__topbar">
           <a href="/" className="dash__logo">ATS Hero</a>

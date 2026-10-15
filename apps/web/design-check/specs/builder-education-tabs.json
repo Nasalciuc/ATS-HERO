@@ -1,0 +1,163 @@
+{
+  "id": "builder-education-tabs",
+  "title": "Builder · Education, two entries",
+  "frame": "249:1850",
+  "reference": "reference/figma/desktop/function-1-step-2-variant-2.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "setup": [
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "fill": [
+        "[data-figma=field-institution-input]",
+        "Technical University of Munich"
+      ]
+    },
+    {
+      "click": "[data-figma=entry-add]"
+    },
+    {
+      "fill": [
+        "[data-figma=field-institution-input]",
+        "Technical University of Munich"
+      ]
+    },
+    {
+      "click": "[data-figma=entry-tab-0]"
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1000
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "btn-preview",
+      "box": [
+        1196,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "stepper",
+      "box": [
+        331,
+        139,
+        1135,
+        98
+      ]
+    },
+    {
+      "key": "tips",
+      "box": [
+        331,
+        269,
+        252,
+        492
+      ]
+    },
+    {
+      "key": "tips-badge",
+      "box": [
+        353,
+        291,
+        null,
+        29
+      ]
+    },
+    {
+      "key": "entry-tabs",
+      "node": "249:2018"
+    },
+    {
+      "key": "entry-tab-0",
+      "node": "249:2013",
+      "style": {
+        "background-color": "rgb(214, 247, 226)"
+      }
+    },
+    {
+      "key": "entry-tab-1",
+      "node": "257:2043",
+      "style": {
+        "background-color": "rgb(248, 248, 248)"
+      }
+    },
+    {
+      "key": "form-card",
+      "node": "249:1950"
+    },
+    {
+      "key": "field-institution",
+      "node": "272:1060"
+    },
+    {
+      "key": "field-additional",
+      "node": "272:1069"
+    },
+    {
+      "key": "entry-add",
+      "box": [
+        643,
+        670,
+        null,
+        37
+      ],
+      "note": "Figma's 8px icon gap here vs 4px in every other frame; we use 4"
+    },
+    {
+      "key": "entry-delete",
+      "node": "272:1106"
+    },
+    {
+      "key": "btn-back",
+      "box": [
+        599,
+        785,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-next",
+      "box": [
+        1306,
+        785,
+        160,
+        52
+      ]
+    }
+  ]
+}

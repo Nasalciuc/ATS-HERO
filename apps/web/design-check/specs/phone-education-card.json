@@ -1,0 +1,113 @@
+{
+  "id": "phone-education-card",
+  "title": "Phone · Education with a saved entry",
+  "frame": "77:15",
+  "reference": "reference/figma/mobile/screen-77-15.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 390,
+    "height": 1244
+  },
+  "touch": true,
+  "locked": true,
+  "tolerance": 2,
+  "note": "This wireframe frame has its tips card 4px lower than the others (275 vs 271), so what follows is checked relative to the tips card.",
+  "setup": [
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "fill": [
+        "[data-figma=field-institution] input",
+        "Oxford University"
+      ]
+    },
+    {
+      "click": ".entry-add"
+    },
+    {
+      "wait": 300
+    }
+  ],
+  "checks": [
+    {
+      "key": "m-back-label",
+      "box": [
+        41,
+        45,
+        null,
+        22
+      ]
+    },
+    {
+      "key": "m-section",
+      "box": [
+        null,
+        45,
+        null,
+        20
+      ]
+    },
+    {
+      "key": "tips",
+      "box": [
+        18,
+        null,
+        358,
+        105
+      ]
+    },
+    {
+      "key": "entry-card-0",
+      "relativeTo": "tips",
+      "box": [
+        0,
+        122,
+        358,
+        82
+      ]
+    },
+    {
+      "key": "entry-card-delete-0",
+      "relativeTo": "entry-card-0",
+      "box": [
+        239,
+        20,
+        39,
+        39
+      ]
+    },
+    {
+      "key": "entry-card-edit-0",
+      "relativeTo": "entry-card-0",
+      "box": [
+        283,
+        20,
+        65,
+        39
+      ],
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    },
+    {
+      "key": "field-institution",
+      "relativeTo": "tips",
+      "box": [
+        0,
+        234,
+        358,
+        70
+      ]
+    },
+    {
+      "key": "entry-add",
+      "box": [
+        16,
+        null,
+        358,
+        51
+      ]
+    }
+  ]
+}

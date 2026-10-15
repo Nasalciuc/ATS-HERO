@@ -1,0 +1,121 @@
+# .github/workflows/infra-deploy.yml - deploys the application stack (infra/template.yaml):
+# build the Python API image for arm64 -> push to ECR -> deploy atshero-dev -> smoke test ->
+# deploy atshero-prod -> delete Lambda versions nothing uses. No AWS keys anywhere: the job
+# assumes atshero-github-deploy through OIDC, and only jobs in the "production" environment
+# (Scaler approves each run) can. Third-party actions are pinned to commit SHAs.
+# The foundation and data stacks are NOT deployed from CI (the role can't touch them).
+name: infra-deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/template.yaml"
+      - "apps/ai/**"
+      - ".github/workflows/infra-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write # OIDC token for AWS
+  contents: read
+
+concurrency:
+  group: infra-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # ubuntu-24.04-arm builds arm64 natively (free while the repo is public); QEMU works everywhere.
+    runs-on: ubuntu-24.04
+    environment: production # GitHub environment: required reviewer Scaler, deployment branch main
+    timeout-minutes: 40
+    env:
+      AWS_REGION: us-east-1
+      CFN_ROLE: ${{ vars.AWS_CFN_EXEC_ROLE_ARN }}
+      ARTIFACTS: ${{ vars.AWS_ARTIFACTS_BUCKET }}
+      TEAM: ${{ vars.VERCEL_TEAM_SLUG }}
+      # Until the domain exists, both are the issuer of the Clerk development instance (the one
+      # the live site runs on). When the production instance exists, change CLERK_ISSUER_PROD.
+      CLERK_ISSUER_DEV: ${{ vars.CLERK_ISSUER_DEV }}
+      CLERK_ISSUER_PROD: ${{ vars.CLERK_ISSUER_PROD }}
+      ORIGINS_DEV: ${{ vars.ALLOWED_ORIGINS_DEV }}
+      ORIGINS_PROD: ${{ vars.ALLOWED_ORIGINS_PROD }}
+      # Switches. Every one is passed on every deploy (a missing parameter would keep its previous
+      # value), so emptying a variable really turns that part off.
+      ENABLE_SNAPSTART_PROD: ${{ vars.ENABLE_SNAPSTART_PROD }}
+      ENABLE_WORKERS: ${{ vars.ENABLE_WORKERS }}
+      ENABLE_ASSETS: ${{ vars.ENABLE_ASSETS }}
+      BEDROCK_ARNS: ${{ vars.BEDROCK_RESOURCE_ARNS }}
+      SES_IDENTITY_ARN: ${{ vars.SES_IDENTITY_ARN }}
+      DB_RESOURCE_ID: ${{ vars.DB_RESOURCE_ID }}
+    steps:
+      - name: Check the required variables (fail before the 10-minute build)
+        env:
+          DEPLOY_ROLE: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          missing=0
+          for v in DEPLOY_ROLE CFN_ROLE ARTIFACTS TEAM CLERK_ISSUER_DEV CLERK_ISSUER_PROD ORIGINS_DEV ORIGINS_PROD; do
+            if [ -z "${!v}" ]; then echo "::error::the GitHub variable behind $v is empty"; missing=1; fi
+          done
+          exit "$missing"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build and push the Python API image (linux/arm64)
+        run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/atshero-python-api:${{ github.sha }}"
+          docker buildx build --platform linux/arm64 --provenance=false \
+            -f apps/ai/Dockerfile.lambda -t "$IMAGE" --push apps/ai
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy dev, smoke test, deploy prod
+        run: |
+          # The SAM transform runs inside CloudFormation (nothing to package: the image is in ECR,
+          # the worker is inline), so plain `aws cloudformation deploy` is enough - no SAM CLI.
+          deploy() { # $1 = env, $2 = allowed origins, $3 = Clerk issuer, $4 = SnapStart
+            aws cloudformation deploy --template-file infra/template.yaml --stack-name "atshero-$1" \
+              --role-arn "$CFN_ROLE" --s3-bucket "$ARTIFACTS" --s3-prefix "atshero-$1" \
+              --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+              --no-fail-on-empty-changeset \
+              --tags project=atshero env="$1" \
+              --parameter-overrides Env="$1" VercelTeamSlug="$TEAM" ClerkIssuer="$3" \
+                AllowedOrigins="$2" PythonApiImageUri="$IMAGE" EnableSnapStart="$4" \
+                EnableWorkers="${ENABLE_WORKERS:-false}" EnableAssets="${ENABLE_ASSETS:-false}" \
+                BedrockResourceArns="$BEDROCK_ARNS" SesIdentityArn="$SES_IDENTITY_ARN" \
+                DbResourceId="$DB_RESOURCE_ID"
+          }
+          url() { aws cloudformation describe-stacks --stack-name "atshero-$1" \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text; }
+
+          deploy dev "$ORIGINS_DEV" "$CLERK_ISSUER_DEV" false # SnapStart only ever in prod
+          curl -fsS --retry 3 "$(url dev)/health"
+          deploy prod "$ORIGINS_PROD" "$CLERK_ISSUER_PROD" "${ENABLE_SNAPSTART_PROD:-false}"
+          curl -fsS --retry 3 "$(url prod)/health"
+
+      - name: Delete Lambda versions the live alias no longer uses
+        # SnapStart bills every published version that still exists; CloudFormation keeps old ones.
+        continue-on-error: true
+        run: |
+          for env in dev prod; do
+            fn="atshero-$env-python-api"
+            live=$(aws lambda get-alias --function-name "$fn" --name live --query FunctionVersion --output text)
+            for v in $(aws lambda list-versions-by-function --function-name "$fn" \
+                --query "Versions[?Version!='\$LATEST'].Version" --output text); do
+              if [ "$v" != "$live" ]; then
+                aws lambda delete-function --function-name "$fn" --qualifier "$v" && echo "deleted $fn:$v"
+              fi
+            done
+          done

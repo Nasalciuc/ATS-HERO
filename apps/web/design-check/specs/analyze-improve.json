@@ -1,0 +1,153 @@
+{
+  "id": "analyze-improve",
+  "title": "Improve My Resume (Function 2)",
+  "frame": "230:685",
+  "reference": "reference/figma/desktop/function-2-improve-cv.png",
+  "route": "/app/improve",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "note": "Figma's placeholder text is a leftover from the builder ('Graduated with honors…'); ours says what to paste.",
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1000
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        40,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "title",
+      "box": [
+        331,
+        40,
+        null,
+        44
+      ],
+      "style": {
+        "font-size": "40px",
+        "font-weight": "600"
+      }
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        40,
+        133,
+        52
+      ],
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    },
+    {
+      "key": "analyze-steps",
+      "box": [
+        331,
+        136,
+        504,
+        83
+      ]
+    },
+    {
+      "key": "analyze-step-0",
+      "box": [
+        331,
+        136,
+        64,
+        64
+      ],
+      "style": {
+        "background-color": "rgb(214, 247, 226)"
+      }
+    },
+    {
+      "key": "analyze-step-1",
+      "box": [
+        551,
+        136,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "analyze-step-2",
+      "box": [
+        771,
+        136,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "analyze-cv-field",
+      "box": [
+        375,
+        295,
+        778,
+        134
+      ]
+    },
+    {
+      "key": "analyze-cv-or",
+      "box": [
+        375,
+        445,
+        null,
+        44
+      ],
+      "style": {
+        "font-size": "40px"
+      }
+    },
+    {
+      "key": "analyze-cv-upload",
+      "box": [
+        375,
+        505,
+        129,
+        37
+      ]
+    },
+    {
+      "key": "analyze-card",
+      "box": [
+        331,
+        251,
+        1133,
+        455
+      ],
+      "style": {
+        "background-color": "rgb(248, 248, 248)",
+        "border-radius": "20px"
+      }
+    },
+    {
+      "key": "btn-check",
+      "box": [
+        1261,
+        730,
+        205,
+        52
+      ],
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    }
+  ]
+}

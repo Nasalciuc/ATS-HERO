@@ -1,0 +1,393 @@
+{
+  "id": "builder-skills",
+  "title": "Builder · Skills (last core step)",
+  "frame": "358:6909",
+  "reference": "reference/figma/desktop/function-1-step-11-add-section.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "setup": [
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "Typography"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "Creative coding"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "Agile Methodologies"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "User Research"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "Design Systems"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-hard] input",
+        "HTML/CSS"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-hard] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-soft] input",
+        "Collaboration"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-soft] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-soft] input",
+        "Adaptability"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-soft] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-soft] input",
+        "Teamwork"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-soft] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-soft] input",
+        "Problem-solving"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-soft] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-tools] input",
+        "FIgma"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-tools] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-tools] input",
+        "Webfow"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-tools] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-tools] input",
+        "Adobe Photoshop"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-tools] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-tools] input",
+        "Adobe After Effects"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-tools] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-tools] input",
+        "Adobe Illustrator"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-tools] input",
+        "Enter"
+      ]
+    },
+    {
+      "fill": [
+        "[data-figma=skills-language-input]",
+        "French"
+      ]
+    },
+    {
+      "select": [
+        "[data-figma=skills-level-input]",
+        "B2"
+      ]
+    },
+    {
+      "press": [
+        "[data-figma=skills-language-input]",
+        "Enter"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1000
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "btn-preview",
+      "box": [
+        1196,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "stepper",
+      "box": [
+        331,
+        139,
+        1135,
+        98
+      ]
+    },
+    {
+      "key": "step-4",
+      "box": [
+        771,
+        139,
+        64,
+        64
+      ],
+      "style": {
+        "background-color": "rgb(214, 247, 226)"
+      }
+    },
+    {
+      "key": "tips",
+      "box": [
+        331,
+        269,
+        252,
+        480
+      ]
+    },
+    {
+      "key": "tips-badge",
+      "box": [
+        353,
+        291,
+        null,
+        29
+      ]
+    },
+    {
+      "key": "form-card",
+      "node": "358:6936"
+    },
+    {
+      "key": "skills-hard",
+      "node": "358:6942"
+    },
+    {
+      "key": "skills-hard-chips",
+      "box": [
+        643,
+        389,
+        null,
+        136
+      ]
+    },
+    {
+      "key": "skills-soft",
+      "node": "358:6996"
+    },
+    {
+      "key": "skills-soft-chips",
+      "box": [
+        643,
+        617,
+        null,
+        88
+      ]
+    },
+    {
+      "key": "skills-tools",
+      "node": "358:7034"
+    },
+    {
+      "key": "skills-tools-chips",
+      "box": [
+        1048,
+        389,
+        null,
+        136
+      ]
+    },
+    {
+      "key": "skills-language",
+      "box": [
+        1048,
+        541,
+        178,
+        60
+      ]
+    },
+    {
+      "key": "skills-level",
+      "box": [
+        1243,
+        541,
+        178,
+        60
+      ]
+    },
+    {
+      "key": "skills-language-chips",
+      "box": [
+        1048,
+        617,
+        null,
+        40
+      ]
+    },
+    {
+      "key": "btn-back",
+      "box": [
+        599,
+        773,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-complete",
+      "box": [
+        1306,
+        773,
+        160,
+        52
+      ],
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    }
+  ]
+}

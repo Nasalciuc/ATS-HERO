@@ -1,0 +1,4 @@
+# ATS lab only (python -m app.lab.run) — the reader libraries live in requirements.txt
+# because /parse-check uses them in production; this file only adds the test runner.
+-r requirements.txt
+pytest>=8.0

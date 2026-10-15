@@ -1,0 +1,673 @@
+{
+  "id": "landing",
+  "title": "Landing page",
+  "frame": "180:19",
+  "$comment": "Figma's footer frame (180:214) sits 10px right of the page grid (x=10, content at 274); we keep the grid, so the footer boxes are Figma's minus 10. The FAQ list is at 262 in Figma (2px left of the grid): within tolerance.",
+  "reference": "reference/figma/desktop/landing-1728px.png",
+  "route": "/",
+  "viewport": {
+    "width": 1728,
+    "height": 4549
+  },
+  "locked": true,
+  "tolerance": 2,
+  "checks": [
+    {
+      "key": "nav",
+      "box": [
+        0,
+        0,
+        1728,
+        74
+      ]
+    },
+    {
+      "key": "nav-logo",
+      "box": [
+        264,
+        31,
+        null,
+        23
+      ]
+    },
+    {
+      "key": "nav-tool",
+      "box": [
+        738,
+        31,
+        null,
+        18
+      ]
+    },
+    {
+      "key": "nav-why",
+      "box": [
+        846,
+        31,
+        null,
+        18
+      ]
+    },
+    {
+      "key": "nav-faq",
+      "box": [
+        949,
+        31,
+        null,
+        18
+      ]
+    },
+    {
+      "key": "nav-login",
+      "box": [
+        1324,
+        21,
+        140,
+        39
+      ]
+    },
+    {
+      "key": "hero",
+      "box": [
+        0,
+        74,
+        1728,
+        785
+      ]
+    },
+    {
+      "key": "hero-badge",
+      "box": [
+        264,
+        154,
+        331,
+        38
+      ]
+    },
+    {
+      "key": "hero-title",
+      "box": [
+        264,
+        218,
+        602,
+        136
+      ]
+    },
+    {
+      "key": "hero-lead",
+      "box": [
+        264,
+        380,
+        450,
+        72
+      ]
+    },
+    {
+      "key": "hero-create",
+      "box": [
+        264,
+        482,
+        218,
+        52
+      ]
+    },
+    {
+      "key": "hero-improve",
+      "box": [
+        496,
+        482,
+        218,
+        52
+      ]
+    },
+    {
+      "key": "hero-stats",
+      "box": [
+        264,
+        657,
+        557,
+        122
+      ]
+    },
+    {
+      "key": "hero-stat-0",
+      "box": [
+        264,
+        657,
+        153,
+        122
+      ]
+    },
+    {
+      "key": "hero-stat-1",
+      "box": [
+        466,
+        657,
+        153,
+        122
+      ]
+    },
+    {
+      "key": "hero-stat-2",
+      "box": [
+        668,
+        657,
+        153,
+        122
+      ]
+    },
+    {
+      "key": "hero-art",
+      "box": [
+        922,
+        159,
+        577,
+        616
+      ]
+    },
+    {
+      "key": "hero-cv",
+      "box": [
+        975,
+        191,
+        389,
+        552
+      ]
+    },
+    {
+      "key": "hero-100",
+      "box": [
+        1289,
+        159,
+        131,
+        138
+      ]
+    },
+    {
+      "key": "hero-pdf",
+      "box": [
+        922,
+        470,
+        106,
+        106
+      ]
+    },
+    {
+      "key": "hero-pill",
+      "box": [
+        1183,
+        731,
+        316,
+        44
+      ]
+    },
+    {
+      "key": "problem",
+      "box": [
+        0,
+        859,
+        1728,
+        356
+      ]
+    },
+    {
+      "key": "problem-title",
+      "box": [
+        264,
+        939,
+        454,
+        92
+      ]
+    },
+    {
+      "key": "problem-text",
+      "box": [
+        264,
+        1063,
+        404,
+        72
+      ]
+    },
+    {
+      "key": "problem-label",
+      "box": [
+        874,
+        939,
+        462,
+        18
+      ]
+    },
+    {
+      "key": "problem-item-0",
+      "box": [
+        874,
+        979,
+        null,
+        32
+      ]
+    },
+    {
+      "key": "problem-item-3",
+      "box": [
+        874,
+        1099,
+        null,
+        32
+      ]
+    },
+    {
+      "key": "tool",
+      "box": [
+        0,
+        1215,
+        1728,
+        717
+      ]
+    },
+    {
+      "key": "tool-title",
+      "box": [
+        264,
+        1295,
+        1202,
+        46
+      ]
+    },
+    {
+      "key": "tool-card-0",
+      "box": [
+        264,
+        1381,
+        389,
+        471
+      ]
+    },
+    {
+      "key": "tool-card-1",
+      "box": [
+        674,
+        1381,
+        386,
+        471
+      ]
+    },
+    {
+      "key": "tool-card-2",
+      "box": [
+        1081,
+        1381,
+        385,
+        471
+      ]
+    },
+    {
+      "key": "tool-img-0",
+      "box": [
+        264,
+        1381,
+        389,
+        291
+      ]
+    },
+    {
+      "key": "tool-text-0",
+      "box": [
+        264,
+        1696,
+        389,
+        72
+      ]
+    },
+    {
+      "key": "tool-cta-0",
+      "box": [
+        264,
+        1800,
+        223,
+        52
+      ]
+    },
+    {
+      "key": "tool-how-0",
+      "box": [
+        495,
+        1800,
+        155,
+        52
+      ]
+    },
+    {
+      "key": "features",
+      "box": [
+        0,
+        1932,
+        1728,
+        858
+      ]
+    },
+    {
+      "key": "features-title",
+      "box": [
+        263,
+        2012,
+        548,
+        92
+      ]
+    },
+    {
+      "key": "features-upload",
+      "box": [
+        264,
+        2136,
+        548,
+        345
+      ]
+    },
+    {
+      "key": "features-upload-title",
+      "box": [
+        333,
+        2206,
+        410,
+        30
+      ]
+    },
+    {
+      "key": "features-drop",
+      "box": [
+        348.5,
+        2260,
+        379,
+        151
+      ]
+    },
+    {
+      "key": "feature-0",
+      "box": [
+        877,
+        2012,
+        587,
+        220
+      ]
+    },
+    {
+      "key": "feature-0-icon",
+      "box": [
+        877,
+        2012,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "feature-0-title",
+      "box": [
+        877,
+        2108,
+        587,
+        36
+      ]
+    },
+    {
+      "key": "feature-1",
+      "box": [
+        877,
+        2251,
+        587,
+        220
+      ]
+    },
+    {
+      "key": "feature-2",
+      "box": [
+        877,
+        2490,
+        587,
+        220
+      ]
+    },
+    {
+      "key": "testimonials",
+      "box": [
+        0,
+        2790,
+        1728,
+        589
+      ]
+    },
+    {
+      "key": "testimonials-title",
+      "box": [
+        263,
+        2870,
+        1202,
+        46
+      ]
+    },
+    {
+      "key": "review-0",
+      "box": [
+        263,
+        2948,
+        387,
+        311
+      ]
+    },
+    {
+      "key": "review-1",
+      "box": [
+        670,
+        2948,
+        387,
+        311
+      ]
+    },
+    {
+      "key": "review-2",
+      "box": [
+        1077,
+        2948,
+        387,
+        311
+      ]
+    },
+    {
+      "key": "review-0-avatar",
+      "box": [
+        283,
+        2968,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "review-0-name",
+      "box": [
+        359,
+        2988.5,
+        null,
+        23
+      ]
+    },
+    {
+      "key": "review-0-stars",
+      "box": [
+        283,
+        3056,
+        132,
+        24
+      ]
+    },
+    {
+      "key": "review-0-time",
+      "box": [
+        283,
+        3221,
+        347,
+        18
+      ]
+    },
+    {
+      "key": "reviews-prev",
+      "box": [
+        808,
+        3279,
+        44,
+        44
+      ]
+    },
+    {
+      "key": "reviews-next",
+      "box": [
+        876,
+        3279,
+        44,
+        44
+      ]
+    },
+    {
+      "key": "faq",
+      "box": [
+        0,
+        3379,
+        1728,
+        759
+      ]
+    },
+    {
+      "key": "faq-list",
+      "box": [
+        262,
+        3459,
+        1200,
+        599
+      ]
+    },
+    {
+      "key": "faq-0",
+      "box": [
+        262,
+        3459,
+        1200,
+        189
+      ]
+    },
+    {
+      "key": "faq-0-q",
+      "box": [
+        262,
+        3488,
+        null,
+        20
+      ]
+    },
+    {
+      "key": "faq-0-toggle",
+      "box": [
+        1418,
+        3476,
+        44,
+        44
+      ]
+    },
+    {
+      "key": "faq-0-a",
+      "box": [
+        262,
+        3528,
+        793,
+        120
+      ]
+    },
+    {
+      "key": "faq-1",
+      "box": [
+        262,
+        3672,
+        1200,
+        61
+      ]
+    },
+    {
+      "key": "faq-5",
+      "box": [
+        262,
+        3980,
+        1200,
+        61
+      ]
+    },
+    {
+      "key": "footer",
+      "box": [
+        null,
+        4138,
+        null,
+        411
+      ]
+    },
+    {
+      "key": "footer-logo",
+      "box": [
+        264,
+        4218,
+        null,
+        23
+      ]
+    },
+    {
+      "key": "footer-tagline",
+      "box": [
+        264,
+        4285,
+        387,
+        184
+      ]
+    },
+    {
+      "key": "footer-label",
+      "box": [
+        877,
+        4218,
+        null,
+        18
+      ]
+    },
+    {
+      "key": "footer-create",
+      "box": [
+        877,
+        4269,
+        218,
+        52
+      ]
+    },
+    {
+      "key": "footer-improve",
+      "box": [
+        877,
+        4335,
+        218,
+        52
+      ]
+    },
+    {
+      "key": "footer-jobfit",
+      "box": [
+        877,
+        4401,
+        218,
+        52
+      ]
+    },
+    {
+      "key": "footer-art",
+      "box": [
+        1351.3,
+        4323.5,
+        145.5,
+        145.5
+      ]
+    }
+  ]
+}

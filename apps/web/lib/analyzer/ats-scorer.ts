@@ -1,4 +1,5 @@
 import type { CvData, ScoreReport, SectionKey, SectionReport } from "../types";
+import { printableCv } from "../cv-print";
 
 const SECTION_LABELS: Record<SectionKey, string> = {
   personalInfo: "Personal info",
@@ -304,7 +305,10 @@ function finalize(
   };
 }
 
-export function scoreCv(data: CvData): ScoreReport {
+export function scoreCv(raw: CvData): ScoreReport {
+  // Score what goes on paper: an entry the user added but never filled (e.g. "Add one more
+  // education" and moved on) is not printed, so it must not drag the section average down.
+  const data = printableCv(raw);
   const sections: SectionReport[] = [
     scorePersonalInfo(data),
     scoreEducation(data),

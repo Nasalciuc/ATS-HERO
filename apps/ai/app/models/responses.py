@@ -87,3 +87,18 @@ class RegionResponse(BaseModel):
     target: str                 # country code, e.g. "US"
     profile_label: str
     deviations: list[RegionDeviation] = []
+
+
+class ParseCheckRecommendation(BaseModel):
+    code: str                   # contact | jobs | columns | unicode | skills | linkedin | ligatures
+    severity: str               # high | medium | low
+    message: str
+
+
+class ParseCheckResponse(BaseModel):
+    """What ATS-style readers recovered from one CV file (the ATS lab, single file)."""
+
+    format: str                 # pdf | docx
+    summary: dict               # verdict, scores or reader disagreements
+    readers: list[dict]         # per extraction engine: fields read (+ verdict/score/problems with truth)
+    recommendations: list[ParseCheckRecommendation] = []

@@ -1,16 +1,16 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@/lib/router";
 import AppShell from "../components/app/AppShell";
 import ProgressBar, { type Step } from "../components/app/ProgressBar";
 import ProTips from "../components/app/ProTips";
-import { Eye, Save, ArrowLeft, ArrowRight } from "../components/icons";
+import { EyeOptic, SaveDisk, ArrowUp } from "../components/figma-icons";
 import TipsModal from "../components/modals/TipsModal";
 import AddSectionModal from "../components/modals/AddSectionModal";
 import CompleteModal from "../components/modals/CompleteModal";
 import AlmostThereModal from "../components/modals/AlmostThereModal";
 import { useApp } from "../store/AppContext";
-import { OPTIONAL_SECTIONS, type CvData, type SectionKey, type SimpleEntry } from "../lib/types";
+import { OPTIONAL_SECTIONS, SECTION_EMOJI, type CvData, type SectionKey, type SimpleEntry } from "../lib/types";
 import {
   PersonalInfoStep,
   EducationStep,
@@ -30,17 +30,25 @@ function isSectionFilled(data: CvData, key: SectionKey): boolean {
   return Array.isArray(list) && list.some((i) => i.title.trim());
 }
 
+// Stepper labels break where Figma breaks them ("Professional⏎summary").
 const BASE_STEPS: { key: SectionKey; label: string; emoji: string }[] = [
-  { key: "personalInfo", label: "Personal info", emoji: "🪪" },
-  { key: "education", label: "Education", emoji: "🎓" },
-  { key: "summary", label: "Professional summary", emoji: "📝" },
-  { key: "work", label: "Work experience", emoji: "💼" },
-  { key: "skills", label: "Skills", emoji: "💪" },
+  { key: "personalInfo", label: "Personal info", emoji: SECTION_EMOJI.personalInfo },
+  { key: "education", label: "Education", emoji: SECTION_EMOJI.education },
+  { key: "summary", label: "Professional\nsummary", emoji: SECTION_EMOJI.summary },
+  { key: "work", label: "Work\nexperience", emoji: SECTION_EMOJI.work },
+  { key: "skills", label: "Skills", emoji: SECTION_EMOJI.skills },
 ];
 
-// The page heading can differ from the compact stepper label (Figma).
+// Figma breaks this optional section's stepper label too.
+const STEPPER_LABELS: Partial<Record<SectionKey, string>> = { activities: "Relevant\nactivities" };
+
+// Figma mobile frames (17:1152) use a shorter title where the desktop one wraps on a phone.
+const PHONE_TITLES: Partial<Record<SectionKey, string>> = { work: "Work experience" };
+
+// Page heading = Pro Tips badge (Figma); it can differ from the compact stepper label.
 const STEP_TITLES: Partial<Record<SectionKey, string>> = {
   personalInfo: "Personal Info",
+  summary: "Professional summary",
   work: "Work experience / Internship",
 };
 
@@ -51,7 +59,7 @@ export default function BuilderPage() {
   // different OptionalSection union (includes "languages"). The template/accent state the
   // new export/preview features need already lives in useBuilderStore and is wired through
   // the cv components; lifting the wizard's step model here is risky with no functional gain.
-  const { data, update, save, saving } = useApp();
+  const { data, update, save, saving, saveError } = useApp();
   const navigate = useNavigate();
 
   const [activeKey, setActiveKey] = useState<SectionKey>("personalInfo");
@@ -62,11 +70,32 @@ export default function BuilderPage() {
   const [almostThere, setAlmostThere] = useState(false);
   const [addedSections, setAddedSections] = useState<SectionKey[]>([]);
 
+  // Optional sections that already hold entries (a saved CV, a reload) belong in the stepper.
+  useEffect(() => {
+    const withData = OPTIONAL_SECTIONS.map((o) => o.key).filter((k) => {
+      const list = data[k] as unknown[] | undefined;
+      return Array.isArray(list) && list.length > 0;
+    });
+    if (withData.some((k) => !addedSections.includes(k))) {
+      setAddedSections((prev) => [...prev, ...withData.filter((k) => !prev.includes(k))]);
+    }
+  }, [data, addedSections]);
+
+  // A new step is a new page: move focus to its title so keyboard and screen-reader users start
+  // there (the button they pressed may be gone — "Next step" on the last step, a removed section)
+  // and, on phones, the page scrolls back up to it. Not on the first render.
+  const shownStep = useRef(activeKey);
+  useEffect(() => {
+    if (shownStep.current === activeKey) return;
+    shownStep.current = activeKey;
+    document.querySelector<HTMLElement>('[data-figma="title"]')?.focus();
+  }, [activeKey]);
+
   const steps: Step[] = useMemo(() => {
     const optional = (keys: SectionKey[]) =>
       OPTIONAL_SECTIONS.filter((o) => keys.includes(o.key) && addedSections.includes(o.key)).map((o) => ({
         key: o.key,
-        label: o.label,
+        label: STEPPER_LABELS[o.key] ?? o.label,
         emoji: o.emoji,
       }));
     const core = BASE_STEPS.slice(0, 4);
@@ -77,6 +106,10 @@ export default function BuilderPage() {
   const activeIndex = steps.findIndex((s) => s.key === activeKey);
   const isLast = activeIndex === steps.length - 1;
   const activeStep = steps[activeIndex];
+  // Figma: "Complete" appears once the core steps are done — on Skills and every section after it.
+  const canComplete = activeIndex >= steps.findIndex((s) => s.key === "skills");
+  // Figma keeps the form card at 480 from Skills on (and on the optional sections) so the footer doesn't jump.
+  const tall = activeKey === "skills" || addedSections.includes(activeKey);
 
   const goTo = (key: string) => setActiveKey(key as SectionKey);
   const markDoneAnd = (next?: string) => {
@@ -85,6 +118,7 @@ export default function BuilderPage() {
   };
 
   const hasUnfilledOptional = addedSections.some((k) => !isSectionFilled(data, k));
+  const skillCount = data.skills.length + data.softSkills.length + data.instruments.length;
 
   const finish = () => {
     markDoneAnd();
@@ -126,29 +160,30 @@ export default function BuilderPage() {
   const optionalKeys = new Set<string>(addedSections);
 
   const renderStep = () => {
+    const props = { data, update, framed: true };
     switch (activeKey) {
       case "personalInfo":
-        return <PersonalInfoStep data={data} update={update} />;
+        return <PersonalInfoStep key="personalInfo" {...props} />;
       case "education":
-        return <EducationStep data={data} update={update} />;
+        return <EducationStep key="education" {...props} />;
       case "summary":
-        return <SummaryStep data={data} update={update} />;
+        return <SummaryStep key="summary" {...props} />;
       case "work":
-        return <WorkStep data={data} update={update} />;
+        return <WorkStep key="work" {...props} />;
       case "skills":
-        return <SkillsStep data={data} update={update} />;
+        return <SkillsStep key="skills" {...props} />;
       case "awards":
-        return <AwardsStep data={data} update={update} />;
+        return <AwardsStep key="awards" {...props} />;
       case "certifications":
-        return <CertificationsStep data={data} update={update} />;
+        return <CertificationsStep key="certifications" {...props} />;
       case "publications":
-        return <PublicationsStep data={data} update={update} />;
+        return <PublicationsStep key="publications" {...props} />;
       case "activities":
-        return <ActivitiesStep data={data} update={update} />;
+        return <ActivitiesStep key="activities" {...props} />;
       case "volunteering":
-        return <VolunteeringStep data={data} update={update} />;
+        return <VolunteeringStep key="volunteering" {...props} />;
       default:
-        return <PersonalInfoStep data={data} update={update} />;
+        return <PersonalInfoStep key="personalInfo" {...props} />;
     }
   };
 
@@ -160,14 +195,23 @@ export default function BuilderPage() {
   return (
     <AppShell
       title={pageTitle}
+      phoneTitle={PHONE_TITLES[activeKey]}
       active="create"
+      // phones: "‹ Back" in the top bar is the previous step; on the first step it leaves for /app
+      onBack={activeIndex > 0 ? back : () => navigate("/app")}
       actions={
         <>
-          <button className="topbtn topbtn--ghost" onClick={() => setComplete(true)}>
-            <Eye size={18} /> Preview
+          {/* on phones these shrink to icon circles; the label stays for screen readers */}
+          <button className="topbtn topbtn--title topbtn--ghost" data-figma="btn-preview" onClick={() => setComplete(true)}>
+            <EyeOptic /> <span className="topbtn__label">Preview</span>
           </button>
-          <button className="topbtn topbtn--dark" onClick={() => void save()}>
-            <Save size={18} /> {saving ? "Saving…" : "Save"}
+          <button
+            className="topbtn topbtn--title topbtn--dark"
+            data-figma="btn-save"
+            onClick={() => void save()}
+            title={saveError ? `Not saved: ${saveError}` : undefined}
+          >
+            <SaveDisk /> <span className="topbtn__label">{saving ? "Saving…" : saveError ? "Retry save" : "Save"}</span>
           </button>
         </>
       }
@@ -182,10 +226,12 @@ export default function BuilderPage() {
         onRemoveSection={(k) => onRemoveSection(k as SectionKey)}
       />
 
-      <div className="builder">
+      <div className={`builder${tall ? " builder--tall" : ""}`}>
         <ProTips
-          badge={activeStep?.label ?? ""}
+          badge={pageTitle}
           onExplore={() => setTips(true)}
+          // phones only (Figma mobile Skills): how many skills so far, against the 6–12 the score wants
+          note={activeKey === "skills" ? `${Math.min(skillCount, 10)}/10 skills added` : undefined}
           extra={
             showActivitiesPrompt
               ? {
@@ -197,26 +243,30 @@ export default function BuilderPage() {
           }
         />
 
-        <div className="builder__panel">{renderStep()}</div>
+        <div className="builder__main">{renderStep()}</div>
       </div>
 
       <div className="builder__footer">
         <div>
           {activeIndex > 0 ? (
-            <button className="topbtn topbtn--ghost" onClick={back}>
-              <ArrowLeft size={18} /> Back
+            <button className="topbtn topbtn--step topbtn--ghost" data-figma="btn-back" onClick={back}>
+              <ArrowUp className="topbtn__arrow--left" /> Back
             </button>
           ) : null}
         </div>
         <div className="builder__footer__actions">
           {!isLast && (
-            <button className="topbtn topbtn--ghost" onClick={next}>
-              Next step <ArrowRight size={18} />
+            // phones: the only button on the core steps, so it becomes the filled primary (Figma "Continue")
+            <button
+              className={`topbtn topbtn--step topbtn--ghost${canComplete ? "" : " topbtn--phone-primary"}`}
+              data-figma="btn-next"
+              onClick={next}
+            >
+              Next step <ArrowUp className="topbtn__arrow--right" />
             </button>
           )}
-          {/* Figma: step 1 offers only "Next step"; "Complete" appears from step 2 on. */}
-          {activeIndex > 0 && (
-            <button className="topbtn topbtn--dark" onClick={finish}>
+          {canComplete && (
+            <button className="topbtn topbtn--step topbtn--dark" data-figma="btn-complete" onClick={finish}>
               Complete
             </button>
           )}

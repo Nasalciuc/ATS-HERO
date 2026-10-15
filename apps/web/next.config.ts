@@ -22,12 +22,19 @@ const nextConfig: NextConfig = {
       // TODO(security-hardening): replace 'unsafe-inline' in script-src with nonce-based CSP.
       // Needs: nonce generated in proxy.ts, forwarded via header, read in layout.tsx, passed to
       // ClerkProvider's nonce prop. Tracked as a post-launch hardening item, not a launch blocker.
-      `script-src 'self' 'unsafe-inline'${devEval} https://*.clerk.accounts.dev https://challenges.cloudflare.com`,
+      // 'wasm-unsafe-eval' is REQUIRED for PDF export + preview: @react-pdf/renderer lays out
+      // pages with yoga-layout 3, which is WebAssembly-only (no asm.js fallback). Without it the
+      // browser refuses WebAssembly.instantiate() and "Download PDF" fails in production.
+      // It permits compiling WASM only — eval()/new Function() stay blocked.
+      `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval} https://*.clerk.accounts.dev https://challenges.cloudflare.com`,
       "connect-src 'self' https://*.clerk.accounts.dev https://clerk-telemetry.com " + (process.env.NEXT_PUBLIC_AI_URL ?? ""),
       "img-src 'self' data: blob: https:",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
-      "frame-src https://challenges.cloudflare.com",
+      // blob: — only CvTemplatePreview (PDFViewer: the PDF in an iframe with a blob: src) needs
+      // it, and nothing renders that component since the Complete pop-up draws pages with PDF.js
+      // on a canvas. Drop blob: here when CvTemplatePreview is deleted.
+      "frame-src 'self' blob: https://challenges.cloudflare.com",
       "worker-src 'self' blob:",
     ].join("; ");
     return [{ source: "/(.*)", headers: [

@@ -1,0 +1,196 @@
+{
+  "id": "builder-certifications",
+  "title": "Builder · Certifications",
+  "frame": "293:891",
+  "reference": "reference/figma/desktop/function-1-step-8-certifications.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "setup": [
+    {
+      "click": ".progress__add"
+    },
+    {
+      "click": ".addsection__check:has-text('Relevant activities')"
+    },
+    {
+      "click": ".addsection__check:has-text('Awards')"
+    },
+    {
+      "click": ".addsection__check:has-text('Certifications')"
+    },
+    {
+      "click": ".addsection__check:has-text('Publications')"
+    },
+    {
+      "click": ".addsection__confirm"
+    },
+    {
+      "wait": 300
+    },
+    {
+      "click": "[data-figma=step-0]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1000
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "btn-preview",
+      "box": [
+        1196,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "stepper",
+      "box": [
+        331,
+        139,
+        1135,
+        98
+      ]
+    },
+    {
+      "key": "step-7",
+      "box": [
+        1101,
+        139,
+        64,
+        64
+      ],
+      "style": {
+        "background-color": "rgb(214, 247, 226)"
+      }
+    },
+    {
+      "key": "step-remove-7",
+      "box": [
+        1151,
+        120,
+        24,
+        24
+      ]
+    },
+    {
+      "key": "tips",
+      "box": [
+        331,
+        269,
+        252,
+        480
+      ]
+    },
+    {
+      "key": "tips-badge",
+      "box": [
+        353,
+        291,
+        null,
+        29
+      ]
+    },
+    {
+      "key": "form-card",
+      "node": "293:929"
+    },
+    {
+      "key": "field-title",
+      "node": "293:934"
+    },
+    {
+      "key": "field-date",
+      "node": "294:1537"
+    },
+    {
+      "key": "entry-upload",
+      "node": "293:946"
+    },
+    {
+      "key": "entry-add",
+      "node": "293:936"
+    },
+    {
+      "key": "btn-back",
+      "box": [
+        599,
+        773,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-next",
+      "box": [
+        1140,
+        773,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-complete",
+      "box": [
+        1306,
+        773,
+        160,
+        52
+      ],
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    }
+  ]
+}

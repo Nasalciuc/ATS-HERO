@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useNavigate } from "@/lib/router";
-import { ChevronDown } from "./icons";
+import { ArrowUp } from "./figma-icons";
 
 const cards = [
   {
@@ -44,25 +44,30 @@ export default function Tool() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section className="tool" id="tool">
-      <div className="container">
-        <h2 className="tool__title">One tool. Three career superpowers.</h2>
+    <section className="tool" id="tool" data-figma="tool">
+      <div className="container tool__inner">
+        <h2 className="tool__title" data-figma="tool-title">One tool. Three career superpowers.</h2>
         <div className="tool__grid">
           {cards.map((card, i) => (
-            <article className="tool__card" key={card.cta}>
-              <div className="tool__img">
+            <article className="tool__card" key={card.cta} data-figma={`tool-card-${i}`}>
+              <div className="tool__img" data-figma={`tool-img-${i}`}>
                 <img src={card.img} alt={card.cta} />
               </div>
-              <p className="tool__desc">{card.desc}</p>
+              <p className="tool__desc" data-figma={`tool-text-${i}`}>
+                {card.desc}
+              </p>
               <div className="tool__actions">
-                <button className="btn btn--white" onClick={() => navigate(card.to)}>{card.cta}</button>
+                <button className="btn btn--white" data-figma={`tool-cta-${i}`} onClick={() => navigate(card.to)}>
+                  {card.cta}
+                </button>
                 <button
                   className="btn btn--outline-light"
+                  data-figma={`tool-how-${i}`}
                   aria-expanded={open === i}
                   onClick={() => setOpen(open === i ? null : i)}
                 >
                   {open === i ? "Hide" : "How it works"}
-                  <ChevronDown size={16} />
+                  <ArrowUp width={26} height={26} className={`tool__how-arrow${open === i ? " is-open" : ""}`} />
                 </button>
               </div>
 

@@ -1,0 +1,99 @@
+{
+  "id": "popup-almost-there",
+  "title": "Pop-up · Almost there",
+  "frame": "358:7402",
+  "reference": "reference/figma/desktop/popup-almost-there.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "note": "Figma's pop-up sits at (639,256); centred it is at (590,292) — boxes below are the Figma ones shifted by (-49, +36).",
+  "setup": [
+    {
+      "click": ".progress__add"
+    },
+    {
+      "click": ".addsection__check:has-text('Awards')"
+    },
+    {
+      "click": ".addsection__confirm"
+    },
+    {
+      "wait": 300
+    },
+    {
+      "click": "[data-figma=btn-complete]"
+    }
+  ],
+  "checks": [
+    {
+      "key": "modal-panel",
+      "box": [
+        590,
+        292,
+        548,
+        416
+      ],
+      "style": {
+        "border-radius": "10px"
+      }
+    },
+    {
+      "key": "modal-close",
+      "box": [
+        1071,
+        312,
+        44,
+        44
+      ]
+    },
+    {
+      "key": "dialog-title",
+      "box": [
+        null,
+        414,
+        null,
+        44
+      ],
+      "style": {
+        "font-size": "40px"
+      }
+    },
+    {
+      "key": "dialog-text",
+      "box": [
+        635,
+        478,
+        458,
+        24
+      ],
+      "style": {
+        "font-size": "20px"
+      }
+    },
+    {
+      "key": "dialog-secondary",
+      "box": [
+        633,
+        534,
+        218,
+        52
+      ]
+    },
+    {
+      "key": "dialog-primary",
+      "box": [
+        857,
+        534,
+        238,
+        52
+      ],
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    }
+  ]
+}

@@ -25,32 +25,37 @@ export default function AddSectionModal({
       return next;
     });
 
+  // Figma's "Continue" is always enabled: with nothing ticked it just closes.
   const confirm = () => {
-    onAdd([...checked]);
+    if (checked.size === 0) onClose();
+    else onAdd([...checked]);
     setChecked(new Set());
   };
 
   return (
-    <Modal open={open} onClose={onClose} variant="center" width={548}>
-      <div className="addsection">
-        <h2 className="addsection__title">Add section</h2>
-        <p className="addsection__subtitle">
-          Your resume is ATS-ready. You can add more sections to improve your chances.
+    <Modal open={open} onClose={onClose} variant="center" panelClassName="modal__panel--dialog">
+      <div className="dialog addsection">
+        <h2 className="dialog__title" data-figma="dialog-title">Add section</h2>
+        <p className="dialog__text" data-figma="dialog-text">
+          Your resume is ATS-ready.
+          <br />
+          You can add more sections to improve your chances.
         </p>
         <div className="addsection__list">
-          {options.length === 0 && (
-            <p className="addsection__empty">All sections have been added.</p>
-          )}
+          {options.length === 0 && <p className="addsection__empty">All sections have been added.</p>}
           {options.map((o) => {
             const isOn = checked.has(o.key);
             return (
               <button
                 key={o.key}
+                type="button"
+                role="checkbox"
+                aria-checked={isOn}
                 className="addsection__check"
                 onClick={() => toggle(o.key)}
               >
-                <span className={`addsection__box${isOn ? " is-on" : ""}`}>
-                  {isOn && <Check size={13} />}
+                <span className={`addsection__box${isOn ? " is-on" : ""}`} aria-hidden="true">
+                  {isOn && <Check size={12} />}
                 </span>
                 {o.label}
               </button>
@@ -58,8 +63,9 @@ export default function AddSectionModal({
           })}
         </div>
         <button
-          className="btn btn--dark addsection__confirm"
-          disabled={checked.size === 0}
+          type="button"
+          className="topbtn topbtn--dark dialog__btn addsection__confirm"
+          data-figma="dialog-primary"
           onClick={confirm}
         >
           Continue

@@ -13,15 +13,16 @@ export default function AlmostThereModal({
   onCompleteAnyway: () => void;
 }) {
   return (
-    <Modal open={open} onClose={onClose} variant="center" width={420}>
-      <div className="almost">
-        <h2 className="almost__title">Almost there</h2>
-        <p className="almost__subtitle">Some additional sections are not filled in yet</p>
-        <div className="almost__actions">
-          <button className="btn btn--outline-dark" onClick={onContinueEditing}>
+    <Modal open={open} onClose={onClose} variant="center" panelClassName="modal__panel--dialog">
+      <div className="dialog almost">
+        <h2 className="dialog__title" data-figma="dialog-title">Almost there</h2>
+        <p className="dialog__text" data-figma="dialog-text">Some additional sections are not filled in yet</p>
+        <div className="dialog__actions">
+          <button type="button" className="topbtn topbtn--ghost dialog__btn dialog__btn--narrow"
+            data-figma="dialog-secondary" onClick={onContinueEditing}>
             Continue editing
           </button>
-          <button className="btn btn--dark" onClick={onCompleteAnyway}>
+          <button type="button" className="topbtn topbtn--dark dialog__btn" data-figma="dialog-primary" onClick={onCompleteAnyway}>
             Complete anyway
           </button>
         </div>

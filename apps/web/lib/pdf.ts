@@ -1,9 +1,12 @@
 import * as pdfjsLib from "pdfjs-dist";
 
-// In Next.js we can't use Vite's `?url` worker import. Load the worker from a CDN
-// matching the installed pdfjs-dist version (client-side only).
-if (typeof window !== "undefined") {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+// The worker runs in this thread, as in the Complete pop-up's preview (CvPagedPreview): importing
+// the worker module sets globalThis.pdfjsWorker, so PDF.js needs no worker URL. It used to load
+// the worker from cdnjs, which the CSP (script-src / worker-src 'self') blocks, so every PDF
+// upload failed with "We couldn't read this file".
+async function loadWorker(): Promise<void> {
+  // @ts-expect-error — the worker bundle ships without type declarations
+  await import("pdfjs-dist/build/pdf.worker.min.mjs");
 }
 
 /**
@@ -13,7 +16,8 @@ if (typeof window !== "undefined") {
  */
 export async function extractTextFromPdf(file: File): Promise<string> {
   const data = new Uint8Array(await file.arrayBuffer());
-  const loadingTask = pdfjsLib.getDocument({ data });
+  await loadWorker();
+  const loadingTask = pdfjsLib.getDocument({ data, isEvalSupported: false });
   const pdf = await loadingTask.promise;
   try {
     const pages: string[] = [];

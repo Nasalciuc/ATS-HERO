@@ -1,11 +1,13 @@
 // Typed bridge from the Next.js app to the FastAPI service (apps/ai).
 // Base URL from NEXT_PUBLIC_AI_URL (e.g. http://localhost:8000 in dev, the DO URL in prod).
 
+import type { CvData } from "../types";
 import type {
   ScoreResult,
   ExtractResult,
   JobFitResult,
   FormatResult,
+  ParseCheckResult,
   RegionResult,
   RegionSignals,
 } from "./types";
@@ -46,3 +48,17 @@ export const formatCheck = (file: File) => postFile<FormatResult>("/format", fil
 /** Region-fit against a target country's norms (global). */
 export const regionCheck = (target: string, signals: RegionSignals, cvText?: string) =>
   postJSON<RegionResult>("/region", { target, signals, cv_text: cvText ?? null });
+
+/**
+ * What ATS-style readers recover from the exact file the user will upload. With `truth`
+ * (the CvData the file was built from) every field is scored; without it (an uploaded CV)
+ * the result reports what was read and where the readers disagree.
+ */
+export async function parseCheck(file: Blob, filename: string, truth?: CvData): Promise<ParseCheckResult> {
+  const form = new FormData();
+  form.append("file", file, filename);
+  if (truth) form.append("truth", JSON.stringify(truth));
+  const res = await fetch(`${BASE}/parse-check`, { method: "POST", body: form });
+  if (!res.ok) throw new Error(`AI service /parse-check failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as ParseCheckResult;
+}

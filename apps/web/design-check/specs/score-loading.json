@@ -1,0 +1,119 @@
+{
+  "id": "score-loading",
+  "title": "ATS Score loading (Create)",
+  "frame": "319:3807",
+  "reference": "reference/figma/desktop/ats-score-loading-1.png",
+  "route": "/app",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "reducedMotion": true,
+  "setup": [
+    {
+      "clock": "pause"
+    },
+    {
+      "goto": "/app/score"
+    },
+    {
+      "wait": 1500
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1000
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "title",
+      "box": [
+        331,
+        43,
+        null,
+        44
+      ],
+      "style": {
+        "font-size": "40px",
+        "font-weight": "600"
+      }
+    },
+    {
+      "key": "btn-back",
+      "box": [
+        1169,
+        43,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "loading",
+      "box": [
+        735,
+        236,
+        327,
+        337
+      ]
+    },
+    {
+      "key": "loading-circle",
+      "box": [
+        781.5,
+        236,
+        234,
+        234
+      ]
+    },
+    {
+      "key": "loading-msg",
+      "box": [
+        null,
+        513,
+        null,
+        24
+      ],
+      "style": {
+        "font-size": "20px"
+      }
+    },
+    {
+      "key": "loading-time",
+      "box": [
+        735,
+        549,
+        327,
+        24
+      ],
+      "style": {
+        "font-size": "20px",
+        "color": "rgb(156, 156, 156)"
+      }
+    }
+  ]
+}

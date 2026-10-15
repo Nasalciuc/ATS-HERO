@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
-import { Plus, Minus } from "./icons";
+import { Fragment, useState } from "react";
+import { MinusThin, PlusThin } from "./figma-icons";
 
 const faqs = [
   {
     q: "How is this different from a regular CV template?",
-    a: "Unlike static templates, this tool actively helps you create a stronger, more effective CV. It guides you step by step, analyzes your content against real ATS and recruiter criteria, and provides personalized, actionable recommendations. Instead of just filling in a template, you build a CV optimized to pass screening systems, highlight your strengths, and significantly increase your chances of getting interview invitations.",
+    // "\n": Figma's line breaks (kept from 1280px up, see .faq__br)
+    a: "Unlike static templates, this tool actively helps you create a stronger, more effective CV.\nIt guides you step by step, analyzes your content against real ATS and recruiter criteria, and provides personalized, actionable recommendations. Instead of just filling in\na template, you build a CV optimized to pass screening systems, highlight your strengths, and significantly increase your chances of getting interview invitations.",
   },
   {
     q: "How to beat an Applicant Tracking System (ATS)?",
@@ -33,23 +34,30 @@ export default function Faq() {
   const [open, setOpen] = useState(0);
 
   return (
-    <section className="faq" id="faq">
+    <section className="faq" id="faq" data-figma="faq">
       <div className="container">
-        <div className="faq__list">
+        <div className="faq__list" data-figma="faq-list">
           {faqs.map((item, i) => {
             const isOpen = open === i;
             return (
-              <div className={`faq__item${isOpen ? " is-open" : ""}`} key={item.q}>
+              <div className={`faq__item${isOpen ? " is-open" : ""}`} key={item.q} data-figma={`faq-${i}`}>
                 <button
                   className="faq__q"
                   onClick={() => setOpen(isOpen ? -1 : i)}
                   aria-expanded={isOpen}
                 >
-                  <span>{item.q}</span>
-                  <span className="faq__toggle">{isOpen ? <Minus /> : <Plus />}</span>
+                  <span data-figma={`faq-${i}-q`}>{item.q}</span>
+                  <span className="faq__toggle" data-figma={`faq-${i}-toggle`}>{isOpen ? <MinusThin /> : <PlusThin size={34} />}</span>
                 </button>
-                <div className="faq__a">
-                  <p className="faq__a-inner">{item.a}</p>
+                <div className="faq__a" aria-hidden={!isOpen} inert={!isOpen}>
+                  <p className="faq__a-inner" data-figma={`faq-${i}-a`}>
+                    {item.a.split("\n").map((part, k) => (
+                      <Fragment key={k}>
+                        {k > 0 && <br className="faq__br" />}
+                        {k > 0 ? ` ${part}` : part}
+                      </Fragment>
+                    ))}
+                  </p>
                 </div>
               </div>
             );

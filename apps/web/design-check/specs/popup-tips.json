@@ -1,0 +1,101 @@
+{
+  "id": "popup-tips",
+  "title": "Pop-up · Pro Tips",
+  "frame": "336:6042",
+  "reference": "reference/figma/desktop/popup-tips.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "setup": [
+    {
+      "click": "[data-figma=tips-explore]"
+    }
+  ],
+  "checks": [
+    {
+      "key": "modal-overlay",
+      "box": [
+        0,
+        0,
+        1728,
+        1000
+      ],
+      "style": {
+        "background-color": "rgb(46, 46, 46)"
+      }
+    },
+    {
+      "key": "modal-panel",
+      "node": "336:6043",
+      "style": {
+        "border-radius": "20px"
+      }
+    },
+    {
+      "key": "modal-close",
+      "node": "336:6081"
+    },
+    {
+      "key": "tips-modal-title",
+      "box": [
+        419,
+        194,
+        null,
+        20
+      ],
+      "style": {
+        "font-size": "20px",
+        "font-weight": "700"
+      }
+    },
+    {
+      "key": "tips-modal-badge-Name",
+      "box": [
+        419,
+        248,
+        null,
+        29
+      ]
+    },
+    {
+      "key": "tips-modal-badge-Email",
+      "box": [
+        419,
+        327,
+        null,
+        29
+      ]
+    },
+    {
+      "key": "tips-modal-badge-Phone",
+      "box": [
+        419,
+        466,
+        null,
+        29
+      ]
+    },
+    {
+      "key": "tips-modal-badge-Linkedin",
+      "box": [
+        419,
+        575,
+        null,
+        29
+      ]
+    },
+    {
+      "key": "tips-modal-badge-Personal website",
+      "box": [
+        419,
+        684,
+        null,
+        29
+      ]
+    }
+  ]
+}

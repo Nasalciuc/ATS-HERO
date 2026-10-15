@@ -2,8 +2,9 @@
 // @react-pdf design language (RR v4 also uses @react-pdf): profile picture, icon
 // contact items, justified split-row meta (title left / dates right), bullet lists,
 // colored section headings with a rule, consistent section spacing.
-import { View, Text, Image, Svg, Path, StyleSheet } from "@react-pdf/renderer";
+import { View, Text, Image, Svg, Path, StyleSheet, Link } from "@react-pdf/renderer";
 import type { CvData, SimpleEntry } from "@/lib/types";
+import { breakLongWords, degreeLine, descLines, displayUrl, fitFontSize, telHref, textWidth, webHref } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
 
 /* ---------------------------------------------------------------- spacing scale */
@@ -37,6 +38,12 @@ export function Avatar({ src, size = 64, radius }: { src?: string; size?: number
   return <Image src={src} style={{ width: size, height: size, borderRadius: radius ?? size / 2, objectFit: "cover" }} />;
 }
 
+/** Separator between inline items. A no-break space before the dot keeps "·" at the END of a
+ *  line when a list wraps (a line used to start with "· GCP"); the space after it is the only
+ *  place to wrap. Never two ASCII spaces: react-pdf treats a double space as an in-word break
+ *  point and adds a fake hyphen there ("Kafka ·-", caught by the ATS lab on a 20-skill CV). */
+export const SEP = "\u00A0· ";
+
 /* --------------------------------------------------------------------- helpers  */
 export function dateRange(start?: string, end?: string, ongoing?: boolean): string {
   const finish = ongoing ? "Present" : end;
@@ -47,38 +54,75 @@ export function hasSkills(d: CvData): boolean {
   return d.skills.length > 0 || d.instruments.length > 0 || d.softSkills.length > 0 || d.languages.length > 0;
 }
 
-function descLines(text?: string): string[] {
-  return (text || "").split(/\r?\n/).map((s) => s.trim().replace(/^[•\-*]\s*/, "")).filter(Boolean);
+
+/** PDF metadata of a CV: the person is the author (it used to say "ATS Hero" when the name
+ *  was empty); PDF 1.4 because the templates use transparency, which 1.3 does not have;
+ *  the document language for screen readers and parsers. */
+export function documentProps(d: CvData) {
+  const name = d.personalInfo.name.trim();
+  return {
+    title: name ? `${name} — CV` : "CV",
+    author: name || undefined,
+    subject: d.summary.position || undefined,
+    creator: "ATS Hero",
+    producer: "ATS Hero",
+    language: "en",
+    pdfVersion: "1.4" as const,
+  };
 }
 
-type ContactPair = { icon: string; text: string };
+/** A contact line; `href` makes it clickable in the PDF (the text layer stays the same). */
+type ContactPair = { icon: string; text: string; href?: string };
 export function contactPairs(p: CvData["personalInfo"]): ContactPair[] {
   const loc = [p.cityState, p.country].filter(Boolean).join(", ");
   return [
-    p.email ? { icon: "mail", text: p.email } : null,
-    p.phone ? { icon: "phone", text: p.phone } : null,
+    p.email ? { icon: "mail", text: p.email, href: `mailto:${p.email.trim()}` } : null,
+    p.phone ? { icon: "phone", text: p.phone, href: telHref(p.phone) } : null,
     loc ? { icon: "pin", text: loc } : null,
-    p.website ? { icon: "globe", text: p.website } : null,
-    p.linkedin ? { icon: "link", text: p.linkedin } : null,
+    p.website ? { icon: "globe", text: displayUrl(p.website), href: webHref(p.website) } : null,
+    p.linkedin ? { icon: "link", text: displayUrl(p.linkedin), href: webHref(displayUrl(p.linkedin)) } : null,
   ].filter(Boolean) as ContactPair[];
 }
 
+/** Clickable text that looks like the text around it (react-pdf links default to blue). */
+function Linked({ href, color, children }: { href?: string; color: string; children: string }) {
+  return href ? <Link src={href} style={{ color, textDecoration: "none" }}>{children}</Link> : <>{children}</>;
+}
+
 /* ------------------------------------------------------------------- contact    */
+/** Width the contact icon and its gap take in front of the text (pt). */
+export const CONTACT_ICON_W = 13;
+const CONTACT_MIN_SIZE = 6.5;
+
 export function ContactBar({
-  p, theme, color, direction = "row",
-}: { p: CvData["personalInfo"]; theme: TemplateTheme; color?: string; direction?: "row" | "column" }) {
+  p, theme, color, direction = "row", maxTextWidth,
+}: {
+  p: CvData["personalInfo"]; theme: TemplateTheme; color?: string; direction?: "row" | "column";
+  /** Width (pt) one contact's text may take (the line minus CONTACT_ICON_W). */
+  maxTextWidth: number;
+}) {
   const c = color ?? theme.muted;
   const items = contactPairs(p);
   return (
     <View style={direction === "row"
       ? { flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 3, marginTop: 6 }
       : { flexDirection: "column", rowGap: 4, marginTop: 8 }}>
-      {items.map((it, i) => (
-        <View key={i} style={{ flexDirection: "row", alignItems: "center", columnGap: 4 }}>
-          <Icon name={it.icon} color={c} />
-          <Text style={{ fontSize: 9, color: c, lineHeight: 1 }}>{it.text}</Text>
-        </View>
-      ))}
+      {items.map((it, i) => {
+        // ONE line per contact, never split: the ATS lab showed a wrapped e-mail or URL is lost by
+        // every extractor (pdf.js even joins the pieces with spaces). A long one shrinks to fit;
+        // only what does not fit even at CONTACT_MIN_SIZE may wrap, rather than run off the page.
+        // (The wrapping Text gets an exact width — see SplitRow for why.)
+        const size = fitFontSize(it.text, maxTextWidth, 9, CONTACT_MIN_SIZE);
+        const fits = textWidth(it.text, size) <= maxTextWidth;
+        return (
+          <View key={i} style={{ flexDirection: "row", alignItems: "center", columnGap: 4 }}>
+            <Icon name={it.icon} color={c} />
+            <Text style={[{ fontSize: size, color: c, lineHeight: direction === "row" ? 1 : 1.2 }, fits ? {} : { width: maxTextWidth }]}>
+              <Linked href={it.href} color={c}>{fits ? it.text : breakLongWords(it.text, maxTextWidth, size)}</Linked>
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -97,28 +141,94 @@ export function SectionHeading({ title, theme, variant = "primary" }: { title: s
   );
 }
 
-/* ----------------------------------------------------------------- split row    */
-export function SplitRow({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
+/* ------------------------------------------------------------- page breaks    */
+// How a CV may break across pages — what a recruiter expects, checked by
+// tests/cv-page-breaks.test.tsx:
+//  - a section heading never ends a page: it is laid out together with its first entry's header;
+//  - an entry's header (title, dates, company…) never ends a page: it keeps at least three lines
+//    of its content on the same page (KEEP_AHEAD = the 2pt gap + 3 lines of at most 15pt);
+//  - a bullet is ONE Text (marker included), so the marker never stays behind, and a bullet or
+//    paragraph of 2–3 lines never splits (react-pdf's default orphans = widows = 2).
+// react-pdf ignores minPresenceAhead on a node that has nothing before it on the page, hence the
+// zero-height <View /> that opens every entry.
+const KEEP_AHEAD = 47;
+
+/** One entry of a section: `head` never splits and keeps KEEP_AHEAD of `body` with it. */
+export type Entry = { key: string; head?: React.ReactNode; body?: React.ReactNode };
+
+export function Section({
+  title, theme, variant = "primary", style, entries,
+}: {
+  title: string; theme: TemplateTheme; variant?: HeadingVariant;
+  style?: React.ComponentProps<typeof View>["style"]; entries: Entry[];
+}) {
+  if (entries.length === 0) return null;
   return (
-    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", columnGap: 12 }}>
+    <View style={style}>
+      <View style={{ rowGap: GAP.entry }}>
+        {entries.map((e, i) => (
+          <View key={e.key}>
+            <View />
+            <View wrap={false} minPresenceAhead={e.body ? KEEP_AHEAD : 0}>
+              {i === 0 ? <SectionHeading title={title} theme={theme} variant={variant} /> : null}
+              {e.head}
+            </View>
+            {e.body}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/* ----------------------------------------------------------------- split row    */
+// The right side (dates, place, issuer; 9pt) takes the width of its text, up to half the row;
+// longer text wraps inside that half, right-aligned. It used to never shrink, so a long issuer
+// squeezed the title into one word per line or ran over it. The wrapping box gets an exact
+// width: inside a box that is only capped (maxWidth), react-pdf measures the text wider than
+// the box and it runs past the margin.
+const RIGHT_SHARE = 0.5;
+const SPLIT_GAP = 12;
+
+/** Widths (pt) a long word must fit in a SplitRow of `theme`'s column (see breakLongWords). */
+const leftWidth = (theme: TemplateTheme) => theme.column * (1 - RIGHT_SHARE) - SPLIT_GAP;
+const rightWidth = (theme: TemplateTheme) => theme.column * RIGHT_SHARE;
+
+export function SplitRow({ left, right, theme }: { left: React.ReactNode; right?: string; theme: TemplateTheme }) {
+  const fits = !!right && textWidth(right, 9) <= rightWidth(theme);
+  return (
+    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", columnGap: SPLIT_GAP }}>
       <View style={{ flex: 1 }}>{left}</View>
-      {right ? <View style={{ flexShrink: 0 }}>{right}</View> : null}
+      {right ? (
+        <View style={fits ? { flexShrink: 0 } : { width: rightWidth(theme) }}>
+          <Text style={[meta.date, { color: theme.faint }]}>{fits ? right : breakLongWords(right, rightWidth(theme), 9)}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 /* ----------------------------------------------------------------- bullets      */
-export function BulletList({ text, theme }: { text?: string; theme: TemplateTheme }) {
+// The marker sits in a hanging indent: Inter Bold "•" is 4.7412pt wide at the 10pt body size;
+// + 2.1875pt letter-spacing + one space (2.8125pt) puts the text at 9.7412pt, exactly where the
+// wrapped lines start (the same place as before bullets became one Text). The test checks these
+// numbers against the font files and the alignment in a rendered PDF.
+// react-pdf takes a paragraph's indent from its FIRST run (here the marker) and textIndent is
+// not inherited, so the marker carries it.
+export const BULLET = { indent: 9.7412109375, track: 2.1875 };
+
+/** A description as bullets (one line of text = one bullet); null when there is no text. */
+export function bullets(text: string | undefined, theme: TemplateTheme): React.ReactNode | null {
   const lines = descLines(text);
   if (lines.length === 0) return null;
-  if (lines.length === 1) return <Text style={{ color: theme.text, marginTop: 1 }}>{lines[0]}</Text>;
+  if (lines.length === 1) return <Text style={{ color: theme.text, marginTop: 1 }}>{breakLongWords(lines[0], theme.column)}</Text>;
   return (
     <View style={{ marginTop: 2, rowGap: 2 }}>
       {lines.map((l, i) => (
-        <View key={i} style={{ flexDirection: "row", columnGap: 5, alignItems: "flex-start" }}>
-          <Text style={{ color: theme.primary, fontFamily: FONT_BOLD }}>•</Text>
-          <Text style={{ color: theme.text, flex: 1 }}>{l}</Text>
-        </View>
+        <Text key={i} style={{ color: theme.text, marginLeft: BULLET.indent }}>
+          <Text style={{ color: theme.primary, fontFamily: FONT_BOLD, letterSpacing: BULLET.track, textIndent: -BULLET.indent }}>•</Text>
+          {` ${breakLongWords(l, theme.column - BULLET.indent)}`}
+        </Text>
       ))}
     </View>
   );
@@ -127,102 +237,116 @@ export function BulletList({ text, theme }: { text?: string; theme: TemplateThem
 const meta = StyleSheet.create({
   title: { fontFamily: FONT_BOLD },
   sub: {},
-  date: { fontSize: 9 },
+  date: { fontSize: 9, textAlign: "right" },
 });
 
-/* ----------------------------------------------------------------- bodies       */
-export function SummaryBody({ data, theme }: { data: CvData; theme: TemplateTheme }) {
-  if (!data.summary.valueProposition) return null;
-  return <Text style={{ color: theme.text }}>{data.summary.valueProposition}</Text>;
-}
-
-export function ExperienceBody({ data, theme }: { data: CvData; theme: TemplateTheme }) {
+/** An entry's two header rows: the title (bold) with dates, then the muted line (company,
+ *  school, role) with the place. A row with nothing in it is left out, and an entry without a
+ *  title prints none: the "—" that stood in for a missing title looked like a typo. */
+function headRows(
+  theme: TemplateTheme, title: string, right: string, sub: string, subRight: string,
+  stacked = theme.meta === "stacked",
+) {
+  if (stacked) {
+    const line = [right, sub, subRight].filter(Boolean).join(SEP);
+    return (
+      <>
+        {title ? <Text style={[meta.title, { color: theme.text }]}>{breakLongWords(title, theme.column, 10, true)}</Text> : null}
+        {line ? <Text style={{ color: theme.muted }}>{asBody(line, theme)}</Text> : null}
+      </>
+    );
+  }
   return (
-    <View style={{ rowGap: GAP.entry }}>
-      {data.work.map((w) => {
-        const dates = dateRange(w.startDate, w.endDate, w.current);
-        const loc = [w.cityState, w.country].filter(Boolean).join(", ");
-        return (
-          <View key={w.id}>
-            <SplitRow
-              left={<Text style={[meta.title, { color: theme.text }]}>{w.role || "—"}</Text>}
-              right={dates ? <Text style={[meta.date, { color: theme.faint }]}>{dates}</Text> : null}
-            />
-            <SplitRow
-              left={<Text style={{ color: theme.muted }}>{w.company}</Text>}
-              right={loc ? <Text style={[meta.date, { color: theme.faint }]}>{loc}</Text> : null}
-            />
-            <BulletList text={w.description} theme={theme} />
-          </View>
-        );
-      })}
-    </View>
+    <>
+      {title || right ? (
+        <SplitRow left={<Text style={[meta.title, { color: theme.text }]}>{asTitle(title, theme)}</Text>} right={right} theme={theme} />
+      ) : null}
+      {sub || subRight ? (
+        <SplitRow left={<Text style={{ color: theme.muted }}>{asLeft(sub, theme)}</Text>} right={subRight} theme={theme} />
+      ) : null}
+    </>
   );
 }
 
-export function EducationBody({ data, theme }: { data: CvData; theme: TemplateTheme }) {
-  return (
-    <View style={{ rowGap: GAP.entry }}>
-      {data.education.map((e) => {
-        const dates = dateRange(e.startDate, e.endDate);
-        const right = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join("  ·  ");
-        return (
-          <View key={e.id}>
-            <SplitRow
-              left={<Text style={[meta.title, { color: theme.text }]}>{e.degree || e.institution || "—"}</Text>}
-              right={dates ? <Text style={[meta.date, { color: theme.faint }]}>{dates}</Text> : null}
-            />
-            <SplitRow
-              left={<Text style={{ color: theme.muted }}>{e.degree ? e.institution : ""}</Text>}
-              right={right ? <Text style={[meta.date, { color: theme.faint }]}>{right}</Text> : null}
-            />
-            {e.additional ? <Text style={{ color: theme.text, marginTop: 1 }}>{e.additional}</Text> : null}
-          </View>
-        );
-      })}
-    </View>
-  );
+/** Text pieces of an entry, with long words made wrappable for where they sit. */
+const asTitle = (s: string, theme: TemplateTheme) => breakLongWords(s, leftWidth(theme), 10, true);
+const asLeft = (s: string, theme: TemplateTheme) => breakLongWords(s, leftWidth(theme));
+const asBody = (s: string, theme: TemplateTheme) => breakLongWords(s, theme.column);
+
+/* ---------------------------------------------------------------- entries      */
+export function summaryEntries(data: CvData, theme: TemplateTheme): Entry[] {
+  if (!data.summary.valueProposition) return [];
+  return [{ key: "summary", body: <Text style={{ color: theme.text }}>{asBody(data.summary.valueProposition, theme)}</Text> }];
+}
+
+export function skillsEntries(data: CvData, theme: TemplateTheme): Entry[] {
+  return hasSkills(data) ? [{ key: "skills", body: <SkillsBody data={data} theme={theme} /> }] : [];
+}
+
+/** A single paragraph in a narrow column of `width` pt (Modern sidebar blocks). */
+export function textEntries(key: string, text: string, color: string, width: number): Entry[] {
+  return text ? [{ key, body: <Text style={{ color }}>{breakLongWords(text, width)}</Text> }] : [];
+}
+
+export function experienceEntries(data: CvData, theme: TemplateTheme): Entry[] {
+  return data.work.map((w) => {
+    const loc = [w.cityState, w.country].filter(Boolean).join(", ");
+    const head = headRows(theme, w.role || w.company, dateRange(w.startDate, w.endDate, w.current), w.role ? w.company : "", loc);
+    return { key: w.id, head, body: bullets(w.description, theme) };
+  });
+}
+
+export function educationEntries(data: CvData, theme: TemplateTheme): Entry[] {
+  return data.education.map((e) => {
+    const degree = degreeLine(e);
+    const place = [e.location, e.grade ? `Grade: ${e.grade}` : ""].filter(Boolean).join(SEP);
+    const head = headRows(theme, degree || e.institution, dateRange(e.startDate, e.endDate), degree ? e.institution : "", place);
+    const body = e.additional ? <Text style={{ color: theme.text, marginTop: 1 }}>{asBody(e.additional, theme)}</Text> : null;
+    return { key: e.id, head, body };
+  });
 }
 
 export function SkillsBody({ data, theme, stacked = false }: { data: CvData; theme: TemplateTheme; stacked?: boolean }) {
-  const sep = stacked ? ", " : "  ·  ";
+  const sep = stacked ? ", " : SEP;
+  const space = stacked ? 4 : 2; // a gap + padding, not a bottom margin (see classic.tsx)
   const Group = ({ label, value }: { label: string; value: string }) => (
-    <Text style={{ color: theme.text, marginBottom: stacked ? 4 : 2 }}>
+    <Text style={{ color: theme.text }}>
       <Text style={{ fontFamily: FONT_BOLD, color: theme.text }}>{label}: </Text>
-      {value}
+      {asBody(value, theme)}
     </Text>
   );
   return (
-    <View>
+    <View style={{ rowGap: space, paddingBottom: space }}>
       {data.skills.length > 0 ? <Group label="Hard skills" value={data.skills.join(sep)} /> : null}
       {data.instruments.length > 0 ? <Group label="Tools" value={data.instruments.join(sep)} /> : null}
       {data.softSkills.length > 0 ? <Group label="Soft skills" value={data.softSkills.join(sep)} /> : null}
       {!stacked && data.languages.length > 0 ? (
-        <Group label="Languages" value={data.languages.map((l) => `${l.name} (${l.level})`).join(sep)} />
+        <Group label="Languages" value={data.languages.map((l) => (l.level ? `${l.name} (${l.level})` : l.name)).join(sep)} />
       ) : null}
     </View>
   );
 }
 
-export function SimpleSection({ items, theme }: { items: SimpleEntry[]; theme: TemplateTheme }) {
-  if (items.length === 0) return null;
-  return (
-    <View style={{ rowGap: GAP.entry }}>
-      {items.map((it) => {
-        const right = [it.organisation || it.issuer || it.publisher, it.date].filter(Boolean).join("  ·  ");
-        return (
-          <View key={it.id}>
-            <SplitRow
-              left={<Text style={[meta.title, { color: theme.text }]}>{it.title || it.role || "—"}</Text>}
-              right={right ? <Text style={[meta.date, { color: theme.faint }]}>{right}</Text> : null}
-            />
-            <BulletList text={it.description} theme={theme} />
-            {it.link ? <Text style={{ fontSize: 9, color: theme.faint, marginTop: 1 }}>{it.link}</Text> : null}
-          </View>
-        );
-      })}
-    </View>
-  );
+/** Awards, certifications, publications (title · issuer · date) and volunteering / activities,
+ *  which also have a role, a type, a place and an end date (or "Present") — those were
+ *  collected by the builder but never printed. */
+export function simpleEntries(items: SimpleEntry[], theme: TemplateTheme): Entry[] {
+  return items.map((it) => {
+    const right = [it.organisation || it.issuer || it.publisher, dateRange(it.date, it.endDate, it.ongoing)].filter(Boolean).join(SEP);
+    const sub = [it.title ? it.role : "", it.activityType].filter(Boolean).join(SEP);
+    const desc = bullets(it.description, theme);
+    const link = it.link ? (
+      <Text style={{ fontSize: 9, color: theme.faint, marginTop: 1 }}>
+        <Linked href={webHref(it.link)} color={theme.faint}>{breakLongWords(it.link, theme.column, 9)}</Linked>
+      </Text>
+    ) : null;
+    return {
+      key: it.id,
+      // always title row + right column, as before (the lab's "stacked" variant covers jobs and schools)
+      head: headRows(theme, it.title || it.role || "", right, sub, it.location ?? "", false),
+      body: desc || link ? <>{desc}{link}</> : null,
+    };
+  });
 }
 
 export const ALL_SIMPLE: { key: keyof CvData; title: string }[] = [

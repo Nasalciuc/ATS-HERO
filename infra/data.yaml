@@ -1,0 +1,195 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  ATS Hero - data stack (atshero-data): the RDS Postgres instance that is the system of record,
+  and the bucket its dumps go to. One instance holds two databases: atshero (production) and
+  atshero_dev (Vercel previews), each with its own login role. Stateful: deployed by a human only
+  (CI can't touch this stack), snapshot on delete/replace, deletion protection, and a stack policy
+  that refuses to replace or delete the instance. If the instance was created by hand (U0),
+  IMPORT it into this stack, don't recreate it.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: The default VPC is fine (no NAT, no private subnets needed)
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: At least two subnets in different AZs of that VPC
+  InstanceClass:
+    Type: String
+    Default: db.t4g.micro
+  EngineVersion:
+    Type: String
+    Default: "16"
+    Description: >
+      Major version only: RDS picks the current 16.x and AutoMinorVersionUpgrade keeps it current,
+      so a pinned minor would only drift. Matches local Docker (postgres:16).
+  MasterPasswordMode:
+    Type: String
+    AllowedValues: [managed, existing]
+    Default: managed
+    Description: >
+      managed = new instance, RDS keeps the master password in Secrets Manager.
+      existing = an imported instance keeps the password it already has (switching would rotate it).
+
+Conditions:
+  ManagedPassword: !Equals [!Ref MasterPasswordMode, managed]
+
+Resources:
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: atshero
+      SubnetIds: !Ref SubnetIds
+      Tags: [{ Key: project, Value: atshero }]
+
+  # Vercel functions have no fixed IPs, so 5432 is open; TLS is forced and logins are
+  # password- or IAM-token-based. Trigger to close it: Vercel static IPs or a private network.
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: atshero Postgres (TLS only)
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+      Tags: [{ Key: project, Value: atshero }]
+
+  DbParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Family: postgres16
+      Description: atshero - TLS forced, slow queries logged
+      Parameters:
+        rds.force_ssl: "1"
+        log_min_duration_statement: "1000"
+      Tags: [{ Key: project, Value: atshero }]
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: atshero
+      Engine: postgres
+      EngineVersion: !Ref EngineVersion
+      AutoMinorVersionUpgrade: true
+      DBInstanceClass: !Ref InstanceClass
+      AllocatedStorage: "20"
+      MaxAllocatedStorage: 50
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: false
+      PubliclyAccessible: true
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VPCSecurityGroups: [!GetAtt DbSecurityGroup.GroupId]
+      DBParameterGroupName: !Ref DbParameterGroup
+      DBName: atshero
+      MasterUsername: postgres
+      ManageMasterUserPassword: !If [ManagedPassword, true, !Ref AWS::NoValue]
+      EnableIAMDatabaseAuthentication: true
+      # Daily snapshot + point-in-time restore to any minute of the last 14 days (logs are shipped
+      # every 5 minutes). Backup storage up to the size of the database (20 GB) costs nothing.
+      BackupRetentionPeriod: 14
+      PreferredBackupWindow: "03:00-04:00"
+      CopyTagsToSnapshot: true
+      DeletionProtection: true
+      Tags: [{ Key: project, Value: atshero }]
+
+  # Monthly pg_dump goes here (F5): a copy outside RDS. Kept 180 days (GDPR storage limitation:
+  # a deleted account's data leaves the backups within 6 months - say so in the privacy policy).
+  # Kept if the stack is deleted.
+  BackupsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: RetainExceptOnCreate
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub atshero-backups-${AWS::AccountId}
+      VersioningConfiguration: { Status: Enabled }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      LifecycleConfiguration:
+        Rules:
+          - Id: cold-after-30-days
+            Status: Enabled
+            Transitions:
+              - { StorageClass: GLACIER_IR, TransitionInDays: 30 }
+            ExpirationInDays: 180
+            NoncurrentVersionExpiration: { NoncurrentDays: 30 }
+      Tags: [{ Key: project, Value: atshero }]
+
+  # Pre-registered triggers: connections > 60 -> InstanceClass db.t4g.small (twice the memory, so
+  # twice the connections; RDS Proxy can't be public, so Vercel could not reach it);
+  # disk < 4 GB; CPU > 80 % for 15 min.
+  ConnectionsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: atshero-db-connections
+      Namespace: AWS/RDS
+      MetricName: DatabaseConnections
+      Dimensions: [{ Name: DBInstanceIdentifier, Value: !Ref Database }]
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 60
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions: [!ImportValue atshero-alerts-topic-arn]
+
+  FreeStorageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: atshero-db-free-storage
+      Namespace: AWS/RDS
+      MetricName: FreeStorageSpace
+      Dimensions: [{ Name: DBInstanceIdentifier, Value: !Ref Database }]
+      Statistic: Minimum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 4294967296
+      ComparisonOperator: LessThanThreshold
+      AlarmActions: [!ImportValue atshero-alerts-topic-arn]
+
+  CpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: atshero-db-cpu
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Dimensions: [{ Name: DBInstanceIdentifier, Value: !Ref Database }]
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions: [!ImportValue atshero-alerts-topic-arn]
+
+Outputs:
+  Endpoint:
+    Value: !GetAtt Database.Endpoint.Address
+  Port:
+    Value: !GetAtt Database.Endpoint.Port
+  DbiResourceId:
+    Description: DbResourceId for the app stack (IAM database login)
+    Value: !GetAtt Database.DbiResourceId
+  MasterSecretArn:
+    Condition: ManagedPassword
+    Description: >
+      RDS rotates this password every 7 days: read it from Secrets Manager each time you need it
+      (migrations), straight into PGPASSWORD - never into chat, files or shell history
+    Value: !GetAtt Database.MasterUserSecret.SecretArn
+  BackupsBucketName:
+    Value: !Ref BackupsBucket
+  # for the restore drill (F5): a restored copy must use the same network and parameters
+  DbSubnetGroupName:
+    Value: !Ref DbSubnetGroup
+  DbSecurityGroupId:
+    Value: !GetAtt DbSecurityGroup.GroupId
+  DbParameterGroupName:
+    Value: !Ref DbParameterGroup

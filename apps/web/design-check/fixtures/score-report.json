@@ -1,0 +1,196 @@
+{
+  "$comment": "The ATS Score results the Figma frames show (319:4126, 383:8025, 383:7664): 61.3, the same nine sections in the same order, the first one open. Score colours follow ours (green from 80, amber from 50, red below), so 'Personal info' and 'Work experience' are 75 where Figma colours an 80 amber.",
+  "generalScore": 61.3,
+  "message": "Your resume has a few critical issues, along with suggestions to help improve your chances of getting hired.",
+  "sections": [
+    {
+      "key": "personalInfo",
+      "label": "Personal info",
+      "score": 75,
+      "entryScore": 80.2,
+      "critical": [
+        "Missing or unclear role descriptions",
+        "Lack of measurable impact or results",
+        "Poor formatting or inconsistent structure"
+      ],
+      "suggestions": [
+        "Add keywords relevant to your target role",
+        "Keep descriptions concise (30–120 characters per bullet)",
+        "Poor formatting or inconsistent structure"
+      ],
+      "goodPractices": [
+        "Clear role and organization information",
+        "Consistent structure across sections",
+        "Relevant skills aligned with your target position"
+      ]
+    },
+    {
+      "key": "education",
+      "label": "Education",
+      "score": 30,
+      "entryScore": 80.2,
+      "critical": [
+        "Missing or unclear role descriptions",
+        "Lack of measurable impact or results",
+        "Poor formatting or inconsistent structure"
+      ],
+      "suggestions": [
+        "Add keywords relevant to your target role",
+        "Keep descriptions concise (30–120 characters per bullet)",
+        "Poor formatting or inconsistent structure"
+      ],
+      "goodPractices": [
+        "Clear role and organization information",
+        "Consistent structure across sections",
+        "Relevant skills aligned with your target position"
+      ]
+    },
+    {
+      "key": "work",
+      "label": "Work experience",
+      "score": 75,
+      "entryScore": 80.2,
+      "critical": [
+        "Missing or unclear role descriptions",
+        "Lack of measurable impact or results",
+        "Poor formatting or inconsistent structure"
+      ],
+      "suggestions": [
+        "Add keywords relevant to your target role",
+        "Keep descriptions concise (30–120 characters per bullet)",
+        "Poor formatting or inconsistent structure"
+      ],
+      "goodPractices": [
+        "Clear role and organization information",
+        "Consistent structure across sections",
+        "Relevant skills aligned with your target position"
+      ]
+    },
+    {
+      "key": "summary",
+      "label": "Professional summary",
+      "score": 80,
+      "entryScore": 80.2,
+      "critical": [
+        "Missing or unclear role descriptions",
+        "Lack of measurable impact or results",
+        "Poor formatting or inconsistent structure"
+      ],
+      "suggestions": [
+        "Add keywords relevant to your target role",
+        "Keep descriptions concise (30–120 characters per bullet)",
+        "Poor formatting or inconsistent structure"
+      ],
+      "goodPractices": [
+        "Clear role and organization information",
+        "Consistent structure across sections",
+        "Relevant skills aligned with your target position"
+      ]
+    },
+    {
+      "key": "activities",
+      "label": "Relevant activities",
+      "score": 80,
+      "entryScore": 80.2,
+      "critical": [
+        "Missing or unclear role descriptions",
+        "Lack of measurable impact or results",
+        "Poor formatting or inconsistent structure"
+      ],
+      "suggestions": [
+        "Add keywords relevant to your target role",
+        "Keep descriptions concise (30–120 characters per bullet)",
+        "Poor formatting or inconsistent structure"
+      ],
+      "goodPractices": [
+        "Clear role and organization information",
+        "Consistent structure across sections",
+        "Relevant skills aligned with your target position"
+      ]
+    },
+    {
+      "key": "skills",
+      "label": "Skills",
+      "score": 80,
+      "entryScore": 80.2,
+      "critical": [
+        "Missing or unclear role descriptions",
+        "Lack of measurable impact or results",
+        "Poor formatting or inconsistent structure"
+      ],
+      "suggestions": [
+        "Add keywords relevant to your target role",
+        "Keep descriptions concise (30–120 characters per bullet)",
+        "Poor formatting or inconsistent structure"
+      ],
+      "goodPractices": [
+        "Clear role and organization information",
+        "Consistent structure across sections",
+        "Relevant skills aligned with your target position"
+      ]
+    },
+    {
+      "key": "awards",
+      "label": "Awards",
+      "score": 80,
+      "entryScore": 80.2,
+      "critical": [
+        "Missing or unclear role descriptions",
+        "Lack of measurable impact or results",
+        "Poor formatting or inconsistent structure"
+      ],
+      "suggestions": [
+        "Add keywords relevant to your target role",
+        "Keep descriptions concise (30–120 characters per bullet)",
+        "Poor formatting or inconsistent structure"
+      ],
+      "goodPractices": [
+        "Clear role and organization information",
+        "Consistent structure across sections",
+        "Relevant skills aligned with your target position"
+      ]
+    },
+    {
+      "key": "certifications",
+      "label": "Certifications",
+      "score": 80,
+      "entryScore": 80.2,
+      "critical": [
+        "Missing or unclear role descriptions",
+        "Lack of measurable impact or results",
+        "Poor formatting or inconsistent structure"
+      ],
+      "suggestions": [
+        "Add keywords relevant to your target role",
+        "Keep descriptions concise (30–120 characters per bullet)",
+        "Poor formatting or inconsistent structure"
+      ],
+      "goodPractices": [
+        "Clear role and organization information",
+        "Consistent structure across sections",
+        "Relevant skills aligned with your target position"
+      ]
+    },
+    {
+      "key": "publications",
+      "label": "Publications",
+      "score": 80,
+      "entryScore": 80.2,
+      "critical": [
+        "Missing or unclear role descriptions",
+        "Lack of measurable impact or results",
+        "Poor formatting or inconsistent structure"
+      ],
+      "suggestions": [
+        "Add keywords relevant to your target role",
+        "Keep descriptions concise (30–120 characters per bullet)",
+        "Poor formatting or inconsistent structure"
+      ],
+      "goodPractices": [
+        "Clear role and organization information",
+        "Consistent structure across sections",
+        "Relevant skills aligned with your target position"
+      ]
+    }
+  ]
+}

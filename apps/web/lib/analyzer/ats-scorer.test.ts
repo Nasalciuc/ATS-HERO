@@ -238,6 +238,13 @@ describe("education", () => {
     const s = section(scoreCv(makeData({ education: [FILLED_EDU] })), "education");
     expect(s.score).toBe(100);
   });
+
+  it("ignores an entry that was added but never filled (it isn't printed either)", () => {
+    const blank = { ...FILLED_EDU, id: "e-blank", institution: "", location: "", degree: "", minor: "", startDate: "", endDate: "", grade: "", additional: "" };
+    const withBlank = section(scoreCv(makeData({ education: [blank, FILLED_EDU] })), "education");
+    const alone = section(scoreCv(makeData({ education: [FILLED_EDU] })), "education");
+    expect(withBlank.score).toBe(alone.score);
+  });
 });
 
 /* ------------------------------ skills ------------------------------ */

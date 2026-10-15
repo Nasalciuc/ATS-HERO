@@ -1,50 +1,57 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# ATS Hero Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Value before the paywall
+A guest can build, score and export a CV without an account. Signing in keeps the work
+(guest → claim) and never takes it away. Paid tiers add depth; they never lock the basics a
+user has already produced.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Output that passes an ATS (NON-NEGOTIABLE)
+Every exported CV (PDF, DOCX) must be readable by applicant tracking systems and correct to the
+letter. Template, export and print changes are measured by the ATS lab (`tools/ats-lab`) and
+visually checked; ATS-recommended layouts never FAIL on any extractor. A defect that changes
+what a recruiter reads (lost letters, cut contacts, missing fields) blocks a release.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Truthful product
+The site only claims what the product does today. Scores are deterministic and explainable;
+AI output is labelled and bounded (kill-switch, quotas). Lab numbers, not opinions, decide
+template recommendations.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Security and privacy by default
+No secrets in code, commits, logs or chats. Every data access is scoped to its owner. Users'
+CVs never go to third parties without explicit consent and a DPA; test data is synthetic.
+No scraping or automation of LinkedIn. No fake applications to real employers.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Measured design fidelity
+Figma is the source of truth for the UI. Screens are matched within ±2px and locked by the
+design check in CI; screens without a frame are designed in Figma before they are built.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### VI. Small, verified steps
+One change at a time, each with its checks (types, tests, build, design check, ATS lab when
+relevant) and a stop before the next. AI-written plans are drafts until verified against the
+code.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+## Technology and constraints
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+The stack, commands, gates and detailed rules live in `AGENTS.md` at the repository root, the
+single operational guide for every agent (Cursor reads it directly; Claude Code through
+`CLAUDE.md`). In short: Next.js 16 + React 19 on Vercel, Postgres + Drizzle, Clerk, Paddle,
+`@react-pdf/renderer` + `docx` for output, FastAPI + spaCy for Tier 2, AWS (us-east-1) as
+CloudFormation. Styling is the project's own CSS design system plus Tailwind utilities; no UI kit.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Development workflow and quality gates
+
+- CI must stay green: XSS/secret grep gate, vitest, build, pytest, Figma design check (UI PRs),
+  ATS lab (template/export PRs), migration check (schema PRs).
+- Components are not moved, renamed or deleted without notice to the designer (Liubovi).
+- Push, PR and deploy happen only on the product owner's (Scaler's) decision.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution states the principles; `AGENTS.md` turns them into rules and commands. When
+they disagree, the principles here win and `AGENTS.md` is fixed in the same change. Amendments
+are made by pull request with a version bump: MAJOR for a removed or redefined principle, MINOR
+for a new principle or section, PATCH for wording.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-10-14 | **Last Amended**: 2026-10-14

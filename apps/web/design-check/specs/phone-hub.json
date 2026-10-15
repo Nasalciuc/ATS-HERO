@@ -1,0 +1,109 @@
+{
+  "id": "phone-hub",
+  "title": "Phone · Home (/app)",
+  "frame": "55:322",
+  "reference": "reference/figma/mobile/screen-55-322.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 390,
+    "height": 1038
+  },
+  "touch": true,
+  "locked": true,
+  "tolerance": 2,
+  "note": "Figma mobile home (ATS-Inspector) in the desktop style: sign-in card instead of the plan card, the three menu actions, My Resumes. One CV is created first so a card shows.",
+  "setup": [
+    {
+      "fill": [
+        "[data-figma=field-name-input]",
+        "Daniel Gallego"
+      ]
+    },
+    {
+      "wait": 2500
+    },
+    {
+      "goto": "/app"
+    },
+    {
+      "wait": 800
+    }
+  ],
+  "checks": [
+    {
+      "key": "hub-title",
+      "box": [
+        28,
+        49,
+        null,
+        33
+      ]
+    },
+    {
+      "key": "hub-account",
+      "box": [
+        327,
+        49,
+        33,
+        33
+      ]
+    },
+    {
+      "key": "hub-banner",
+      "box": [
+        29,
+        107,
+        331,
+        168
+      ],
+      "style": {
+        "background-color": "rgb(32, 32, 32)"
+      }
+    },
+    {
+      "key": "hub-act-0",
+      "box": [
+        29,
+        295,
+        331,
+        124
+      ]
+    },
+    {
+      "key": "hub-act-1",
+      "box": [
+        29,
+        429,
+        331,
+        124
+      ]
+    },
+    {
+      "key": "hub-act-2",
+      "box": [
+        29,
+        563,
+        331,
+        124
+      ]
+    },
+    {
+      "key": "hub-history-title",
+      "box": [
+        29,
+        732,
+        null,
+        28
+      ]
+    },
+    {
+      "key": "hub-cv-0",
+      "box": [
+        29,
+        771,
+        188,
+        240
+      ]
+    }
+  ]
+}

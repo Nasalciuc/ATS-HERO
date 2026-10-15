@@ -1,0 +1,152 @@
+{
+  "id": "builder-work",
+  "title": "Builder · Work experience",
+  "frame": "272:609",
+  "reference": "reference/figma/desktop/function-1-step-5-work.png",
+  "route": "/app/create",
+  "viewport": {
+    "width": 1728,
+    "height": 1000
+  },
+  "locked": true,
+  "tolerance": 2,
+  "setup": [
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    },
+    {
+      "click": "[data-figma=btn-next]"
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1000
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "btn-preview",
+      "box": [
+        1196,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "stepper",
+      "box": [
+        331,
+        139,
+        1135,
+        98
+      ]
+    },
+    {
+      "key": "step-3",
+      "box": [
+        661,
+        139,
+        64,
+        64
+      ],
+      "style": {
+        "background-color": "rgb(214, 247, 226)"
+      }
+    },
+    {
+      "key": "tips",
+      "node": "273:1131"
+    },
+    {
+      "key": "tips-extra",
+      "node": "355:6374",
+      "style": {
+        "background-color": "rgb(214, 247, 226)",
+        "border-radius": "10px"
+      }
+    },
+    {
+      "key": "tips-extra-add",
+      "node": "355:6386",
+      "style": {
+        "color": "rgb(0, 196, 80)"
+      }
+    },
+    {
+      "key": "form-card",
+      "node": "272:712"
+    },
+    {
+      "key": "field-role",
+      "node": "272:955"
+    },
+    {
+      "key": "field-description",
+      "node": "272:957"
+    },
+    {
+      "key": "field-start",
+      "node": "294:1513"
+    },
+    {
+      "key": "toggle-current",
+      "node": "290:349",
+      "style": {
+        "font-size": "12px",
+        "color": "rgb(0, 196, 80)"
+      }
+    },
+    {
+      "key": "field-country",
+      "node": "272:968"
+    },
+    {
+      "key": "entry-add",
+      "node": "272:970"
+    },
+    {
+      "key": "btn-back",
+      "box": [
+        599,
+        760,
+        160,
+        52
+      ]
+    },
+    {
+      "key": "btn-next",
+      "box": [
+        1306,
+        760,
+        160,
+        52
+      ]
+    }
+  ]
+}

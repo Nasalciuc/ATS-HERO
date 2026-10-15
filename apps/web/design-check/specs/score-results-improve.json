@@ -1,0 +1,276 @@
+{
+  "id": "score-results-improve",
+  "title": "ATS Score results (Improve / Job Fit)",
+  "frame": "383:8025",
+  "reference": "reference/figma/desktop/ats-score-results-3.png",
+  "route": "/app",
+  "viewport": {
+    "width": 1728,
+    "height": 1756
+  },
+  "locked": true,
+  "tolerance": 2,
+  "setup": [
+    {
+      "session": {
+        "ats_report": {
+          "$file": "fixtures/score-report.json"
+        },
+        "ats_flow": "improve"
+      }
+    },
+    {
+      "goto": "/app/score"
+    },
+    {
+      "wait": 2000
+    }
+  ],
+  "checks": [
+    {
+      "key": "sidebar",
+      "box": [
+        0,
+        0,
+        274,
+        1756
+      ]
+    },
+    {
+      "key": "title-panel",
+      "box": [
+        331,
+        43,
+        1135,
+        52
+      ]
+    },
+    {
+      "key": "title",
+      "box": [
+        331,
+        43,
+        null,
+        44
+      ],
+      "style": {
+        "font-size": "40px",
+        "font-weight": "600"
+      }
+    },
+    {
+      "key": "btn-preview",
+      "box": [
+        1196,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "btn-save",
+      "box": [
+        1333,
+        43,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "analyze-steps",
+      "box": [
+        331,
+        127,
+        504,
+        83
+      ]
+    },
+    {
+      "key": "analyze-step-0",
+      "box": [
+        331,
+        127,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "analyze-step-1",
+      "box": [
+        551,
+        127,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "analyze-step-2",
+      "box": [
+        771,
+        127,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "score-head",
+      "box": [
+        331,
+        267,
+        null,
+        157
+      ]
+    },
+    {
+      "key": "score-circle",
+      "box": [
+        331,
+        267,
+        157,
+        157
+      ]
+    },
+    {
+      "key": "score-text",
+      "box": [
+        537,
+        275.5,
+        354,
+        72
+      ],
+      "style": {
+        "font-size": "20px"
+      }
+    },
+    {
+      "key": "btn-recalc",
+      "box": [
+        537,
+        363.5,
+        185,
+        52
+      ]
+    },
+    {
+      "key": "score-list",
+      "box": [
+        331,
+        472,
+        1135,
+        1236
+      ]
+    },
+    {
+      "key": "row-0",
+      "box": [
+        331,
+        472,
+        1135,
+        81
+      ]
+    },
+    {
+      "key": "row-icon",
+      "box": [
+        331,
+        481,
+        64,
+        64
+      ]
+    },
+    {
+      "key": "row-label",
+      "box": [
+        418,
+        501,
+        null,
+        24
+      ],
+      "style": {
+        "font-size": "20px",
+        "font-weight": "700"
+      }
+    },
+    {
+      "key": "row-score",
+      "box": [
+        642,
+        501.5,
+        null,
+        23
+      ],
+      "style": {
+        "color": "rgb(255, 193, 7)"
+      }
+    },
+    {
+      "key": "row-entry",
+      "box": [
+        811,
+        501.5,
+        null,
+        23
+      ],
+      "style": {
+        "color": "rgb(156, 156, 156)"
+      }
+    },
+    {
+      "key": "row-fix",
+      "box": [
+        1133,
+        487,
+        133,
+        52
+      ]
+    },
+    {
+      "key": "row-toggle",
+      "box": [
+        1422,
+        491,
+        44,
+        44
+      ]
+    },
+    {
+      "key": "badge-critical",
+      "box": [
+        414,
+        553,
+        141,
+        28
+      ],
+      "style": {
+        "color": "rgb(255, 97, 97)"
+      }
+    },
+    {
+      "key": "badge-suggestion",
+      "box": [
+        414,
+        699,
+        119,
+        28
+      ]
+    },
+    {
+      "key": "badge-good",
+      "box": [
+        414,
+        845,
+        134,
+        28
+      ]
+    },
+    {
+      "key": "row-1",
+      "box": [
+        331,
+        995,
+        1135,
+        81
+      ]
+    }
+  ]
+}
