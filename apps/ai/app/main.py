@@ -7,6 +7,7 @@ FastAPI app exposing the deterministic-NLP analysis layer:
   POST /format   — parseability analysis from the file structure
   POST /region   — region-fit against a target country's norms (global)
   POST /parse-check — what ATS-style readers recover from a CV file (ATS lab)
+  POST /jobs/search  — job postings from job boards through JobSpy (never LinkedIn)
   GET  /health   — liveness + which NLP backend is active
 
 Tier 3 (AI WEAK->STRONG rewriting) lives in the Next.js app via the Vercel AI SDK.
@@ -19,7 +20,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from .analyzers.nlp_engine import get_engine
 from .config import settings
-from .routers import analyze, format as format_router, job_fit, parse, parse_check, region
+from .routers import analyze, format as format_router, job_fit, jobs, parse, parse_check, region
 from .routers.parse import limiter
 
 app = FastAPI(title="ATS Hero AI", version="0.2.0")
@@ -42,6 +43,7 @@ app.include_router(job_fit.router, tags=["job-fit"])
 app.include_router(format_router.router, tags=["format"])
 app.include_router(region.router, tags=["region"])
 app.include_router(parse_check.router, tags=["parse-check"])
+app.include_router(jobs.router, tags=["jobs"])
 
 
 @app.get("/health")

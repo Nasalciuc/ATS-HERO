@@ -1,0 +1,33 @@
+name: Jobs smoke (JobSpy)
+# Live check of POST /jobs/search's engine (apps/ai/app/jobs): real searches in our markets through
+# JobSpy, on GitHub's runners, which reach the job boards. Weekly, because JobSpy reaches the boards
+# through their private endpoints, which change without notice; also on a push to lab/jobs.
+on:
+  push:
+    branches: [lab/jobs]
+  schedule:
+    - cron: "41 6 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults: { run: { working-directory: apps/ai } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: JobSpy at the version requirements.txt pins
+        run: pip install "$(grep -E '^python-jobspy==' requirements.txt)" "pydantic>=2.7"
+      - name: Real searches (exit 1 when no board returns a posting)
+        run: python -m app.jobs.smoke --out ../../tools/jobs-smoke/out
+      - name: Report → job summary
+        if: always()
+        run: cat ../../tools/jobs-smoke/out/REPORT.md >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: jobs-smoke-report, path: tools/jobs-smoke/out/ }
