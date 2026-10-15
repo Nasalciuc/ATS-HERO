@@ -28,6 +28,18 @@ jobs:
       - name: Report → job summary
         if: always()
         run: cat ../../tools/jobs-smoke/out/REPORT.md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Report → annotations (readable through the API, e.g. gh api …/check-runs/<id>/annotations)
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          report = Path("../../tools/jobs-smoke/out/REPORT.md")
+          text = report.read_text(encoding="utf-8") if report.exists() else "no report"
+          chunks = [text[i:i + 8000] for i in range(0, len(text), 8000)][:9]
+          for n, chunk in enumerate(chunks, 1):
+              body = chunk.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print(f"::notice title=Jobs smoke report {n}/{len(chunks)}::{body}")
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: jobs-smoke-report, path: tools/jobs-smoke/out/ }
