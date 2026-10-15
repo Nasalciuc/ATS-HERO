@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { CvData } from "./types";
+import { MAX_PHOTO_CHARS, PHOTO_DATA_URL } from "./photo";
 
 /**
  * Zod mirror of CvData (lib/types.ts). This is the trust boundary for `cvs.data`:
@@ -10,7 +11,12 @@ const personalInfoSchema = z.object({
   name: z.string(),
   email: z.string(),
   phone: z.string(),
-  photo: z.string().optional(),
+  // only the small JPEG the builder makes (lib/photo.ts): never a link the PDF would fetch
+  photo: z
+    .string()
+    .max(MAX_PHOTO_CHARS)
+    .refine((v) => v === "" || PHOTO_DATA_URL.test(v), "photo must be a JPEG data URL")
+    .optional(),
   linkedin: z.string(),
   website: z.string(),
   country: z.string(),

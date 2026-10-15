@@ -48,7 +48,7 @@ const journey: Step[] = [
     title: "You build a CV as a guest",
     points: [
       "The first time you open the app, your browser gets a random guest code, and your CVs are saved under it.",
-      "What you type in the builder is saved to our database as you go.",
+      "What you type in the builder is saved to our database as you go, with your photo if you add one: a small copy made in your browser, not the original file.",
       "A CV you check (on the home page, in Improve My Resume or in Check Job Fit) is read inside your browser and never uploaded, whether it is a PDF, a Word file or text.",
       "PDF and Word downloads are made in your browser too.",
     ],
@@ -262,7 +262,7 @@ export function PrivacyContent() {
               <Table
                 head={["What we do", "With which data", "Why we may"]}
                 rows={[
-                  ["Save and show your CVs, as a guest or signed in", "What you type in the builder, your guest code, CV IDs", "You asked us to (our agreement with you)"],
+                  ["Save and show your CVs, as a guest or signed in", "What you type in the builder, your photo if you add one, your guest code, CV IDs", "You asked us to (our agreement with you)"],
                   ["Your account and sign-in", "Email address, Clerk ID, the date you joined, sometimes your name", "Our agreement with you"],
                   ["The job tracker", "What you enter in it", "Our agreement with you"],
                   ["Keep the service safe and working: request logs, sign-in checks, rate limits, the bot check", "IP address, browser, guest code, account and CV IDs", "Our legitimate interest in a service that works and isn’t abused"],

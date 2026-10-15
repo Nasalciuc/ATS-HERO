@@ -2,6 +2,7 @@
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { nanoid } from "nanoid";
 import { Field, TextArea, SelectField } from "../../components/app/Field";
+import { PhotoUpload } from "./PhotoUpload";
 import {
   ChevronUp,
   ChipClose,
@@ -301,13 +302,7 @@ export function PersonalInfoStep({ data, update, framed }: StepProps) {
           <Field figma="field-name" label="NAME, SURNAME" value={p.name} placeholder="David Smith" onChange={(v) => set({ name: v })} />
           <Field figma="field-email" label="EMAIL" value={p.email} placeholder="davidsmith@gmail.com" onChange={(v) => set({ email: v })} />
           <Field figma="field-phone" label="PHONE" value={p.phone} placeholder="+1 123 456 7890" onChange={(v) => set({ phone: v })} />
-          <div className="field field--photo field--photo-gap">
-            <span className="field__label" data-figma="photo-label">PHOTO (OPTIONAL)</span>
-            <button type="button" className="field__upload" data-figma="upload">
-              {/* Figma flattened material-symbols:upload-rounded to a bare 16×15 vector: crop to the glyph */}
-              <UploadRounded width={16} height={15} viewBox="4 4.425 16 15.575" preserveAspectRatio="none" /> Upload
-            </button>
-          </div>
+          <PhotoUpload value={p.photo ?? ""} onChange={(photo) => set({ photo })} />
         </div>
         <div className="form-col">
           <Field figma="field-linkedin" label="LINKEDIN PROFILE" value={p.linkedin} placeholder="https://www.linkedin.com/in/davidsmith" onChange={(v) => set({ linkedin: v })} />

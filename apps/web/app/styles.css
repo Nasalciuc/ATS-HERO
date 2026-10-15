@@ -2200,6 +2200,49 @@ select.field__input {
 .field--photo-gap {
   margin-top: 3px; /* Figma: 19 between the fields and the photo group */
 }
+/* the photo, once there is one: a 37px thumbnail (the button's height), "Change", "Remove" */
+.photo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.photo-thumb {
+  flex: none;
+  width: 37px;
+  height: 37px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.photo-remove {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-inter);
+  font-size: 14px;
+  line-height: 17px;
+  color: #4a4a4a; /* 8.9:1 on white; --gray-600 is 3.4:1 */
+  text-decoration: underline;
+  cursor: pointer;
+}
+.photo-remove:hover {
+  color: var(--ink);
+}
+.field__upload.is-over {
+  box-shadow: inset 0 0 0 2px var(--green);
+  background: var(--green-tint);
+}
+.field__error {
+  max-width: 420px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 18px;
+  color: var(--red-text);
+}
+.field__error a {
+  color: var(--violet-600);
+  text-decoration: underline;
+}
 .field__textarea {
   display: block;
   resize: none;
