@@ -21,7 +21,7 @@ export default function Navbar() {
   return (
     <header className="nav" data-figma="nav">
       <div className="container nav__inner">
-        <a className="nav__logo" href="#top" data-figma="nav-logo">
+        <a className="nav__logo" href="/#top" data-figma="nav-logo">
           ATS Hero
         </a>
 
@@ -36,13 +36,13 @@ export default function Navbar() {
         </button>
 
         <nav className={`nav__links${menuOpen ? " is-open" : ""}`}>
-          <a href="#tool" data-figma="nav-tool" onClick={() => setMenuOpen(false)}>
+          <a href="/#tool" data-figma="nav-tool" onClick={() => setMenuOpen(false)}>
             Our tool
           </a>
-          <a href="#why" data-figma="nav-why" onClick={() => setMenuOpen(false)}>
+          <a href="/#why" data-figma="nav-why" onClick={() => setMenuOpen(false)}>
             Why us
           </a>
-          <a href="#faq" data-figma="nav-faq" onClick={() => setMenuOpen(false)}>
+          <a href="/#faq" data-figma="nav-faq" onClick={() => setMenuOpen(false)}>
             FAQs
           </a>
         </nav>

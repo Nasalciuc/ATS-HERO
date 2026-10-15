@@ -5098,6 +5098,581 @@ select.field__input {
   text-underline-offset: 3px;
 }
 
+/* ============================================================
+   PRIVACY POLICY (views/PrivacyPage.tsx). No Figma frame: built from the landing's parts —
+   the hero badge, the selected-text headline, the stats row, the builder's stepper nodes,
+   the dark band and the FAQ's hairline rows.
+   ============================================================ */
+.privacy-hero {
+  background: var(--bg-page);
+  padding: 80px 0 72px;
+}
+.privacy-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 64px;
+  align-items: center;
+}
+.privacy-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px 0 10px;
+  border: 1px solid var(--green);
+  border-radius: 100px;
+  background: var(--white);
+  box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.02);
+  /* The landing badge's bright green text is 2.3:1 on white; the date here is something people
+     need to read, so the text takes the darker green the step labels use (4.6:1). */
+  color: #00873a;
+  font-size: 16px;
+  line-height: 18px;
+}
+.privacy-hero__badge time {
+  white-space: nowrap;
+}
+.privacy-hero__dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+}
+/* The landing headline's look (Figma 180:136) for any text: each line is a highlight sized to its
+   words, with the selection carets (3px bar, 7×6 handles) at the start and at the end. */
+.privacy-hero__title {
+  margin: 26px 0 0;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 57px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #1c3426;
+}
+/* Box-less on wide screens; on phones it carries the one highlight that wraps with the text. */
+.sel-text {
+  display: contents;
+}
+.sel-line {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0 8px 3px 10px;
+  background: var(--green-tint);
+}
+.sel-line + .sel-line {
+  margin-top: 5px;
+}
+.sel-line:last-child {
+  padding-right: 18px;
+}
+.sel-caret {
+  position: absolute;
+  width: 7px;
+  background:
+    linear-gradient(var(--green), var(--green)) 2px 0 / 3px 100% no-repeat,
+    linear-gradient(var(--green), var(--green)) 0 0 / 7px 6px no-repeat,
+    linear-gradient(var(--green), var(--green)) 0 100% / 7px 6px no-repeat;
+}
+.sel-caret--start {
+  left: -3px;
+  top: -5px;
+  bottom: 1px;
+}
+.sel-caret--end {
+  right: -2px;
+  top: -8px;
+  bottom: 0;
+}
+.privacy-hero__lead {
+  margin-top: 26px;
+  max-width: 560px;
+  font-size: 20px;
+  line-height: 24px;
+  color: var(--ink);
+}
+/* "At a glance": the landing's stats, stacked in a white card where the landing has its CV art. */
+.privacy-hero__card {
+  padding: 4px 28px;
+  border: 1px solid var(--violet-200);
+  border-radius: 24px;
+  background: var(--white);
+  box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.02);
+}
+.privacy-hero__stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.privacy-hero__stats .stat {
+  width: auto;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 0;
+}
+.privacy-hero__stats .stat + .stat {
+  border-top: 1px solid var(--violet-200);
+}
+.privacy-hero__stats .stat__icon {
+  flex: none;
+  justify-content: center;
+  width: 32px;
+}
+.privacy-hero__stats .stat__body {
+  gap: 8px;
+}
+.privacy-hero__stats .stat .stat__desc {
+  max-width: none; /* the landing narrows its first stat to Figma's 140px */
+}
+
+.privacy-section-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 46px;
+  letter-spacing: -0.8px;
+  color: var(--ink);
+}
+.privacy-section-title--light {
+  color: var(--white);
+}
+
+/* The four moments, drawn with the builder's stepper: 64px nodes joined by the green line. */
+.privacy-journey {
+  background: var(--white);
+  padding: 64px 0 80px;
+}
+.privacy-journey__steps {
+  list-style: none;
+  margin: 48px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+.pj-step {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.pj-step__head {
+  position: relative;
+}
+.pj-step:not(:last-child) .pj-step__head::after {
+  content: "";
+  position: absolute;
+  top: 31px;
+  left: 76px;
+  right: -12px;
+  height: 2px;
+  background: var(--green);
+}
+.pj-step__node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-mint);
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+.pj-step__emoji {
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 44px;
+}
+.pj-step__num {
+  display: block;
+  margin-top: 16px;
+  font-family: var(--font-inter);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #00873a;
+}
+.pj-step__title {
+  margin: 4px 0 0;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  color: var(--ink);
+}
+.pj-step__card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--bg-page);
+}
+.pj-step__points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pj-step__points li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--ink);
+}
+.pj-step__points li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--violet-600);
+}
+.pj-step__note {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--white);
+  font-size: 14px;
+  line-height: 19px;
+  color: #4a4a4a;
+}
+.pj-step__keep {
+  margin-top: auto;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 100px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--green);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 16px;
+  color: #1c3426;
+}
+.pj-step__keep-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.privacy-never {
+  background: var(--bg-dark);
+  color: var(--white);
+  padding: 80px 0;
+}
+.privacy-never__grid {
+  list-style: none;
+  margin: 40px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px 64px;
+}
+.privacy-never__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.privacy-never__icon {
+  flex: none;
+  color: var(--green-ring);
+}
+.privacy-never__title {
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+}
+.privacy-never__text {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 20px;
+  color: #c9c9c9;
+}
+
+.privacy-details {
+  background: var(--white);
+  padding: 80px 0 96px;
+}
+.privacy-details__grid {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 760px);
+  gap: 80px;
+  align-items: start;
+}
+.privacy-toc {
+  position: sticky;
+  top: 98px; /* under the 74px navbar */
+}
+.privacy-toc__title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 28px;
+  color: var(--ink);
+}
+.privacy-toc__list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+.privacy-toc__list a {
+  display: block;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--ink);
+}
+.privacy-toc__list a:hover {
+  color: var(--violet-600);
+}
+.privacy-toc__list a:focus-visible,
+.privacy-block a:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
+.privacy-block {
+  padding: 32px 0;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 98px;
+}
+.privacy-block:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.privacy-block h2 {
+  margin: 0 0 16px;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 28px;
+  color: var(--ink);
+}
+.privacy-block p {
+  font-size: 18px;
+  line-height: 27px;
+  color: var(--ink);
+}
+.privacy-block > * + * {
+  margin-top: 16px;
+}
+.privacy-block > h2 + * {
+  margin-top: 0;
+}
+.privacy-block p a {
+  color: var(--violet-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.privacy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--ink);
+}
+.privacy-table th {
+  padding: 0 16px 10px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-family: var(--font-inter);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+.privacy-table td {
+  padding: 14px 16px 14px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.privacy-table td:first-child {
+  font-weight: 700;
+}
+.privacy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+@media (max-width: 1279px) {
+  .privacy-journey__steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 48px;
+  }
+  .pj-step:nth-child(2n) .pj-step__head::after {
+    display: none;
+  }
+  .privacy-details__grid {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 48px;
+  }
+}
+@media (max-width: 960px) {
+  .privacy-hero__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+  .privacy-hero__card {
+    max-width: 520px;
+  }
+  .privacy-hero__title {
+    font-size: 44px;
+  }
+  .privacy-details__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+  .privacy-toc {
+    position: static;
+  }
+}
+@media (max-width: 720px) {
+  .privacy-hero {
+    padding: 48px 0;
+  }
+  /* The badge may wrap on narrow phones (the date stays on one line). */
+  .privacy-hero__badge {
+    height: auto;
+    min-height: 38px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  /* As on the landing at this width: no carets. One highlight on the whole sentence follows the
+     wrapped lines, so the join between the two halves is a normal space, not two paddings. */
+  .privacy-hero__title {
+    font-size: 32px;
+    line-height: 1.3;
+  }
+  .sel-text {
+    display: inline;
+    padding: 0 6px;
+    background: var(--green-tint);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .sel-line,
+  .sel-line:last-child {
+    display: inline;
+    padding: 0;
+    background: none;
+  }
+  .sel-caret {
+    display: none;
+  }
+  .privacy-hero__lead {
+    font-size: 18px;
+    line-height: 24px;
+  }
+  .privacy-hero__grid {
+    gap: 32px;
+  }
+  .privacy-hero__card {
+    padding: 0 20px;
+  }
+  .privacy-hero__stats .stat {
+    padding: 18px 0;
+  }
+  .privacy-section-title {
+    font-size: 32px;
+    line-height: 38px;
+  }
+  .privacy-journey,
+  .privacy-never,
+  .privacy-details {
+    padding: 56px 0;
+  }
+  /* The stepper turns vertical: nodes on the left, joined by a vertical line. */
+  .privacy-journey__steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 32px;
+  }
+  .pj-step {
+    position: relative;
+    padding: 0 0 32px 80px;
+    gap: 14px;
+  }
+  .pj-step__head {
+    position: static;
+  }
+  .pj-step:not(:last-child) .pj-step__head::after {
+    display: none;
+  }
+  .pj-step__node {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .pj-step:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 31px;
+    top: 72px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--green);
+  }
+  .pj-step__num {
+    margin-top: 6px;
+  }
+  .privacy-never__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .privacy-block p {
+    font-size: 17px;
+    line-height: 25px;
+  }
+  .privacy-table thead {
+    display: none;
+  }
+  .privacy-table,
+  .privacy-table tbody,
+  .privacy-table tr,
+  .privacy-table td {
+    display: block;
+  }
+  .privacy-table tr {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .privacy-table td {
+    padding: 2px 0;
+    border: 0;
+  }
+  .privacy-table td:not(:first-child)::before {
+    content: attr(data-label);
+    display: block;
+    margin-top: 6px;
+    font-family: var(--font-inter);
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 15px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6b6b6b;
+  }
+  .privacy-actions .btn {
+    width: 100%;
+  }
+}
+
 /* ---------------- footer legal links (s5) ---------------- */
 /* Not in Figma: in the footer's bottom padding, so the 411px footer keeps its height */
 .footer__legal {

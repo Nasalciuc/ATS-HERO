@@ -130,6 +130,7 @@ graphify update .             # after every change; `graphify explain <Node>` be
     - LinkedIn: OAuth sign-in only; no scraping or automation.
     - No real user CVs to third-party parsers without explicit consent + DPA; the lab uses fixtures only.
     - Never apply to real employers with test personas.
+    - **Privacy page** (`views/PrivacyPage.tsx`) lists what we keep, where, for how long, every provider and every cookie or storage key. A change to any of that (a new provider or storage key, another retention, payments, turning on `AI_REWRITE_ENABLED` or `NEXT_PUBLIC_ATS_CHECK_ENABLED`) updates the page and its `PRIVACY_UPDATED` date in the same commit. `tests/privacy-page.test.tsx` checks the numbers and keys it quotes.
 12. **Flags.** `NEXT_PUBLIC_ATS_CHECK_ENABLED` stays off in production until `apps/ai` is deployed behind auth.
 13. **AWS.**
     - Don't create by hand what `infra/*.yaml` describes.
