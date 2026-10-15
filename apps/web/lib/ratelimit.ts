@@ -7,6 +7,8 @@ type Window = { count: number; resetAt: number };
 
 const windows = new Map<string, Window>();
 export const MAX_KEYS = 10_000;
+/** The window proxy.ts counts requests in (per IP + user). The privacy page quotes it. */
+export const RATE_LIMIT_WINDOW_MS = 60_000;
 
 export function allow(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
