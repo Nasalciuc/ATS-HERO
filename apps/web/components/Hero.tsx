@@ -55,7 +55,7 @@ export default function Hero() {
           <p className="hero__lead" data-figma="hero-lead">
             Not getting interviews despite your experience?
             <br />
-            Our tool will help yout to turn your experience into a job-winning asset.
+            Our tool will help you turn your experience into a job-winning asset.
           </p>
 
           <div className="hero__cta">
