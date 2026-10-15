@@ -1,8 +1,15 @@
 "use client";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { AppProvider } from "@/store/AppContext";
 
 export default function Providers({ children }: { children: ReactNode }) {
+  // <html data-hydrated="true"> once React has hydrated the page (effects run after the commit).
+  // Scripts that click (design check, E2E) wait for it: on a slow machine a click that lands
+  // before hydration is lost, and the next step waits for a pop-up that never opens.
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
+  }, []);
+
   const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   if (!pk) {
     // Deliberately a runtime check, not a build-time one: a missing key is a deployment

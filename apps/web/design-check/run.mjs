@@ -47,6 +47,13 @@ function sameStyle(want, got) {
   return a !== null && b !== null && Math.abs(a - b) <= 0.05;
 }
 
+// "networkidle" is not "hydrated": on a slow machine (a Windows dev server) React may still be
+// hydrating, and a setup click that lands before it finishes is lost. app/providers.tsx sets
+// <html data-hydrated="true"> after hydration; every navigation waits for it.
+async function waitForHydration(page) {
+  await page.waitForSelector('html[data-hydrated="true"]', { state: "attached", timeout: 60_000 });
+}
+
 // Setup steps put the screen into the state the Figma frame shows:
 //   { "click": sel } { "fill": [sel, text] } { "press": [sel, key] } { "select": [sel, value] } { "wait": ms }
 //   { "goto": "/path" } (same origin)
@@ -70,6 +77,7 @@ async function runSetup(page, steps = []) {
     }
     if (s.goto) {
       await page.goto(BASE + s.goto, { waitUntil: "networkidle" });
+      await waitForHydration(page);
       await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
     }
     if (s.click) await page.locator(s.click).first().click();
@@ -113,6 +121,7 @@ for (const spec of specs) {
   page.on("pageerror", (err) => pageErrors.push(err.message.split("\n")[0]));
   page.on("console", (msg) => msg.type() === "error" && consoleErrors.push(msg.text().split("\n")[0].slice(0, 200)));
   await page.goto(BASE + spec.route, { waitUntil: "networkidle" });
+  await waitForHydration(page);
   // The Next.js dev-tools badge is not part of the product.
   await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
   await runSetup(page, spec.setup);
