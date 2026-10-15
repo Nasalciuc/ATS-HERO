@@ -12,7 +12,6 @@ import {
   SkillSoftIcon,
   SkillToolIcon,
   TrashOutline,
-  UploadRounded,
 } from "../../components/figma-icons";
 import type {
   CvData,
@@ -278,19 +277,6 @@ function Toggle({ label, on, onChange, figma }: { label: string; on: boolean; on
   );
 }
 
-function PhotoField({ figma }: { figma?: string }) {
-  return (
-    <div className="field field--photo">
-      <span className="field__label" data-figma={figma && `${figma}-label`}>
-        PHOTO (OPTIONAL)
-      </span>
-      <button type="button" className="field__upload" data-figma={figma}>
-        {/* Figma flattened material-symbols:upload-rounded to a bare 16×15 vector: crop to the glyph */}
-        <UploadRounded width={16} height={15} viewBox="4 4.425 16 15.575" preserveAspectRatio="none" /> Upload
-      </button>
-    </div>
-  );
-}
 
 export function PersonalInfoStep({ data, update, framed }: StepProps) {
   const p = data.personalInfo;
@@ -642,7 +628,6 @@ export function AwardsStep({ data, update, framed }: StepProps) {
           </div>
           <div className="form-col">
             <Field figma="field-date" className="field--half" label="START DATE" value={it.date} placeholder="October 2022" onChange={(v) => set(it.id, { date: v })} />
-            <PhotoField figma="entry-upload" />
           </div>
         </div>
       )}
@@ -671,7 +656,6 @@ export function CertificationsStep({ data, update, framed }: StepProps) {
           </div>
           <div className="form-col">
             <Field figma="field-date" className="field--half" label="START DATE" value={it.date} placeholder="October 2022" onChange={(v) => set(it.id, { date: v })} />
-            <PhotoField figma="entry-upload" />
           </div>
         </div>
       )}
@@ -701,7 +685,6 @@ export function PublicationsStep({ data, update, framed }: StepProps) {
           </div>
           <div className="form-col">
             <Field figma="field-date" className="field--half" label="START DATE" value={it.date} placeholder="October 2022" onChange={(v) => set(it.id, { date: v })} />
-            <PhotoField figma="entry-upload" />
           </div>
         </div>
       )}

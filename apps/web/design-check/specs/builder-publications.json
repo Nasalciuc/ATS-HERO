@@ -10,7 +10,7 @@
   },
   "locked": true,
   "tolerance": 2,
-  "note": "Figma shows 'Next step' on Publications although it is the last step; we hide Next on the last step (as the Skills frame does).",
+  "note": "Figma shows 'Next step' on Publications although it is the last step; we hide Next on the last step (as the Skills frame does). 2026-10-15: the 'entry-upload' check (Figma 'PHOTO (OPTIONAL)' + 'Upload' in this step) is removed, with the field. Scaler's decision: the field was copied from Personal info (its Figma placeholders were 'David Smith' and 'davidsmith@gmail.com'), had no function, and no template prints a photo here. Liubovi removes it from the frame.",
   "setup": [
     {
       "click": ".progress__add"
@@ -152,10 +152,6 @@
     {
       "key": "field-date",
       "node": "294:1532"
-    },
-    {
-      "key": "entry-upload",
-      "node": "293:1149"
     },
     {
       "key": "entry-add",
