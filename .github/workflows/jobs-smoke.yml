@@ -35,7 +35,8 @@ jobs:
           from pathlib import Path
           report = Path("../../tools/jobs-smoke/out/REPORT.md")
           text = report.read_text(encoding="utf-8") if report.exists() else "no report"
-          chunks = [text[i:i + 8000] for i in range(0, len(text), 8000)][:9]
+          # GitHub keeps 4,096 characters of an annotation: 3,500 leaves room for the escapes
+          chunks = [text[i:i + 3500] for i in range(0, len(text), 3500)][:9]
           for n, chunk in enumerate(chunks, 1):
               body = chunk.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
               print(f"::notice title=Jobs smoke report {n}/{len(chunks)}::{body}")
