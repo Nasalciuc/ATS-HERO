@@ -34,7 +34,7 @@ without an account; signing in keeps the work (guest → claim).
 ## Map
 
 - `apps/web`:
-  - `app/` routes;
+  - `app/` routes (`icon.svg` is the favicon; `favicon.ico` and `apple-icon.png` are generated from it by `npm run icons`);
   - `views/` pages;
   - `components/` UI (`figma-icons.tsx` and `icon-credits.ts` are generated);
   - `lib/`, `db/`, `drizzle/`;
@@ -61,6 +61,7 @@ npx tsc --noEmit -p .
 npx vitest run
 npm run build
 npm run design:check          # needs `npm run dev` + local Postgres; 🔒 specs must pass
+npm run icons                 # after changing app/icon.svg: regenerates favicon.ico and apple-icon.png
 npm run db:migrate            # local DB only; production migrations are manual, after a snapshot
 npx tsx --tsconfig lab/tsconfig.json lab/render.tsx      # ATS lab, step 1: render
 
