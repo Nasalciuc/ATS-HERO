@@ -367,6 +367,10 @@ p {
   border-radius: 50%;
   background: var(--green);
 }
+/* In Figma the two highlight rectangles are the top layers of group 180:136, so their 12% green
+   lies over the #202020 letters and turns them dark green (#1C3426). Here the bars stay behind
+   the text and the letters get that colour directly: the same pixels inside the bars, and one
+   colour where a long word runs past a bar on a narrow screen. */
 .hero__title {
   margin: 26px 0 0;
   font-family: var(--font-sans);
@@ -374,7 +378,7 @@ p {
   font-size: 57px;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  color: var(--ink);
+  color: #1c3426;
 }
 .hero__title-inner {
   position: relative;
@@ -417,6 +421,7 @@ p {
   position: absolute;
   z-index: 2;
   pointer-events: none;
+  color: var(--green);
 }
 .hero__title-bracket--tl {
   left: 0;
@@ -1390,6 +1395,15 @@ p {
   .hero__title-bg--2 {
     width: auto;
     right: 0;
+  }
+  /* The 57px geometry scaled to 44px lines (48.4px tall, 5px apart): each bar covers its own
+     line with a 5px gap between them, instead of the first bar reaching into the second line. */
+  .hero__title-bg--1 {
+    height: 51px;
+  }
+  .hero__title-bg--2 {
+    top: 61px;
+    height: 46px;
   }
   .hero__title-bracket--br {
     left: auto;

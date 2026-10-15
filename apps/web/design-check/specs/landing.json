@@ -2,7 +2,7 @@
   "id": "landing",
   "title": "Landing page",
   "frame": "180:19",
-  "$comment": "Figma's footer frame (180:214) sits 10px right of the page grid (x=10, content at 274); we keep the grid, so the footer boxes are Figma's minus 10. The FAQ list is at 262 in Figma (2px left of the grid): within tolerance.",
+  "$comment": "Figma's footer frame (180:214) sits 10px right of the page grid (x=10, content at 274); we keep the grid, so the footer boxes are Figma's minus 10. The FAQ list is at 262 in Figma (2px left of the grid): within tolerance. Hero headline (group 180:136): Figma's highlight rectangles are the top layers, so their 12% green turns the #202020 text #1C3426; we paint the text that colour with the bars behind it. Each caret is a 3px bar with a 7x6 handle at both ends. Highlights and carets are decorative (pointer-events: none), hence \"hit\": false.",
   "reference": "reference/figma/desktop/landing-1728px.png",
   "route": "/",
   "viewport": {
@@ -91,7 +91,134 @@
         218,
         602,
         136
-      ]
+      ],
+      "style": {
+        "color": "rgb(28, 52, 38)"
+      }
+    },
+    {
+      "key": "hero-title-hl-1",
+      "box": [
+        267,
+        223,
+        506,
+        66
+      ],
+      "hit": false,
+      "style": {
+        "background-color": "rgba(0, 196, 80, 0.12)"
+      }
+    },
+    {
+      "key": "hero-title-hl-2",
+      "box": [
+        267,
+        294,
+        460,
+        60
+      ],
+      "hit": false,
+      "style": {
+        "background-color": "rgba(0, 196, 80, 0.12)"
+      }
+    },
+    {
+      "key": "hero-caret-tl",
+      "box": [
+        264,
+        218,
+        7,
+        68
+      ],
+      "hit": false
+    },
+    {
+      "key": "hero-caret-tl-top",
+      "box": [
+        264,
+        218,
+        7,
+        6
+      ],
+      "hit": false,
+      "style": {
+        "fill": "rgb(0, 196, 80)"
+      }
+    },
+    {
+      "key": "hero-caret-tl-bar",
+      "box": [
+        266,
+        221,
+        3,
+        59
+      ],
+      "hit": false,
+      "style": {
+        "fill": "rgb(0, 196, 80)"
+      }
+    },
+    {
+      "key": "hero-caret-tl-bottom",
+      "box": [
+        264,
+        280,
+        7,
+        6
+      ],
+      "hit": false,
+      "style": {
+        "fill": "rgb(0, 196, 80)"
+      }
+    },
+    {
+      "key": "hero-caret-br",
+      "box": [
+        722,
+        286,
+        7,
+        68
+      ],
+      "hit": false
+    },
+    {
+      "key": "hero-caret-br-top",
+      "box": [
+        722,
+        286,
+        7,
+        6
+      ],
+      "hit": false,
+      "style": {
+        "fill": "rgb(0, 196, 80)"
+      }
+    },
+    {
+      "key": "hero-caret-br-bar",
+      "box": [
+        724,
+        289,
+        3,
+        59
+      ],
+      "hit": false,
+      "style": {
+        "fill": "rgb(0, 196, 80)"
+      }
+    },
+    {
+      "key": "hero-caret-br-bottom",
+      "box": [
+        722,
+        348,
+        7,
+        6
+      ],
+      "hit": false,
+      "style": {
+        "fill": "rgb(0, 196, 80)"
+      }
     },
     {
       "key": "hero-lead",
