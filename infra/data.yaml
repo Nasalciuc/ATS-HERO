@@ -64,6 +64,11 @@ Resources:
       Parameters:
         rds.force_ssl: "1"
         log_min_duration_statement: "1000"
+        # The privacy page promises that our logs never hold what a CV says: slow statements are
+        # logged without their bind values, and errors without DETAIL (where Postgres puts the
+        # failing row). Both apply without a reboot.
+        log_parameter_max_length: "0"
+        log_error_verbosity: terse
       Tags: [{ Key: project, Value: atshero }]
 
   Database:
@@ -97,8 +102,10 @@ Resources:
       DeletionProtection: true
       Tags: [{ Key: project, Value: atshero }]
 
-  # Monthly pg_dump goes here (F5): a copy outside RDS. Kept 180 days (GDPR storage limitation:
-  # a deleted account's data leaves the backups within 6 months - say so in the privacy policy).
+  # Monthly pg_dump goes here (F5): a copy outside RDS. Kept 180 days, then 30 more as a
+  # noncurrent version (GDPR storage limitation: a deleted account's data leaves these copies
+  # within 7 months). The F5 commit changes the backup lines of the privacy page
+  # (apps/web/views/PrivacyPage.tsx), which until then promise 14 days and 30 days.
   # Kept if the stack is deleted.
   BackupsBucket:
     Type: AWS::S3::Bucket

@@ -13,5 +13,7 @@ created by hand, phase by phase (F0–F5 in `CURSOR-AWS-INFRA.md`), and no workf
 
 Rules: `us-east-1` only, tag `project=atshero` on everything, no NAT Gateway, no access keys in the
 repo (GitHub and Vercel assume roles through OIDC). Lint with `cfn-lint infra/*.yaml`.
+Manual RDS snapshots (the one taken before a production migration, or the final one CloudFormation
+keeps when it replaces or deletes the database) are deleted within 30 days: the privacy page promises it.
 The Lambda entry point and the rate limiter live in `apps/ai` (`app/lambda_handler.py`,
 `app/rate_limit.py`, `Dockerfile.lambda`).
