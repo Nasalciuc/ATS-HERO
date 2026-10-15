@@ -84,7 +84,7 @@ export default function DashboardPage() {
 
         {!isSignedIn && (
           <div className="dash__banner">
-            You&apos;re working as a guest — your CVs are saved on this device.{" "}
+            You&apos;re working as a guest — your CVs are linked to this browser.{" "}
             <button type="button" className="dash__banner-link" onClick={() => setSignInOpen(true)}>
               Sign in
             </button>{" "}

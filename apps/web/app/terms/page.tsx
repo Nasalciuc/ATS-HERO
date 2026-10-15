@@ -4,7 +4,7 @@ export default function Terms() {
   return (
     <main className="legal">
       <h1>Terms and Conditions</h1>
-      <p><em>Last updated: {new Date().toISOString().slice(0, 10)}</em></p>
+      <p><em>Last updated: <time dateTime="2026-08-30">30 August 2026</time></em></p>
 
       <h2>The service</h2>
       <p>ATS Hero helps you build a CV, score it the way an applicant tracking system would
