@@ -1,0 +1,39 @@
+name: Jobs volume test (temporary)
+# How many postings one search brings: Indeed through JobSpy, up to 500 per search
+# (tools/jobs-volume/volume_check.py). Temporary: it runs on a push to lab/jobs-volume, a branch
+# deleted after the test (Scaler, 16 Oct 2026). Indeed only; LinkedIn is not searched.
+on:
+  push:
+    branches: [lab/jobs-volume]
+
+permissions:
+  contents: read
+
+jobs:
+  indeed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: JobSpy at the version apps/ai pins
+        run: pip install "$(grep -E '^python-jobspy==' apps/ai/requirements.txt)"
+      - name: Searches of up to 500 postings
+        run: python tools/jobs-volume/volume_check.py --out tools/jobs-volume/out
+      - name: Report → job summary
+        if: always()
+        run: cat tools/jobs-volume/out/REPORT.md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Report → annotations (readable through the API)
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          report = Path("tools/jobs-volume/out/REPORT.md")
+          text = report.read_text(encoding="utf-8") if report.exists() else "no report"
+          # GitHub keeps 4,096 characters of an annotation: 3,500 leaves room for the escapes
+          chunks = [text[i:i + 3500] for i in range(0, len(text), 3500)][:9]
+          for n, chunk in enumerate(chunks, 1):
+              body = chunk.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print(f"::notice title=Jobs volume report {n}/{len(chunks)}::{body}")
+          PY
