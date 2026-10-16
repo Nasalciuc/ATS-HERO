@@ -12,17 +12,23 @@ Scaler's decisions (15-16 Oct 2026):
   reliable board, and it covers Romania, Nigeria, South Africa, Germany, France, the UK and more,
   but not Moldova.
 
-JobSpy is imported on first use: it brings pandas, which the rest of the service does not need.
-Version 1.3.0 (PyPI) reports a board that fails only in its log ("JobSpy:Indeed", ...): those
-messages are collected per board for the answer, and kept out of our own logs.
+Each search runs in a child process of its own ("spawn"):
+- One deadline, SEARCH_TIMEOUT_S, covers the whole search: waiting for a free slot, starting the
+  child, the boards. When it passes, the child is killed, so a board that hangs stops sending
+  requests there and then (JobSpy has a 15 s limit per request, none for a whole search; a
+  thread could not be stopped).
+- JobSpy 1.3.0 (PyPI) reports a board that fails only in its log ("JobSpy:Indeed", ...). The
+  child collects those messages per board for the answer, so they belong to that search alone
+  and never reach another search or our own logs (they can contain the search).
+- The API process never imports JobSpy or pandas; only the children do.
 """
 from __future__ import annotations
 
 import logging
 import math
+import multiprocessing
 import threading
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FutureTimeout
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -43,17 +49,20 @@ LOGGERS = {
     "JobSpy:BDJobs": "bdjobs",
     "JobSpy:HelloWork": "hellowork",
 }
-# one search at a time per process, so a board's error is never filed under another search
-# (a Lambda instance serves one request at a time anyway)
-_ONE_SEARCH = threading.Lock()
 
 MAX_RESULTS = 50  # per board
 MAX_SITES = 4
 MAX_HOURS_OLD = 24 * 30
 MAX_DESCRIPTION_CHARS = 20_000
 MIN_TERM_CHARS = 2
-# API Gateway ends a request after 29 s; JobSpy has no overall deadline of its own
+# API Gateway ends a request after 29 s
 SEARCH_TIMEOUT_S = 25.0
+# Searches running at once in one API process. A Lambda instance serves one request at a time;
+# uvicorn can serve several, and each search is a child process with pandas in it.
+MAX_PARALLEL_SEARCHES = 2
+_SLOTS = threading.BoundedSemaphore(MAX_PARALLEL_SEARCHES)
+# "spawn" everywhere: the only way Windows starts a process, and safe from a process with threads
+_SPAWN = multiprocessing.get_context("spawn")
 
 # What a job carries in our answer: JobSpy's columns, without the e-mail addresses it picks out of
 # descriptions (people's contact details we have no use for)
@@ -81,7 +90,11 @@ FIELDS = (
 
 
 class SearchTimeout(Exception):
-    """The boards did not answer within SEARCH_TIMEOUT_S."""
+    """The search did not finish within SEARCH_TIMEOUT_S: no free slot, or the boards were slow."""
+
+
+class SearchFailed(Exception):
+    """JobSpy stopped with an error of its own, or the search's process ended without an answer."""
 
 
 @dataclass
@@ -116,7 +129,7 @@ def check_sites(sites: list[str] | tuple[str, ...]) -> tuple[str, ...]:
 
 
 def _jobspy_scrape() -> Callable[..., Any]:
-    from jobspy import scrape_jobs  # pandas comes with it: loaded only when someone searches
+    from jobspy import scrape_jobs  # in the search's process only: pandas comes with it
 
     return scrape_jobs
 
@@ -137,7 +150,7 @@ def scrape_arguments(q: JobQuery) -> dict[str, Any]:
         "is_remote": bool(q.is_remote),
         "job_type": q.job_type or None,
         "description_format": "markdown",
-        "verbose": 0,  # board failures come back in the result (attrs), not in our logs
+        "verbose": 0,  # JobSpy then logs only errors; _board_errors() collects them per board
     }
     if "google" in sites:
         # Google Jobs reads only its own search phrase (JobSpy's README)
@@ -203,28 +216,67 @@ def _job(row: dict[str, Any]) -> dict[str, Any]:
     return job
 
 
+def _search_in_child(answer: Any, scrape: Callable[..., Any] | None, args: dict[str, Any]) -> None:
+    """The search's own process: JobSpy, its board errors, and the answer as plain data on `answer`."""
+    try:
+        with _board_errors() as errors:
+            frame = (scrape or _jobspy_scrape())(**args)
+        jobs = [_job(row) for row in frame.to_dict(orient="records")]
+        answer.send(("done", jobs, {site: "; ".join(messages) for site, messages in errors.items()}))
+    except ValueError as e:  # JobSpy refused an argument, e.g. an unknown country
+        answer.send(("refused", str(e)))
+    except Exception as e:  # noqa: BLE001 - whatever else JobSpy raises reaches the API as SearchFailed
+        answer.send(("failed", type(e).__name__))  # the name only: the message can contain the search
+    finally:
+        answer.close()
+
+
+def _run_child(scrape: Callable[..., Any] | None, args: dict[str, Any], deadline: float) -> tuple:
+    """What the search's process answered, or SearchTimeout once the deadline passes (the process is
+    killed then)."""
+    receiver, sender = _SPAWN.Pipe(duplex=False)
+    child = _SPAWN.Process(target=_search_in_child, args=(sender, scrape, args), name="job-search", daemon=True)
+    try:
+        child.start()
+        sender.close()  # the child has its own end; if it dies, the receiver reads end-of-file
+        if not receiver.poll(max(0.0, deadline - time.monotonic())):
+            raise SearchTimeout(f"The job boards did not answer within {SEARCH_TIMEOUT_S:.0f} s.")
+        try:
+            return receiver.recv()
+        except EOFError:
+            raise SearchFailed("The job search stopped without an answer. Try again in a minute.") from None
+    finally:
+        sender.close()
+        receiver.close()
+        if child.is_alive():
+            child.kill()  # a search past its deadline stops here: no more requests, no late errors
+        child.join(timeout=5)
+
+
 def search_jobs(q: JobQuery, scrape: Callable[..., Any] | None = None) -> dict[str, Any]:
     """Postings for a query, from the chosen boards, with the error of each board that failed.
 
-    Raises ValueError for a query JobSpy rejects (an unknown country, say) and SearchTimeout when
-    the boards take longer than SEARCH_TIMEOUT_S.
+    `scrape` stands in for jobspy.scrape_jobs in tests; it goes to the search's process, so it must
+    be a module-level function. Raises ValueError for a query JobSpy rejects (an unknown country,
+    say), SearchTimeout when the search takes longer than SEARCH_TIMEOUT_S in all, and SearchFailed
+    when JobSpy breaks.
     """
     args = scrape_arguments(q)
-    run = scrape or _jobspy_scrape()
-    with _ONE_SEARCH, _board_errors() as errors:
-        pool = ThreadPoolExecutor(max_workers=1)
-        try:
-            frame = pool.submit(run, **args).result(timeout=SEARCH_TIMEOUT_S)
-        except FutureTimeout:
-            raise SearchTimeout(f"The job boards did not answer within {SEARCH_TIMEOUT_S:.0f} s.") from None
-        finally:
-            pool.shutdown(wait=False, cancel_futures=True)
+    deadline = time.monotonic() + SEARCH_TIMEOUT_S
+    if not _SLOTS.acquire(timeout=SEARCH_TIMEOUT_S):
+        raise SearchTimeout(
+            f"Too many job searches are running: this one could not start within {SEARCH_TIMEOUT_S:.0f} s."
+        )
+    try:
+        outcome = _run_child(scrape, args, deadline)
+    finally:
+        _SLOTS.release()
 
-    jobs = [_job(row) for row in frame.to_dict(orient="records")]
+    kind, *rest = outcome
+    if kind == "refused":
+        raise ValueError(rest[0])
+    if kind == "failed":
+        raise SearchFailed(f"The job search failed ({rest[0]}). Try again in a minute.")
+    jobs, errors = rest
     by_site = {site: sum(1 for j in jobs if j["site"] == site) for site in args["site_name"]}
-    return {
-        "count": len(jobs),
-        "by_site": by_site,
-        "errors": {site: "; ".join(messages) for site, messages in errors.items()},
-        "jobs": jobs,
-    }
+    return {"count": len(jobs), "by_site": by_site, "errors": errors, "jobs": jobs}

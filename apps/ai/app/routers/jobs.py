@@ -3,7 +3,7 @@ import asyncio
 
 from fastapi import APIRouter, HTTPException, Request
 
-from ..jobs.search import JobQuery, SearchTimeout, search_jobs
+from ..jobs.search import JobQuery, SearchFailed, SearchTimeout, search_jobs
 from ..models.requests import JobSearchRequest
 from ..models.responses import JobSearchResponse
 from .parse import limiter
@@ -28,6 +28,8 @@ async def jobs_search(request: Request, req: JobSearchRequest) -> JobSearchRespo
         result = await asyncio.to_thread(search_jobs, query)
     except SearchTimeout as e:
         raise HTTPException(status_code=504, detail=str(e)) from None
+    except SearchFailed as e:  # JobSpy broke, or the search's process died
+        raise HTTPException(status_code=502, detail=str(e)) from None
     except ValueError as e:  # JobSpy refused an argument, e.g. an unknown country
         raise HTTPException(status_code=422, detail=str(e)) from None
     return JobSearchResponse(**result)

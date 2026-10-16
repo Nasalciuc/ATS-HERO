@@ -14,7 +14,7 @@ import time
 from datetime import date
 from pathlib import Path
 
-from .search import JobQuery, SearchTimeout, search_jobs
+from .search import JobQuery, SearchFailed, SearchTimeout, search_jobs
 
 # (what, where, Indeed/Glassdoor country, boards): Romania, Moldova, Nigeria, South Africa,
 # Germany, the UK, France and the Gulf. LinkedIn is never searched.
@@ -47,7 +47,7 @@ def run(out: Path, results_wanted: int = 10, hours_old: int = 168) -> int:
         try:
             result = search_jobs(query)
             failure = None
-        except (SearchTimeout, ValueError) as e:
+        except (SearchTimeout, SearchFailed, ValueError) as e:
             result, failure = {"by_site": {s: 0 for s in sites}, "errors": {}, "jobs": []}, str(e)
         seconds = round(time.monotonic() - started, 1)
         for site in sites:

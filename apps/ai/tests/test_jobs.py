@@ -1,54 +1,27 @@
 """POST /jobs/search and app/jobs/search.py: JobSpy is called with the right arguments, LinkedIn is
-refused, and what JobSpy returns (a pandas DataFrame with NaN, numpy numbers and dates) comes back
-as clean JSON. JobSpy itself is not called over the network here: tools/jobs-smoke does that, on
-GitHub's runners (.github/workflows/jobs-smoke.yml)."""
+refused, what JobSpy returns (a pandas DataFrame with NaN, numpy numbers and dates) comes back as
+clean JSON, and a search never outlives its deadline or spills into another search. JobSpy itself
+is not called over the network here: app/jobs/smoke.py does that, on GitHub's runners
+(.github/workflows/jobs-smoke.yml). The stand-ins for JobSpy are in tests/jobs_fakes.py."""
 from __future__ import annotations
 
 import logging
+import threading
 import time
-from datetime import date
 
-import pandas as pd
 import pytest
-from jobspy.util import desired_order  # the columns of the pinned JobSpy's DataFrame
 
 from app.jobs import search as jobs
-from app.jobs.search import JobQuery, SearchTimeout, check_sites, scrape_arguments, search_jobs
+from app.jobs.search import JobQuery, SearchFailed, SearchTimeout, check_sites, scrape_arguments, search_jobs
 from app.models.requests import JobSearchRequest
 from app.routers.parse import limiter
+from tests import jobs_fakes as fakes
 
 
 @pytest.fixture(autouse=True)
 def _fresh_rate_limit():
     limiter.reset()  # the endpoint allows 6 searches a minute; tests make more
     yield
-
-
-def frame(rows: list[dict]) -> pd.DataFrame:
-    """What jobspy.scrape_jobs (1.3.0) returns: one row per posting in its column order, or an
-    empty DataFrame without columns when nothing was found."""
-    return pd.DataFrame(rows, columns=desired_order) if rows else pd.DataFrame()
-
-
-INDEED = {
-    "id": "in-1",
-    "site": "indeed",
-    "title": "Data Analyst",
-    "company": "Fintech Labs SRL",
-    "location": "Bucharest, Romania",
-    "date_posted": date(2026, 10, 12),
-    "job_type": "fulltime",
-    "salary_source": "direct_data",
-    "interval": "monthly",
-    "min_amount": 9000,
-    "max_amount": 12000,
-    "currency": "RON",
-    "job_url": "https://ro.indeed.com/viewjob?jk=1",
-    "description": "**SQL** and Python.",
-    "emails": "hr@example.com",
-    "is_remote": False,
-}
-GLASSDOOR = {"id": "gd-2", "site": "glassdoor", "title": "BI Analyst", "company": "Acme", "job_url": "https://www.glassdoor.com/job-listing/j?jl=2"}
 
 
 def test_indeed_is_the_default_and_jobspy_gets_clean_arguments():
@@ -94,14 +67,9 @@ def test_google_gets_its_own_search_phrase_and_limits_hold():
 
 
 def test_jobspy_rows_come_back_as_clean_json():
-    long_text = "x" * (jobs.MAX_DESCRIPTION_CHARS + 50)
-    df = frame([INDEED, GLASSDOOR | {"description": long_text}])
-
-    def scrape(**_):
-        logging.getLogger("JobSpy:Google").error("Google response status code 429")  # how 1.3.0 reports it
-        return df
-
-    result = search_jobs(JobQuery(search_term="analyst", sites=("indeed", "glassdoor", "google")), scrape=scrape)
+    result = search_jobs(
+        JobQuery(search_term="analyst", sites=("indeed", "glassdoor", "google")), scrape=fakes.two_boards_and_a_google_error
+    )
     assert result["count"] == 2
     assert result["by_site"] == {"indeed": 1, "glassdoor": 1, "google": 0}
     assert result["errors"] == {"google": "Google response status code 429"}
@@ -118,38 +86,60 @@ def test_jobspy_rows_come_back_as_clean_json():
 
 
 def test_a_blocked_board_is_an_error_in_the_answer_not_in_our_logs(caplog):
-    def blocked(**_):
-        logging.getLogger("JobSpy:Indeed").error("Indeed response status code 403")
-        logging.getLogger("JobSpy:Indeed").error("Indeed response status code 403")
-        return frame([])
-
+    ours = logging.getLogger("JobSpy:Indeed")
+    handlers_before = ours.handlers[:]
     with caplog.at_level(logging.DEBUG):
-        result = search_jobs(JobQuery(search_term="analyst"), scrape=blocked)
+        result = search_jobs(JobQuery(search_term="analyst"), scrape=fakes.indeed_blocked)
     assert result == {"count": 0, "by_site": {"indeed": 0}, "errors": {"indeed": "Indeed response status code 403"}, "jobs": []}
     assert "403" not in caplog.text
-    # JobSpy's own console handler is back after the search
-    assert logging.getLogger("JobSpy:Indeed").handlers and all(
-        type(h).__name__ != "Collect" for h in logging.getLogger("JobSpy:Indeed").handlers
-    )
+    assert ours.handlers == handlers_before  # the API process's JobSpy loggers are never touched
 
 
-def test_slow_boards_end_in_a_timeout(monkeypatch):
-    monkeypatch.setattr(jobs, "SEARCH_TIMEOUT_S", 0.05)
+def test_a_search_past_its_deadline_is_stopped_and_never_reaches_the_next_one(monkeypatch, tmp_path):
+    # The first search's board would answer at ~4 s, log an error and leave a mark; its deadline
+    # is 2.5 s, by when its process is running the scrape.
+    mark = tmp_path / "late"
+    monkeypatch.setenv("JOBS_FAKE_MARK", str(mark))
+    monkeypatch.setenv("JOBS_FAKE_SLEEP", "4")
+    monkeypatch.setattr(jobs, "SEARCH_TIMEOUT_S", 2.5)
+    started = time.monotonic()
+    with pytest.raises(SearchTimeout, match="did not answer within"):
+        search_jobs(JobQuery(search_term="first"), scrape=fakes.late_board)
+    assert time.monotonic() - started < 4  # the deadline holds: the board was not waited for
 
-    def slow(**_):
-        time.sleep(0.5)
-        return frame([])
+    # The next search runs past the moment the first board would have reported
+    monkeypatch.setenv("JOBS_FAKE_SLEEP", "3")
+    monkeypatch.setattr(jobs, "SEARCH_TIMEOUT_S", 15)
+    result = search_jobs(JobQuery(search_term="second"), scrape=fakes.slow_quiet_board)
+    assert result["errors"] == {}
+    assert not mark.exists()  # the first scrape was stopped at its deadline
 
 
-    with pytest.raises(SearchTimeout):
-        search_jobs(JobQuery(search_term="analyst"), scrape=slow)
+def test_waiting_for_a_free_slot_counts_against_the_deadline(monkeypatch):
+    taken = threading.BoundedSemaphore(1)
+    taken.acquire()  # every slot held by searches still running
+    monkeypatch.setattr(jobs, "_SLOTS", taken)
+    monkeypatch.setattr(jobs, "SEARCH_TIMEOUT_S", 0.3)
+    started = time.monotonic()
+    with pytest.raises(SearchTimeout, match="Too many job searches"):
+        search_jobs(JobQuery(search_term="analyst"), scrape=fakes.one_indeed)
+    assert time.monotonic() - started < 1
+
+
+def test_jobspy_breaking_is_a_failure_and_every_search_gives_its_slot_back(monkeypatch):
+    monkeypatch.setattr(jobs, "_SLOTS", threading.BoundedSemaphore(1))
+    monkeypatch.setattr(jobs, "SEARCH_TIMEOUT_S", 15)
+    with pytest.raises(SearchFailed, match=r"failed \(KeyError\)"):
+        search_jobs(JobQuery(search_term="analyst"), scrape=fakes.jobspy_breaks)
+    with pytest.raises(ValueError):
+        search_jobs(JobQuery(search_term="analyst", country="atlantis"))
+    assert search_jobs(JobQuery(search_term="analyst"), scrape=fakes.one_indeed)["count"] == 1  # the one slot is free
 
 
 def test_jobspy_refuses_an_unknown_country_before_any_request():
-    from jobspy import scrape_jobs  # the pinned version: arguments are validated first
-
+    # the real, pinned JobSpy: its arguments are checked before any request
     with pytest.raises(ValueError, match="Invalid country string: 'atlantis'"):
-        search_jobs(JobQuery(search_term="analyst", country="atlantis"), scrape=scrape_jobs)
+        search_jobs(JobQuery(search_term="analyst", country="atlantis"))
 
 
 # ---------------------------------------------------------------- the endpoint
@@ -158,7 +148,7 @@ def test_endpoint_returns_the_postings(client, monkeypatch):
 
     def fake(q: JobQuery):
         seen["q"] = q
-        return search_jobs(q, scrape=lambda **_: frame([INDEED]))
+        return search_jobs(q, scrape=fakes.one_indeed)
 
     monkeypatch.setattr("app.routers.jobs.search_jobs", fake)
     r = client.post("/jobs/search", json={"search_term": "data analyst", "location": "Bucharest", "country": "romania"})
@@ -177,17 +167,18 @@ def test_endpoint_refuses_linkedin_and_out_of_range_values(client):
     assert client.post("/jobs/search", json={"search_term": "analyst", "sites": ["indeed"] * 5}).status_code == 422
 
 
-def test_endpoint_turns_timeouts_and_refusals_into_clear_answers(client, monkeypatch):
-    def timeout(_q):
-        raise SearchTimeout("The job boards did not answer within 25 s.")
+def test_endpoint_turns_timeouts_refusals_and_failures_into_clear_answers(client, monkeypatch):
+    def raises(error: Exception):
+        def search(_q):
+            raise error
 
-    monkeypatch.setattr("app.routers.jobs.search_jobs", timeout)
-    r = client.post("/jobs/search", json={"search_term": "analyst"})
-    assert r.status_code == 504 and "did not answer" in r.json()["detail"]
+        return search
 
-    def refused(_q):
-        raise ValueError("Invalid country string: 'atlantis'")
-
-    monkeypatch.setattr("app.routers.jobs.search_jobs", refused)
-    r = client.post("/jobs/search", json={"search_term": "analyst", "country": "atlantis"})
-    assert r.status_code == 422 and "atlantis" in r.json()["detail"]
+    for error, status, words in (
+        (SearchTimeout("The job boards did not answer within 25 s."), 504, "did not answer"),
+        (ValueError("Invalid country string: 'atlantis'"), 422, "atlantis"),
+        (SearchFailed("The job search failed (KeyError). Try again in a minute."), 502, "Try again"),
+    ):
+        monkeypatch.setattr("app.routers.jobs.search_jobs", raises(error))
+        r = client.post("/jobs/search", json={"search_term": "analyst"})
+        assert r.status_code == status and words in r.json()["detail"]
