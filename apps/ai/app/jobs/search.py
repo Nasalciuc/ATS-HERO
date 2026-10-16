@@ -51,6 +51,7 @@ MAX_RESULTS = 50  # per board
 MAX_SITES = 4
 MAX_HOURS_OLD = 24 * 30
 MAX_DESCRIPTION_CHARS = 20_000
+MIN_TERM_CHARS = 2
 # API Gateway ends a request after 29 s; JobSpy has no overall deadline of its own
 SEARCH_TIMEOUT_S = 25.0
 
@@ -123,9 +124,12 @@ def _jobspy_scrape() -> Callable[..., Any]:
 def scrape_arguments(q: JobQuery) -> dict[str, Any]:
     """The arguments JobSpy's scrape_jobs gets for a query."""
     sites = check_sites(q.sites)
+    term = q.search_term.strip()
+    if len(term) < MIN_TERM_CHARS:
+        raise ValueError(f"Type at least {MIN_TERM_CHARS} characters to search for.")
     args: dict[str, Any] = {
         "site_name": list(sites),
-        "search_term": q.search_term.strip(),
+        "search_term": term,
         "location": (q.location or "").strip() or None,
         "results_wanted": max(1, min(int(q.results_wanted), MAX_RESULTS)),
         "hours_old": min(int(q.hours_old), MAX_HOURS_OLD) if q.hours_old else None,

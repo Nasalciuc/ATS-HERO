@@ -1,7 +1,7 @@
 """Request schemas for the Tier 2 AI service."""
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ScoreRequest(BaseModel):
@@ -42,6 +42,10 @@ class RegionRequest(BaseModel):
 
 class JobSearchRequest(BaseModel):
     """A job search on the boards JobSpy reaches, LinkedIn excepted (app/jobs/search.py)."""
+
+    # Spaces around a value go before the length checks: a term of spaces is refused, and the
+    # term checked here is the one JobSpy gets
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     search_term: str = Field(..., min_length=2, max_length=100, description="What the job is, e.g. 'data analyst'")
     location: str | None = Field(default=None, max_length=100, description="City or region, e.g. 'Bucharest'")

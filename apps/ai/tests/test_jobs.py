@@ -14,6 +14,7 @@ from jobspy.util import desired_order  # the columns of the pinned JobSpy's Data
 
 from app.jobs import search as jobs
 from app.jobs.search import JobQuery, SearchTimeout, check_sites, scrape_arguments, search_jobs
+from app.models.requests import JobSearchRequest
 from app.routers.parse import limiter
 
 
@@ -73,6 +74,14 @@ def test_linkedin_is_refused_whatever_the_case():
     with pytest.raises(ValueError, match="Unknown job board"):
         check_sites(["monster"])
     assert check_sites(["Indeed", "indeed", "glassdoor"]) == ("indeed", "glassdoor")
+
+
+def test_a_search_term_of_spaces_is_refused(client):
+    with pytest.raises(ValueError, match="at least 2 characters"):
+        scrape_arguments(JobQuery(search_term="   "))
+    assert JobSearchRequest(search_term="  data analyst ").search_term == "data analyst"
+    for term in ("   ", " a "):
+        assert client.post("/jobs/search", json={"search_term": term}).status_code == 422
 
 
 def test_google_gets_its_own_search_phrase_and_limits_hold():
