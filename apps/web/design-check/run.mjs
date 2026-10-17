@@ -246,6 +246,24 @@ for (const r of results) {
 }
 fs.writeFileSync(path.join(OUT, "REPORT.md"), md.join("\n"));
 fs.writeFileSync(path.join(OUT, "results.json"), JSON.stringify(results, null, 2));
+
+// On GitHub Actions the failing checks of locked specs also become annotations. The check run's
+// API returns them, so the reason is readable without signing in or downloading the artifact.
+if (process.env.GITHUB_ACTIONS === "true") {
+  const esc = (s) => String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+  const prop = (s) => esc(s).replace(/:/g, "%3A").replace(/,/g, "%2C");
+  const failing = results
+    .filter((r) => r.locked)
+    .flatMap((r) => r.rows.filter((row) => !row.ok).map((row) => ({ r, row })));
+  for (const { r, row } of failing.slice(0, 9)) {
+    const where = row.want ? ` (Figma ${JSON.stringify(row.want)}, ours ${JSON.stringify(row.got)})` : "";
+    console.log(`::error title=${prop(`Figma check ${r.id}`)}::${esc(`${row.key}: ${row.problems.join("; ")}${where}`)}`);
+  }
+  if (failing.length > 9) {
+    console.log(`::error title=Figma check::${failing.length - 9} more off-spec checks: see the job summary`);
+  }
+}
+
 const gate = results.filter((r) => r.locked && r.passed < r.total);
 if (gate.length) {
   console.error(`\nFAIL: ${gate.map((r) => `${r.id} (${r.total - r.passed} off-spec)`).join(", ")} — see design-check/out/REPORT.md`);
