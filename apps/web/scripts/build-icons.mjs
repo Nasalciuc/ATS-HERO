@@ -32,7 +32,10 @@ async function render(source, size) {
   const src = "data:image/svg+xml;base64," + Buffer.from(source).toString("base64");
   await page.setViewportSize({ width: size + 20, height: size + 20 });
   await page.setContent(`<body style="margin:0"><img id="i" src="${src}" width="${size}" height="${size}" style="display:block"></body>`);
-  await page.waitForFunction(() => document.getElementById("i").complete);
+  // `complete` is true for a broken image too. decode() fails instead, so a malformed SVG stops
+  // the script rather than saving the browser's broken-image glyph as our favicon.
+  const ok = await page.locator("#i").evaluate((img) => img.decode().then(() => img.naturalWidth > 0, () => false));
+  if (!ok) throw new Error(`app/icon.svg did not load as an image at ${size} px: is it valid SVG?`);
   return page.locator("#i").screenshot({ omitBackground: true });
 }
 
