@@ -8,6 +8,7 @@ export const OPERATOR = {
 };
 
 export const PRIVACY_EMAIL = "privacy@atshero.app";
+export const SUPPORT_EMAIL = "support@atshero.app";
 
 /** The date a legal page last changed. Change it with the content, never compute it. */
 export type LegalDate = { iso: string; label: string };

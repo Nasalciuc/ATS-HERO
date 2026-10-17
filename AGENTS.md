@@ -133,6 +133,7 @@ graphify update .             # after every change; `graphify explain <Node>` be
     - No real user CVs to third-party parsers without explicit consent + DPA; the lab uses fixtures only.
     - Never apply to real employers with test personas.
     - **Privacy page** (`views/PrivacyPage.tsx`) lists what we keep, where, for how long, every provider and every cookie or storage key. A change to any of that (a new provider or storage key, another retention, payments, turning on `AI_REWRITE_ENABLED` or `NEXT_PUBLIC_ATS_CHECK_ENABLED`) updates the page and its `PRIVACY_UPDATED` date in the same commit. `tests/privacy-page.test.tsx` checks the numbers and keys it quotes.
+    - **Terms page** (`views/TermsPage.tsx`) describes ATS Hero as it is today: free, no AI, no job search. Payments, AI features or job search update it and its `TERMS_UPDATED` date in the same commit; the price and the payment and refund terms go there before anything is charged. No payment provider is named until Scaler chooses one. Who runs ATS Hero and the addresses live in `lib/legal.ts`, shared with the Privacy page. `tests/terms-page.test.tsx` checks what it quotes.
 12. **Flags.** `NEXT_PUBLIC_ATS_CHECK_ENABLED` stays off in production until `apps/ai` is deployed behind auth.
 13. **AWS.**
     - Don't create by hand what `infra/*.yaml` describes.
