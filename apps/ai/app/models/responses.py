@@ -102,3 +102,35 @@ class ParseCheckResponse(BaseModel):
     summary: dict               # verdict, scores or reader disagreements
     readers: list[dict]         # per extraction engine: fields read (+ verdict/score/problems with truth)
     recommendations: list[ParseCheckRecommendation] = []
+
+
+class JobPosting(BaseModel):
+    """One posting as JobSpy returns it (its column names), without the e-mails it collects."""
+
+    site: str | None = None
+    title: str | None = None
+    company: str | None = None
+    location: str | None = None
+    date_posted: str | None = None  # ISO date
+    job_type: str | None = None
+    is_remote: bool | None = None
+    interval: str | None = None  # yearly, monthly, weekly, daily, hourly
+    min_amount: float | None = None
+    max_amount: float | None = None
+    currency: str | None = None
+    salary_source: str | None = None
+    job_url: str | None = None
+    job_url_direct: str | None = None
+    description: str | None = None  # markdown from a third party: show it as text, never as HTML
+    company_url: str | None = None
+    company_logo: str | None = None
+    company_industry: str | None = None
+    job_level: str | None = None
+
+
+class JobSearchResponse(BaseModel):
+    count: int
+    by_site: dict[str, int]          # postings per board searched (0 when a board found none or failed)
+    errors: dict[str, str] = {}      # board → why it failed (blocked, changed, a location it doesn't know)
+    jobs: list[JobPosting]
+

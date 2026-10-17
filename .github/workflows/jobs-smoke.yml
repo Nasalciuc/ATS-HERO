@@ -1,0 +1,46 @@
+name: Jobs smoke (JobSpy)
+# Live check of POST /jobs/search's engine (apps/ai/app/jobs): real searches in our markets through
+# JobSpy, on GitHub's runners, which reach the job boards. Weekly, because JobSpy reaches the boards
+# through their private endpoints, which change without notice; also on a push to lab/jobs.
+on:
+  push:
+    branches: [lab/jobs]
+  schedule:
+    - cron: "41 6 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults: { run: { working-directory: apps/ai } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: JobSpy at the version requirements.txt pins
+        run: pip install "$(grep -E '^python-jobspy==' requirements.txt)" "pydantic>=2.7"
+      - name: Real searches (exit 1 when no board returns a posting)
+        run: python -m app.jobs.smoke --out ../../tools/jobs-smoke/out
+      - name: Report → job summary
+        if: always()
+        run: cat ../../tools/jobs-smoke/out/REPORT.md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Report → annotations (readable through the API, e.g. gh api …/check-runs/<id>/annotations)
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          report = Path("../../tools/jobs-smoke/out/REPORT.md")
+          text = report.read_text(encoding="utf-8") if report.exists() else "no report"
+          # GitHub keeps 4,096 characters of an annotation: 3,500 leaves room for the escapes
+          chunks = [text[i:i + 3500] for i in range(0, len(text), 3500)][:9]
+          for n, chunk in enumerate(chunks, 1):
+              body = chunk.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print(f"::notice title=Jobs smoke report {n}/{len(chunks)}::{body}")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: jobs-smoke-report, path: tools/jobs-smoke/out/ }

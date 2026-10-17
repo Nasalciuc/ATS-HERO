@@ -13,6 +13,9 @@ pypdf>=5.0
 docx2txt>=0.8
 rapidfuzz>=3.9
 pdfplumber>=0.11
+# POST /jobs/search (app/jobs/search.py): job boards through JobSpy, MIT. Pinned: it reaches the
+# boards through their private endpoints, which change; a new version is tested before it ships.
+python-jobspy==1.3.0
 
 # Pin spaCy model wheel so Heroku/Docker never download at boot.
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
