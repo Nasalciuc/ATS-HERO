@@ -52,6 +52,7 @@ without an account; signing in keeps the work (guest → claim).
 ## Commands
 
 Windows: run them in **Git Bash** (PowerShell breaks `&&`, `source`, `( … )`).
+Node 24, as in CI. On Node 20 the PDF tests fail: pdf.js needs `Promise.withResolvers`.
 
 ```bash
 # web (from apps/web)
