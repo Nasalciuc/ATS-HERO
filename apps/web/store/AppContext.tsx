@@ -15,7 +15,7 @@ import { claimGuestWork } from "../lib/claim";
 import { getGuestId } from "../lib/guest";
 import { isClerkPublicConfigured } from "../lib/clerk-config";
 import { emptyCvData, type Cv, type CvData, type User } from "../lib/types";
-import { applyCvPatch, type CvPatch } from "../lib/cv-patch";
+import { applyCvPatch, laterUpdate, type CvPatch } from "../lib/cv-patch";
 import { mutate } from "swr";
 
 const CV_ID_KEY = "ats_hero_cv_id";
@@ -36,6 +36,12 @@ type AppState = {
   ensureCv: () => Promise<string>;
   openCv: (id: string) => Promise<void>;
   update: (patch: CvPatch) => void;
+  /**
+   * For a result that arrives later (a photo still loading): call it when the work starts, and
+   * give the result to what it returns. It lands in the CV open at the start, even if the form is
+   * gone by then, and is dropped if another CV was opened or started meanwhile.
+   */
+  updateLater: () => (patch: CvPatch) => void;
   save: () => Promise<void>;
   reset: () => void;
 };
@@ -226,6 +232,8 @@ function AppProviderCore({
     [autosave]
   );
 
+  const updateLater = useCallback(() => laterUpdate(update, () => generationRef.current), [update]);
+
   const ensureCv = useCallback(async (): Promise<string> => {
     if (cvRef.current) return cvRef.current.id;
     const { promise } = createOnce(dataRef.current, generationRef.current);
@@ -292,10 +300,11 @@ function AppProviderCore({
       ensureCv,
       openCv,
       update,
+      updateLater,
       save,
       reset,
     }),
-    [user, cv, data, saving, saveError, lastSavedAt, ready, login, logout, ensureCv, openCv, update, save, reset]
+    [user, cv, data, saving, saveError, lastSavedAt, ready, login, logout, ensureCv, openCv, update, updateLater, save, reset]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

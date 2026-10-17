@@ -5,38 +5,34 @@ type PhotoResult = { ok: true; dataUrl: string } | { ok: false; error: PhotoErro
 /**
  * The async part of Personal info → Photo, kept out of React so it can be tested.
  *
- * Turning a picture into the small CV copy takes a moment. If the user clicks Remove (or leaves the
- * step) before it is ready, that picture is dropped: it never comes back after Remove. A newer
- * pick also wins over an older one that finishes later.
+ * Turning a picture into the small CV copy takes a moment. Remove (`cancel`) drops a picture still
+ * loading, so it never comes back after Remove, and a newer pick wins over an older one that
+ * finishes later. Leaving the step drops nothing: `deliver` is chosen when the pick starts
+ * (PersonalInfoStep binds it to the CV open at that moment).
  */
 export function photoPicker(opts: {
   load: (file: File) => Promise<PhotoResult>;
-  onChange: (photo: string) => void;
   onBusy: (busy: boolean) => void;
   onError: (error: PhotoError | null) => void;
 }) {
-  let current = 0; // the pick that may still apply its result; Remove and dispose() move it on
+  let current = 0; // the pick that may still deliver; cancel() and newer picks move it on
 
   return {
-    async take(file: File) {
+    async take(file: File, deliver: (photo: string) => void) {
       const mine = ++current;
       opts.onError(null);
       opts.onBusy(true);
       const res = await opts.load(file);
-      if (mine !== current) return; // removed, replaced or left while it loaded
+      if (mine !== current) return; // removed or replaced while it loaded
       opts.onBusy(false);
-      if (res.ok) opts.onChange(res.dataUrl);
+      if (res.ok) deliver(res.dataUrl);
       else opts.onError(res.error);
     },
-    remove() {
+    /** Remove: a picture still loading is dropped. */
+    cancel() {
       current++;
       opts.onBusy(false);
       opts.onError(null);
-      opts.onChange("");
-    },
-    /** The field is gone (the user left the step): a picture still loading is dropped. */
-    dispose() {
-      current++;
     },
   };
 }

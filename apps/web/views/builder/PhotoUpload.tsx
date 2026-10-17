@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { UploadRounded } from "../../components/figma-icons";
 import { photoFromFile, PHOTO_MSG, type PhotoError } from "../../lib/photo";
 import { photoPicker } from "../../lib/photo-picker";
@@ -14,29 +14,26 @@ import { droppedFile, isFileDrag } from "../../lib/cv-file";
  * People with a CV file look for "upload" here: a PDF or Word file gets a pointer to Improve My
  * Resume instead of a silent failure.
  */
-export function PhotoUpload({ value, onChange }: { value: string; onChange: (photo: string) => void }) {
+export function PhotoUpload({
+  value,
+  onPick,
+  onRemove,
+}: {
+  value: string;
+  /** Called as a pick starts; the picture goes to the function it returns once it is ready. */
+  onPick: () => (photo: string) => void;
+  onRemove: () => void;
+}) {
   const input = useRef<HTMLInputElement>(null);
   const labelId = useId();
   const [busy, setBusy] = useState(false);
   const [over, setOver] = useState(false);
   const [error, setError] = useState<PhotoError | null>(null);
 
-  // A picture still loading when the user clicks Remove, picks another or leaves the step is
-  // dropped (lib/photo-picker.ts). onChange is read through a ref: the picker outlives renders.
-  const onChangeRef = useRef(onChange);
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  });
-  const [picker] = useState(() =>
-    photoPicker({
-      load: photoFromFile,
-      onChange: (photo) => onChangeRef.current(photo),
-      onBusy: setBusy,
-      onError: setError,
-    }),
-  );
-  useEffect(() => () => picker.dispose(), [picker]);
-  const take = (file: File) => picker.take(file);
+  // Remove, or a newer pick, drops a picture still loading (lib/photo-picker.ts). Leaving the step
+  // doesn't: the picture still goes where onPick said when the pick started.
+  const [picker] = useState(() => photoPicker({ load: photoFromFile, onBusy: setBusy, onError: setError }));
+  const take = (file: File) => picker.take(file, onPick());
 
   return (
     <div className="field field--photo field--photo-gap">
@@ -72,7 +69,14 @@ export function PhotoUpload({ value, onChange }: { value: string; onChange: (pho
           <span className="sr-only"> photo</span>
         </button>
         {value && (
-          <button type="button" className="photo-remove" onClick={() => picker.remove()}>
+          <button
+            type="button"
+            className="photo-remove"
+            onClick={() => {
+              picker.cancel();
+              onRemove();
+            }}
+          >
             Remove<span className="sr-only"> photo</span>
           </button>
         )}

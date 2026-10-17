@@ -21,10 +21,19 @@ import type {
   SimpleEntry,
   WorkItem,
 } from "../../lib/types";
-import type { CvPatch } from "../../lib/cv-patch";
+import { personalInfoPatch, type CvPatch } from "../../lib/cv-patch";
 
-/** `framed`: the step in the Figma form card (the builder, and the score page's "Fix now"); unframed, just the fields. */
-type StepProps = { data: CvData; update: (patch: CvPatch) => void; framed?: boolean };
+/**
+ * `framed`: the step in the Figma form card (the builder, and the score page's "Fix now"); unframed,
+ * just the fields. `update` and `updateLater` are AppContext's; `updateLater` is for a result that
+ * arrives after a delay (the photo).
+ */
+type StepProps = {
+  data: CvData;
+  update: (patch: CvPatch) => void;
+  updateLater: () => (patch: CvPatch) => void;
+  framed?: boolean;
+};
 
 /** Figma "Frame 274": the #f8f8f8 form card. `tabbed` squares the corner the entry tabs sit on. */
 function Panel({
@@ -279,12 +288,16 @@ function Toggle({ label, on, onChange, figma }: { label: string; on: boolean; on
 }
 
 
-export function PersonalInfoStep({ data, update, framed }: StepProps) {
+export function PersonalInfoStep({ data, update, updateLater, framed }: StepProps) {
   const p = data.personalInfo;
-  // Built from the latest data, not from this render's `p`: the photo arrives after a moment, and
-  // what the user typed meanwhile must survive it.
-  const set = (patch: Partial<typeof p>) =>
-    update((latest) => ({ personalInfo: { ...latest.personalInfo, ...patch } }));
+  // Built from the latest personal info, not from this render's `p`.
+  const set = (patch: Partial<typeof p>) => update(personalInfoPatch(patch));
+  // A photo takes a moment to load. It goes to the CV open when the pick started, even if the user
+  // has left this step by then (never to another CV), and keeps what the user typed meanwhile.
+  const pickPhoto = () => {
+    const apply = updateLater();
+    return (photo: string) => apply(personalInfoPatch({ photo }));
+  };
   return (
     <Panel framed={framed}>
       <div className="form-grid">
@@ -292,7 +305,7 @@ export function PersonalInfoStep({ data, update, framed }: StepProps) {
           <Field figma="field-name" label="NAME, SURNAME" value={p.name} placeholder="David Smith" onChange={(v) => set({ name: v })} />
           <Field figma="field-email" label="EMAIL" value={p.email} placeholder="davidsmith@gmail.com" onChange={(v) => set({ email: v })} />
           <Field figma="field-phone" label="PHONE" value={p.phone} placeholder="+1 123 456 7890" onChange={(v) => set({ phone: v })} />
-          <PhotoUpload value={p.photo ?? ""} onChange={(photo) => set({ photo })} />
+          <PhotoUpload value={p.photo ?? ""} onPick={pickPhoto} onRemove={() => set({ photo: "" })} />
         </div>
         <div className="form-col">
           <Field figma="field-linkedin" label="LINKEDIN PROFILE" value={p.linkedin} placeholder="https://www.linkedin.com/in/davidsmith" onChange={(v) => set({ linkedin: v })} />
