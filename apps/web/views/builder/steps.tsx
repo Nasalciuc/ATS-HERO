@@ -21,9 +21,10 @@ import type {
   SimpleEntry,
   WorkItem,
 } from "../../lib/types";
+import type { CvPatch } from "../../lib/cv-patch";
 
 /** `framed`: the step in the Figma form card (the builder, and the score page's "Fix now"); unframed, just the fields. */
-type StepProps = { data: CvData; update: (patch: Partial<CvData>) => void; framed?: boolean };
+type StepProps = { data: CvData; update: (patch: CvPatch) => void; framed?: boolean };
 
 /** Figma "Frame 274": the #f8f8f8 form card. `tabbed` squares the corner the entry tabs sit on. */
 function Panel({
@@ -280,7 +281,10 @@ function Toggle({ label, on, onChange, figma }: { label: string; on: boolean; on
 
 export function PersonalInfoStep({ data, update, framed }: StepProps) {
   const p = data.personalInfo;
-  const set = (patch: Partial<typeof p>) => update({ personalInfo: { ...p, ...patch } });
+  // Built from the latest data, not from this render's `p`: the photo arrives after a moment, and
+  // what the user typed meanwhile must survive it.
+  const set = (patch: Partial<typeof p>) =>
+    update((latest) => ({ personalInfo: { ...latest.personalInfo, ...patch } }));
   return (
     <Panel framed={framed}>
       <div className="form-grid">

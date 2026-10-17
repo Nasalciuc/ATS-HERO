@@ -15,6 +15,7 @@ import { claimGuestWork } from "../lib/claim";
 import { getGuestId } from "../lib/guest";
 import { isClerkPublicConfigured } from "../lib/clerk-config";
 import { emptyCvData, type Cv, type CvData, type User } from "../lib/types";
+import { applyCvPatch, type CvPatch } from "../lib/cv-patch";
 import { mutate } from "swr";
 
 const CV_ID_KEY = "ats_hero_cv_id";
@@ -34,7 +35,7 @@ type AppState = {
 
   ensureCv: () => Promise<string>;
   openCv: (id: string) => Promise<void>;
-  update: (patch: Partial<CvData>) => void;
+  update: (patch: CvPatch) => void;
   save: () => Promise<void>;
   reset: () => void;
 };
@@ -208,8 +209,8 @@ function AppProviderCore({
   }, [flushPendingSave]);
 
   const update = useCallback(
-    (patch: Partial<CvData>) => {
-      setData((prev) => ({ ...prev, ...patch }));
+    (patch: CvPatch) => {
+      setData((prev) => applyCvPatch(prev, patch));
       dirtyRef.current = true;
       if (saveTimer.current) clearTimeout(saveTimer.current);
       const tick = () => {
