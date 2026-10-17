@@ -5,8 +5,10 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import Providers from "./providers";
 import { isClerkPublicConfigured } from "@/lib/clerk-config";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "ATS Hero — Build, improve and match your CV to any job",
   description:
     "Create an ATS-friendly resume, get an instant ATS score, and check how well your CV matches a job description.",
