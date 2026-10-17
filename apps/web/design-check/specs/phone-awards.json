@@ -11,7 +11,7 @@
   "touch": true,
   "locked": true,
   "tolerance": 2,
-  "note": "Our Awards step also has the photo upload (desktop); the buttons still land where Figma has them.",
+  "note": "Figma 86:1618 pins 'Add another award' and 'Continue' to the bottom of the screen (y 738 and 797). Ours follow the fields, as on the other phone steps; they sat on Figma's y only while the photo field (desktop Awards) filled the gap. 2026-10-15: that field is removed (Scaler's decision), so the two buttons are checked 72 px higher, under the date. Liubovi decides whether phones pin them to the bottom.",
   "setup": [
     {
       "click": ".progress__add"
@@ -94,7 +94,7 @@
       "key": "entry-add",
       "box": [
         16,
-        738,
+        666,
         358,
         51
       ]
@@ -103,7 +103,7 @@
       "key": "btn-complete",
       "box": [
         16,
-        797,
+        725,
         358,
         51
       ],

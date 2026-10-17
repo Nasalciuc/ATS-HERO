@@ -2,7 +2,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isClerkConfigured } from "@/lib/clerk-config";
-import { allow } from "@/lib/ratelimit";
+import { allow, RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /**
  * Clerk auth context when keys are configured. Routes stay public on purpose
@@ -22,7 +22,7 @@ function tooManyRequests(req: NextRequest, userId: string | null): NextResponse 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "ip";
   const key = `${isRewrite ? "rw" : "act"}:${ip}:${userId ?? "anon"}`;
   const limit = isRewrite ? 10 : 30;
-  if (allow(key, limit, 60_000)) return null;
+  if (allow(key, limit, RATE_LIMIT_WINDOW_MS)) return null;
   return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 }
 

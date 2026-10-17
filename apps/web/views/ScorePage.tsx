@@ -202,7 +202,7 @@ function JobFitPanel({ fit }: { fit: JobFitReport }) {
 }
 
 export default function ScorePage() {
-  const { data, update, save, saving, saveError, ready } = useApp();
+  const { data, update, updateLater, save, saving, saveError, ready } = useApp();
   const navigate = useNavigate();
   const [report, setReport] = useState<ScoreReport | null>(null);
   const [jobFit, setJobFit] = useState<JobFitReport | null>(null);
@@ -274,7 +274,7 @@ export default function ScorePage() {
 
   // Fix now shows the section's builder form in its Figma card (383:7664)
   const renderSectionForm = (key: SectionKey) => {
-    const props = { data, update, framed: true };
+    const props = { data, update, updateLater, framed: true };
     switch (key) {
       case "personalInfo": return <PersonalInfoStep {...props} />;
       case "education": return <EducationStep {...props} />;

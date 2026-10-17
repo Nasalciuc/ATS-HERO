@@ -21,7 +21,7 @@ const cards = [
     cta: "Improve My Resume",
     to: "/app/improve",
     steps: [
-      { title: "Upload or paste your CV", body: "PDF or plain text. We read the text layer, the same way a tracking system does." },
+      { title: "Upload or paste your CV", body: "PDF, Word or plain text. We read the text, the same way a tracking system does." },
       { title: "See your ATS score", body: "A score per section, plus the critical mistakes that cost you the most." },
       { title: "Fix the flagged lines", body: "Each finding comes with what to change and why it matters to a recruiter." },
     ],

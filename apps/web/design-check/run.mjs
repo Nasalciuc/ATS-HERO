@@ -246,8 +246,31 @@ for (const r of results) {
 }
 fs.writeFileSync(path.join(OUT, "REPORT.md"), md.join("\n"));
 fs.writeFileSync(path.join(OUT, "results.json"), JSON.stringify(results, null, 2));
+
+// The gate: locked specs with a failing or missing check.
 const gate = results.filter((r) => r.locked && r.passed < r.total);
+const gateLine = gate.map((r) => `${r.id} (${r.total - r.passed} off-spec)`).join(", ");
+
+// On GitHub Actions the gate also becomes annotations. The check run's API returns them, so the
+// reason is readable without signing in or downloading the artifact. GitHub keeps 10 error
+// annotations per step: the first names every failing spec, the other 9 show failing checks, one
+// spec at a time in turn, so each failing spec shows a reason (all of them are in the job summary).
+if (process.env.GITHUB_ACTIONS === "true" && gate.length) {
+  const esc = (s) => String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+  const prop = (s) => esc(s).replace(/:/g, "%3A").replace(/,/g, "%2C");
+  console.log(`::error title=Figma check failed::${esc(gateLine)}`);
+  const queues = gate.map((r) => r.rows.filter((row) => !row.ok).map((row) => ({ r, row })));
+  const shown = [];
+  while (shown.length < 9 && queues.some((q) => q.length)) {
+    for (const q of queues) if (q.length && shown.length < 9) shown.push(q.shift());
+  }
+  for (const { r, row } of shown) {
+    const where = row.want ? ` (Figma ${JSON.stringify(row.want)}, ours ${JSON.stringify(row.got)})` : "";
+    console.log(`::error title=${prop(`Figma check ${r.id}`)}::${esc(`${row.key}: ${row.problems.join("; ")}${where}`)}`);
+  }
+}
+
 if (gate.length) {
-  console.error(`\nFAIL: ${gate.map((r) => `${r.id} (${r.total - r.passed} off-spec)`).join(", ")} — see design-check/out/REPORT.md`);
+  console.error(`\nFAIL: ${gateLine} — see design-check/out/REPORT.md`);
   process.exit(1);
 }

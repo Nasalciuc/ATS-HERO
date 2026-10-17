@@ -10,9 +10,8 @@ export const metadata: Metadata = {
   title: "ATS Hero — Build, improve and match your CV to any job",
   description:
     "Create an ATS-friendly resume, get an instant ATS score, and check how well your CV matches a job description.",
-  icons: {
-    icon: "/images/favicon.svg",
-  },
+  // Icons come from files Next.js finds in app/: icon.svg, favicon.ico and apple-icon.png
+  // (the last two are generated from icon.svg by `npm run icons`).
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -27,6 +26,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             signInFallbackRedirectUrl="/app"
             signUpFallbackRedirectUrl="/app"
             afterSignOutUrl="/"
+            // Clerk sends SDK telemetry from development instances (the live site runs on one).
+            // The privacy page promises no analytics, so it is off; the CSP doesn't allow it either.
+            telemetry={false}
           >
             {inner}
           </ClerkProvider>

@@ -27,7 +27,8 @@ const nextConfig: NextConfig = {
       // browser refuses WebAssembly.instantiate() and "Download PDF" fails in production.
       // It permits compiling WASM only — eval()/new Function() stay blocked.
       `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval} https://*.clerk.accounts.dev https://challenges.cloudflare.com`,
-      "connect-src 'self' https://*.clerk.accounts.dev https://clerk-telemetry.com " + (process.env.NEXT_PUBLIC_AI_URL ?? ""),
+      // No clerk-telemetry.com: Clerk's telemetry is off (app/layout.tsx), and the privacy page says no analytics.
+      "connect-src 'self' https://*.clerk.accounts.dev " + (process.env.NEXT_PUBLIC_AI_URL ?? ""),
       "img-src 'self' data: blob: https:",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",

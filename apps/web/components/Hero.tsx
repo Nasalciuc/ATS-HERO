@@ -9,18 +9,23 @@ const stats = [
   { Icon: GraphBarIcon, size: 27, num: "2–3× more likely", desc: "to land interviews with ATS optimization" },
 ];
 
-function TitleBracketTL() {
+/** A text-selection caret, as Figma draws it (groups 180:142 and 180:138): a 3px bar with a
+ *  7×6 handle at each end. Both carets are the same shape; only the position differs. */
+function TitleCaret({ corner }: { corner: "tl" | "br" }) {
+  const key = `hero-caret-${corner}`;
   return (
-    <svg className="hero__title-bracket hero__title-bracket--tl" width="7" height="68" viewBox="0 0 7 68" fill="none" aria-hidden="true">
-      <path d="M0 0H7M0 0V68" stroke="#00C450" strokeWidth="2" />
-    </svg>
-  );
-}
-
-function TitleBracketBR() {
-  return (
-    <svg className="hero__title-bracket hero__title-bracket--br" width="7" height="68" viewBox="0 0 7 68" fill="none" aria-hidden="true">
-      <path d="M0 68H7M7 0V68" stroke="#00C450" strokeWidth="2" />
+    <svg
+      className={`hero__title-bracket hero__title-bracket--${corner}`}
+      width="7"
+      height="68"
+      viewBox="0 0 7 68"
+      fill="currentColor"
+      aria-hidden="true"
+      data-figma={key}
+    >
+      <rect x="0" y="0" width="7" height="6" data-figma={`${key}-top`} />
+      <rect x="2" y="3" width="3" height="59" data-figma={`${key}-bar`} />
+      <rect x="0" y="62" width="7" height="6" data-figma={`${key}-bottom`} />
     </svg>
   );
 }
@@ -38,10 +43,10 @@ export default function Hero() {
 
           <h1 className="hero__title">
             <span className="hero__title-inner" data-figma="hero-title">
-              <span className="hero__title-bg hero__title-bg--1" aria-hidden="true" />
-              <span className="hero__title-bg hero__title-bg--2" aria-hidden="true" />
-              <TitleBracketTL />
-              <TitleBracketBR />
+              <span className="hero__title-bg hero__title-bg--1" aria-hidden="true" data-figma="hero-title-hl-1" />
+              <span className="hero__title-bg hero__title-bg--2" aria-hidden="true" data-figma="hero-title-hl-2" />
+              <TitleCaret corner="tl" />
+              <TitleCaret corner="br" />
               <span className="hero__title-line">You’re exactly who</span>
               <span className="hero__title-line hero__title-line--2">we’re looking for</span>
             </span>
@@ -50,7 +55,7 @@ export default function Hero() {
           <p className="hero__lead" data-figma="hero-lead">
             Not getting interviews despite your experience?
             <br />
-            Our tool will help yout to turn your experience into a job-winning asset.
+            Our tool will help you turn your experience into a job-winning asset.
           </p>
 
           <div className="hero__cta">

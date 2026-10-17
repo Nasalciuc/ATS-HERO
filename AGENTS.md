@@ -34,7 +34,7 @@ without an account; signing in keeps the work (guest → claim).
 ## Map
 
 - `apps/web`:
-  - `app/` routes;
+  - `app/` routes (`icon.svg` is the favicon; `favicon.ico` and `apple-icon.png` are generated from it by `npm run icons`);
   - `views/` pages;
   - `components/` UI (`figma-icons.tsx` and `icon-credits.ts` are generated);
   - `lib/`, `db/`, `drizzle/`;
@@ -52,6 +52,8 @@ without an account; signing in keeps the work (guest → claim).
 ## Commands
 
 Windows: run them in **Git Bash** (PowerShell breaks `&&`, `source`, `( … )`).
+Node 24, as in CI and on Vercel (`engines` in `apps/web/package.json`). On Node 20 the PDF tests fail:
+pdf.js needs `Promise.withResolvers`.
 
 ```bash
 # web (from apps/web)
@@ -61,6 +63,7 @@ npx tsc --noEmit -p .
 npx vitest run
 npm run build
 npm run design:check          # needs `npm run dev` + local Postgres; 🔒 specs must pass
+npm run icons                 # after changing app/icon.svg: regenerates favicon.ico and apple-icon.png
 npm run db:migrate            # local DB only; production migrations are manual, after a snapshot
 npx tsx --tsconfig lab/tsconfig.json lab/render.tsx      # ATS lab, step 1: render
 
@@ -124,11 +127,14 @@ graphify update .             # after every change; `graphify explain <Node>` be
 8. **Components.** Don't move, rename or delete components or icons without telling Liubovi first.
 9. **Generated files.** Regenerate instead of editing:
    - `node design-check/icons/generate.mjs` produces `components/figma-icons.tsx`, `components/icon-credits.ts` and `design-check/ICON-SOURCES.md`.
+   - `npm run credits` produces `components/software-credits.ts` (the Credits page's open-source list) from `package-lock.json`. Run it after changing dependencies; `tests/credits-page.test.tsx` fails while the list is out of date.
 10. **Truthful copy.** Text on the site describes what the product actually does today.
 11. **Privacy and ethics.**
     - LinkedIn: OAuth sign-in only; no scraping or automation.
     - No real user CVs to third-party parsers without explicit consent + DPA; the lab uses fixtures only.
     - Never apply to real employers with test personas.
+    - **Privacy page** (`views/PrivacyPage.tsx`) lists what we keep, where, for how long, every provider and every cookie or storage key. A change to any of that (a new provider or storage key, another retention, payments, turning on `AI_REWRITE_ENABLED` or `NEXT_PUBLIC_ATS_CHECK_ENABLED`) updates the page and its `PRIVACY_UPDATED` date in the same commit. `tests/privacy-page.test.tsx` checks the numbers and keys it quotes.
+    - **Terms page** (`views/TermsPage.tsx`) describes ATS Hero as it is today: free, no AI, no job search. Payments, AI features or job search update it and its `TERMS_UPDATED` date in the same commit; the price and the payment and refund terms go there before anything is charged. No payment provider is named until Scaler chooses one. Who runs ATS Hero and the addresses live in `lib/legal.ts`, shared with the Privacy page. `tests/terms-page.test.tsx` checks what it quotes.
 12. **Flags.** `NEXT_PUBLIC_ATS_CHECK_ENABLED` stays off in production until `apps/ai` is deployed behind auth.
 13. **AWS.**
     - Don't create by hand what `infra/*.yaml` describes.

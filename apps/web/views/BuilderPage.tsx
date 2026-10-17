@@ -59,7 +59,7 @@ export default function BuilderPage() {
   // different OptionalSection union (includes "languages"). The template/accent state the
   // new export/preview features need already lives in useBuilderStore and is wired through
   // the cv components; lifting the wizard's step model here is risky with no functional gain.
-  const { data, update, save, saving, saveError } = useApp();
+  const { data, update, updateLater, save, saving, saveError } = useApp();
   const navigate = useNavigate();
 
   const [activeKey, setActiveKey] = useState<SectionKey>("personalInfo");
@@ -160,7 +160,7 @@ export default function BuilderPage() {
   const optionalKeys = new Set<string>(addedSections);
 
   const renderStep = () => {
-    const props = { data, update, framed: true };
+    const props = { data, update, updateLater, framed: true };
     switch (activeKey) {
       case "personalInfo":
         return <PersonalInfoStep key="personalInfo" {...props} />;
