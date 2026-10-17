@@ -18,7 +18,8 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx db/seed.ts",
     "design:check": "node design-check/run.mjs",
-    "icons": "node scripts/build-icons.mjs"
+    "icons": "node scripts/build-icons.mjs",
+    "credits": "node scripts/software-credits.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.0",

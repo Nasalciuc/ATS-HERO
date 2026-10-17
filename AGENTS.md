@@ -127,6 +127,7 @@ graphify update .             # after every change; `graphify explain <Node>` be
 8. **Components.** Don't move, rename or delete components or icons without telling Liubovi first.
 9. **Generated files.** Regenerate instead of editing:
    - `node design-check/icons/generate.mjs` produces `components/figma-icons.tsx`, `components/icon-credits.ts` and `design-check/ICON-SOURCES.md`.
+   - `npm run credits` produces `components/software-credits.ts` (the Credits page's open-source list) from `package-lock.json`. Run it after changing dependencies; `tests/credits-page.test.tsx` fails while the list is out of date.
 10. **Truthful copy.** Text on the site describes what the product actually does today.
 11. **Privacy and ethics.**
     - LinkedIn: OAuth sign-in only; no scraping or automation.

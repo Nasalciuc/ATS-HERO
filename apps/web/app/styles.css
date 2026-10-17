@@ -5138,44 +5138,8 @@ select.field__input {
   cursor: pointer;
 }
 
-/* ---------------- legal pages (s5) ---------------- */
-.legal {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 72px 20px 96px;
-  color: var(--ink);
-}
-.legal h1 {
-  font-size: 36px;
-  margin: 0 0 8px;
-}
-.legal h2 {
-  font-size: 20px;
-  margin: 32px 0 8px;
-}
-.legal p {
-  margin: 0;
-  line-height: 1.65;
-  color: var(--muted);
-}
-.legal em {
-  color: var(--muted);
-  font-size: 14px;
-}
-.legal__list {
-  margin: 0;
-  padding-left: 20px;
-  line-height: 1.65;
-  color: var(--muted);
-}
-.legal a {
-  color: var(--violet-600);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 /* ============================================================
-   LEGAL PAGES (components/legal/LegalLayout.tsx: the Privacy Policy first). No Figma frame:
+   LEGAL PAGES (components/legal/LegalLayout.tsx: Privacy Policy, Terms, Credits). No Figma frame:
    built from the landing's parts — the hero badge, the selected-text headline, the stats row,
    the builder's stepper nodes, the dark band and the FAQ's hairline rows.
    ============================================================ */
@@ -5584,6 +5548,73 @@ select.field__input {
   flex-wrap: wrap;
   gap: 12px;
   padding-top: 8px;
+}
+.legal-table a,
+.legal-licence__list a {
+  color: var(--violet-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.legal-table a:focus-visible,
+.legal-licence__list a:focus-visible,
+.legal-licence > summary:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
+/* Credits: one row per licence, opened like the FAQ's rows, with the packages inside. */
+.legal-licences {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.legal-licence {
+  border-bottom: 1px solid var(--line);
+}
+.legal-licence > summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  list-style: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 24px;
+  color: var(--ink);
+}
+.legal-licence > summary::-webkit-details-marker {
+  display: none;
+}
+.legal-licence__count {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 16px;
+  color: #6b6b6b;
+}
+.legal-licence__toggle {
+  display: inline-flex;
+  flex: none;
+}
+.legal-licence__toggle svg:last-child,
+.legal-licence[open] .legal-licence__toggle svg:first-child {
+  display: none;
+}
+.legal-licence[open] .legal-licence__toggle svg:last-child {
+  display: block;
+}
+.legal-licence__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 16px;
+  line-height: 22px;
+}
+.legal-licence__version {
+  color: #6b6b6b;
 }
 
 @media (max-width: 1279px) {
