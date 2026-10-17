@@ -1,7 +1,8 @@
 "use client";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { UploadRounded } from "../../components/figma-icons";
 import { photoFromFile, PHOTO_MSG, type PhotoError } from "../../lib/photo";
+import { photoPicker } from "../../lib/photo-picker";
 import { droppedFile, isFileDrag } from "../../lib/cv-file";
 
 /**
@@ -20,14 +21,22 @@ export function PhotoUpload({ value, onChange }: { value: string; onChange: (pho
   const [over, setOver] = useState(false);
   const [error, setError] = useState<PhotoError | null>(null);
 
-  const take = async (file: File) => {
-    setError(null);
-    setBusy(true);
-    const res = await photoFromFile(file);
-    setBusy(false);
-    if (res.ok) onChange(res.dataUrl);
-    else setError(res.error);
-  };
+  // A picture still loading when the user clicks Remove, picks another or leaves the step is
+  // dropped (lib/photo-picker.ts). onChange is read through a ref: the picker outlives renders.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+  const [picker] = useState(() =>
+    photoPicker({
+      load: photoFromFile,
+      onChange: (photo) => onChangeRef.current(photo),
+      onBusy: setBusy,
+      onError: setError,
+    }),
+  );
+  useEffect(() => () => picker.dispose(), [picker]);
+  const take = (file: File) => picker.take(file);
 
   return (
     <div className="field field--photo field--photo-gap">
@@ -63,7 +72,7 @@ export function PhotoUpload({ value, onChange }: { value: string; onChange: (pho
           <span className="sr-only"> photo</span>
         </button>
         {value && (
-          <button type="button" className="photo-remove" onClick={() => onChange("")}>
+          <button type="button" className="photo-remove" onClick={() => picker.remove()}>
             Remove<span className="sr-only"> photo</span>
           </button>
         )}
