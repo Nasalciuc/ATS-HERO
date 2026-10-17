@@ -5175,21 +5175,21 @@ select.field__input {
 }
 
 /* ============================================================
-   PRIVACY POLICY (views/PrivacyPage.tsx). No Figma frame: built from the landing's parts —
-   the hero badge, the selected-text headline, the stats row, the builder's stepper nodes,
-   the dark band and the FAQ's hairline rows.
+   LEGAL PAGES (components/legal/LegalLayout.tsx: the Privacy Policy first). No Figma frame:
+   built from the landing's parts — the hero badge, the selected-text headline, the stats row,
+   the builder's stepper nodes, the dark band and the FAQ's hairline rows.
    ============================================================ */
-.privacy-hero {
+.legal-hero {
   background: var(--bg-page);
   padding: 80px 0 72px;
 }
-.privacy-hero__grid {
+.legal-hero__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 400px;
   gap: 64px;
   align-items: center;
 }
-.privacy-hero__badge {
+.legal-hero__badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -5205,10 +5205,10 @@ select.field__input {
   font-size: 16px;
   line-height: 18px;
 }
-.privacy-hero__badge time {
+.legal-hero__badge time {
   white-space: nowrap;
 }
-.privacy-hero__dot {
+.legal-hero__dot {
   flex: none;
   width: 10px;
   height: 10px;
@@ -5217,7 +5217,7 @@ select.field__input {
 }
 /* The landing headline's look (Figma 180:136) for any text: each line is a highlight sized to its
    words, with the selection carets (3px bar, 7×6 handles) at the start and at the end. */
-.privacy-hero__title {
+.legal-hero__title {
   margin: 26px 0 0;
   font-family: var(--font-sans);
   font-weight: 700;
@@ -5262,7 +5262,7 @@ select.field__input {
   top: -8px;
   bottom: 0;
 }
-.privacy-hero__lead {
+.legal-hero__lead {
   margin-top: 26px;
   max-width: 560px;
   font-size: 20px;
@@ -5270,41 +5270,41 @@ select.field__input {
   color: var(--ink);
 }
 /* "At a glance": the landing's stats, stacked in a white card where the landing has its CV art. */
-.privacy-hero__card {
+.legal-hero__card {
   padding: 4px 28px;
   border: 1px solid var(--violet-200);
   border-radius: 24px;
   background: var(--white);
   box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.02);
 }
-.privacy-hero__stats {
+.legal-hero__stats {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-.privacy-hero__stats .stat {
+.legal-hero__stats .stat {
   width: auto;
   flex-direction: row;
   align-items: flex-start;
   gap: 16px;
   padding: 22px 0;
 }
-.privacy-hero__stats .stat + .stat {
+.legal-hero__stats .stat + .stat {
   border-top: 1px solid var(--violet-200);
 }
-.privacy-hero__stats .stat__icon {
+.legal-hero__stats .stat__icon {
   flex: none;
   justify-content: center;
   width: 32px;
 }
-.privacy-hero__stats .stat__body {
+.legal-hero__stats .stat__body {
   gap: 8px;
 }
-.privacy-hero__stats .stat .stat__desc {
+.legal-hero__stats .stat .stat__desc {
   max-width: none; /* the landing narrows its first stat to Figma's 140px */
 }
 
-.privacy-section-title {
+.legal-section-title {
   margin: 0;
   font-weight: 700;
   font-size: 40px;
@@ -5312,16 +5312,16 @@ select.field__input {
   letter-spacing: -0.8px;
   color: var(--ink);
 }
-.privacy-section-title--light {
+.legal-section-title--light {
   color: var(--white);
 }
 
 /* The four moments, drawn with the builder's stepper: 64px nodes joined by the green line. */
-.privacy-journey {
+.legal-steps {
   background: var(--white);
   padding: 64px 0 80px;
 }
-.privacy-journey__steps {
+.legal-steps__list {
   list-style: none;
   margin: 48px 0 0;
   padding: 0;
@@ -5329,15 +5329,15 @@ select.field__input {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
 }
-.pj-step {
+.legal-step {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
-.pj-step__head {
+.legal-step__head {
   position: relative;
 }
-.pj-step:not(:last-child) .pj-step__head::after {
+.legal-step:not(:last-child) .legal-step__head::after {
   content: "";
   position: absolute;
   top: 31px;
@@ -5346,7 +5346,7 @@ select.field__input {
   height: 2px;
   background: var(--green);
 }
-.pj-step__node {
+.legal-step__node {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5356,12 +5356,12 @@ select.field__input {
   background: var(--bg-mint);
   box-shadow: inset 0 0 0 2px var(--green);
 }
-.pj-step__emoji {
+.legal-step__emoji {
   font-family: var(--font-emoji);
   font-size: 30px;
   line-height: 44px;
 }
-.pj-step__num {
+.legal-step__num {
   display: block;
   margin-top: 16px;
   font-family: var(--font-inter);
@@ -5372,14 +5372,14 @@ select.field__input {
   text-transform: uppercase;
   color: #00873a;
 }
-.pj-step__title {
+.legal-step__title {
   margin: 4px 0 0;
   font-weight: 700;
   font-size: 20px;
   line-height: 24px;
   color: var(--ink);
 }
-.pj-step__card {
+.legal-step__card {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -5388,7 +5388,7 @@ select.field__input {
   border-radius: 20px;
   background: var(--bg-page);
 }
-.pj-step__points {
+.legal-step__points {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -5396,14 +5396,14 @@ select.field__input {
   flex-direction: column;
   gap: 10px;
 }
-.pj-step__points li {
+.legal-step__points li {
   position: relative;
   padding-left: 16px;
   font-size: 16px;
   line-height: 22px;
   color: var(--ink);
 }
-.pj-step__points li::before {
+.legal-step__points li::before {
   content: "";
   position: absolute;
   left: 0;
@@ -5413,7 +5413,7 @@ select.field__input {
   border-radius: 50%;
   background: var(--violet-600);
 }
-.pj-step__note {
+.legal-step__note {
   padding: 12px 14px;
   border-radius: 14px;
   background: var(--white);
@@ -5421,7 +5421,7 @@ select.field__input {
   line-height: 19px;
   color: #4a4a4a;
 }
-.pj-step__keep {
+.legal-step__tag {
   margin-top: auto;
   align-self: flex-start;
   display: inline-flex;
@@ -5436,7 +5436,7 @@ select.field__input {
   line-height: 16px;
   color: #1c3426;
 }
-.pj-step__keep-dot {
+.legal-step__tag-dot {
   flex: none;
   width: 8px;
   height: 8px;
@@ -5444,12 +5444,12 @@ select.field__input {
   background: var(--green);
 }
 
-.privacy-never {
+.legal-band {
   background: var(--bg-dark);
   color: var(--white);
   padding: 80px 0;
 }
-.privacy-never__grid {
+.legal-band__grid {
   list-style: none;
   margin: 40px 0 0;
   padding: 0;
@@ -5457,54 +5457,54 @@ select.field__input {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 32px 64px;
 }
-.privacy-never__item {
+.legal-band__item {
   display: flex;
   align-items: flex-start;
   gap: 16px;
 }
-.privacy-never__icon {
+.legal-band__icon {
   flex: none;
   color: var(--green-ring);
 }
-.privacy-never__title {
+.legal-band__title {
   font-weight: 700;
   font-size: 20px;
   line-height: 24px;
 }
-.privacy-never__text {
+.legal-band__text {
   margin-top: 8px;
   font-size: 16px;
   line-height: 20px;
   color: #c9c9c9;
 }
 
-.privacy-details {
+.legal-details {
   background: var(--white);
   padding: 80px 0 96px;
 }
-.privacy-details__grid {
+.legal-details__grid {
   display: grid;
   grid-template-columns: 280px minmax(0, 760px);
   gap: 80px;
   align-items: start;
 }
-.privacy-toc {
+.legal-toc {
   position: sticky;
   top: 98px; /* under the 74px navbar */
 }
-.privacy-toc__title {
+.legal-toc__title {
   margin: 0;
   font-weight: 700;
   font-size: 24px;
   line-height: 28px;
   color: var(--ink);
 }
-.privacy-toc__list {
+.legal-toc__list {
   list-style: none;
   margin: 16px 0 0;
   padding: 0;
 }
-.privacy-toc__list a {
+.legal-toc__list a {
   display: block;
   padding: 10px 0;
   border-bottom: 1px solid var(--line);
@@ -5512,54 +5512,54 @@ select.field__input {
   line-height: 20px;
   color: var(--ink);
 }
-.privacy-toc__list a:hover {
+.legal-toc__list a:hover {
   color: var(--violet-600);
 }
-.privacy-toc__list a:focus-visible,
-.privacy-block a:focus-visible {
+.legal-toc__list a:focus-visible,
+.legal-block a:focus-visible {
   outline: 2px solid var(--violet-600);
   outline-offset: 2px;
 }
-.privacy-block {
+.legal-block {
   padding: 32px 0;
   border-top: 1px solid var(--line);
   scroll-margin-top: 98px;
 }
-.privacy-block:first-child {
+.legal-block:first-child {
   padding-top: 0;
   border-top: 0;
 }
-.privacy-block h2 {
+.legal-block h2 {
   margin: 0 0 16px;
   font-weight: 700;
   font-size: 24px;
   line-height: 28px;
   color: var(--ink);
 }
-.privacy-block p {
+.legal-block p {
   font-size: 18px;
   line-height: 27px;
   color: var(--ink);
 }
-.privacy-block > * + * {
+.legal-block > * + * {
   margin-top: 16px;
 }
-.privacy-block > h2 + * {
+.legal-block > h2 + * {
   margin-top: 0;
 }
-.privacy-block p a {
+.legal-block p a {
   color: var(--violet-600);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.privacy-table {
+.legal-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 16px;
   line-height: 22px;
   color: var(--ink);
 }
-.privacy-table th {
+.legal-table th {
   padding: 0 16px 10px 0;
   border-bottom: 1px solid var(--line);
   text-align: left;
@@ -5571,15 +5571,15 @@ select.field__input {
   text-transform: uppercase;
   color: #6b6b6b;
 }
-.privacy-table td {
+.legal-table td {
   padding: 14px 16px 14px 0;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
 }
-.privacy-table td:first-child {
+.legal-table td:first-child {
   font-weight: 700;
 }
-.privacy-actions {
+.legal-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -5587,43 +5587,43 @@ select.field__input {
 }
 
 @media (max-width: 1279px) {
-  .privacy-journey__steps {
+  .legal-steps__list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     row-gap: 48px;
   }
-  .pj-step:nth-child(2n) .pj-step__head::after {
+  .legal-step:nth-child(2n) .legal-step__head::after {
     display: none;
   }
-  .privacy-details__grid {
+  .legal-details__grid {
     grid-template-columns: 220px minmax(0, 1fr);
     gap: 48px;
   }
 }
 @media (max-width: 960px) {
-  .privacy-hero__grid {
+  .legal-hero__grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 40px;
   }
-  .privacy-hero__card {
+  .legal-hero__card {
     max-width: 520px;
   }
-  .privacy-hero__title {
+  .legal-hero__title {
     font-size: 44px;
   }
-  .privacy-details__grid {
+  .legal-details__grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 40px;
   }
-  .privacy-toc {
+  .legal-toc {
     position: static;
   }
 }
 @media (max-width: 720px) {
-  .privacy-hero {
+  .legal-hero {
     padding: 48px 0;
   }
   /* The badge may wrap on narrow phones (the date stays on one line). */
-  .privacy-hero__badge {
+  .legal-hero__badge {
     height: auto;
     min-height: 38px;
     padding-top: 9px;
@@ -5631,7 +5631,7 @@ select.field__input {
   }
   /* As on the landing at this width: no carets. One highlight on the whole sentence follows the
      wrapped lines, so the join between the two halves is a normal space, not two paddings. */
-  .privacy-hero__title {
+  .legal-hero__title {
     font-size: 32px;
     line-height: 1.3;
   }
@@ -5651,51 +5651,51 @@ select.field__input {
   .sel-caret {
     display: none;
   }
-  .privacy-hero__lead {
+  .legal-hero__lead {
     font-size: 18px;
     line-height: 24px;
   }
-  .privacy-hero__grid {
+  .legal-hero__grid {
     gap: 32px;
   }
-  .privacy-hero__card {
+  .legal-hero__card {
     padding: 0 20px;
   }
-  .privacy-hero__stats .stat {
+  .legal-hero__stats .stat {
     padding: 18px 0;
   }
-  .privacy-section-title {
+  .legal-section-title {
     font-size: 32px;
     line-height: 38px;
   }
-  .privacy-journey,
-  .privacy-never,
-  .privacy-details {
+  .legal-steps,
+  .legal-band,
+  .legal-details {
     padding: 56px 0;
   }
   /* The stepper turns vertical: nodes on the left, joined by a vertical line. */
-  .privacy-journey__steps {
+  .legal-steps__list {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
     margin-top: 32px;
   }
-  .pj-step {
+  .legal-step {
     position: relative;
     padding: 0 0 32px 80px;
     gap: 14px;
   }
-  .pj-step__head {
+  .legal-step__head {
     position: static;
   }
-  .pj-step:not(:last-child) .pj-step__head::after {
+  .legal-step:not(:last-child) .legal-step__head::after {
     display: none;
   }
-  .pj-step__node {
+  .legal-step__node {
     position: absolute;
     left: 0;
     top: 0;
   }
-  .pj-step:not(:last-child)::before {
+  .legal-step:not(:last-child)::before {
     content: "";
     position: absolute;
     left: 31px;
@@ -5704,35 +5704,35 @@ select.field__input {
     width: 2px;
     background: var(--green);
   }
-  .pj-step__num {
+  .legal-step__num {
     margin-top: 6px;
   }
-  .privacy-never__grid {
+  .legal-band__grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
-  .privacy-block p {
+  .legal-block p {
     font-size: 17px;
     line-height: 25px;
   }
-  .privacy-table thead {
+  .legal-table thead {
     display: none;
   }
-  .privacy-table,
-  .privacy-table tbody,
-  .privacy-table tr,
-  .privacy-table td {
+  .legal-table,
+  .legal-table tbody,
+  .legal-table tr,
+  .legal-table td {
     display: block;
   }
-  .privacy-table tr {
+  .legal-table tr {
     padding: 12px 0;
     border-bottom: 1px solid var(--line);
   }
-  .privacy-table td {
+  .legal-table td {
     padding: 2px 0;
     border: 0;
   }
-  .privacy-table td:not(:first-child)::before {
+  .legal-table td:not(:first-child)::before {
     content: attr(data-label);
     display: block;
     margin-top: 6px;
@@ -5744,7 +5744,7 @@ select.field__input {
     text-transform: uppercase;
     color: #6b6b6b;
   }
-  .privacy-actions .btn {
+  .legal-actions .btn {
     width: 100%;
   }
 }
