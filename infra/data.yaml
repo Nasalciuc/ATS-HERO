@@ -177,6 +177,144 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       AlarmActions: [!ImportValue atshero-alerts-topic-arn]
 
+  # The privacy page promises that the copy taken before a database update is gone within 30 days
+  # (tests/privacy-page.test.tsx holds KEEP_DAYS to it). Manual snapshots never expire on their own,
+  # so this job runs every day and deletes those of this instance once they are 28 days old: gone by
+  # day 29, or by day 30 if a run fails. It may delete only snapshots tagged project=atshero, which
+  # the instance copies to its snapshots unless one is given tags of its own. A snapshot old enough
+  # that it can't delete fails the run, and the alarm below e-mails a human. The automated daily
+  # snapshots expire through BackupRetentionPeriod. The job lives in this stack: if the stack is
+  # ever deleted, the final snapshot it leaves behind has to be deleted by hand.
+  SnapshotCleanupLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/atshero-snapshot-cleanup
+      RetentionInDays: 30
+      Tags: [{ Key: project, Value: atshero }]
+
+  # No permissions boundary: the boundary caps the roles CI creates in the app stacks, and this
+  # stack is deployed by a human only. The policy is the ceiling: list the snapshots, delete only
+  # those tagged project=atshero, write its own logs.
+  SnapshotCleanupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: delete-old-manual-snapshots
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: rds:DescribeDBSnapshots
+                Resource: "*"
+              - Effect: Allow
+                Action: rds:DeleteDBSnapshot
+                Resource: !Sub arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:snapshot:*
+                Condition:
+                  StringEquals: { "rds:snapshot-tag/project": atshero }
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt SnapshotCleanupLogs.Arn
+      Tags: [{ Key: project, Value: atshero }]
+
+  SnapshotCleanup:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: atshero-snapshot-cleanup
+      Description: Deletes the manual snapshots of the atshero instance once they are 28 days old
+      Runtime: python3.12
+      Architectures: [arm64]
+      Handler: index.handler
+      MemorySize: 128
+      Timeout: 60
+      Role: !GetAtt SnapshotCleanupRole.Arn
+      Environment:
+        Variables:
+          DB_INSTANCE: !Ref Database
+          KEEP_DAYS: "28"
+      Code:
+        ZipFile: |
+          import datetime
+          import os
+
+          import boto3
+          from botocore.exceptions import ClientError
+
+          rds = boto3.client("rds")
+
+
+          def handler(event, context):
+              keep = datetime.timedelta(days=int(os.environ["KEEP_DAYS"]))
+              cutoff = datetime.datetime.now(datetime.timezone.utc) - keep
+              deleted, kept, stuck = [], [], []
+              pages = rds.get_paginator("describe_db_snapshots").paginate(
+                  DBInstanceIdentifier=os.environ["DB_INSTANCE"], SnapshotType="manual"
+              )
+              for page in pages:
+                  for snap in page["DBSnapshots"]:
+                      name, status = snap["DBSnapshotIdentifier"], snap.get("Status")
+                      created = snap.get("SnapshotCreateTime")
+                      # too young, still being made, or already going (a retry of this run)
+                      if created is None or created > cutoff or status == "deleting":
+                          kept.append(name)
+                          continue
+                      tags = {t["Key"]: t.get("Value") for t in snap.get("TagList", [])}
+                      if status != "available" or tags.get("project") != "atshero":
+                          stuck.append(f"{name} (status {status}, project={tags.get('project')})")
+                          continue
+                      try:
+                          rds.delete_db_snapshot(DBSnapshotIdentifier=name)
+                          deleted.append(name)
+                      except ClientError as err:
+                          stuck.append(f"{name} ({err.response['Error']['Code']})")
+              print({"cutoff": cutoff.isoformat(), "deleted": deleted, "kept": kept, "stuck": stuck})
+              if stuck:
+                  # Old enough to go, but this job can't delete them: the alarm sends a human.
+                  raise RuntimeError(f"manual snapshots older than {keep.days} days left: {stuck}")
+              return {"deleted": deleted, "kept": len(kept)}
+      Tags: [{ Key: project, Value: atshero }]
+
+  # Every day at 04:30 UTC, after the 03:00-04:00 backup window.
+  SnapshotCleanupSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Daily run of atshero-snapshot-cleanup
+      ScheduleExpression: cron(30 4 * * ? *)
+      Targets:
+        - Id: snapshot-cleanup
+          Arn: !GetAtt SnapshotCleanup.Arn
+      Tags: [{ Key: project, Value: atshero }]
+
+  SnapshotCleanupInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SnapshotCleanup
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt SnapshotCleanupSchedule.Arn
+
+  SnapshotCleanupAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: atshero-snapshot-cleanup-errors
+      AlarmDescription: The daily snapshot cleanup failed, so a promise on the privacy page may be broken
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref SnapshotCleanup }]
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue atshero-alerts-topic-arn]
+      Tags: [{ Key: project, Value: atshero }]
+
 Outputs:
   Endpoint:
     Value: !GetAtt Database.Endpoint.Address

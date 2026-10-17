@@ -6,7 +6,8 @@
 //   ats_ prefix the page describes, and the app sets no cookies of its own;
 // - no analytics or tracking package is installed and Clerk's telemetry is off ("0 trackers");
 // - the database logs slow statements without their values and errors without the failing row
-//   ("never what your CV says"; withLog's half is in tests/db/log-no-cv-data.test.ts).
+//   ("never what your CV says"; withLog's half is in tests/db/log-no-cv-data.test.ts);
+// - the database keeps its backups no longer than the page says (infra/data.yaml).
 import { describe, it, expect, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
@@ -131,5 +132,18 @@ describe("privacy page", () => {
     const data = fs.readFileSync(path.join(WEB, "../../infra/data.yaml"), "utf8");
     expect(data).toMatch(/log_parameter_max_length: "0"/); // slow statements without their values
     expect(data).toMatch(/log_error_verbosity: terse/); // errors without DETAIL (the failing row)
+  });
+
+  it("keeps database backups no longer than it says", () => {
+    expect(text).toContain("Daily backups: 14 days");
+    expect(text).toContain("The copy taken before a database update: up to 30 days");
+    const data = fs.readFileSync(path.join(WEB, "../../infra/data.yaml"), "utf8");
+    expect(data).toMatch(/BackupRetentionPeriod: 14\s*$/m);
+    // The snapshot cleanup runs once a day: a snapshot KEEP_DAYS old goes on the next run, or on
+    // the one after that if a run fails.
+    expect(data).toMatch(/ScheduleExpression: cron\(\d+ \d+ \* \* \? \*\)/);
+    const keep = data.match(/KEEP_DAYS: "(\d+)"/);
+    expect(keep, "KEEP_DAYS of the snapshot cleanup").not.toBeNull();
+    expect(Number(keep![1]) + 2).toBeLessThanOrEqual(30);
   });
 });
