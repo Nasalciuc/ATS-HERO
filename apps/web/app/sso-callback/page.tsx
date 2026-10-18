@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import { isClerkPublicConfigured } from "@/lib/clerk-config";
 import { SsoCallbackClient } from "./sso-callback-client";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function SsoCallbackPage() {
   if (!isClerkPublicConfigured()) {
