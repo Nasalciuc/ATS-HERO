@@ -48,6 +48,8 @@ export default function Hero() {
               <TitleCaret corner="tl" />
               <TitleCaret corner="br" />
               <span className="hero__title-line">You’re exactly who</span>
+              {/* A real space for crawlers and copy-paste: the lines are display:block, so it never renders. */}
+              {" "}
               <span className="hero__title-line hero__title-line--2">we’re looking for</span>
             </span>
           </h1>
