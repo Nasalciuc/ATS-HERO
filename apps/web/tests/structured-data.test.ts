@@ -13,6 +13,7 @@ import JsonLd from "@/components/JsonLd";
 import { FAQS, faqAnswerText } from "@/lib/faq";
 import { SITE_URL } from "@/lib/site";
 import { OFFER_PRICE, homeJsonLd, serializeJsonLd } from "@/lib/structured-data";
+import { metadata as homeMetadata } from "@/app/page";
 
 const WEB = path.resolve(__dirname, "..");
 const read = (rel: string) => fs.readFileSync(path.join(WEB, rel), "utf8");
@@ -58,6 +59,11 @@ describe("home JSON-LD", () => {
 
   it("states the price the Terms state: free during the beta", () => {
     expect(OFFER_PRICE).toBe("0");
+    expect(read("views/TermsPage.tsx")).toContain("ATS Hero is free while it is in beta");
+  });
+
+  it("the home title says what the product is, and only while the Terms say it's free", () => {
+    expect(homeMetadata.title).toBe("ATS Hero — Free ATS resume checker and CV builder");
     expect(read("views/TermsPage.tsx")).toContain("ATS Hero is free while it is in beta");
   });
 
