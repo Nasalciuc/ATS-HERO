@@ -107,13 +107,15 @@ const browser = await chromium.launch();
 for (const spec of specs) {
   const frame = snapshots[spec.frame];
   if (!frame) throw new Error(`${spec.id}: frame ${spec.frame} is not in design-check/figma/*.json`);
-  // "touch": true emulates a phone (touch, coarse pointer) for the 390px specs;
-  // "reducedMotion": true stops CSS animations that have a reduced-motion fallback (spinners)
+  // "touch": true emulates a phone (touch, coarse pointer) for the 390px specs.
+  // Every spec runs with reduced motion: styles.css then ends each animation and transition at once,
+  // so boxes are measured in their final (Figma) state, never halfway through a move. The old
+  // per-spec "reducedMotion": true is now the default and is ignored.
   const page = await browser.newPage({
     viewport: spec.viewport,
     deviceScaleFactor: 1,
     ...(spec.touch ? { isMobile: true, hasTouch: true } : {}),
-    ...(spec.reducedMotion ? { reducedMotion: "reduce" } : {}),
+    reducedMotion: "reduce",
   });
   // The dev error overlay is hidden below, so collect errors here instead.
   const pageErrors = [];
