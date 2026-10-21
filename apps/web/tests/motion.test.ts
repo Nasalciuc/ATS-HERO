@@ -41,6 +41,9 @@ describe("reduced motion", () => {
     expect(global).toMatch(/animation-duration:\s*0\.01ms\s*!important/);
     expect(global).toMatch(/animation-iteration-count:\s*1\s*!important/);
     expect(global).toMatch(/transition-duration:\s*0\.01ms\s*!important/);
+    // A delay outlives a short duration: .appshell__side would stay in the Tab order 0.2s after closing.
+    expect(global).toMatch(/animation-delay:\s*0ms\s*!important/);
+    expect(global).toMatch(/transition-delay:\s*0ms\s*!important/);
   });
 
   it("is how the design check runs every spec", () => {
