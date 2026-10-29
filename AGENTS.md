@@ -140,7 +140,8 @@ graphify update .             # after every change; `graphify explain <Node>` be
    - `npm run credits` produces `components/software-credits.ts` (the Credits page's open-source list) from `package-lock.json`. Run it after changing dependencies; `tests/credits-page.test.tsx` fails while the list is out of date.
 10. **Truthful copy.** Text on the site describes what the product actually does today.
 11. **Privacy and ethics.**
-    - LinkedIn: OAuth sign-in only; no scraping or automation.
+    - LinkedIn: OAuth for sign-in; JobSpy may search LinkedIn for job postings only
+      (`apps/ai` `/jobs/search`). No apply bots or other LinkedIn automation beyond JobSpy.
     - No real user CVs to third-party parsers without explicit consent + DPA; the lab uses fixtures only.
     - Never apply to real employers with test personas.
     - The apply agent (`lib/apply`) sends an application only on the person's approval of that application and of the form they were shown; types from the CV only contact details and the job marked current, only into a field whose own name says what it is; answers no question itself (every other item, sensitive or not, is the person's, and a sensitive one is never stored); never gets past a CAPTCHA, an e-mailed code or a login, and hands over a field it can't set; never goes to LinkedIn, Indeed Apply or Workday; is tested only on `tools/apply-lab/forms`.
