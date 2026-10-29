@@ -7,7 +7,7 @@ FastAPI app exposing the deterministic-NLP analysis layer:
   POST /format   — parseability analysis from the file structure
   POST /region   — region-fit against a target country's norms (global)
   POST /parse-check — what ATS-style readers recover from a CV file (ATS lab)
-  POST /jobs/search  — job postings from job boards through JobSpy (never LinkedIn)
+  POST /jobs/search  — job postings from job boards through JobSpy (including LinkedIn)
   GET  /health   — liveness + which NLP backend is active
 
 Tier 3 (AI WEAK->STRONG rewriting) lives in the Next.js app via the Vercel AI SDK.

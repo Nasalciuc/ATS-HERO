@@ -1,4 +1,4 @@
-"""POST /jobs/search — postings from job boards through JobSpy, LinkedIn never (app/jobs/search.py)."""
+"""POST /jobs/search — postings from job boards through JobSpy, including LinkedIn (app/jobs/search.py)."""
 import asyncio
 
 from fastapi import APIRouter, HTTPException, Request

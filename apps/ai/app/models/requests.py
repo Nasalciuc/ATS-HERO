@@ -41,7 +41,7 @@ class RegionRequest(BaseModel):
 
 
 class JobSearchRequest(BaseModel):
-    """A job search on the boards JobSpy reaches, LinkedIn excepted (app/jobs/search.py)."""
+    """A job search on the boards JobSpy reaches, including LinkedIn (app/jobs/search.py)."""
 
     # Spaces around a value go before the length checks: a term of spaces is refused, and the
     # term checked here is the one JobSpy gets
@@ -49,8 +49,12 @@ class JobSearchRequest(BaseModel):
 
     search_term: str = Field(..., min_length=2, max_length=100, description="What the job is, e.g. 'data analyst'")
     location: str | None = Field(default=None, max_length=100, description="City or region, e.g. 'Bucharest'")
-    sites: list[str] = Field(default=["indeed"], min_length=1, max_length=4,
-                             description="indeed, glassdoor, google, zip_recruiter, bayt, naukri, bdjobs, hellowork")
+    sites: list[str] = Field(
+        default=["indeed"],
+        min_length=1,
+        max_length=4,
+        description="indeed, linkedin, glassdoor, google, zip_recruiter, bayt, naukri, bdjobs, hellowork",
+    )
     country: str = Field(default="usa", min_length=2, max_length=40,
                          description="Indeed and Glassdoor country, as JobSpy names it, e.g. 'romania', 'nigeria', 'uk'")
     results_wanted: int = Field(default=20, ge=1, le=50, description="Postings per board")
@@ -61,7 +65,7 @@ class JobSearchRequest(BaseModel):
     @field_validator("sites")
     @classmethod
     def _known_sites(cls, value: list[str]) -> list[str]:
-        from ..jobs.search import check_sites  # LinkedIn and unknown boards are refused there
+        from ..jobs.search import check_sites  # unknown boards are refused there
 
         return list(check_sites(value))
 

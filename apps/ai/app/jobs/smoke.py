@@ -17,7 +17,7 @@ from pathlib import Path
 from .search import JobQuery, SearchFailed, SearchTimeout, search_jobs
 
 # (what, where, Indeed/Glassdoor country, boards): Romania, Moldova, Nigeria, South Africa,
-# Germany, the UK, France and the Gulf. LinkedIn is never searched.
+# Germany, the UK, France and the Gulf. LinkedIn is allowed via JobSpy when listed.
 SEARCHES: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("software developer", "Bucharest", "romania", ("indeed",)),
     ("programator", "Chisinau", "usa", ("google",)),  # Indeed has no Moldova
