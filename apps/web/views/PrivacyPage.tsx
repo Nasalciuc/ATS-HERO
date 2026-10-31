@@ -7,6 +7,7 @@
 // (AGENTS.md, rule 11, "Privacy page").
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CookieSettingsButton from "@/components/CookieSettingsButton";
 import { CvFileIcon, GraphBarIcon, ScanIcon } from "@/components/figma-icons";
 import {
   LegalBand,
@@ -197,6 +198,7 @@ const sections: LegalSection[] = [
           All of them are needed for the site to work, which is why there is no cookie banner. We set no
           advertising or analytics cookies.
         </p>
+        <CookieSettingsButton />
       </>
     ),
   },

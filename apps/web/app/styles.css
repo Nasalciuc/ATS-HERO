@@ -5541,6 +5541,21 @@ select.field__input {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+/* "Cookie settings" on the Privacy page: a button (it opens a window) that reads like the links around it */
+.legal-inline-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--violet-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.legal-inline-button:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
 .legal-table {
   width: 100%;
   border-collapse: collapse;
@@ -6265,7 +6280,9 @@ select.field__input {
 /* ============================================================
    COOKIE CONSENT (public pages only, see lib/consent.ts)
    vanilla-cookieconsent is styled here, scoped to #cc-main, so nothing else on the site is touched.
-   Not in Figma yet (AGENTS.md rule 6): Liubovi mirrors it from this when the frame is drawn.
+   PROVISIONAL (AGENTS.md rule 6): there is no Figma frame for the banner yet; Scaler chose to style it
+   in code for the first version. When Liubovi draws the frame, the frame wins and this section follows it;
+   until then the banner stays off (lib/consent.ts), so no visitor sees this styling.
    `html #cc-main` (the library mounts it on <html>) outranks its own `#cc-main` rules whatever order the stylesheets load in.
    ============================================================ */
 html #cc-main {

@@ -13,11 +13,23 @@ export const CATEGORY_NECESSARY = "necessary";
 export const CATEGORY_ANALYTICS = "analytics";
 
 /**
- * Off until a Google Tag Manager container is configured: without an ID there is nothing to ask consent
- * for, so no banner and no cookie. Set NEXT_PUBLIC_GTM_ID in Vercel together with the Privacy page.
+ * AGENTS.md rule 11, enforced in code: the banner sets cc_cookie, and after Allow Google Analytics sets
+ * the _ga cookies, so the Privacy page has to list both before any visitor can see the banner. Set this
+ * to true in the same commit that adds those rows to views/PrivacyPage.tsx; tests/consent.test.ts fails
+ * while the flag and the page disagree. Until then, setting NEXT_PUBLIC_GTM_ID alone changes nothing.
  */
-export function consentEnabled(gtmId: string | undefined = process.env.NEXT_PUBLIC_GTM_ID): boolean {
-  return Boolean(gtmId && gtmId.trim());
+export const PRIVACY_LISTS_CONSENT: boolean = false;
+
+/**
+ * On only when a Google Tag Manager container is configured (without one there is nothing to ask consent
+ * for) and the Privacy page already lists the cookies (PRIVACY_LISTS_CONSENT). Otherwise: no banner, no
+ * cookie, no settings button.
+ */
+export function consentEnabled(
+  gtmId: string | undefined = process.env.NEXT_PUBLIC_GTM_ID,
+  privacyReady: boolean = PRIVACY_LISTS_CONSENT,
+): boolean {
+  return privacyReady && Boolean(gtmId && gtmId.trim());
 }
 
 /** The banner shows on the public pages (the sitemap's list) and nowhere else: never in /app, /api or /dev. */

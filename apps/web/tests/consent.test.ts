@@ -4,10 +4,15 @@
 // - the choice is two equal buttons, no pre-ticked box;
 // - the first layer asks in plain words and names no tool; the settings layer names the provider;
 // - the banner's CSS is scoped to #cc-main and cannot restyle the rest of the site;
-// - without a GTM container ID there is no banner at all.
+// - without a GTM container ID there is no banner at all;
+// - the banner cannot switch on before the Privacy page lists its cookies (rule 11), and the settings
+//   control that lets a visitor change their choice renders nothing until then.
 import fs from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import CookieSettingsButton from "@/components/CookieSettingsButton";
 import { NOINDEX_ROUTES, PUBLIC_ROUTES } from "@/lib/site";
 import {
   CATEGORY_ANALYTICS,
@@ -15,6 +20,7 @@ import {
   CONSENT_COOKIE,
   CONSENT_DAYS,
   CONSENT_MODE_DENIED,
+  PRIVACY_LISTS_CONSENT,
   consentConfig,
   consentEnabled,
   consentModeFor,
@@ -70,13 +76,45 @@ describe("the banner's CSS", () => {
 });
 
 describe("no GTM container, no banner", () => {
+  // consentEnabled() reads NEXT_PUBLIC_GTM_ID when no ID is passed, so every case pins that variable.
+  afterEach(() => vi.unstubAllEnvs());
+
   it("is off without an ID, with an empty ID and with a blank one", () => {
-    expect(consentEnabled(undefined)).toBe(false);
-    expect(consentEnabled("")).toBe(false);
-    expect(consentEnabled("   ")).toBe(false);
+    vi.stubEnv("NEXT_PUBLIC_GTM_ID", "");
+    expect(consentEnabled(undefined, true)).toBe(false);
+    expect(consentEnabled("", true)).toBe(false);
+    expect(consentEnabled("   ", true)).toBe(false);
   });
-  it("is on once an ID is set", () => {
-    expect(consentEnabled("GTM-ABC1234")).toBe(true);
+
+  it("is on once an ID is set and the Privacy page lists the cookies", () => {
+    expect(consentEnabled("GTM-ABC1234", true)).toBe(true);
+  });
+
+  it("reads the ID from NEXT_PUBLIC_GTM_ID when none is passed", () => {
+    vi.stubEnv("NEXT_PUBLIC_GTM_ID", "GTM-ENV1234");
+    expect(consentEnabled(undefined, true)).toBe(true);
+  });
+});
+
+describe("the Privacy page comes first (AGENTS.md rule 11)", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  const privacy = fs.readFileSync(path.join(WEB, "views/PrivacyPage.tsx"), "utf8");
+
+  it("keeps the banner off while the Privacy page does not list cc_cookie and the _ga cookies, even with an ID", () => {
+    vi.stubEnv("NEXT_PUBLIC_GTM_ID", "GTM-ENV1234");
+    expect(consentEnabled("GTM-ABC1234", false)).toBe(false);
+    expect(consentEnabled()).toBe(PRIVACY_LISTS_CONSENT);
+  });
+
+  it("flips PRIVACY_LISTS_CONSENT together with the Privacy page rows, never one without the other", () => {
+    const pageListsThem = privacy.includes(CONSENT_COOKIE) && /\b_ga\b/.test(privacy);
+    expect(pageListsThem).toBe(PRIVACY_LISTS_CONSENT);
+  });
+
+  it("puts the Cookie settings control on the Privacy page, and it renders nothing while the banner is off", () => {
+    expect(privacy).toContain("<CookieSettingsButton />");
+    vi.stubEnv("NEXT_PUBLIC_GTM_ID", "");
+    expect(renderToStaticMarkup(createElement(CookieSettingsButton))).toBe("");
   });
 });
 
