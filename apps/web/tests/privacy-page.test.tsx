@@ -122,7 +122,7 @@ describe("privacy page", () => {
     expect(text).toContain("0 trackers");
     // Development instances (the live site runs on one) send SDK telemetry unless told not to.
     expect(read("app/layout.tsx")).toMatch(/<ClerkProvider[^>]*telemetry=\{false\}/);
-    const connectSrc = read("next.config.ts").split("\n").filter((line) => line.includes('"connect-src'));
+    const connectSrc = read("lib/csp.ts").split("\n").filter((line) => line.includes('"connect-src'));
     expect(connectSrc).toHaveLength(1);
     expect(connectSrc[0]).not.toContain("clerk-telemetry");
   });

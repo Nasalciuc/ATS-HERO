@@ -20,12 +20,16 @@ import {
   CONSENT_COOKIE,
   CONSENT_DAYS,
   CONSENT_MODE_DENIED,
+  GOOGLE_CSP_HOSTS,
   PRIVACY_LISTS_CONSENT,
   consentConfig,
   consentEnabled,
   consentModeFor,
+  gtmContainerId,
+  gtmScriptUrl,
   isConsentRoute,
 } from "@/lib/consent";
+import { buildCsp, securityHeaders } from "@/lib/csp";
 
 const WEB = path.resolve(__dirname, "..");
 
@@ -188,5 +192,76 @@ describe("the banner's configuration", () => {
     expect(names("_gid")).toBe(true);
     expect(names("cc_cookie")).toBe(false);
     expect(names("__session")).toBe(false);
+  });
+});
+
+describe("Google Tag Manager loads only through a checked container ID", () => {
+  it("accepts a container ID and nothing else", () => {
+    expect(gtmContainerId("GTM-ABC1234")).toBe("GTM-ABC1234");
+    expect(gtmContainerId("  GTM-ABC1234 ")).toBe("GTM-ABC1234");
+    for (const bad of ["", "   ", "G-ABCDEF1234", "gtm-abc1234", "GTM-AB", "GTM-ABC1234&x=1", 'GTM-1"><script>']) {
+      expect(gtmContainerId(bad), bad).toBeNull();
+    }
+  });
+
+  it("builds the script URL on Google Tag Manager's own host", () => {
+    expect(gtmScriptUrl("GTM-ABC1234")).toBe("https://www.googletagmanager.com/gtm.js?id=GTM-ABC1234");
+  });
+
+  it("keeps real container IDs out of the code: they come from NEXT_PUBLIC_GTM_ID", () => {
+    const sources = ["app", "components", "lib", "views"].flatMap((d) => filesUnder(path.join(WEB, d)));
+    const found = sources.filter((f) => /GTM-[A-Z0-9]{6,}/.test(fs.readFileSync(f, "utf8").replace(/GTM-ABC1234|GTM-XXXXXXX/g, "")));
+    expect(found.map((f) => path.relative(WEB, f))).toEqual([]);
+  });
+
+  it("starts Google Tag Manager only from the consent callbacks, with Consent Mode set first", () => {
+    const banner = fs.readFileSync(path.join(WEB, "components/ConsentBanner.tsx"), "utf8");
+    expect(banner).toMatch(/onConsent: applyConsent, onChange: applyConsent/);
+    expect(banner.indexOf('gtag("consent", "default"')).toBeLessThan(banner.indexOf("document.createElement(\"script\")"));
+    expect(banner).toContain("window.location.reload()");
+  });
+
+  it("reloads a public page reached client-side from /app before loading it, so the public CSP applies", () => {
+    const banner = fs.readFileSync(path.join(WEB, "components/ConsentBanner.tsx"), "utf8");
+    expect(banner).toMatch(/const documentStartedPublic = [^;]*isConsentRoute\(window\.location\.pathname\)/);
+    expect(banner).toMatch(/if \(documentStartedPublic\) loadGtm\(mode\);\s*else window\.location\.reload\(\);/);
+  });
+});
+
+describe("the CSP (AGENTS.md rule 3)", () => {
+  const cspOf = (rule: { headers: { key: string; value: string }[] }) =>
+    rule.headers.find((h) => h.key === "Content-Security-Policy")?.value ?? "";
+  const directive = (csp: string, name: string) => csp.split("; ").find((d) => d.startsWith(name + " ")) ?? "";
+
+  it("is unchanged while the banner is off: one rule, no Google host", () => {
+    const rules = securityHeaders({ consent: false });
+    expect(rules).toHaveLength(1);
+    expect(rules[0].source).toBe("/(.*)");
+    expect(cspOf(rules[0])).not.toMatch(/google/);
+  });
+
+  it("adds the Google hosts on the public pages only, once the banner is on", () => {
+    const rules = securityHeaders({ consent: true });
+    expect(cspOf(rules[0])).not.toMatch(/google/);
+    const extra = rules.slice(1);
+    expect(extra.map((r) => r.source).sort()).toEqual([...PUBLIC_ROUTES].sort());
+    for (const r of extra) {
+      const csp = cspOf(r);
+      for (const host of GOOGLE_CSP_HOSTS.scriptSrc) expect(directive(csp, "script-src")).toContain(host);
+      for (const host of GOOGLE_CSP_HOSTS.connectSrc) expect(directive(csp, "connect-src")).toContain(host);
+    }
+    // Exact paths only: nothing under /app, /api or /dev can match a public rule.
+    for (const r of extra) expect(r.source).toMatch(/^\/[a-z]*$/);
+  });
+
+  it("lists every Google host by name: https, no wildcard", () => {
+    for (const host of [...GOOGLE_CSP_HOSTS.scriptSrc, ...GOOGLE_CSP_HOSTS.connectSrc]) {
+      expect(host).toMatch(/^https:\/\/[a-z0-9.-]+$/);
+    }
+  });
+
+  it("keeps the rest of the policy the same with or without Google", () => {
+    const strip = (csp: string) => csp.replace(/ https:\/\/[a-z0-9.-]*google[a-z0-9.-]*\.com/g, "");
+    expect(strip(buildCsp({ google: true }))).toBe(buildCsp());
   });
 });
