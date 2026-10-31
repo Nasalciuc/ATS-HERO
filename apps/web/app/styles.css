@@ -50,6 +50,31 @@
   --side-w: 274px;
   --app-gap: 57px;      /* sidebar → content */
   --app-max: 1135px;    /* content column    */
+
+  /* Motion: one set of durations and one curve for every animation. Figma has no motion, so these
+     are ours (proposed to Liubovi 21 Oct); change them here, never per component. Animate only
+     transform and opacity, and end every animation on the Figma frame's state. */
+  --motion-fast: 150ms;  /* hover, press              */
+  --motion-base: 250ms;  /* open, close, small moves  */
+  --motion-slow: 600ms;  /* a section coming into view */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Reduced motion: every animation and transition finishes at once, on its final state. This also
+   keeps the design check honest: it runs with reduced motion, so it measures the Figma state, never
+   a box halfway through a move. tests/motion.test.ts checks that this block stays. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    /* delays too: .appshell__side hides itself 0.2s after sliding away, and staggered reveals wait */
+    animation-delay: 0ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Inter 4 (SIL OFL 1.1, public/fonts/inter/LICENSE.txt) from @fontsource/inter 5.3.0.
