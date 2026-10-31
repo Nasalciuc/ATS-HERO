@@ -19,7 +19,7 @@ export const CATEGORY_ANALYTICS = "analytics";
  * to true in the same commit that adds those rows to views/PrivacyPage.tsx; tests/consent.test.ts fails
  * while the flag and the page disagree. Until then, setting NEXT_PUBLIC_GTM_ID alone changes nothing.
  */
-export const PRIVACY_LISTS_CONSENT: boolean = false;
+export const PRIVACY_LISTS_CONSENT: boolean = true;
 
 /**
  * On only when a Google Tag Manager container is configured (without one there is nothing to ask consent

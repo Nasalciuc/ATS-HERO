@@ -3,11 +3,14 @@
 // - the guest retention and the rate-limit window come from the constants the code runs on;
 // - the "updated" date is a fixed constant (a computed date would announce a change on every build);
 // - every local-storage key the code uses is named on the page, every session-storage key has the
-//   ats_ prefix the page describes, and the app sets no cookies of its own;
-// - no analytics or tracking package is installed and Clerk's telemetry is off ("0 trackers");
+//   ats_ prefix the page describes, and the app code sets no cookies itself (cc_cookie comes from the
+//   consent library, and its lifetime matches the page);
+// - no analytics or tracking package is installed, Google Analytics only arrives through the consent
+//   banner (lib/consent.ts), and Clerk's telemetry is off ("0 ads", "analytics only if you click Allow");
 // - the database logs slow statements without their values and errors without the failing row
 //   ("never what your CV says"; withLog's half is in tests/db/log-no-cv-data.test.ts);
 // - the database keeps its backups no longer than the page says (infra/data.yaml).
+import { CONSENT_DAYS } from "@/lib/consent";
 import { describe, it, expect, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
@@ -107,7 +110,7 @@ describe("privacy page", () => {
     expect(text).toContain("the other ats_ keys");
   });
 
-  it("lists only other companies' cookies, because the app sets none", () => {
+  it("sets no cookies from the app code itself: cc_cookie comes from the consent library", () => {
     for (const file of appFiles()) {
       expect(fs.readFileSync(file, "utf8"), path.relative(WEB, file)).not.toMatch(
         /document\.cookie\s*=|cookies\(\)\)?\.set\(|\.cookies\.set\(/,
@@ -115,16 +118,25 @@ describe("privacy page", () => {
     }
   });
 
-  it("has no analytics or tracking package behind its \"0 trackers\", and Clerk's telemetry is off", () => {
+  it("has no analytics or tracking package: Google Analytics comes only through the consent banner, and Clerk's telemetry is off", () => {
     const pkg = JSON.parse(read("package.json")) as { dependencies?: Record<string, string> };
     const trackers = /^(@vercel\/(analytics|speed-insights)|posthog-|@sentry\/|mixpanel|@segment\/|react-ga|react-gtm|@next\/third-parties|@amplitude\/|logrocket|@datadog\/browser|@hotjar\/|@fullstory\/|plausible|@microsoft\/clarity)/;
     expect(Object.keys(pkg.dependencies ?? {}).filter((d) => trackers.test(d))).toEqual([]);
-    expect(text).toContain("0 trackers");
+    expect(text).toContain("0 ads");
+    expect(text).toContain("analytics only if you click Allow");
     // Development instances (the live site runs on one) send SDK telemetry unless told not to.
     expect(read("app/layout.tsx")).toMatch(/<ClerkProvider[^>]*telemetry=\{false\}/);
     const connectSrc = read("lib/csp.ts").split("\n").filter((line) => line.includes('"connect-src'));
     expect(connectSrc).toHaveLength(1);
     expect(connectSrc[0]).not.toContain("clerk-telemetry");
+  });
+
+  it("names the consent cookie with the lifetime the banner gives it, and the Google Analytics cookies", () => {
+    expect(text).toContain("cc_cookie");
+    expect(text).toContain(`for ${CONSENT_DAYS} days`);
+    expect(text).toContain(`${CONSENT_DAYS} days, then the banner asks again`);
+    expect(text).toMatch(/_ga and _ga_(<|&lt;)ID(>|&gt;)/);
+    expect(text).toMatch(/Google Analytics/);
   });
 
   it("keeps CV data out of the database logs it promises are free of it", () => {
