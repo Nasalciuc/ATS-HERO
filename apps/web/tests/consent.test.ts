@@ -267,6 +267,8 @@ describe("the CSP (AGENTS.md rule 3)", () => {
 });
 
 describe("previews stay out of search engines", () => {
+  // securityHeaders() reads VERCEL_ENV when no deployEnv is passed, so every case pins that variable.
+  afterEach(() => vi.unstubAllEnvs());
   const robots = (deployEnv: string | undefined) =>
     securityHeaders({ consent: false, deployEnv })[0].headers.find((h) => h.key === "X-Robots-Tag")?.value;
 
@@ -276,8 +278,14 @@ describe("previews stay out of search engines", () => {
   });
 
   it("never on production or outside Vercel", () => {
+    vi.stubEnv("VERCEL_ENV", "");
     expect(robots("production")).toBeUndefined();
     expect(robots(undefined)).toBeUndefined();
     expect(robots("")).toBeUndefined();
+  });
+
+  it("reads VERCEL_ENV when no environment is passed", () => {
+    vi.stubEnv("VERCEL_ENV", "preview");
+    expect(robots(undefined)).toBe("noindex, nofollow");
   });
 });
