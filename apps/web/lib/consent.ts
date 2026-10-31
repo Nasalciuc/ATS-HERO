@@ -3,7 +3,8 @@
 // AGENTS.md rule 3 (enumerated hosts on the public pages only). The Privacy page lists the cookie below
 // (AGENTS.md rule 11).
 import type { CookieConsentConfig } from "vanilla-cookieconsent";
-import { PUBLIC_ROUTES } from "@/lib/site";
+// Relative on purpose: next.config.ts imports this file (through lib/csp.ts), and it has no "@/" alias.
+import { PUBLIC_ROUTES } from "./site";
 
 /** The visitor's choice, kept by the library in a first-party cookie (name and lifetime are its defaults, spelled out). */
 export const CONSENT_COOKIE = "cc_cookie";
@@ -29,8 +30,42 @@ export function consentEnabled(
   gtmId: string | undefined = process.env.NEXT_PUBLIC_GTM_ID,
   privacyReady: boolean = PRIVACY_LISTS_CONSENT,
 ): boolean {
-  return privacyReady && Boolean(gtmId && gtmId.trim());
+  return privacyReady && gtmContainerId(gtmId) !== null;
 }
+
+/** A Google Tag Manager container ID, like GTM-XXXXXXX. Anything else is ignored, never put in a URL. */
+export const GTM_ID_PATTERN = /^GTM-[A-Z0-9]{4,12}$/;
+
+export function gtmContainerId(raw: string | undefined = process.env.NEXT_PUBLIC_GTM_ID): string | null {
+  const id = (raw ?? "").trim();
+  return GTM_ID_PATTERN.test(id) ? id : null;
+}
+
+/** The only script the consent can load: the GTM container, which holds the GA4 tag. */
+export const GTM_HOST = "https://www.googletagmanager.com";
+export function gtmScriptUrl(id: string): string {
+  return `${GTM_HOST}/gtm.js?id=${encodeURIComponent(id)}`;
+}
+
+/**
+ * The hosts the public pages' CSP allows once the banner is on (AGENTS.md rule 3: enumerated, never a
+ * wildcard, public pages only). GA4 sends hits to www/region1 google-analytics.com and to
+ * (region1.)analytics.google.com; GTM loads from www.googletagmanager.com. Google Signals and ads stay
+ * off, so no doubleclick or google.com hosts are needed. img-src already allows https:.
+ */
+export const GOOGLE_CSP_HOSTS = {
+  scriptSrc: [GTM_HOST],
+  connectSrc: [
+    GTM_HOST,
+    "https://www.google-analytics.com",
+    "https://region1.google-analytics.com",
+    "https://analytics.google.com",
+    "https://region1.analytics.google.com",
+  ],
+} as const;
+
+/** The custom dataLayer event for a client-side move between public pages (GA4's first page_view is automatic). */
+export const VIRTUAL_PAGE_VIEW_EVENT = "virtual_page_view";
 
 /** The banner shows on the public pages (the sitemap's list) and nowhere else: never in /app, /api or /dev. */
 export function isConsentRoute(pathname: string): boolean {

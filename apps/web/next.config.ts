@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import path from "path";
+import { securityHeaders } from "./lib/csp";
 
 const monorepoRoot = path.resolve(__dirname, "../..");
 
@@ -13,37 +14,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: monorepoRoot,
   },
+  // The CSP and the other security headers live in lib/csp.ts (tests/consent.test.ts checks them).
   async headers() {
-    // React's dev build needs eval() for debugging features. Production stays strict —
-    // never widen this branch to cover prod.
-    const devEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
-    const csp = [
-      "default-src 'self'",
-      // TODO(security-hardening): replace 'unsafe-inline' in script-src with nonce-based CSP.
-      // Needs: nonce generated in proxy.ts, forwarded via header, read in layout.tsx, passed to
-      // ClerkProvider's nonce prop. Tracked as a post-launch hardening item, not a launch blocker.
-      // 'wasm-unsafe-eval' is REQUIRED for PDF export + preview: @react-pdf/renderer lays out
-      // pages with yoga-layout 3, which is WebAssembly-only (no asm.js fallback). Without it the
-      // browser refuses WebAssembly.instantiate() and "Download PDF" fails in production.
-      // It permits compiling WASM only — eval()/new Function() stay blocked.
-      `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval} https://*.clerk.accounts.dev https://challenges.cloudflare.com`,
-      // No clerk-telemetry.com: Clerk's telemetry is off (app/layout.tsx), and the privacy page says no analytics.
-      "connect-src 'self' https://*.clerk.accounts.dev " + (process.env.NEXT_PUBLIC_AI_URL ?? ""),
-      "img-src 'self' data: blob: https:",
-      "style-src 'self' 'unsafe-inline'",
-      "font-src 'self' data:",
-      // blob: — only CvTemplatePreview (PDFViewer: the PDF in an iframe with a blob: src) needs
-      // it, and nothing renders that component since the Complete pop-up draws pages with PDF.js
-      // on a canvas. Drop blob: here when CvTemplatePreview is deleted.
-      "frame-src 'self' blob: https://challenges.cloudflare.com",
-      "worker-src 'self' blob:",
-    ].join("; ");
-    return [{ source: "/(.*)", headers: [
-      { key: "Content-Security-Policy", value: csp },
-      { key: "X-Content-Type-Options", value: "nosniff" },
-      { key: "X-Frame-Options", value: "DENY" },
-      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-    ]}];
+    return securityHeaders();
   },
 };
 
