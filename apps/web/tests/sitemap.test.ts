@@ -125,14 +125,19 @@ describe("robots.txt", () => {
     }
   });
 
-  it("on a Vercel preview blocks everything and names no sitemap", async () => {
+  it("on a Vercel preview lets crawlers in to read the noindex header, and names no sitemap", async () => {
     process.env.VERCEL_ENV = "preview";
     vi.resetModules();
     const { default: previewRobots } = await import("@/app/robots");
     const r = previewRobots();
     const rules = Array.isArray(r.rules) ? r.rules[0] : r.rules;
-    expect(rules.disallow).toBe("/");
+    expect(rules.allow).toBe("/");
+    expect(rules.disallow).toBeUndefined();
     expect(r.sitemap).toBeUndefined();
+    // What keeps the preview out of the index is the header every response carries there.
+    const { securityHeaders } = await import("@/lib/csp");
+    const robotsHeader = securityHeaders({ consent: false }).at(0)?.headers.find((h) => h.key === "X-Robots-Tag");
+    expect(robotsHeader?.value).toBe("noindex, nofollow");
   });
 });
 

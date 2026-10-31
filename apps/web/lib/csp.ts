@@ -7,6 +7,11 @@ import { GOOGLE_CSP_HOSTS, consentEnabled } from "./consent";
 import { PUBLIC_ROUTES } from "./site";
 
 type Header = { key: string; value: string };
+
+/** True on a Vercel preview or development build; false in production and outside Vercel. */
+export function isPreviewDeploy(deployEnv: string | undefined = process.env.VERCEL_ENV): boolean {
+  return Boolean(deployEnv) && deployEnv !== "production";
+}
 export type HeaderRule = { source: string; headers: Header[] };
 
 export function buildCsp({ google = false }: { google?: boolean } = {}): string {
@@ -43,18 +48,20 @@ export function buildCsp({ google = false }: { google?: boolean } = {}): string 
  * Google hosts. Next.js lets the later rule's Content-Security-Policy win for the paths it matches, and the
  * public paths are exact ("/" matches only the home page), so nothing under /app is ever matched.
  */
-export function securityHeaders({ consent = consentEnabled() }: { consent?: boolean } = {}): HeaderRule[] {
-  const rules: HeaderRule[] = [
-    {
-      source: "/(.*)",
-      headers: [
-        { key: "Content-Security-Policy", value: buildCsp() },
-        { key: "X-Content-Type-Options", value: "nosniff" },
-        { key: "X-Frame-Options", value: "DENY" },
-        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      ],
-    },
+export function securityHeaders({
+  consent = consentEnabled(),
+  deployEnv = process.env.VERCEL_ENV,
+}: { consent?: boolean; deployEnv?: string } = {}): HeaderRule[] {
+  const base: Header[] = [
+    { key: "Content-Security-Policy", value: buildCsp() },
+    { key: "X-Content-Type-Options", value: "nosniff" },
+    { key: "X-Frame-Options", value: "DENY" },
+    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   ];
+  // Vercel previews (staging.atshero.app and the *.vercel.app links) copy the live site; search engines
+  // must not index them. Only Vercel builds set VERCEL_ENV, so production and local builds are unaffected.
+  if (isPreviewDeploy(deployEnv)) base.push({ key: "X-Robots-Tag", value: "noindex, nofollow" });
+  const rules: HeaderRule[] = [{ source: "/(.*)", headers: base }];
   if (consent) {
     const csp = buildCsp({ google: true });
     for (const route of PUBLIC_ROUTES) rules.push({ source: route, headers: [{ key: "Content-Security-Policy", value: csp }] });
