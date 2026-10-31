@@ -4,7 +4,7 @@
 // (AGENTS.md rule 11).
 import type { CookieConsentConfig } from "vanilla-cookieconsent";
 // Relative on purpose: next.config.ts imports this file (through lib/csp.ts), and it has no "@/" alias.
-import { PUBLIC_ROUTES } from "./site";
+import { PUBLIC_ROUTES, SITE_URL } from "./site";
 
 /** The visitor's choice, kept by the library in a first-party cookie (name and lifetime are its defaults, spelled out). */
 export const CONSENT_COOKIE = "cc_cookie";
@@ -124,11 +124,30 @@ export function consentModeFor(accepted: readonly string[]): ConsentModeState {
 }
 
 /**
+ * Google Analytics sets its cookies on the widest domain it can ("auto"): on staging.atshero.app that is
+ * atshero.app. The banner's library only clears the current host, so a subdomain of the site also needs
+ * the site's own domain. Elsewhere (atshero.app itself, vercel.app previews, localhost) there is none.
+ */
+export function analyticsCookieParentDomain(
+  hostname: string,
+  siteHost: string = new URL(SITE_URL).hostname,
+): string | undefined {
+  return hostname.endsWith(`.${siteHost}`) && hostname !== `www.${siteHost}` ? siteHost : undefined;
+}
+
+/**
  * Two equal buttons, no pre-ticked box, no dark patterns (M-5), in English. The first layer says what we
  * ask for without naming a tool; the settings layer and the Privacy page name the provider (rule 11).
  * The look is in app/styles.css ("Cookie consent"), scoped to #cc-main.
  */
-export function consentConfig(): CookieConsentConfig {
+export function consentConfig(
+  hostname: string = typeof window === "undefined" ? "" : window.location.hostname,
+): CookieConsentConfig {
+  const parent = analyticsCookieParentDomain(hostname);
+  const gaCookies = (domain?: string) => [
+    { name: /^_ga/, ...(domain ? { domain } : {}) },
+    { name: "_gid", ...(domain ? { domain } : {}) },
+  ];
   return {
     revision: 1,
     cookie: { name: CONSENT_COOKIE, expiresAfterDays: CONSENT_DAYS, sameSite: "Lax" },
@@ -140,8 +159,9 @@ export function consentConfig(): CookieConsentConfig {
       [CATEGORY_NECESSARY]: { enabled: true, readOnly: true },
       [CATEGORY_ANALYTICS]: {
         enabled: false,
-        // Rejecting later removes what Google Analytics set: _ga, _ga_<container> and the older _gid.
-        autoClear: { cookies: [{ name: /^_ga/ }, { name: "_gid" }] },
+        // Rejecting later removes what Google Analytics set: _ga, _ga_<container> and the older _gid, on this
+        // host and, on a subdomain such as staging, on the site's own domain, where Google puts them.
+        autoClear: { cookies: [...gaCookies(), ...(parent ? gaCookies(parent) : [])] },
       },
     },
     language: {

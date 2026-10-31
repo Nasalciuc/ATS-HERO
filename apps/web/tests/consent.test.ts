@@ -194,6 +194,15 @@ describe("the banner's configuration", () => {
     expect(names("cc_cookie")).toBe(false);
     expect(names("__session")).toBe(false);
   });
+
+  it("also clears them on the site's own domain when the page is on a subdomain such as staging", () => {
+    const domains = (host: string) =>
+      (consentConfig(host).categories?.[CATEGORY_ANALYTICS]?.autoClear?.cookies ?? []).map((c) => c.domain);
+    expect(domains("staging.atshero.app")).toEqual([undefined, undefined, "atshero.app", "atshero.app"]);
+    for (const host of ["atshero.app", "www.atshero.app", "ats-hero-git-x.vercel.app", "localhost", "evilatshero.app"]) {
+      expect(domains(host)).toEqual([undefined, undefined]);
+    }
+  });
 });
 
 describe("Google Tag Manager loads only through a checked container ID", () => {
