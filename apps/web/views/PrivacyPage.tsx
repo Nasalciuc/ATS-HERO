@@ -185,7 +185,7 @@ const sections: LegalSection[] = [
           ["Database logs (slow queries, errors), without what your CV says", "3 days"],
           ["Rate-limit counters", `In our server’s memory only, never saved; each count runs for ${RATE_SECONDS} seconds`],
           ["What you check in Improve My Resume or Check Job Fit", "In your browser tab, until you close it"],
-          ["Google Analytics data (only if you clicked Allow)", "14 months after your last visit, then Google deletes it"],
+          ["Google Analytics visit data (only if you clicked Allow)", "14 months (our setting in Google Analytics), then Google deletes it in its monthly clean-up. Totals in its standard reports, which identify no one, are not covered by this limit"],
           ["Your answer to the cookie banner (cc_cookie)", "182 days, then the banner asks again"],
         ]}
       />
@@ -210,7 +210,9 @@ const sections: LegalSection[] = [
         />
         <p>
           The first five are needed for the site to work. The _ga cookies are optional: they exist only if you
-          clicked Allow, and never inside the app. We set no advertising cookies.
+          clicked Allow. They belong to the whole site, so your browser also sends them with pages inside the
+          app, but the app never loads Google Analytics and nothing there reads them. We set no advertising
+          cookies.
         </p>
         <CookieSettingsButton />
       </>
