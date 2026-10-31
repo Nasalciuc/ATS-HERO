@@ -22,6 +22,7 @@ import {
   CONSENT_MODE_DENIED,
   GOOGLE_CSP_HOSTS,
   PRIVACY_LISTS_CONSENT,
+  analyticsPageLocation,
   consentConfig,
   consentEnabled,
   consentModeFor,
@@ -225,6 +226,29 @@ describe("Google Tag Manager loads only through a checked container ID", () => {
     const banner = fs.readFileSync(path.join(WEB, "components/ConsentBanner.tsx"), "utf8");
     expect(banner).toMatch(/const documentStartedPublic = [^;]*isConsentRoute\(window\.location\.pathname\)/);
     expect(banner).toMatch(/if \(documentStartedPublic\) loadGtm\(mode\);\s*else window\.location\.reload\(\);/);
+  });
+});
+
+describe("page addresses sent to Google Analytics", () => {
+  it("keep the origin, the path and the campaign tags", () => {
+    expect(analyticsPageLocation("https://atshero.app/")).toBe("https://atshero.app/");
+    expect(analyticsPageLocation("https://atshero.app/privacy?utm_source=reddit&utm_medium=social")).toBe(
+      "https://atshero.app/privacy?utm_source=reddit&utm_medium=social",
+    );
+  });
+
+  it("drop every other query parameter and the fragment", () => {
+    expect(analyticsPageLocation("https://atshero.app/?name=Alice&email=a%40b.com#top")).toBe("https://atshero.app/");
+    expect(analyticsPageLocation("https://atshero.app/terms?utm_campaign=launch&ref=Alice")).toBe(
+      "https://atshero.app/terms?utm_campaign=launch",
+    );
+  });
+
+  it("are the only addresses the banner gives Google: before the first page view and on every later one", () => {
+    const banner = fs.readFileSync(path.join(WEB, "components/ConsentBanner.tsx"), "utf8");
+    expect(banner.indexOf('gtag("set", { page_location: analyticsPageLocation(')).toBeGreaterThan(-1);
+    expect(banner.indexOf('gtag("set", { page_location: analyticsPageLocation(')).toBeLessThan(banner.indexOf('"gtm.js"'));
+    expect(banner).not.toMatch(/page_location: window\.location\.href/);
   });
 });
 

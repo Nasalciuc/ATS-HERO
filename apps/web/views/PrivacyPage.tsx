@@ -152,7 +152,8 @@ const sections: LegalSection[] = [
         </p>
         <p>
           In Google Analytics, Google signals and every advertising feature are off, and we send no email
-          addresses, names or CV content. Google Analytics does not store IP addresses.
+          addresses, names or CV content. The page address it gets has no query string, except campaign tags
+          such as utm_source. Google Analytics does not store IP addresses.
         </p>
       </>
     ),

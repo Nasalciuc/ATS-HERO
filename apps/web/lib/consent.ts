@@ -67,6 +67,30 @@ export const GOOGLE_CSP_HOSTS = {
 /** The custom dataLayer event for a client-side move between public pages (GA4's first page_view is automatic). */
 export const VIRTUAL_PAGE_VIEW_EVENT = "virtual_page_view";
 
+/** Campaign tags: the only query parameters a page address keeps when it is sent to Google Analytics. */
+export const ANALYTICS_QUERY_KEEP: readonly string[] = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "utm_id",
+];
+
+/**
+ * The page address Google Analytics gets: origin and path, plus campaign tags. Any other query parameter
+ * (which a link from elsewhere could fill with a name or an email address) and the #fragment are dropped.
+ */
+export function analyticsPageLocation(href: string): string {
+  const url = new URL(href);
+  const kept = new URLSearchParams();
+  url.searchParams.forEach((value, key) => {
+    if (ANALYTICS_QUERY_KEEP.includes(key)) kept.append(key, value);
+  });
+  const query = kept.toString();
+  return url.origin + url.pathname + (query ? `?${query}` : "");
+}
+
 /** The banner shows on the public pages (the sitemap's list) and nowhere else: never in /app, /api or /dev. */
 export function isConsentRoute(pathname: string): boolean {
   return (PUBLIC_ROUTES as readonly string[]).includes(pathname);
