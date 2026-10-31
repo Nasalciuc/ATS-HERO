@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, type ReactNode } from "react";
 import { AppProvider } from "@/store/AppContext";
+import ConsentBanner from "@/components/ConsentBanner";
 
 export default function Providers({ children }: { children: ReactNode }) {
   // <html data-hydrated="true"> once React has hydrated the page (effects run after the commit).
@@ -22,5 +23,11 @@ export default function Providers({ children }: { children: ReactNode }) {
 
   // ClerkProvider lives in app/layout.tsx; data access is Postgres via Server Actions, so
   // there is no data provider to mount here any more.
-  return <AppProvider>{children}</AppProvider>;
+  return (
+    <AppProvider>
+      {children}
+      {/* Public pages only, and only once a GTM container is configured (lib/consent.ts). */}
+      <ConsentBanner />
+    </AppProvider>
+  );
 }

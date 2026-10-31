@@ -884,6 +884,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "vanilla-cookieconsent",
+    "version": "3.2.1",
+    "license": "MIT"
+  },
+  {
     "name": "vite-compatible-readable-stream",
     "version": "3.6.1",
     "license": "MIT"
