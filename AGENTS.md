@@ -99,7 +99,10 @@ graphify update .             # after every change; `graphify explain <Node>` be
    - AWS access is SSO/OIDC; no access keys.
 3. **Security.**
    - No `dangerouslySetInnerHTML`.
-   - Don't widen the CSP in `next.config.ts`.
+   - Don't widen the CSP in `next.config.ts`. One exception (Scaler, `MARKETING-CE-FACEM.md` M-1): on the
+     **public pages only**, add enumerated hosts per directive (`script-src`, `connect-src`, `img-src`),
+     never `*`, each with its reason in the PR. `/app`, `/api` and `/dev` never get a third-party script,
+     and their CSP does not change.
    - Validate input with zod; keep the rate limits.
 4. **Data.**
    - Every query filters by owner (`lib/ownership.ts`).

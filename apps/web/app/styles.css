@@ -5541,6 +5541,21 @@ select.field__input {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+/* "Cookie settings" on the Privacy page: a button (it opens a window) that reads like the links around it */
+.legal-inline-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--violet-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.legal-inline-button:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
 .legal-table {
   width: 100%;
   border-collapse: collapse;
@@ -6259,5 +6274,246 @@ select.field__input {
   }
   .tracker__field--wide {
     grid-column: 1 / -1;
+  }
+}
+
+/* ============================================================
+   COOKIE CONSENT (public pages only, see lib/consent.ts)
+   vanilla-cookieconsent is styled here, scoped to #cc-main, so nothing else on the site is touched.
+   PROVISIONAL (AGENTS.md rule 6): there is no Figma frame for the banner yet; Scaler chose to style it
+   in code for the first version. When Liubovi draws the frame, the frame wins and this section follows it;
+   until then the banner stays off (lib/consent.ts), so no visitor sees this styling.
+   `html #cc-main` (the library mounts it on <html>) outranks its own `#cc-main` rules whatever order the stylesheets load in.
+   ============================================================ */
+html #cc-main {
+  --cc-font-family: var(--font-sans);
+  --cc-bg: var(--white);
+  --cc-primary-color: var(--ink);
+  --cc-secondary-color: #565656;
+  --cc-modal-border-radius: 20px;
+  --cc-modal-margin: 20px;
+  --cc-modal-transition-duration: 0.4s;
+  --cc-btn-border-radius: 14px; /* sections inside the settings; the buttons themselves are pills below */
+  --cc-btn-primary-bg: var(--ink);
+  --cc-btn-primary-color: var(--white);
+  --cc-btn-primary-border-color: var(--ink);
+  --cc-btn-primary-hover-bg: #000;
+  --cc-btn-primary-hover-color: var(--white);
+  --cc-btn-primary-hover-border-color: #000;
+  /* Decline is the same size and the same strength as Allow: outlined, not greyed out (M-5) */
+  --cc-btn-secondary-bg: var(--white);
+  --cc-btn-secondary-color: var(--ink);
+  --cc-btn-secondary-border-color: var(--ink);
+  --cc-btn-secondary-hover-bg: #f3f3f3;
+  --cc-btn-secondary-hover-color: var(--ink);
+  --cc-btn-secondary-hover-border-color: var(--ink);
+  --cc-separator-border-color: var(--line);
+  --cc-link-color: var(--ink);
+  --cc-overlay-bg: rgba(32, 32, 32, 0.55);
+  --cc-footer-bg: var(--bg-page);
+  --cc-footer-color: var(--ink);
+  --cc-footer-border-color: var(--line);
+  --cc-cookie-category-block-bg: var(--bg-page);
+  --cc-cookie-category-block-border: var(--bg-page);
+  --cc-cookie-category-block-hover-bg: #ece8ff;
+  --cc-cookie-category-block-hover-border: #ece8ff;
+  --cc-cookie-category-expanded-block-bg: var(--bg-page);
+  --cc-cookie-category-expanded-block-hover-bg: #ece8ff;
+  --cc-toggle-on-bg: var(--green);
+  --cc-toggle-on-knob-bg: var(--white);
+  --cc-toggle-off-bg: var(--gray-400);
+  --cc-toggle-off-knob-bg: var(--white);
+  --cc-toggle-readonly-bg: #d4d4d4;
+  --cc-toggle-readonly-knob-bg: var(--white);
+  --cc-toggle-readonly-knob-icon-color: #d4d4d4;
+  --cc-pm-toggle-border-radius: 100px;
+}
+
+/* The small card: bottom-left on a computer, a sheet along the bottom edge on a phone */
+html #cc-main .cm {
+  width: calc(100vw - 2 * var(--cc-modal-margin));
+  max-width: 372px;
+  border-radius: var(--cc-modal-border-radius);
+  box-shadow: 0 0 0 1px rgba(32, 32, 32, 0.06), 0 18px 48px rgba(32, 32, 32, 0.18);
+  transform: translateY(16px) scale(0.98);
+}
+html.show--consent #cc-main .cc--anim .cm {
+  transform: translateY(0) scale(1);
+}
+html #cc-main .cc--anim .cm {
+  transition: opacity var(--cc-modal-transition-duration) var(--ease-out),
+    visibility var(--cc-modal-transition-duration) var(--ease-out),
+    transform var(--cc-modal-transition-duration) var(--ease-out);
+}
+html #cc-main .cm__texts {
+  padding: 22px 0 0;
+}
+html #cc-main .cm__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+/* The green dot with a soft ring: the same accent as the status marks in the app */
+html #cc-main .cm__title::before {
+  content: "";
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 5px var(--green-tint);
+}
+html #cc-main .cm__title + .cm__desc {
+  margin-top: 10px;
+}
+html #cc-main .cm__desc {
+  padding: 0 22px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+html #cc-main .cm__desc a,
+html #cc-main .pm__section-desc a {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+html #cc-main .cm__btns {
+  padding: 18px 22px 22px;
+  border-top: none;
+}
+html #cc-main .cm__btn-group {
+  grid-auto-flow: column;
+  gap: 10px;
+}
+html #cc-main .cm__btn + .cm__btn,
+html #cc-main .cm__btn-group + .cm__btn-group {
+  margin: 0;
+}
+
+/* Buttons: the site's pills (see .btn), both the same size */
+html #cc-main .cm__btn,
+html #cc-main .pm__btn {
+  min-height: 46px;
+  padding: 0 20px;
+  border-radius: 100px;
+  border-width: 1px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  transition: background-color var(--motion-fast) ease, border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease, transform var(--motion-fast) ease;
+}
+html #cc-main .cm__btn:active,
+html #cc-main .pm__btn:active {
+  transform: translateY(1px);
+}
+/* Decline: same size, same type, same border weight as Allow; outlined instead of filled, like the hero's pair */
+html #cc-main .cm__btn[data-role="necessary"],
+html #cc-main .pm__btn[data-role="necessary"] {
+  background: var(--white);
+  color: var(--ink);
+  border-color: var(--ink);
+}
+html #cc-main .cm__btn[data-role="necessary"]:hover,
+html #cc-main .pm__btn[data-role="necessary"]:hover {
+  background: #f3f3f3;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+html #cc-main button:focus-visible,
+html #cc-main a:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
+
+/* The settings window, same family: bigger radius, pills, the site's green for "on" */
+html #cc-main .pm {
+  border-radius: 24px;
+  box-shadow: 0 0 0 1px rgba(32, 32, 32, 0.06), 0 24px 64px rgba(32, 32, 32, 0.28);
+}
+html #cc-main .pm--box {
+  height: auto; /* fit the content instead of a tall empty window */
+}
+html #cc-main .pm__header {
+  padding: 22px 28px;
+}
+html #cc-main .pm__title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+html #cc-main .pm__close-btn {
+  border-radius: 50%;
+}
+html #cc-main .pm__body {
+  padding: 22px 28px;
+}
+html #cc-main .pm__footer {
+  padding: 18px 28px;
+}
+html #cc-main .pm__section-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+html #cc-main .pm__section-desc {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Phone: a sheet along the bottom edge, the two buttons stay side by side (the library stacks them) */
+@media (max-width: 640px) {
+  html #cc-main {
+    --cc-modal-margin: 12px;
+  }
+  html #cc-main .cm {
+    width: calc(100vw - 24px) !important;
+    max-width: none !important;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    margin: 0;
+  }
+  html #cc-main .cm__title,
+  html #cc-main .cm__desc {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+  html #cc-main .cm__btns {
+    padding: 16px 20px 20px !important;
+    border-top: 0 !important;
+  }
+  html #cc-main .cm__btn-group {
+    flex-direction: row !important;
+    gap: 10px;
+  }
+  html #cc-main .cm__btn + .cm__btn {
+    margin: 0 !important;
+  }
+  html #cc-main .cm__btn {
+    flex: 1 1 0 !important;
+    min-width: 0;
+    padding: 0 12px;
+  }
+  html #cc-main .pm {
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html #cc-main .cc--anim .cm,
+  html #cc-main .cm__btn,
+  html #cc-main .pm__btn {
+    transition: none;
+  }
+  html #cc-main .cm {
+    transform: none;
   }
 }
