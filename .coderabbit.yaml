@@ -1,0 +1,83 @@
+# CodeRabbit review settings for ATS Hero.
+# The rules come from AGENTS.md; this file only turns the most important ones into checks on every PR.
+# Every check starts in "warning" mode (it reports, it never blocks). Move a check to "error" only once it
+# has run on a few PRs without false alarms; an "error" check blocks merging only together with
+# auto_approvals below and a branch protection rule on main that requires an approving review.
+language: "en-US"
+
+reviews:
+  profile: "chill"
+  high_level_summary: true
+
+  # CodeRabbit requests changes while it has open actionable comments and approves the PR once they are
+  # resolved and the latest commit is reviewed. It never merges.
+  auto_approvals:
+    enabled: true
+    max_merge_risk: "moderate"
+    allow_author_approval: true
+
+  auto_review:
+    enabled: true
+    drafts: false
+
+  # Generated or exported files: regenerate them, never review them line by line (AGENTS.md rule 9).
+  path_filters:
+    - "!apps/web/components/figma-icons.tsx"
+    - "!apps/web/components/icon-credits.ts"
+    - "!apps/web/components/software-credits.ts"
+    - "!apps/web/design-check/ICON-SOURCES.md"
+    - "!reference/figma/**"
+    - "!**/package-lock.json"
+
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: "Conventional Commits in English (feat, fix, docs, chore, refactor, test, ci), with a scope when it helps, for example feat(web): ... (AGENTS.md rule 1)."
+    description:
+      mode: "warning"
+    docstrings:
+      mode: "off"
+    issue_assessment:
+      mode: "off"
+    custom_checks:
+      - name: "Privacy and Terms pages stay true"
+        mode: "warning"
+        instructions: |
+          AGENTS.md rules 10 and 11. Fail if the PR adds or changes a provider, a cookie, a localStorage or
+          sessionStorage key, a retention period, payments, AI features, or turns on AI_REWRITE_ENABLED or
+          NEXT_PUBLIC_ATS_CHECK_ENABLED, and apps/web/views/PrivacyPage.tsx (with PRIVACY_UPDATED) or
+          apps/web/views/TermsPage.tsx (with TERMS_UPDATED) is not updated in the same PR. Fail if
+          PRIVACY_LISTS_CONSENT in apps/web/lib/consent.ts changes without the Privacy page rows for cc_cookie
+          and the _ga cookies. Fail if site copy claims something the code does not do. Pass otherwise.
+      - name: "UI follows Figma"
+        mode: "warning"
+        instructions: |
+          AGENTS.md rule 6. Fail if the PR removes "locked": true from a spec in apps/web/design-check/specs/,
+          changes CSS only to make a design check pass without naming the Figma frame it was compared with,
+          or adds a new screen or visible component without a Figma frame or an explicit note that the owner
+          approved it as provisional. Fail if it moves, renames or deletes components or icons (rule 8)
+          without saying Liubovi was told. Pass otherwise.
+      - name: "Data is filtered by owner"
+        mode: "warning"
+        instructions: |
+          AGENTS.md rule 4. Fail if a query or Server Action in apps/web/app/actions or apps/web/lib reads or
+          writes user data without resolving the owner with getOwnerId() and filtering through
+          lib/ownership.ts, takes a user id as a parameter (only guestId is allowed), or skips withLog().
+          Fail if a migration in apps/web/drizzle is not additive (drops or renames a column or table), if a
+          schema change has no committed migration, or if DATABASE_URL gains ?sslmode=. Pass otherwise.
+      - name: "No secrets and no wider CSP"
+        mode: "warning"
+        instructions: |
+          AGENTS.md rules 2 and 3. Fail if the PR adds anything that looks like a key, token, password,
+          DATABASE_URL value or AWS access key, or uses dangerouslySetInnerHTML (even in a comment). Fail if
+          next.config.ts widens the CSP: a wildcard, a host added for /app, /api or /dev, or a public-page host
+          added without a reason in the PR description. Fail if user input reaches the server without zod
+          validation or a rate limit is removed. Pass otherwise.
+      - name: "CV output follows the PDF rules"
+        mode: "warning"
+        instructions: |
+          AGENTS.md rule 7, for apps/web/components/cv/templates, lib/exportPdf.tsx, lib/exportDocx.ts and
+          lib/cv-print.ts. Fail if a PDF is rendered other than through renderCvPdfBlob(), if a block is spaced
+          with a bottom margin instead of the parent's rowGap, if a template skips pdfData() or
+          breakLongWords() for long text, if contacts bypass ContactBar, or if blank entries can print. Fail if
+          the PR changes templates or export without saying the ATS lab was run. Pass otherwise.
