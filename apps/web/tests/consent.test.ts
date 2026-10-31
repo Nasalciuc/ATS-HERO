@@ -220,6 +220,12 @@ describe("Google Tag Manager loads only through a checked container ID", () => {
     expect(banner.indexOf('gtag("consent", "default"')).toBeLessThan(banner.indexOf("document.createElement(\"script\")"));
     expect(banner).toContain("window.location.reload()");
   });
+
+  it("reloads a public page reached client-side from /app before loading it, so the public CSP applies", () => {
+    const banner = fs.readFileSync(path.join(WEB, "components/ConsentBanner.tsx"), "utf8");
+    expect(banner).toMatch(/const documentStartedPublic = [^;]*isConsentRoute\(window\.location\.pathname\)/);
+    expect(banner).toMatch(/if \(documentStartedPublic\) loadGtm\(mode\);\s*else window\.location\.reload\(\);/);
+  });
 });
 
 describe("the CSP (AGENTS.md rule 3)", () => {

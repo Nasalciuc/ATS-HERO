@@ -33,6 +33,10 @@ declare global {
 // that comes while the library is still starting waits for it instead of starting it twice.
 let ready: Promise<void> | null = null;
 let gtmLoaded = false;
+// The CSP comes with the document, so it is the one of the page the visitor first loaded. If that was
+// /app (no Google hosts) and they then moved to a public page client-side, Google Tag Manager would be
+// blocked: in that case loading it means reloading the public page first, to get the public-page CSP.
+const documentStartedPublic = typeof window !== "undefined" && isConsentRoute(window.location.pathname);
 let lastPagePath: string | null = null;
 
 // The Google tag reads gtag() commands as Arguments objects, so this pushes `arguments`, not an array.
@@ -63,7 +67,8 @@ function applyConsent(): void {
     // A later Decline: Google stops storing anything, and the library deletes the _ga cookies (autoClear).
     gtag("consent", "update", mode);
   } else if (mode.analytics_storage === "granted") {
-    loadGtm(mode);
+    if (documentStartedPublic) loadGtm(mode);
+    else window.location.reload();
   }
 }
 
