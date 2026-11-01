@@ -10,10 +10,27 @@ const PHONE = /\+?\d[\d\s().-]{6,}\d/;
 const TEXT_BOX = /<w:txbxContent\b[\s\S]*?<\/w:txbxContent>/g;
 const FALLBACK = /<mc:Fallback>[\s\S]*?<\/mc:Fallback>/g;
 
+const TABLE = /<w:tbl>[\s\S]*?<\/w:tbl>/g;
+
+/**
+ * The body as a plain reader such as python-docx gives it (the lab's DOCX reader): the paragraphs
+ * outside tables first, then each table row by row, its cells joined by a tab. A whole-page table
+ * (a sidebar layout) comes out as "Excel⇥EXPERIENCE": the heading glued to the sidebar.
+ */
+export function strictText(bodyXml: string): string {
+  const tables = bodyXml.match(TABLE) ?? [];
+  const rows = tables.flatMap((t) =>
+    (t.match(/<w:tr\b[\s\S]*?<\/w:tr>/g) ?? []).map((tr) =>
+      (tr.match(/<w:tc\b[\s\S]*?<\/w:tc>/g) ?? []).map((tc) => wordXmlText(tc)).join("\t"),
+    ),
+  );
+  return [wordXmlText(bodyXml.replace(TABLE, "")), ...rows].filter((x) => x.trim()).join("\n");
+}
+
 /**
  * Reads a .docx the two ways ATS readers do: strictly (the body only, without page headers, footers
- * and text boxes) and fully (what Word shows, as `extractDocxText`). Returns null when the zip is
- * not a Word document.
+ * and text boxes; tables after the paragraphs, as python-docx gives them) and fully (what Word
+ * shows, as `extractDocxText`). Returns null when the zip is not a Word document.
  */
 export async function readDocx(data: ArrayBuffer): Promise<AtsRead | null> {
   const zip = await JSZip.loadAsync(data);
@@ -22,7 +39,7 @@ export async function readDocx(data: ArrayBuffer): Promise<AtsRead | null> {
   const xml = (await body.async("string")).replace(FALLBACK, "");
 
   const all = (await extractDocxText(data)) ?? "";
-  const strict = wordXmlText(xml.replace(TEXT_BOX, ""));
+  const strict = strictText(xml.replace(TEXT_BOX, ""));
 
   const boxes = xml.match(TEXT_BOX) ?? [];
   const boxText = boxes.map((b) => wordXmlText(b)).join("\n");

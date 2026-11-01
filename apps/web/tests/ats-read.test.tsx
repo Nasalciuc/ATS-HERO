@@ -125,13 +125,13 @@ describe("PDF: ligature glyphs", () => {
   it("names the words a glyph-keeping reader sees, even when pdf.js gives the glyph as its own item", () => {
     const items = [
       { str: "Kafka, Air", hasEOL: false },
-      { str: "ﬂ", hasEOL: false },
+      { str: "\uFB02", hasEOL: false },
       { str: "ow, work", hasEOL: false },
-      { str: "ﬂ", hasEOL: false },
+      { str: "\uFB02", hasEOL: false },
       { str: "ows.", hasEOL: true },
-      { str: "ﬁrst", hasEOL: true },
+      { str: "\uFB01rst", hasEOL: true },
     ];
-    expect(ligatureWordsIn(items)).toEqual(["Airﬂow", "workﬂows", "ﬁrst"]);
+    expect(ligatureWordsIn(items)).toEqual(["Air\uFB02ow", "work\uFB02ows", "\uFB01rst"]);
   });
 
   it("finds none in our templates (Inter has no ligature glyphs)", async () => {
@@ -197,5 +197,16 @@ describe("DOCX: two readings and the layout signals", () => {
 describe("other files", () => {
   it("are not read here (readCvFile already explains them to the person)", async () => {
     expect(await readForAts(ab(Buffer.from("just some text, not a CV file")))).toBeNull();
+  });
+});
+
+describe("readCvFile hands the reading over", () => {
+  it("returns the file's ATS reading with the text, and the text is its in-order reading", async () => {
+    const { readCvFile } = await import("@/lib/cv-file");
+    const pdf = await pdfOf("classic", personas.ana);
+    const res = await readCvFile(new File([pdf as BlobPart], "cv.pdf", { type: "application/pdf" }));
+    if (!res.ok) throw new Error(res.error);
+    expect(res.ats?.kind).toBe("pdf");
+    expect(res.ats?.readings.find((r) => r.reader === "pdf-stream")?.text).toBe(res.text);
   });
 });

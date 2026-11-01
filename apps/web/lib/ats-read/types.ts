@@ -36,7 +36,7 @@ export interface AtsSignals {
   twoColumns: boolean;
   /** PDF: web links whose address is not in the text, so a text reader never sees it. */
   hiddenLinks: HiddenLink[];
-  /** PDF: words drawn with ligature glyphs (ﬁ, ﬂ…), which some readers keep, breaking searches. */
+  /** PDF: words drawn with ligature glyphs (\uFB01, \uFB02…), which some readers keep, breaking searches. */
   ligatureWords: string[];
   /** Over 2.5 MB: Greenhouse documents that it doesn't parse files this large. */
   overSizeLimit: boolean;

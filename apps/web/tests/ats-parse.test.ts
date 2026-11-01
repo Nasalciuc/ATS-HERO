@@ -46,7 +46,7 @@ describe("Python's splitlines", () => {
     expect(splitLines("")).toEqual([]);
     expect(splitLines("a\n")).toEqual(["a"]);
     expect(splitLines("a\n\n")).toEqual(["a", ""]);
-    expect(splitLines("a\r\nb\rc d")).toEqual(["a", "b", "c", "d"]);
+    expect(splitLines("a\r\nb\rc\u2028d")).toEqual(["a", "b", "c", "d"]);
   });
 });
 
@@ -58,7 +58,7 @@ describe("title and company of an entry", () => {
     ["Data Analyst at Moldcell\nJune 2018 – February 2021", "Data Analyst", "Moldcell"],
     ["Senior Data Analyst @ Orange Moldova (Mar '21 – now)", "Senior Data Analyst", "Orange Moldova"],
     [
-      "Reco, Leader in Dynamic SaaS Security​\nChisinau, Remote\nSenior Go Developer & Researcher​\nOct. 2025 – now\n- Own 35+ integrations.",
+      "Reco, Leader in Dynamic SaaS Security\u200B\nChisinau, Remote\nSenior Go Developer & Researcher\u200B\nOct. 2025 – now\n- Own 35+ integrations.",
       "Senior Go Developer & Researcher",
       "Reco",
     ],

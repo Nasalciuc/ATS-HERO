@@ -40,7 +40,7 @@ export async function extractPdfText(data: ArrayBuffer): Promise<{ pages: number
     const text = pages
       .join("\n")
       .split("\n")
-      .map((line) => line.replace(/[ \t ]+/g, " ").trim())
+      .map((line) => line.replace(/[ \t\u00A0]+/g, " ").trim())
       .join("\n")
       .replace(/\n{3,}/g, "\n\n")
       .trim();

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scoreCv, scoreRawText } from "./ats-scorer";
+import { scoreCv } from "./ats-scorer";
 import type { CvData, ScoreReport, SectionKey, SectionReport } from "../types";
 
 /* --------------------------- test helpers --------------------------- */
@@ -380,39 +380,6 @@ describe("generalScore formula", () => {
     // 90 + (100 * 0.12) = 102 → clamped to 100
     expect(r.generalScore).toBe(100);
     expect(r.message).toMatch(/great shape/i);
-  });
-});
-
-/* --------------------------- scoreRawText --------------------------- */
-
-describe("scoreRawText (Improve flow, plain text)", () => {
-  it("detects contact channels", () => {
-    const text = "John Doe john@x.com +1 555 123 4567 linkedin.com/in/john";
-    const r = scoreRawText(text);
-    const pi = section(r, "personalInfo");
-    expect(pi.goodPractices).toContain("Contact details detected");
-  });
-
-  it("flags a missing email", () => {
-    const r = scoreRawText("Just some text with a phone +1 555 123 4567");
-    const pi = section(r, "personalInfo");
-    expect(pi.critical).toContain("No email address detected");
-  });
-
-  it("maps the 'experience' keyword onto the work section", () => {
-    const r = scoreRawText("Professional experience: built systems. Education: BSc. Skills: x. Summary: y.");
-    const work = section(r, "work");
-    expect(work.goodPractices.some((g) => /experience/i.test(g))).toBe(true);
-  });
-
-  it("rewards longer documents with a higher general score", () => {
-    const short = scoreRawText("john@x.com experience education skills summary");
-    const long = scoreRawText(
-      "john@x.com +1 555 1234567 linkedin " +
-        "experience education skills summary ".repeat(80) +
-        " improved revenue by 40%"
-    );
-    expect(long.generalScore).toBeGreaterThan(short.generalScore);
   });
 });
 

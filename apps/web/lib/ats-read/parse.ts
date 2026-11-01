@@ -53,7 +53,7 @@ const SLUG_REST = /^[A-Za-z0-9\-_%]/;
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 const PHONE = /(?<![\p{L}\p{N}_/])\+?\p{Nd}[\p{Nd}\s().-]{7,}\p{Nd}(?![\p{L}\p{N}_/])/gu;
 const LINKEDIN = /linkedin\.com\/in\/([A-Za-z0-9\-_%]+)/i;
-const LIGATURES = /[ﬀ-ﬆ]/g;
+const LIGATURES = /[\uFB00-\uFB06]/g;
 const BULLET = /^[\s•●▪◦‣►▸→➜➔✓■◆\-*·]+/u;
 const LEVEL = /\s*\((?:a1|a2|b1|b2|c1|c2|native)\)\s*$/i;
 
@@ -71,7 +71,7 @@ const len = (s: string) => [...s].length;
 
 /** What a careful parser normalises: Unicode NFC, NBSP→space, trailing spaces. */
 export function normalize(text: string): string {
-  const t = text.normalize("NFC").replaceAll(" ", " ").replaceAll("﻿", "");
+  const t = text.normalize("NFC").replaceAll("\u00A0", " ").replaceAll("\uFEFF", "");
   return splitLines(t).map(rstrip).join("\n");
 }
 

@@ -22,7 +22,7 @@ interface PageText {
 }
 
 const isItem = (i: object): i is Item => "str" in i;
-const LIGATURES = /[ﬀ-ﬆ]/;
+const LIGATURES = /[\uFB00-\uFB06]/;
 
 /**
  * Reads a PDF the ways ATS text extractors do, plus the layout signals behind their differences.
@@ -124,7 +124,7 @@ export function rowsText(items: Item[]): string {
 function cleanLines(text: string): string {
   return text
     .split("\n")
-    .map((line) => line.replace(/[ \t ]+/g, " ").trim())
+    .map((line) => line.replace(/[ \t\u00A0]+/g, " ").trim())
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -213,7 +213,7 @@ function textUnder(items: Item[], rect: number[]): string {
 
 /**
  * The distinct words drawn with a ligature glyph, as a reader that keeps the glyph sees them
- * ("Airﬂow"). pdf.js often gives the glyph as an item of its own, so words are cut from the raw
+ * ("Air\uFB02ow"). pdf.js often gives the glyph as an item of its own, so words are cut from the raw
  * text in stream order, not from single items.
  */
 function ligatureWords(pages: PageText[]): string[] {
