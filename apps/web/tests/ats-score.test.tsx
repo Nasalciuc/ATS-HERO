@@ -331,3 +331,46 @@ describe("the line that says what the file is", () => {
     expect(codes).not.toContain("name_mixed");
   });
 });
+
+describe("the CV's language", () => {
+  const RU = `Елена Русу
+elena.rusu@example.com | +373 69 555 012
+Опыт работы
+Старший аналитик данных, Orange Moldova, 03.2021 – по настоящее время
+• Создала 12 дашбордов Power BI
+Аналитик данных, Moldcell, 06.2018 – 02.2021
+Образование
+Технический университет Молдовы, 2014 – 2018
+Навыки
+Python, SQL, Power BI, Excel`;
+  const RO = `Elena Rusu
+elena.rusu@example.com | +373 69 555 012
+EXPERIENȚĂ PROFESIONALĂ
+Analist de date senior, Orange Moldova, Martie 2021 – Prezent
+• Am construit 12 dashboard-uri Power BI folosite de 40 de manageri
+Analist de date, Moldcell, Iunie 2018 – Februarie 2021
+• Am automatizat analiza churn în Python
+EDUCAȚIE
+Licență în Informatică, Universitatea Tehnică a Moldovei, 2014 – 2018
+COMPETENȚE
+Python, SQL, Power BI, Excel`;
+  const notes = (r: AtsReport) => r.notes.map((n) => n.code);
+
+  it("Russian: Taleo's language limit, and no “no sections” stated as a fact about the CV", () => {
+    const r = scoreText(RU, TODAY);
+    expect(r.language).toBe("ru");
+    expect(notes(r)).toContain("taleo_language");
+    const none = r.issues.find((i) => i.code === "no_sections");
+    if (none) {
+      expect(notes(r)).toContain("language_unknown");
+      expect(none.title).toBe("No headings our reader knows");
+    }
+  });
+
+  it("Romanian: Taleo's language limit; English: no language note", () => {
+    expect(scoreText(RO, TODAY).language).toBe("ro");
+    expect(notes(scoreText(RO, TODAY))).toContain("taleo_language");
+    expect(scoreText(ANA_TEXT, TODAY).language).toBe("en");
+    expect(notes(scoreText(ANA_TEXT, TODAY))).toEqual(["pasted_text"]);
+  });
+});

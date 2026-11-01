@@ -61,9 +61,13 @@ export interface AtsSection {
   recruiter: string[];
 }
 
+/** The CV's language, as far as the letters and a few words tell. */
+export type Language = "en" | "ro" | "ru";
+
 export interface AtsReport {
   kind: "ats-read";
   version: 2;
+  language: Language;
   message: string;
   fields: { read: number; total: number };
   /** the worst level found, null when nothing */
@@ -98,6 +102,10 @@ const TALEO_ATTACHMENTS = {
   label: "Oracle Taleo: attachment settings",
   url: "https://docs.oracle.com/en/cloud/saas/taleo-enterprise/22d/otrcg/c-attachmentpermissionsandsettings.html",
 };
+const TALEO_LANGUAGES = {
+  label: "Oracle Taleo: supported languages",
+  url: "https://docs.oracle.com/en/cloud/saas/taleo-enterprise/21c/otrcg/r-supportedlanguages.html",
+};
 const WORKABLE_FILES = {
   label: "Workable: supported files",
   url: "https://help.workable.com/hc/en-us/articles/115012238108",
@@ -125,6 +133,16 @@ export function scoreText(text: string, today = new Date()): AtsReport {
 
 type Draft = Omit<Issue, "level" | "ref">;
 
+/** Russian when most letters are Cyrillic; Romanian when it has its letters and words; else English. */
+export function languageOf(text: string): Language {
+  const letters = text.match(/\p{L}/gu) ?? [];
+  const cyrillic = letters.filter((c) => /\p{Script=Cyrillic}/u.test(c)).length;
+  if (letters.length && cyrillic * 2 > letters.length) return "ru";
+  const marks = (text.match(/[ăâîșşțţĂÂÎȘŞȚŢ]/g) ?? []).length;
+  if (marks >= 4 && /(?<!\p{L})(?:și|şi|în|pentru|experien[țţ][ăa]|educa[țţ]ie|competen[țţ]e|universitatea|prezent)(?!\p{L})/iu.test(text)) return "ro";
+  return "en";
+}
+
 function scoreReadings(
   texts: string[],
   signals: AtsSignals,
@@ -150,6 +168,19 @@ function scoreReadings(
   const add = (d: Draft) => issues.push({ ...d, level: levelOf(d.code), ref: ISSUE_LEVELS[d.code]?.ref ?? {} });
   const has = (code: string) => issues.some((i) => i.code === code);
   const noSections = parsed.every((p) => p.sections.length === 0);
+  const language = languageOf(texts[primaryIndex] ?? "");
+  const NAMES = { en: "English", ro: "Romanian", ru: "Russian" } as const;
+  if (language !== "en" && noSections)
+    notes.push({
+      code: "language_unknown",
+      text: `This CV looks ${NAMES[language]}, and our reader found no heading it knows in it. If your headings are standard, the problem is our reader, not your CV: check the findings below against your CV.`,
+    });
+  if (language !== "en")
+    notes.push({
+      code: "taleo_language",
+      text: "Some ATSs parse only some languages. Oracle Taleo lists full resume parsing for English only, limited parsing for Dutch, French, German, Italian, Brazilian Portuguese and Spanish, and none for Romanian or Russian. For an international employer, an English CV is the safer choice.",
+      source: TALEO_LANGUAGES,
+    });
 
   // ---------------------------------------------------------------- contact
   const contact: ReadField[] = [];
@@ -291,8 +322,11 @@ function scoreReadings(
     add({
       code: "no_sections",
       section: "work",
-      title: "No sections found",
-      why: "Parsers cut a CV into sections by headings such as “Experience”, “Education” and “Skills”. None was found, so nothing can be placed in the profile. Textkernel and RChilli rate this as fatal.",
+      title: language === "en" ? "No sections found" : "No headings our reader knows",
+      why:
+        language === "en"
+          ? "Parsers cut a CV into sections by headings such as “Experience”, “Education” and “Skills”. None was found, so nothing can be placed in the profile. Textkernel and RChilli rate this as fatal."
+          : "Parsers cut a CV into sections by their headings, and our reader found none it knows. That may be our reader's limit; but parsers that don't know your CV's language place nothing in the profile either, which Textkernel and RChilli rate as fatal.",
       fix: "Use standard headings, each on its own line: Experience, Education, Skills.",
       source: TEXTKERNEL_QUALITY,
     });
@@ -631,6 +665,7 @@ function scoreReadings(
   return {
     kind: "ats-read",
     version: 2,
+    language,
     message: summary(contact, jobs, nJobs, skills.length, issues, many),
     fields,
     worst,
