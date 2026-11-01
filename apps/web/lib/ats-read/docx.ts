@@ -1,0 +1,57 @@
+import JSZip from "jszip";
+import { extractDocxText, wordXmlText } from "../docx-text";
+import { ATS_SIZE_LIMIT_BYTES, NO_SIGNALS, type AtsRead } from "./types";
+
+const EMAIL = /[^\s@<>]+@[^\s@<>]+\.[a-z]{2,}/i;
+/** a phone number: 7+ digits, with the usual separators */
+const PHONE = /\+?\d[\d\s().-]{6,}\d/;
+
+/** A text box's content, without the copy Word keeps for old readers (<mc:Fallback>). */
+const TEXT_BOX = /<w:txbxContent\b[\s\S]*?<\/w:txbxContent>/g;
+const FALLBACK = /<mc:Fallback>[\s\S]*?<\/mc:Fallback>/g;
+
+/**
+ * Reads a .docx the two ways ATS readers do: strictly (the body only, without page headers, footers
+ * and text boxes) and fully (what Word shows, as `extractDocxText`). Returns null when the zip is
+ * not a Word document.
+ */
+export async function readDocx(data: ArrayBuffer): Promise<AtsRead | null> {
+  const zip = await JSZip.loadAsync(data);
+  const body = zip.file("word/document.xml");
+  if (!body) return null;
+  const xml = (await body.async("string")).replace(FALLBACK, "");
+
+  const all = (await extractDocxText(data)) ?? "";
+  const strict = wordXmlText(xml.replace(TEXT_BOX, ""));
+
+  const boxes = xml.match(TEXT_BOX) ?? [];
+  const boxText = boxes.map((b) => wordXmlText(b)).join("\n");
+  const sides: string[] = [];
+  for (const f of zip.file(/^word\/(header|footer)\d*\.xml$/)) sides.push(wordXmlText(await f.async("string")));
+  const outside = [...sides, boxText].join("\n");
+
+  // a contact that a strict reader loses: in a header, footer or text box, and not in the body
+  const lost = (re: RegExp) => {
+    const m = outside.match(re);
+    return m !== null && !strict.replace(/\s+/g, "").includes(m[0].replace(/\s+/g, ""));
+  };
+
+  return {
+    kind: "docx",
+    bytes: data.byteLength,
+    pages: null,
+    producer: null,
+    readings: [
+      { reader: "docx-strict", text: strict },
+      { reader: "docx-all", text: all },
+    ],
+    signals: {
+      ...NO_SIGNALS,
+      overSizeLimit: data.byteLength > ATS_SIZE_LIMIT_BYTES,
+      contactsOutsideBody: lost(EMAIL) || lost(PHONE),
+      tables: (xml.match(/<w:tbl>/g) ?? []).length,
+      textBoxes: boxes.length,
+      images: (xml.match(/<pic:pic\b/g) ?? []).length,
+    },
+  };
+}
