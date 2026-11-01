@@ -227,3 +227,43 @@ describe("fixing a problem raises the score and removes the issue", () => {
     explained(hidden);
   });
 });
+
+describe("the bullet counter", () => {
+  it("joins a bullet wrapped over lines and counts results like 35+, 6 months, 78%", async () => {
+    const { contentCounts } = await import("@/lib/ats-read/score");
+    const job = {
+      start: "2021",
+      end: "now",
+      text: [
+        "Senior Go Developer, Reco, 2021 – now",
+        "- Own 35+ SaaS integrations across services.",
+        "- Resolved incidents by improving observability and",
+        "reliability workflows; reduced MTTR by 35%.",
+        "- Cut p95 latency from 480 ms to 120 ms.",
+        "- Contributed to backend reliability.",
+      ].join("\n"),
+    };
+    expect(contentCounts([job])).toEqual({ bullets: 4, withResult: 3, percentNoBase: 1 });
+  });
+});
+
+describe("the line that says what the file is", () => {
+  it("names the program that made it, the size and the columns", async () => {
+    const { fileLine, producerName } = await import("@/lib/ats-read/score");
+    expect(producerName("Skia/PDF m150 Google Docs Renderer")).toBe("Google Docs");
+    expect(producerName("Microsoft® Word for Microsoft 365")).toBe("Microsoft Word");
+    expect(producerName("pdfTeX-1.40.25")).toBe("LaTeX");
+    expect(producerName(null)).toBeNull();
+    const r = await scoreFile(await pdfOf("modern", personas.ana));
+    expect(fileLine(r)).toMatch(/^PDF made with ATS Hero · 1 page · \d+ KB · two columns · read in your browser$/);
+    expect(fileLine(scoreText(ANA_TEXT, TODAY))).toBe("Pasted text · the file's layout isn't checked");
+  });
+
+  it("contacts only in the header are one issue, not one per field", async () => {
+    const r = await scoreFile(await docx(JOBS, p("Elena Rusu") + CONTACTS));
+    const codes = r.issues.map((i) => i.code);
+    expect(codes).toContain("contacts_outside_body");
+    expect(codes).not.toContain("linkedin_cut");
+    expect(codes).not.toContain("name_mixed");
+  });
+});

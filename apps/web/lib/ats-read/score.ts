@@ -13,7 +13,7 @@
  */
 import type { AtsRead, AtsSignals } from "./types";
 import { NO_SIGNALS } from "./types";
-import { entryParts, headingKey, monthsOfExperience, parse, splitLines, type Block, type Parsed } from "./parse";
+import { DATE_RANGE, entryParts, headingKey, monthsOfExperience, parse, splitLines, type Block, type Parsed } from "./parse";
 import type { ScoreReport, SectionKey, SectionReport } from "../types";
 
 /** The lab's weights (scorer.py WEIGHTS). */
@@ -137,8 +137,13 @@ function scoreReadings(
   } else if (goodNames.length > 0) {
     checks.name = 0.5;
     const odd = nameValues.find((n) => !n || nameBroken(n) || norm(n) !== norm(goodNames[0]));
-    contact.push({ label: "Name", value: goodNames[0], mark: "partial", note: odd ? `Also read as “${odd}”` : "Not found by every reader" });
-    add({
+    contact.push({
+      label: "Name",
+      value: goodNames[0],
+      mark: "partial",
+      note: signals.contactsOutsideBody ? "Only in the page header or a text box" : odd ? `Also read as “${odd}”` : "Not found by every reader",
+    });
+    if (!signals.contactsOutsideBody) add({
       code: "name_mixed",
       section: "personalInfo",
       points: WEIGHTS.name / 2,
@@ -195,19 +200,6 @@ function scoreReadings(
       });
     }
   }
-  if (signals.contactsOutsideBody) {
-    const lost = (["email", "phone"] as const).filter((c) => checks[c] === 0.5);
-    add({
-      code: "contacts_outside_body",
-      section: "personalInfo",
-      points: lost.reduce((s, c) => s + WEIGHTS[c] / 2, 0),
-      title: "Your contacts are only in the page header or a text box",
-      why: "Stricter readers read the page body only. Greenhouse documents that contact details in a header, footer or text box aren't parsed.",
-      fix: "Move your email and phone into the page itself, under your name.",
-      source: GREENHOUSE_PARSE,
-    });
-  }
-
   const linkedinHidden = signals.hiddenLinks.find((l) => /linkedin\.com/i.test(l.url));
   const slugs = parsed.map((p) => p.linkedin);
   const mentions = texts.some((t) => /linkedin/i.test(t));
@@ -218,8 +210,13 @@ function scoreReadings(
       contact.push({ label: "LinkedIn", value: `linkedin.com/in/${slugs[0]}`, mark: "ok" });
     } else if (hits > 0) {
       checks.linkedin = 0.5;
-      contact.push({ label: "LinkedIn", value: `linkedin.com/in/${slugs.find(Boolean)}`, mark: "partial", note: "Cut or missing in some readings" });
-      add({
+      contact.push({
+        label: "LinkedIn",
+        value: `linkedin.com/in/${slugs.find(Boolean)}`,
+        mark: "partial",
+        note: signals.contactsOutsideBody ? "Only in the page header or a text box" : "Cut or missing in some readings",
+      });
+      if (!signals.contactsOutsideBody) add({
         code: "linkedin_cut",
         section: "personalInfo",
         points: WEIGHTS.linkedin / 2,
@@ -250,6 +247,19 @@ function scoreReadings(
         fix: "Write the address out, e.g. linkedin.com/in/your-name.",
       });
     }
+  }
+
+  if (signals.contactsOutsideBody) {
+    const lost = (["name", "email", "phone", "linkedin"] as const).filter((c) => checks[c] === 0.5);
+    add({
+      code: "contacts_outside_body",
+      section: "personalInfo",
+      points: lost.reduce((sum, c) => sum + WEIGHTS[c] / 2, 0),
+      title: "Your contacts are only in the page header or a text box",
+      why: "Stricter readers read the page body only. Greenhouse documents that contact details in a header, footer or text box aren't parsed.",
+      fix: "Move your name, email, phone and LinkedIn into the page itself, at the top.",
+      source: GREENHOUSE_PARSE,
+    });
   }
 
   // ---------------------------------------------------------------- experience
@@ -571,8 +581,8 @@ function scoreReadings(
   if (file.kind === "docx" && !signals.contactsOutsideBody && checks.email === 1) good.push("Contacts in the page, not the header");
   if (file.bytes !== null && !signals.overSizeLimit) good.push(`${file.pages ? `${plural(file.pages, "page")}, ` : ""}${formatBytes(file.bytes)}`);
 
-  const sections = buildSections(checks, issues, contact, jobs, education, skillReads, monthsTotal, good);
   const content = contentCounts(P.experience);
+  const sections = buildSections(checks, issues, contact, jobs, education, skillReads, monthsTotal, good, content);
   const weakest = parsed.reduce((w, p, i) => (p.experience.length < parsed[w].experience.length ? i : w), 0);
 
   return {
@@ -621,7 +631,16 @@ function summary(
   if (checks.email === 1) read.push("email");
   if (checks.phone === 1) read.push("phone");
   const okJobs = jobs.filter((j) => j.mark === "ok").length;
-  if (nJobs > 0) read.push(okJobs === nJobs ? `all ${plural(nJobs, "job")} with their dates` : `${okJobs} of ${plural(nJobs, "job")} with their dates`);
+  if (nJobs > 0 && okJobs > 0)
+    read.push(
+      okJobs === nJobs
+        ? nJobs === 1
+          ? "your job with its dates"
+          : nJobs === 2
+            ? "both jobs with their dates"
+            : `all ${nJobs} jobs with their dates`
+        : `${okJobs} of ${plural(nJobs, "job")} with their dates`,
+    );
   if (nSkills > 0) read.push(plural(nSkills, "skill"));
   const head = read.length ? `An ATS reads ${list(read)}.` : "An ATS reads almost nothing from this CV.";
   const costly = issues.filter((i) => i.points > 0).slice(0, 2);
@@ -632,20 +651,35 @@ function summary(
 const lowerFirst = (s: string) => (/^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s);
 const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 
-/** Bullets in the jobs, those with a measurable result, and those with a % but no starting point. */
+/**
+ * Bullets in the jobs, those with a measurable result, and those with a % but no starting point.
+ * A bullet wrapped over several lines is one bullet: its continuation lines are joined to it.
+ */
 export function contentCounts(jobs: Block[]): AtsReport["content"] {
-  let bullets = 0;
-  let withResult = 0;
-  let percentNoBase = 0;
-  for (const b of jobs)
+  const BULLET_START = /^\s*(?:[•●▪◦‣►▸→➜➔✓■◆*·]|-\s)/u;
+  const bullets: string[] = [];
+  for (const b of jobs) {
+    let current: string | null = null;
     for (const line of splitLines(b.text)) {
-      if (!/^\s*(?:[•●▪◦‣►▸→➜➔✓■◆*·]|-\s)/u.test(line)) continue;
-      bullets++;
-      const result = /\d+(?:[.,]\d+)?\s*(?:%|x\b|×|ms\b|s\b|sec|min|hours?|h\b|days?|weeks?|months?|years?|k\b|m\b|bn\b|million|thousand|users|customers|clients|people|engineers|\$|€|£|lei|mdl)|[$€£]\s?\d|\bfrom\s+\S+.*\bto\s+\S*\d/iu.test(line);
-      if (result) withResult++;
-      if (/\d\s*%/.test(line) && !/\bfrom\b[^%]*\bto\b/i.test(line)) percentNoBase++;
+      if (BULLET_START.test(line)) {
+        if (current !== null) bullets.push(current);
+        current = line;
+      } else if (current !== null && line.trim() && !DATE_RANGE.test(line)) {
+        current += ` ${line.trim()}`;
+      } else if (current !== null) {
+        bullets.push(current);
+        current = null;
+      }
     }
-  return { bullets, withResult, percentNoBase };
+    if (current !== null) bullets.push(current);
+  }
+  const RESULT =
+    /\d+(?:[.,]\d+)?\+|\d+(?:[.,]\d+)?\s*(?:%|x\b|×|ms\b|s\b|sec|min|hours?|h\b|days?|weeks?|months?|years?|k\b|m\b|bn\b|million|thousand|users|customers|clients|people|engineers|\$|€|£|lei|mdl)|[$€£]\s?\d|\bfrom\s+\S+.*\bto\s+\S*\d/iu;
+  return {
+    bullets: bullets.length,
+    withResult: bullets.filter((t) => RESULT.test(t)).length,
+    percentNoBase: bullets.filter((t) => /\d\s*%/.test(t) && !/\bfrom\b[^%]*\bto\b/i.test(t)).length,
+  };
 }
 
 function buildSections(
@@ -657,6 +691,7 @@ function buildSections(
   skills: ReadField[],
   months: number | null,
   good: string[],
+  content: AtsReport["content"],
 ): AtsSection[] {
   const pct = (cs: Check[]) => {
     const on = cs.filter((c) => checks[c] !== undefined);
@@ -697,6 +732,18 @@ function buildSections(
     make("education", "Education", pct(["education"]), education, status(education, "entry"), []),
     make("skills", "Skills", pct(["skillsText", "skillsList"]), skills, skills.length ? skills[0].value ?? "" : "no skills read", []),
   ];
+  // the bullets: a counter, not a score (there's no objective measure of a good bullet)
+  if (content.bullets > 0) {
+    sections[1].reads.push({
+      label: "Bullets with a measurable result",
+      value: `${content.withResult} of ${content.bullets}`,
+      mark: content.withResult * 2 >= content.bullets ? "ok" : "partial",
+    });
+    if (content.percentNoBase > 0)
+      sections[1].suggestions.push(
+        `${plural(content.percentNoBase, "bullet")} give${content.percentNoBase === 1 ? "s" : ""} a percentage with no starting point (“reduced costs by 34%”). Say from what to what (“from 40 s to 9 s”): numbers a recruiter can check read stronger.`,
+      );
+  }
   // the file's own issues go with the row they affect most: the experience
   for (const i of fileIssues) {
     if (i.points > 0) {
@@ -704,7 +751,35 @@ function buildSections(
       sections[1].suggestions.push(i.fix);
     } else sections[1].suggestions.push(`${i.title}. ${i.why} ${i.fix}`);
   }
-  const fileGood = good.filter((g) => /One column|page|KB|MB|headings/i.test(g));
-  sections[1].goodPractices.push(...fileGood.filter((g) => !sections[1].goodPractices.includes(g)));
   return sections;
+}
+
+/** What the file is, for the line under the verdict: "PDF made with Google Docs · 2 pages · 75 KB · one column". */
+export function fileLine(r: AtsReport): string {
+  const f = r.file;
+  if (f.kind === "text") return "Pasted text · the file's layout isn't checked";
+  const maker = producerName(f.producer);
+  const parts = [`${f.kind === "pdf" ? "PDF" : "Word file"}${maker ? ` made with ${maker}` : ""}`];
+  if (f.pages) parts.push(plural(f.pages, "page"));
+  if (f.bytes !== null) parts.push(formatBytes(f.bytes));
+  if (f.kind === "pdf") parts.push(f.twoColumns ? "two columns" : "one column");
+  parts.push("read in your browser");
+  return parts.join(" · ");
+}
+
+/** The PDF Producer as people know it: "Skia/PDF m150 Google Docs Renderer" → "Google Docs". */
+export function producerName(producer: string | null): string | null {
+  if (!producer) return null;
+  const known: [RegExp, string][] = [
+    [/google docs/i, "Google Docs"],
+    [/microsoft|word/i, "Microsoft Word"],
+    [/libreoffice|openoffice/i, "LibreOffice"],
+    [/canva/i, "Canva"],
+    [/pdftex|luatex|xetex|xdvipdfmx|latex/i, "LaTeX"],
+    [/quartz|mac os|pages/i, "Apple Pages or macOS"],
+    [/ats hero/i, "ATS Hero"],
+    [/chrome|skia/i, "a web browser"],
+  ];
+  for (const [re, name] of known) if (re.test(producer)) return name;
+  return producer.length > 30 ? null : producer;
 }
