@@ -6,6 +6,7 @@ import "vanilla-cookieconsent/dist/cookieconsent.css";
 import {
   CONSENT_MODE_DENIED,
   VIRTUAL_PAGE_VIEW_EVENT,
+  analyticsPageLocation,
   consentConfig,
   consentEnabled,
   consentModeFor,
@@ -52,6 +53,8 @@ function loadGtm(mode: ConsentModeState): void {
   lastPagePath = window.location.pathname;
   gtag("consent", "default", CONSENT_MODE_DENIED);
   gtag("consent", "update", mode);
+  // The Google tag would otherwise send the full address, query string included (see analyticsPageLocation).
+  gtag("set", { page_location: analyticsPageLocation(window.location.href) });
   window.dataLayer!.push({ "gtm.start": Date.now(), event: "gtm.js" });
   const script = document.createElement("script");
   script.async = true;
@@ -115,10 +118,12 @@ export default function ConsentBanner() {
   useEffect(() => {
     if (!gtmLoaded || !onPublicPage || !pathname || pathname === lastPagePath) return;
     lastPagePath = pathname;
+    const pageLocation = analyticsPageLocation(window.location.href);
+    gtag("set", { page_location: pageLocation });
     window.dataLayer?.push({
       event: VIRTUAL_PAGE_VIEW_EVENT,
       page_path: pathname,
-      page_location: window.location.href,
+      page_location: pageLocation,
       page_title: document.title,
     });
   }, [pathname, onPublicPage]);

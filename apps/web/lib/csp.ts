@@ -30,7 +30,7 @@ export function buildCsp({ google = false }: { google?: boolean } = {}): string 
     // browser refuses WebAssembly.instantiate() and "Download PDF" fails in production.
     // It permits compiling WASM only — eval()/new Function() stay blocked.
     `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval} https://*.clerk.accounts.dev https://challenges.cloudflare.com${gScript}`,
-    // No clerk-telemetry.com: Clerk's telemetry is off (app/layout.tsx), and the privacy page says no analytics.
+    // No clerk-telemetry.com: Clerk's telemetry is off (app/layout.tsx); the privacy page lists Google Analytics only, opt-in.
     "connect-src 'self' https://*.clerk.accounts.dev " + (process.env.NEXT_PUBLIC_AI_URL ?? "") + gConnect,
     "img-src 'self' data: blob: https:",
     "style-src 'self' 'unsafe-inline'",
