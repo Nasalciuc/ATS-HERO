@@ -64,6 +64,26 @@ EDGE: dict[str, str] = {
         "Step 1. Rub the butter into the flour.\nQuestions? grandma.bakes@example.com, +1 555 010 2030, linkedin.com/in/grandma-bakes"
     ),
     "empty": "",
+    "russian-cv": (
+        "Елена Русу\nelena.rusu@example.com | +373 69 555 012\nОпыт работы\n"
+        "Старший аналитик данных, Orange Moldova, 03.2021 – по настоящее время\n• Создала 12 дашбордов Power BI\n"
+        "Аналитик данных, Moldcell, июнь 2018 – февраль 2021\nОбразование\nТехнический университет Молдовы, 2014 – 2018\n"
+        "Навыки\nPython, SQL, Power BI, Excel"
+    ),
+    "romanian-months": (
+        "Elena Rusu\nelena.rusu@example.com | +373 69 555 012\nEXPERIENȚĂ PROFESIONALĂ\n"
+        "Analist de date senior, Orange Moldova, Martie 2021 – Prezent\n"
+        "Analist de date, Moldcell, Iunie 2018 – Februarie 2021\nEDUCAȚIE\n"
+        "Licență în Informatică, Universitatea Tehnică a Moldovei, 2014 – 2018\nCOMPETENȚE\nPython, SQL, Power BI"
+    ),
+    "dotted-dates": (
+        "Elena Rusu\nExperience\nSenior Data Analyst, Orange Moldova, 03.2021 – present\n"
+        "Data Analyst, Moldcell, 06.2018 – 02.2021\nEducation\nBSc Computer Science, 2014 – 2018\nSkills\nPython, SQL"
+    ),
+    "cedilla-headings": (
+        "Ion Bălănescu\nEXPERIENŢĂ PROFESIONALĂ\nInginer software, Bălţi Tech, Septembrie 2020 – până în prezent\n"
+        "EDUCAŢIE\nUniversitatea de Stat din Bălţi, 2016 – 2020\nCOMPETENŢE\nC++, Python"
+    ),
 }
 
 

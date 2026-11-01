@@ -374,3 +374,44 @@ Python, SQL, Power BI, Excel`;
     expect(notes(scoreText(ANA_TEXT, TODAY))).toEqual(["pasted_text"]);
   });
 });
+
+describe("Romanian and Russian CVs are read, not just warned about", () => {
+  const RU = `Елена Русу
+elena.rusu@example.com | +373 69 555 012
+Опыт работы
+Старший аналитик данных, Orange Moldova, 03.2021 – по настоящее время
+• Создала 12 дашбордов Power BI
+Аналитик данных, Moldcell, июнь 2018 – февраль 2021
+Образование
+Технический университет Молдовы, 2014 – 2018
+Навыки
+Python, SQL, Power BI, Excel`;
+  const RO = `Elena Rusu
+elena.rusu@example.com | +373 69 555 012
+EXPERIENŢĂ PROFESIONALĂ
+Analist de date senior, Orange Moldova, Martie 2021 – Prezent
+• Am construit 12 dashboard-uri Power BI folosite de 40 de manageri
+Analistă de date, Moldcell, Iunie 2018 – Februarie 2021
+EDUCAŢIE
+Licență în Informatică, Universitatea Tehnică a Moldovei, 2014 – 2018
+COMPETENŢE
+Python, SQL, Power BI, Excel`;
+  const DOTTED = `Elena Rusu
+elena.rusu@example.com | +373 69 555 012
+Experience
+Senior Data Analyst, Orange Moldova, 03.2021 – present
+Data Analyst, Moldcell, 06.2018 – 02.2021
+Education
+BSc Computer Science, Technical University of Moldova, 2014 – 2018
+Skills
+Python, SQL, Power BI, Excel`;
+
+  for (const [name, text] of [["Russian", RU], ["Romanian (with ş ţ)", RO], ["dotted dates", DOTTED]] as const)
+    it(`${name}: both jobs, with their months`, () => {
+      const r = scoreText(text, TODAY);
+      expect(r.sections[1].status).toBe("2 of 2 jobs read in full");
+      expect(r.monthsOfExperience).toBe(102); // June 2018 – November 2026
+      expect(r.worst).toBeNull();
+      expect(r.notes.map((n) => n.code)).not.toContain("language_unknown");
+    });
+});

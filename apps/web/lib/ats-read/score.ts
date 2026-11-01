@@ -559,7 +559,7 @@ function scoreReadings(
       fix: "Export again with a standard font (for example Arial, Calibri or Inter), or upload the .docx.",
     });
   else if (special) {
-    if (new Set(parsed.map((p) => norm(p.name))).size === 1) good.push("Diacritics read exactly");
+    if (new Set(parsed.map((p) => norm(p.name))).size === 1) good.push("The special letters in your name read exactly");
     else
       add({
         code: "diacritics",
@@ -804,7 +804,7 @@ function buildSections(
     );
   const skillsList = skills.find((f) => f.counted);
   return [
-    make("personalInfo", "Contact", of("personalInfo"), contact, `${read(contact)} of ${plural(contact.length, "field")} read${same}`, good.filter((g) => /Contacts|Diacritics/.test(g))),
+    make("personalInfo", "Contact", of("personalInfo"), contact, `${read(contact)} of ${plural(contact.length, "field")} read${same}`, good.filter((g) => /Contacts|letters/.test(g))),
     make(
       "work",
       "Experience",

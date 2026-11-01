@@ -15,23 +15,27 @@
  * and count the years of experience from the dates (what an ATS filter on "3+ years" uses).
  */
 
+// English, Romanian (comma-below ș/ț; headingKey folds the cedilla ş/ţ into them) and Russian.
 const HEADINGS: Record<string, string[]> = {
-  summary: ["summary", "professional summary", "profile", "about me", "objective", "rezumat", "profil"],
+  summary: ["summary", "professional summary", "profile", "about me", "objective", "rezumat", "profil",
+    "о себе", "обо мне", "профиль", "цель"],
   experience: ["experience", "work experience", "professional experience", "employment",
-    "employment history", "work history", "experiență", "experienta", "experiență profesională"],
-  education: ["education", "educație", "educatie", "studii"],
+    "employment history", "work history", "experiență", "experienta", "experiență profesională",
+    "experiență de muncă", "опыт работы", "опыт", "профессиональный опыт", "трудовая деятельность"],
+  education: ["education", "educație", "educatie", "studii", "образование"],
   skills: ["skills", "technical skills", "hard skills", "skills & awards", "skills and awards",
-    "skills & languages", "competențe", "competente", "abilități"],
-  tools: ["tools", "instruments", "technologies"],
+    "skills & languages", "competențe", "competente", "abilități",
+    "навыки", "ключевые навыки", "профессиональные навыки", "компетенции"],
+  tools: ["tools", "instruments", "technologies", "инструменты", "технологии"],
   soft_skills: ["soft skills"],
-  languages: ["languages", "limbi", "limbi străine"],
+  languages: ["languages", "limbi", "limbi străine", "языки", "знание языков", "иностранные языки"],
   certifications: ["certifications", "certificates", "training & certifications",
-    "training and certifications", "certificări"],
-  awards: ["awards", "honors", "awards & honors", "premii"],
-  publications: ["publications", "publicații"],
-  volunteering: ["volunteering", "volunteer experience", "voluntariat"],
-  activities: ["activities", "relevant activities", "projects", "activități"],
-  links: ["links", "profiles"],
+    "training and certifications", "certificări", "сертификаты", "курсы и сертификаты"],
+  awards: ["awards", "honors", "awards & honors", "premii", "награды", "достижения"],
+  publications: ["publications", "publicații", "публикации"],
+  volunteering: ["volunteering", "volunteer experience", "voluntariat", "волонтерство", "волонтёрство"],
+  activities: ["activities", "relevant activities", "projects", "activități", "проекты"],
+  links: ["links", "profiles", "ссылки"],
 };
 const HEADING_INDEX = new Map(Object.entries(HEADINGS).flatMap(([k, vs]) => vs.map((v) => [v, k] as const)));
 
@@ -39,15 +43,21 @@ export type SectionKey = keyof typeof HEADINGS;
 
 const MONTHS =
   "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|" +
-  "sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
-const DATE = `(?:(?:${MONTHS})\\.?\\s+(?:19|20)\\d{2}|(?:0?[1-9]|1[0-2])/(?:19|20)\\d{2}|(?:19|20)\\d{2})`;
-export const DATE_RANGE = new RegExp(
-  `(?<start>${DATE})\\s*(?:–|—|-|to|until)\\s*(?<end>${DATE}|present|current|now|prezent)`,
-  "iu",
-);
+  "sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|" +
+  // Romanian (feb, mar, apr, aug, sept, oct, dec are above)
+  "ian(?:uarie)?|februarie|martie|aprilie|mai|iun(?:ie)?|iul(?:ie)?|septembrie|octombrie|noi(?:embrie)?|decembrie|" +
+  // Russian, in the nominative and genitive ("март 2021", "марта 2021")
+  "янв(?:ар[ьяе])?|фев(?:рал[ьяе])?|мар(?:т[ае]?)?|апр(?:ел[ьяе])?|ма[йяе]|июн[ьяе]?|июл[ьяе]?|" +
+  "авг(?:уст[ае]?)?|сен(?:т(?:ябр[ьяе])?)?|окт(?:ябр[ьяе])?|ноя(?:бр[ьяе])?|дек(?:абр[ьяе])?";
+// "March 2021", "03/2021", "03.2021" or "2021"
+const DATE = `(?:(?:${MONTHS})\\.?\\s+(?:19|20)\\d{2}|(?:0?[1-9]|1[0-2])[/.](?:19|20)\\d{2}|(?:19|20)\\d{2})`;
+// "Present" in English, Romanian and Russian
+const NOW =
+  "present|current|now|până în prezent|pana in prezent|în prezent|prezent|по настоящее время|настоящее время|н\\.\\s?в\\.|по сей день|сейчас";
+export const DATE_RANGE = new RegExp(`(?<start>${DATE})\\s*(?:–|—|-|to|until)\\s*(?<end>${DATE}|${NOW})`, "iu");
 const SINGLE_DATE = new RegExp(`(?<![\\p{Nd}/.])(?<date>${DATE})(?![\\p{Nd}/])`, "iu");
 const RANGE_CUT = new RegExp(`${DATE}\\s*(?:–|—|-|to|until)\\s*$`, "iu");
-const RANGE_REST = new RegExp(`^\\s*(?:${DATE}|present|current|now|prezent)(?![\\p{L}\\p{N}_])`, "iu");
+const RANGE_REST = new RegExp(`^\\s*(?:${DATE}|${NOW})(?![\\p{L}\\p{N}_])`, "iu");
 const SLUG_CUT = /linkedin\.com\/in\/$/i;
 const SLUG_REST = /^[A-Za-z0-9\-_%]/;
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
@@ -90,7 +100,8 @@ export function joinWraps(text: string): string {
 export function headingKey(line: string): SectionKey | null {
   const s = strip(strip(line).replace(/[:\s]+$/u, ""));
   if (!s || len(s) > 40 || /[\p{Nd}\p{No}]/u.test(s)) return null;
-  return HEADING_INDEX.get(s.toLowerCase()) ?? null;
+  // Romanian written with the cedilla (ş ţ, older keyboards) is the same word as with the comma (ș ț)
+  return HEADING_INDEX.get(s.toLowerCase().replace(/\u015F/g, "\u0219").replace(/\u0163/g, "\u021B")) ?? null;
 }
 
 /** Text anchored on one date range: one job or one degree, as the parser segments it. */
@@ -226,8 +237,17 @@ function skillItems(lines: string[], sections: [SectionKey, number][]): string[]
 // --------------------------------------------------------------------------------------------
 // Beyond the lab parser: what the "how an ATS reads your CV" view shows for each entry.
 
-const TITLE_WORDS =
-  /\b(?:developer|engineer|analyst|manager|designer|specialist|consultant|lead|director|intern|internship|researcher|scientist|architect|administrator|officer|coordinator|assistant|accountant|teacher|nurse|editor|writer|programmer|technician|associate|executive|head|founder|co-founder|cto|ceo|cfo|vp|president|owner|supervisor|representative|agent|advisor|adviser|strategist|marketer|recruiter|tester|qa|devops|sre|contributor|volunteer|trainer|mentor|lecturer|professor|student|operator|inginer|programator|dezvoltator|manager|specialist|analist|director|asistent|contabil|profesor)\b/iu;
+const TITLE_WORDS = new RegExp(
+  "(?<![\\p{L}\\p{N}])(?:" +
+    "developer|engineer|analyst|manager|designer|specialist|consultant|lead|director|intern|internship|researcher|scientist|architect|administrator|officer|coordinator|assistant|accountant|teacher|nurse|editor|writer|programmer|technician|associate|executive|head|founder|co-founder|cto|ceo|cfo|vp|president|owner|supervisor|representative|agent|advisor|adviser|strategist|marketer|recruiter|tester|qa|devops|sre|contributor|volunteer|trainer|mentor|lecturer|professor|student|operator|inginer|inginer[ăa]|programator|programatoare|dezvoltator|dezvoltatoare|analist|analist[ăa]|asistent|asistent[ăa]|" +
+    "contabil|contabil[ăa]|profesor|profesoar[ăa]|specialist[ăa]|directoare|" +
+    // Russian job words, with their endings ("аналитика", "инженером")
+    "(?:аналитик|разработчик|программист|инженер|менеджер|дизайнер|специалист|консультант|руководитель|директор|" +
+    "стаж[её]р|тестировщик|администратор|бухгалтер|преподаватель|учитель|ассистент|координатор|архитектор|" +
+    "оператор|маркетолог|рекрутер|юрист|экономист|переводчик)\\p{L}*" +
+    ")(?![\\p{L}\\p{N}])",
+  "iu",
+);
 const ENTRY_SPLIT = /\s+(?:at|@|—|–|\|)\s+|,\s+|\s+·\s+/u;
 
 /**
@@ -285,19 +305,26 @@ export function entryParts(block: Block): { title: string | null; company: strin
   return { title, company };
 }
 
-const MONTH_INDEX = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+/** Month prefixes in English, Romanian and Russian; the longer Russian "мар" before "ма" (May). */
+const MONTH_PREFIX: [string, number][] = [
+  ["jan", 0], ["ian", 0], ["янв", 0], ["feb", 1], ["фев", 1], ["mar", 2], ["мар", 2], ["apr", 3], ["апр", 3],
+  ["may", 4], ["mai", 4], ["ма", 4], ["jun", 5], ["iun", 5], ["июн", 5], ["jul", 6], ["iul", 6], ["июл", 6],
+  ["aug", 7], ["авг", 7], ["sep", 8], ["сен", 8], ["oct", 9], ["окт", 9], ["nov", 10], ["noi", 10], ["ноя", 10],
+  ["dec", 11], ["дек", 11],
+];
+const PRESENT = new RegExp(`^(?:${NOW})$`, "iu");
 
 /** A date as months since year 0 (start: January for a bare year, end: December, capped at today). */
 export function monthOf(raw: string, edge: "start" | "end", today: Date): number | null {
   const s = raw.toLowerCase().trim();
   const now = today.getFullYear() * 12 + today.getMonth();
-  if (/^(?:present|current|now|prezent)$/.test(s)) return now;
+  if (PRESENT.test(s)) return now;
   const year = s.match(/(?:19|20)\d{2}/);
   if (!year) return null;
   const y = Number(year[0]);
-  const named = s.match(/^([a-z]{3})/);
-  const numeric = s.match(/^(0?[1-9]|1[0-2])\//);
-  const month = named ? MONTH_INDEX.indexOf(named[1]) : numeric ? Number(numeric[1]) - 1 : edge === "start" ? 0 : 11;
+  const named = MONTH_PREFIX.find(([p]) => s.startsWith(p));
+  const numeric = s.match(/^(0?[1-9]|1[0-2])[/.]/);
+  const month = named ? named[1] : numeric ? Number(numeric[1]) - 1 : edge === "start" ? 0 : 11;
   return Math.min(y * 12 + Math.max(0, month), now);
 }
 
