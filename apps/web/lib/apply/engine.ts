@@ -30,13 +30,14 @@ import { cliRunner, type Runner, type RunnerOptions } from "./runner";
 export type Handoff = "captcha" | "email_code" | "login" | "no_form" | "unsupported_field";
 
 // Read from the names of these nodes only, never from the posting's text: a job description that
-// says "security check" doesn't stop the agent, and one can't hide a challenge in a paragraph.
+// says "security check" doesn't stop the agent, and one can't hide a challenge in a paragraph. A
+// posting's heading can still say it ("Background and security check"), so the phrase isn't one.
 const BLOCKER_ROLES = new Set(["Iframe", "iframe", "dialog", "alertdialog", "heading", "checkbox", "button", "textbox"]);
 
 // A challenge the person must pass. Greenhouse's invisible reCAPTCHA shows only a badge (an iframe
 // named "reCAPTCHA") and is not one of these; its challenge frame is.
 const BLOCKERS: [Handoff, RegExp][] = [
-  ["captcha", /recaptcha challenge|hcaptcha|h-captcha|cloudflare security challenge|turnstile|i'?m not a robot|i am human|verify (that )?you(?:'re| are) (a )?human|human verification|security check/i],
+  ["captcha", /recaptcha challenge|hcaptcha|h-captcha|cloudflare security challenge|turnstile|i'?m not a robot|i am human|verify (that )?you(?:'re| are) (a )?human|human verification/i],
   ["email_code", /verification code|enter the code|one[- ]time (code|password)|code (we|that we) (sent|e-?mailed)|^(security |confirmation |access )?code$|check your (e-?mail|inbox)|verify your e-?mail/i],
   ["login", /sign in to apply|log ?in to apply|create an account to apply|log ?in to continue|sign in to continue/i],
 ];

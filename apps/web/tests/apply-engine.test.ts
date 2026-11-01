@@ -161,6 +161,8 @@ describe("preparing", () => {
   it("reads challenges from the page's controls, not from the posting's text", () => {
     expect(blockerIn(`- Iframe "reCAPTCHA"\n- StaticText "This site is protected by reCAPTCHA"`)).toBeNull();
     expect(blockerIn(`- paragraph\n  - StaticText "You will pass a security check. Verify you are human at the interview."\n${FORM}`)).toBeNull();
+    // a heading of the posting, not a challenge
+    expect(blockerIn(`- heading "Background and security check" [level=2, ref=e40]\n${FORM}`)).toBeNull();
   });
 
   it("a page without a form to send is handed over", async () => {
