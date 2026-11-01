@@ -24,7 +24,7 @@ import { GUEST_RETENTION_DAYS } from "@/lib/retention";
 import { RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /** The date the content last changed. Change it with the content, never compute it. */
-export const PRIVACY_UPDATED: LegalDate = { iso: "2026-10-31", label: "31 October 2026" };
+export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-01", label: "1 November 2026" };
 
 const RATE_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
 
@@ -203,7 +203,7 @@ const sections: LegalSection[] = [
             ["_cfuvid", "Cookie set by Cloudflare, for Clerk", "Protects sign-in from abuse"],
             ["ats_hero_guest_id", "Your browser’s local storage", "Links guest CVs to this browser"],
             ["ats_hero_cv_id", "Local storage", "Reopens the CV you were editing"],
-            ["ats_text, ats_jd and the other ats_ keys", "Session storage", "Hold what you check in Improve My Resume and Check Job Fit, and its score, until you close the tab"],
+            ["ats_text, ats_jd and the other ats_ keys", "Session storage", "Hold what you check in Improve My Resume and Check Job Fit, and its result, until you close the tab"],
             ["cc_cookie", "Cookie set by ATS Hero on the public pages", "Remembers your answer to the cookie banner, for 182 days"],
             ["_ga and _ga_<ID>", "Cookies set by Google Analytics, only after you click Allow", "Tell one visit from another, for up to 2 years. If you later choose Decline, we delete them"],
           ]}
