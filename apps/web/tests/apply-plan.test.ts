@@ -237,7 +237,9 @@ describe("where the agent may go", () => {
     });
     expect(postingTarget("https://jobs.lever.co/acme/1-2-3/apply")).toMatchObject({ ok: true, ats: "lever" });
     expect(postingTarget("https://jobs.ashbyhq.com/acme/1")).toMatchObject({ ok: true, ats: "ashby" });
-    expect(postingTarget("https://atshero.breezy.hr/p/abc")).toMatchObject({ ok: true, ats: "breezy" });
+    // Breezy joins with our own test job, under its exact subdomain (AA-2)
+    expect(postingTarget("https://atshero.breezy.hr/p/abc")).toMatchObject({ ok: false, reason: "unsupported" });
+    expect(postingTarget("https://user:pw@jobs.lever.co/acme/1")).toMatchObject({ ok: false, reason: "invalid_url" });
     expect(postingTarget("http://jobs.lever.co/acme/1")).toMatchObject({ ok: false, reason: "not_https" });
     expect(postingTarget("https://evil-greenhouse.io.example.com/x")).toMatchObject({ ok: false, reason: "unsupported" });
     expect(postingTarget("https://careers.example.com/apply")).toMatchObject({ ok: false, reason: "unsupported" });

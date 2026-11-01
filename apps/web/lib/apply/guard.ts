@@ -3,7 +3,8 @@
  *
  * - LinkedIn: never (AGENTS.md rule 11; its User Agreement 8.2 forbids bots and automation).
  * - Indeed Apply and Workday: not now (an Indeed account, or a candidate account per employer).
- * - Greenhouse, Lever, Ashby: the ATSs the agent is built for first; Breezy for our own test job.
+ * - Greenhouse, Lever, Ashby: the ATSs the agent is built for first. Breezy joins with our own test
+ *   job (AA-2), under that job's exact subdomain only.
  * - localhost: the apply lab's synthetic forms, and only when the caller allows it.
  *
  * The browser is then held to `allowedDomains`: agent-browser blocks navigation and sub-resources
@@ -11,7 +12,7 @@
  * CDN, its CAPTCHA) are added after we see a real form of that ATS, on our test job first.
  */
 
-export type Ats = "greenhouse" | "lever" | "ashby" | "breezy" | "lab";
+export type Ats = "greenhouse" | "lever" | "ashby" | "lab";
 
 export type Refusal = "invalid_url" | "not_https" | "linkedin" | "indeed" | "workday" | "unsupported";
 
@@ -23,7 +24,6 @@ const ATS_HOSTS: [Ats, RegExp, string[]][] = [
   ["greenhouse", /(^|\.)greenhouse\.io$/, ["greenhouse.io", "*.greenhouse.io"]],
   ["lever", /(^|\.)lever\.co$/, ["lever.co", "*.lever.co"]],
   ["ashby", /(^|\.)ashbyhq\.com$/, ["ashbyhq.com", "*.ashbyhq.com"]],
-  ["breezy", /(^|\.)breezy\.hr$/, ["breezy.hr", "*.breezy.hr"]],
 ];
 
 const NEVER: [Refusal, RegExp][] = [
@@ -41,6 +41,8 @@ export function postingTarget(raw: string, opts: { allowLocal?: boolean } = {}):
   } catch {
     return { ok: false, reason: "invalid_url", host: null };
   }
+  // a user name or password in the link: never sent anywhere
+  if (url.username || url.password) return { ok: false, reason: "invalid_url", host: null };
   const host = url.hostname.toLowerCase();
   if (opts.allowLocal && LOCAL.has(host) && (url.protocol === "http:" || url.protocol === "https:"))
     return { ok: true, ats: "lab", url: url.href, allowedDomains: [host === "[::1]" ? "::1" : host] };
