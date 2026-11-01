@@ -173,4 +173,3 @@ describe("sending", () => {
     expect(f.calls).toEqual([["close"]]);
   });
 });
-

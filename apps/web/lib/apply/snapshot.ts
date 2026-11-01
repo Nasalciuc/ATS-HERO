@@ -96,6 +96,22 @@ function contextOf(node: SnapshotNode): string | null {
   return null;
 }
 
+/** A select's options sit under a popup node ("MenuListPopup"), not right under the combobox. */
+function optionsOf(node: SnapshotNode): { ref: string | null; name: string }[] {
+  const out: { ref: string | null; name: string }[] = [];
+  const walk = (n: SnapshotNode) => {
+    for (const c of n.children) {
+      if (c.role === "option") out.push({ ref: c.attrs.ref ?? null, name: c.name });
+      else walk(c);
+    }
+  };
+  walk(node);
+  return out;
+}
+
+// A <select required> is not marked required in the tree: the label's mark is what says it.
+const REQUIRED_MARK = /\*|✱|✳|\((required|obligatoriu|обязательно)\)/iu;
+
 /** Every control that has a ref, with the group and the text that give it meaning. */
 export function controlsOf(text: string): FormControl[] {
   const out: FormControl[] = [];
@@ -107,12 +123,13 @@ export function controlsOf(text: string): FormControl[] {
         ref: node.attrs.ref,
         role: node.role,
         name: node.name,
-        required: node.attrs.required === "true",
+        // a radio's "*" is on its question
+        required: node.attrs.required === "true" || REQUIRED_MARK.test(node.name) || (node.role === "radio" && REQUIRED_MARK.test(g?.name ?? "")),
         checked: node.attrs.checked === undefined ? null : node.attrs.checked === "true",
         value: node.value,
         group: g?.name || null,
         context: contextOf(node),
-        options: node.children.filter((c) => c.role === "option").map((c) => ({ ref: c.attrs.ref ?? null, name: c.name })),
+        options: optionsOf(node),
       });
     }
     node.children.forEach(walk);

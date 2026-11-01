@@ -187,11 +187,15 @@ export function planApplication(controls: FormControl[], profile: ApplyProfile, 
 /** The person's answers, keyed by `PersonItem.id`: text for text and choice, the option for radio, true/false for checkbox. */
 export type Answers = Record<string, string | boolean>;
 
-/** What still blocks a submission: required items without an answer, and answers that don't fit the item. */
+/**
+ * What still blocks a submission: a sensitive question the person hasn't gone through (answered, or
+ * left empty on purpose with ""), a required item without an answer, an answer that doesn't fit.
+ */
 export function missingAnswers(plan: ApplyPlan, answers: Answers): PersonItem[] {
   return plan.person.filter((item) => {
     const a = answers[item.id];
-    if (a === undefined || a === "") return item.required;
+    if (a === undefined) return item.required || item.sensitive;
+    if (a === "") return item.required;
     if (item.kind === "checkbox") return typeof a !== "boolean" || (item.required && a !== true);
     if (typeof a !== "string") return true;
     if (item.kind === "radio" || (item.kind === "choice" && item.options.length)) return !item.options.some((o) => sameOption(o, a));

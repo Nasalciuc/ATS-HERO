@@ -143,7 +143,7 @@ export interface Approval {
 export type Submitted =
   | { status: "blocked"; missing: PersonItem[] }
   | { status: "handoff"; reason: Handoff; screenshot: string }
-  | { status: "sent"; screenshot: string; confirmation: string }
+  | { status: "sent"; screenshot: string; confirmation: string; pageText: string }
   | { status: "unconfirmed"; screenshot: string; pageText: string };
 
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -179,9 +179,11 @@ export async function submitApplication(session: Session, approval: Approval): P
 
     const blocker = blockerIn(pageText);
     if (blocker) return { status: "handoff", reason: blocker, screenshot };
+    // what the page said after the click: the person's proof, kept with the screenshot
+    const said = pageText.slice(0, 4000);
     const sent = pageText.match(SENT);
-    if (sent) return { status: "sent", screenshot, confirmation: sent[0] };
-    return { status: "unconfirmed", screenshot, pageText: pageText.slice(0, 4000) };
+    if (sent) return { status: "sent", screenshot, confirmation: sent[0], pageText: said };
+    return { status: "unconfirmed", screenshot, pageText: said };
   } finally {
     await close(run);
   }
