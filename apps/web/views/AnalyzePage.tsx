@@ -26,7 +26,7 @@ function TextOrUpload({
   onFileRead?: (ats: AtsRead | null) => void;
   placeholder: string;
   figma: string;
-  /** read out after the visible label, so the two Job Fit fields don't share one name */
+  /** shown after "INSERT TEXT", so nobody pastes the CV into the job field or the other way round */
   what: string;
 }) {
   const id = useId();
@@ -70,7 +70,7 @@ function TextOrUpload({
     >
       <div className="analyze-field" data-figma={`${figma}-field`}>
         <label className="field__label" htmlFor={id}>
-          INSERT TEXT<span className="sr-only">: {what}</span>
+          INSERT TEXT — {what}
         </label>
         <textarea
           id={id}
@@ -199,7 +199,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
       <div className={`analyze-card${mode === "jobfit" ? " analyze-card--two" : ""}`} data-figma="analyze-card">
         <TextOrUpload
           figma="analyze-cv"
-          what="your CV"
+          what="YOUR CV"
           value={cvText}
           onChange={setCvText}
           onFileRead={setCvFile}
@@ -208,7 +208,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
         {mode === "jobfit" && (
           <TextOrUpload
             figma="analyze-job"
-            what="the job description"
+            what="JOB DESCRIPTION"
             value={jobText}
             onChange={setJobText}
             placeholder="Paste the job description here…"

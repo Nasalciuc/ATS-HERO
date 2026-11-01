@@ -36,7 +36,8 @@ export default function Navbar() {
         </button>
 
         <nav className={`nav__links${menuOpen ? " is-open" : ""}`}>
-          <a href="/#tool" data-figma="nav-tool" onClick={() => setMenuOpen(false)}>
+          {/* Opens the app (the CV builder), not the landing's "Our tool" section. */}
+          <a href="/app/create" data-figma="nav-tool" onClick={() => setMenuOpen(false)}>
             Our tool
           </a>
           <a href="/#why" data-figma="nav-why" onClick={() => setMenuOpen(false)}>
