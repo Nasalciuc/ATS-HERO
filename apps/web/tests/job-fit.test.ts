@@ -119,6 +119,15 @@ describe("the match", () => {
     expect(r.summary).toBe("most_required");
   });
 
+  it("a post with only nice-to-haves gets no “all required” grade", () => {
+    const r = jobFit(ELENA, "Data Analyst\nNice to have: Go, SQL", TODAY);
+    expect(r.required).toEqual({ met: 0, total: 0 });
+    expect(r.preferred).toEqual({ met: 1, total: 2 });
+    expect(r.summary).toBe("preferred_only");
+    expect(r.label).toBe("No required items we can check");
+    expect(r.message).toBe("We found nothing the post marks as required that we can check. Nice to have, not shown: Go.");
+  });
+
   it("a post with nothing to check says so", () => {
     const r = jobFit(ELENA, "We are a friendly team. Join us!", TODAY);
     expect(r.summary).toBe("none_found");
