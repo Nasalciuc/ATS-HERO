@@ -6,6 +6,8 @@
  * The file type is told by its first bytes, not its name: a PDF renamed .txt is still read as a
  * PDF, and an old .doc renamed .docx gets the right advice.
  */
+import type { AtsRead } from "./ats-read/types";
+
 export type CvFileError =
   | "TOO_LARGE"
   | "TOO_MANY_PAGES"
@@ -16,7 +18,8 @@ export type CvFileError =
   | "EMPTY";
 
 export type CvFileResult =
-  | { ok: true; text: string; kind: "pdf" | "docx" | "text" }
+  /** `ats`: the file read the ways ATS readers do (lib/ats-read), for the ATS check; not for text files */
+  | { ok: true; text: string; kind: "pdf" | "docx" | "text"; ats?: AtsRead }
   | { ok: false; error: CvFileError };
 
 export const MAX_CV_FILE_BYTES = 10 * 1024 * 1024;
@@ -47,19 +50,22 @@ export async function readCvFile(file: File): Promise<CvFileResult> {
   const head = new Uint8Array(await file.slice(0, 8).arrayBuffer());
   try {
     if (startsWith(head, [0x25, 0x50, 0x44, 0x46, 0x2d])) {
-      // %PDF-
-      const { extractPdfText, MAX_PDF_PAGES } = await import("./pdf");
-      const { pages, text } = await extractPdfText(await file.arrayBuffer());
-      if (pages > MAX_PDF_PAGES) return { ok: false, error: "TOO_MANY_PAGES" };
+      // %PDF-: read once, the ways ATS readers do; the text is the in-order reading, as before
+      const { readPdf } = await import("./ats-read/pdf");
+      const { MAX_PDF_PAGES } = await import("./pdf");
+      const ats = await readPdf(await file.arrayBuffer());
+      if ((ats.pages ?? 0) > MAX_PDF_PAGES) return { ok: false, error: "TOO_MANY_PAGES" };
+      const text = ats.readings.find((r) => r.reader === "pdf-stream")?.text ?? "";
       if (text.replace(/[^\p{L}\p{N}]/gu, "").length < MIN_TEXT_CHARS) return { ok: false, error: "SCANNED" };
-      return { ok: true, text, kind: "pdf" };
+      return { ok: true, text, kind: "pdf", ats };
     }
     if (startsWith(head, [0x50, 0x4b, 0x03, 0x04])) {
       // PK: a zip, which a .docx is (so are .xlsx, .pptx and .odt)
-      const { extractDocxText } = await import("./docx-text");
-      const text = await extractDocxText(await file.arrayBuffer());
-      if (text === null) return { ok: false, error: "NOT_SUPPORTED" };
-      return text.trim() ? { ok: true, text, kind: "docx" } : { ok: false, error: "EMPTY" };
+      const { readDocx } = await import("./ats-read/docx");
+      const ats = await readDocx(await file.arrayBuffer());
+      if (ats === null) return { ok: false, error: "NOT_SUPPORTED" };
+      const text = ats.readings.find((r) => r.reader === "docx-all")?.text ?? "";
+      return text.trim() ? { ok: true, text, kind: "docx", ats } : { ok: false, error: "EMPTY" };
     }
     if (startsWith(head, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])) {
       // the old Office binary format: .doc (or .xls, .ppt)

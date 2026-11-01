@@ -1,6 +1,8 @@
 import type { Cv, CvData, JobFitReport, ScoreReport } from "./types";
 import { emptyCvData } from "./types";
-import { scoreCv, scoreRawText } from "./analyzer/ats-scorer";
+import { scoreCv } from "./analyzer/ats-scorer";
+import { atsReport } from "./analyze-flow";
+import type { AtsRead } from "./ats-read/types";
 import { jobFit } from "./analyzer/keyword-matcher";
 import { getGuestId } from "./guest";
 import { listMyCvs, getCvById, createCv, updateCv, removeCv, claimGuest } from "@/app/actions/cvs";
@@ -70,8 +72,11 @@ export const api = {
     cvId?: string;
     data?: CvData;
     text?: string;
+    /** the uploaded file, read for the ATS check (lib/ats-read): used when `text` is its text */
+    ats?: AtsRead | null;
   }): Promise<{ report: ScoreReport }> => {
-    if (payload.text != null) return { report: scoreRawText(payload.text) };
+    // Improve / Job Fit: the ATS read report of the file (or of the pasted text)
+    if (payload.text != null) return { report: atsReport(payload.text, payload.ats) };
     let data = payload.data;
     if (!data && payload.cvId) {
       const { cv } = await api.getCv(payload.cvId);

@@ -2,6 +2,12 @@
 // ATS Score: Figma "ATS Score Estimation_loading" (319:3807; 331:5590 with the Improve / Job Fit
 // progress bar) and "ATS Score_Results" (319:4126; 383:8025 with the progress bar; 383:7664 with
 // "Fix now" open). Checked by design-check/specs/score-*.json.
+//
+// Improve / Job Fit show the "ATS read" report (lib/ats-read/score.ts): the same circle, rows,
+// icons, "Fix now" and +/− toggles, plus what an ATS reads in each row, the issues that cost the
+// most, the text the robot read and the method. PROVISIONAL (AGENTS.md rule 6): those additions
+// have no Figma frame yet (ATS-VIEW-DESIGN.md §4; Liubovi draws or checks them). The locked specs
+// still pass: they inject an old-format report, which renders as before.
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "@/lib/router";
 import AppShell from "../components/app/AppShell";
@@ -10,6 +16,7 @@ import { AlertLine, ArrowUp, CvDocument, EyeOptic, MinusThin, PlusThin, SaveDisk
 import { useApp } from "../store/AppContext";
 import { api } from "../lib/api";
 import { SECTION_EMOJI, type JobFitReport, type ScoreReport, type SectionKey, type SectionReport } from "../lib/types";
+import { fileLine, type AtsReport, type AtsSection, type Issue, type ReadField } from "../lib/ats-read/score";
 import {
   PersonalInfoStep,
   EducationStep,
@@ -32,6 +39,8 @@ function getAtsFlow(): AtsFlow {
   if (f === "improve" || f === "jobfit") return f;
   return "create";
 }
+
+const isAts = (r: ScoreReport | null): r is AtsReport => !!r && (r as AtsReport).kind === "ats-read";
 
 /** Green from 80, amber from 50, red below (the colours of the Figma rows). */
 const toneOf = (score: number): Tone => (score >= 80 ? "good" : score >= 50 ? "fair" : "poor");
@@ -85,7 +94,7 @@ function ScoreRow({
   onFix,
   form,
 }: {
-  s: SectionReport;
+  s: SectionReport | AtsSection;
   /** the first row carries the design-check keys (the second one its position) */
   index: number;
   open: boolean;
@@ -96,6 +105,7 @@ function ScoreRow({
 }) {
   const tone = toneOf(s.score);
   const key = (k: string) => (index === 0 ? k : undefined);
+  const ats = "reads" in s ? s : null;
   const bodyId = `score-body-${s.key}`;
   const fix = (phone: boolean) => (
     <button
@@ -121,8 +131,8 @@ function ScoreRow({
           <span className={`score-row__score is-${tone}`} data-figma={key("row-score")}>
             {Math.round(s.score)} / 100
           </span>
-          <span className="score-row__entry" data-figma={key("row-entry")}>
-            Entry score: {s.entryScore.toFixed(2)}
+          <span className={`score-row__entry${ats ? " score-row__entry--status" : ""}`} data-figma={key("row-entry")}>
+            {ats ? ats.status : `Entry score: ${s.entryScore.toFixed(2)}`}
           </span>
         </span>
         {open && !fixing && fix(false)}
@@ -140,6 +150,7 @@ function ScoreRow({
       </div>
       {open && (
         <div className="score-row__body" id={bodyId}>
+          {ats && ats.reads.length > 0 && <ReadList reads={ats.reads} />}
           {s.critical.length > 0 && <Group tone="critical" items={s.critical} figma={key("badge-critical")} />}
           {s.suggestions.length > 0 && <Group tone="suggestion" items={s.suggestions} figma={key("badge-suggestion")} />}
           {s.goodPractices.length > 0 && <Group tone="good" items={s.goodPractices} figma={key("badge-good")} />}
@@ -150,6 +161,110 @@ function ScoreRow({
               {form}
             </div>
           )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+const MARK = {
+  ok: { sign: "✓", label: "Read correctly" },
+  partial: { sign: "!", label: "Partly read" },
+  lost: { sign: "✕", label: "Not read" },
+} as const;
+
+/** What an ATS reads in one section, field by field (provisional, rule 6). */
+function ReadList({ reads }: { reads: ReadField[] }) {
+  return (
+    <div className="score-group score-group--wide">
+      <span className="score-badge score-badge--read">What an ATS reads</span>
+      <ul className="score-reads">
+        {reads.map((f, i) => (
+          <li key={i} className={`score-reads__item is-${f.mark}`}>
+            <span className="score-reads__mark" role="img" aria-label={MARK[f.mark].label}>
+              {MARK[f.mark].sign}
+            </span>
+            <span className="score-reads__label">{f.label}</span>
+            <span className="score-reads__value">
+              {f.value ?? "—"}
+              {f.note && <span className="score-reads__note">{f.note}</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The issues that cost the most points, with why and how to fix (provisional, rule 6). */
+function FixFirst({ issues }: { issues: Issue[] }) {
+  const top = issues.filter((i) => i.points > 0).slice(0, 4);
+  if (!top.length) return null;
+  return (
+    <section className="score-fixfirst" aria-labelledby="score-fixfirst-title">
+      <h2 id="score-fixfirst-title" className="score-fixfirst__title">
+        What to fix first
+      </h2>
+      <ol className="score-fixfirst__list">
+        {top.map((i) => (
+          <li key={i.code} className="score-fixfirst__item">
+            <div className="score-fixfirst__top">
+              <h3 className="score-fixfirst__name">{i.title}</h3>
+              <span className={`score-badge ${i.points >= 10 ? "score-badge--critical" : "score-badge--suggestion"}`}>
+                −{i.points} pts
+              </span>
+            </div>
+            <p className="score-fixfirst__why">
+              {i.why}
+              {i.source && (
+                <>
+                  {" "}
+                  <a href={i.source.url} target="_blank" rel="noopener noreferrer">
+                    {i.source.label}
+                  </a>
+                </>
+              )}
+            </p>
+            <p className="score-fixfirst__fix">
+              <strong>Fix:</strong> {i.fix}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+/** "See the text the robot read": the weakest reading's text, in a row like the sections. */
+function RobotRow({ text, readings }: { text: string; readings: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className={`score-row${open ? " is-open" : ""}`}>
+      <div className="score-row__head">
+        <span className="score-row__main">
+          <span className="score-row__icon is-neutral" aria-hidden="true">
+            🔍
+          </span>
+          <span className="score-row__label">Text the robot read</span>
+          <span className="score-row__entry score-row__entry--status">
+            {readings > 1 ? `the weaker of ${readings} readings` : "your pasted text"}
+          </span>
+        </span>
+        <button
+          type="button"
+          className="score-row__toggle"
+          aria-expanded={open}
+          aria-controls={open ? "score-robot" : undefined}
+          aria-label="Text the robot read: show"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <MinusThin /> : <PlusThin size={34} />}
+        </button>
+      </div>
+      {open && (
+        <div className="score-row__body" id="score-robot">
+          <p className="score-robot__hint">The exact text, in the order a reader took it. Compare it with your CV: what&apos;s glued, moved or missing here is what an ATS gets wrong.</p>
+          <pre className="score-robot">{text}</pre>
         </div>
       )}
     </li>
@@ -214,7 +329,6 @@ export default function ScorePage() {
   const [saved, setSaved] = useState(false); // Improve / Job Fit: "Saved" for a moment
   const savedTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(savedTimer.current), []);
-  const [secondsLeft, setSecondsLeft] = useState(30);
   const [flow, setFlow] = useState<AtsFlow>("create");
   // Improve / Job Fit with the analysed text kept: "Fix now" edits that text
   const [textFlow, setTextFlow] = useState(false);
@@ -236,10 +350,10 @@ export default function ScorePage() {
     else setOpen(keep && r.sections.some((x) => x.key === keep) ? keep : null);
   };
 
+  // No artificial wait: the loading screen shows only while the score is really being computed
+  // (the builder's CV still loading). Improve / Job Fit arrive with their report ready.
   const compute = async () => {
     setLoading(true);
-    const t0 = Date.now();
-    const MIN_LOADING_MS = 1500;
     try {
       const cached = sessionStorage.getItem("ats_report");
       if (cached) {
@@ -250,8 +364,6 @@ export default function ScorePage() {
         show((await api.score({ data })).report);
       }
     } finally {
-      const wait = MIN_LOADING_MS - (Date.now() - t0);
-      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       setLoading(false);
     }
   };
@@ -264,13 +376,6 @@ export default function ScorePage() {
     void compute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
-
-  useEffect(() => {
-    if (!loading) return;
-    setSecondsLeft(30);
-    const id = setInterval(() => setSecondsLeft((s) => (s > 1 ? s - 1 : s)), 800);
-    return () => clearInterval(id);
-  }, [loading]);
 
   // Fix now shows the section's builder form in its Figma card (383:7664)
   const renderSectionForm = (key: SectionKey) => {
@@ -428,20 +533,23 @@ export default function ScorePage() {
             <p className="ats-loading__msg" role="status" data-figma="loading-msg">
               <span aria-hidden="true">🔍 </span>Hunting for hidden resume glitches...
             </p>
-            <p className="ats-loading__time" aria-hidden="true" data-figma="loading-time">
-              {secondsLeft} sec left
-            </p>
           </div>
         </div>
       ) : (
         <div className="score">
           {fromAnalyze && <AnalyzeSteps current={1} />}
           <div className="score__head" data-figma="score-head">
-            <ScoreCircle value={report.generalScore} text={report.generalScore.toFixed(1)} label="General score" figma="score-circle" />
-            <div className="score__msg">
+            <ScoreCircle
+              value={report.generalScore}
+              text={isAts(report) ? String(Math.round(report.generalScore)) : report.generalScore.toFixed(1)}
+              label={isAts(report) ? "ATS read score" : "General score"}
+              figma="score-circle"
+            />
+            <div className={`score__msg${isAts(report) ? " score__msg--ats" : ""}`}>
               <p className="score__text" data-figma="score-text">
                 {report.message}
               </p>
+              {isAts(report) && <p className="score__file">{fileLine(report)}</p>}
               <button className="topbtn topbtn--dark score__recalc" data-figma="btn-recalc" onClick={() => void recalculate()} disabled={busy}>
                 {busy ? "Recalculating…" : "Recalculate Score"}
               </button>
@@ -449,6 +557,13 @@ export default function ScorePage() {
           </div>
 
           {jobFit && <JobFitPanel fit={jobFit} />}
+
+          {isAts(report) && <FixFirst issues={report.issues} />}
+          {isAts(report) && report.good.length > 0 && (
+            <div className="score-good">
+              <Group tone="good" items={report.good} />
+            </div>
+          )}
 
           <ul className="score__list" data-figma="score-list" aria-label="Score by section">
             {report.sections.map((s, i) => (
@@ -468,7 +583,29 @@ export default function ScorePage() {
                 form={fixing === s.key ? (textFlow ? <TextFix value={draft} onChange={setDraft} /> : renderSectionForm(s.key)) : null}
               />
             ))}
+            {isAts(report) && <RobotRow text={report.robotText} readings={report.readings} />}
           </ul>
+
+          {isAts(report) && flow === "improve" && (
+            <section className="score-next" aria-labelledby="score-next-title">
+              <div className="score-next__text">
+                <h2 id="score-next-title" className="score-next__title">
+                  Match with a job
+                </h2>
+                <p>Paste a job post to see which of its keywords your CV has, and which are missing.</p>
+              </div>
+              <button type="button" className="topbtn topbtn--dark score-next__btn" onClick={() => navigate("/app/jobfit")}>
+                Check Job Fit
+              </button>
+            </section>
+          )}
+          {isAts(report) && (
+            <p className="score-method">
+              How we check: your file is read in your browser the way ATS parsers start, by open-source document readers, then
+              field by field, with the weights of our ATS lab. We don&apos;t run Workday&apos;s or Greenhouse&apos;s own parser.
+              Your file never leaves your device.
+            </p>
+          )}
         </div>
       )}
     </AppShell>

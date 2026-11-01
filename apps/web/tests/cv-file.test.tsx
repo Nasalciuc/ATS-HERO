@@ -136,6 +136,6 @@ describe("wordXmlText", () => {
     zip.file("word/header1.xml", "<w:hdr><w:p><w:r><w:t>Ana Popescu</w:t></w:r></w:p></w:hdr>");
     zip.file("word/header2.xml", "<w:hdr><w:p><w:r><w:t>Ana Popescu</w:t></w:r></w:p></w:hdr>");
     const res = await readCvFile(file(await zip.generateAsync({ type: "uint8array" }), "cv.docx"));
-    expect(res).toEqual({ ok: true, kind: "docx", text: "Ana Popescu\nEXPERIENCE" });
+    expect(res).toMatchObject({ ok: true, kind: "docx", text: "Ana Popescu\nEXPERIENCE" });
   });
 });

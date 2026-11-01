@@ -49,7 +49,7 @@ function UploadCard() {
       setReading(false);
       return;
     }
-    startImprove(res.text);
+    startImprove(res.text, res.ats);
     navigate("/app/score");
   };
 
