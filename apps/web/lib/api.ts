@@ -3,7 +3,8 @@ import { emptyCvData } from "./types";
 import { scoreCv } from "./analyzer/ats-scorer";
 import { atsReport } from "./analyze-flow";
 import type { AtsRead } from "./ats-read/types";
-import { jobFit } from "./analyzer/keyword-matcher";
+import type { AtsReport } from "./ats-read/score";
+import { jobFit } from "./job-fit";
 import { getGuestId } from "./guest";
 import { listMyCvs, getCvById, createCv, updateCv, removeCv, claimGuest } from "@/app/actions/cvs";
 import { saveScan as saveScanAction } from "@/app/actions/scans";
@@ -74,8 +75,8 @@ export const api = {
     text?: string;
     /** the uploaded file, read for the ATS check (lib/ats-read): used when `text` is its text */
     ats?: AtsRead | null;
-  }): Promise<{ report: ScoreReport }> => {
-    // Improve / Job Fit: the ATS read report of the file (or of the pasted text)
+  }): Promise<{ report: ScoreReport | AtsReport }> => {
+    // Improve / Job Fit: the ATS check of the file (or of the pasted text)
     if (payload.text != null) return { report: atsReport(payload.text, payload.ats) };
     let data = payload.data;
     if (!data && payload.cvId) {

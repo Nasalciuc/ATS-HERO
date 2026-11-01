@@ -1,7 +1,8 @@
-// The "ATS read" score (lib/ats-read/score.ts): calibration. It must rank CVs the way the ATS lab
-// does, never reward length or stray keywords, give the same answer every time, and explain every
-// point it takes. All files are built here from the lab's synthetic people or hand-made Word XML
-// (AGENTS.md rule 11). Design: ATS-VIEW-DESIGN.md §5.
+// The ATS check (lib/ats-read/score.ts): fields read and findings on the parsers' levels, no score.
+// It must rank layouts the way the ATS lab does, never react to length or stray keywords, give the
+// same answer every time, and give every finding a level, a reason and a fix. All files are built
+// here from the lab's synthetic people or hand-made Word XML (AGENTS.md rule 11).
+// Design: ATS-REAL-VS-NOI.md §5 (claude.ai Project "App Builder").
 import { describe, it, expect, beforeAll } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
@@ -15,6 +16,7 @@ import { buildCvDocx } from "@/lib/exportDocx";
 import { printableCv } from "@/lib/cv-print";
 import { readForAts } from "@/lib/ats-read";
 import { scoreRead, scoreText, type AtsReport } from "@/lib/ats-read/score";
+import { ISSUE_LEVELS } from "@/lib/ats-read/levels";
 import { ATS_SIZE_LIMIT_BYTES } from "@/lib/ats-read/types";
 import type { CvData } from "@/lib/types";
 
@@ -97,33 +99,48 @@ beforeAll(() => {
   Font.registerHyphenationCallback(hyphenationCallback);
 });
 
-/** Every lost point is an issue: their points add up to 100 − score. */
+/** Every finding has a level from the table, a reason and a fix. */
 function explained(r: AtsReport) {
-  const lost = Math.round((100 - r.generalScore) * 10) / 10;
-  const sum = Math.round(r.issues.reduce((s, i) => s + i.points, 0) * 10) / 10;
-  expect(sum).toBeCloseTo(lost, 1);
-  for (const i of r.issues) expect(i.why.length && i.fix.length).toBeTruthy();
+  for (const i of r.issues) {
+    expect(ISSUE_LEVELS[i.code], i.code).toBeDefined();
+    expect(i.level).toBe(ISSUE_LEVELS[i.code].level);
+    expect(i.why.length && i.fix.length).toBeTruthy();
+  }
+  expect(r.fields.read).toBeLessThanOrEqual(r.fields.total);
 }
+const codes = (r: AtsReport) => r.issues.map((i) => i.code);
 
-describe("what doesn't move the score", () => {
-  it("a recipe with an email, a phone and a LinkedIn address scores under 30", () => {
+describe("no score, and nothing that moves one", () => {
+  it("a recipe with an email, a phone and a LinkedIn address: one critical finding, no sections", () => {
     const r = scoreText(RECIPE, TODAY);
-    expect(r.generalScore).toBeLessThan(30);
-    expect(r.verdict).toBe("FAIL");
-    expect(r.issues.map((i) => i.code)).toEqual(expect.arrayContaining(["no_jobs", "no_skills", "no_education"]));
+    expect(r.worst).toBe("critical");
+    expect(codes(r)).toContain("no_sections");
+    // a missing section is one finding, not one per section
+    for (const c of ["no_jobs", "no_education", "no_skills", "heading_experience"]) expect(codes(r)).not.toContain(c);
+    expect(r.message).toMatch(/Most important: no sections found\./);
     explained(r);
   });
 
-  it("length doesn't raise it: the same recipe three times scores the same", () => {
-    expect(scoreText(`${RECIPE}\n${RECIPE}\n${RECIPE}`, TODAY).generalScore).toBe(scoreText(RECIPE, TODAY).generalScore);
+  it("the report has no score in it: no points, no /100", () => {
+    const json = JSON.stringify(scoreText(RECIPE, TODAY));
+    expect(json).not.toMatch(/generalScore|"points"|\/100|\bpts\b/);
   });
 
-  it("a clear CV pasted as text reads fully", () => {
+  it("length doesn't change it: the same recipe three times reads the same", () => {
+    const once = scoreText(RECIPE, TODAY);
+    const thrice = scoreText(`${RECIPE}\n${RECIPE}\n${RECIPE}`, TODAY);
+    expect(thrice.fields).toEqual(once.fields);
+    expect(thrice.counts).toEqual(once.counts);
+  });
+
+  it("a clear CV pasted as text: every field read, nothing found", () => {
     const r = scoreText(ANA_TEXT, TODAY);
-    expect(r.generalScore).toBe(100);
-    expect(r.verdict).toBe("PASS");
+    expect(r.fields).toEqual({ read: 8, total: 8 }); // name, email, phone, LinkedIn, 2 jobs, 1 degree, skills list
+    expect(r.worst).toBeNull();
+    expect(r.issues).toEqual([]);
+    expect(r.notes.map((n) => n.code)).toEqual(["pasted_text"]);
     expect(r.monthsOfExperience).toBe(90); // June 2019 – Nov 2026, both months counted
-    expect(r.issues.map((i) => i.code)).toEqual(["pasted_text"]);
+    expect(r.message).toBe("The reader got your name, email, phone, both jobs with their dates and 6 skills. Nothing the profile needs is lost.");
   });
 
   it("the same file twice gives exactly the same report", async () => {
@@ -134,42 +151,45 @@ describe("what doesn't move the score", () => {
 
 describe("it ranks layouts the way the ATS lab measures them", () => {
   for (const id of Object.keys(personas)) {
-    it(`${id}: Classic, Minimal and Word read fully; the two-column Modern scores lower`, async () => {
+    it(`${id}: Classic, Minimal and Word read in full; the two-column Modern gets a critical finding`, async () => {
       const classic = await scoreFile(await pdfOf("classic", personas[id]));
       const minimal = await scoreFile(await pdfOf("minimal", personas[id]));
       const modern = await scoreFile(await pdfOf("modern", personas[id]));
       const word = await scoreFile(new Uint8Array(await Packer.toBuffer(buildCvDocx(personas[id]))));
-      expect(classic.generalScore).toBeGreaterThanOrEqual(95);
-      expect(minimal.generalScore).toBeGreaterThanOrEqual(95);
-      expect(word.generalScore).toBeGreaterThanOrEqual(95);
-      expect(modern.generalScore).toBeLessThan(classic.generalScore);
-      expect(modern.issues.some((i) => i.code === "jobs_disagree" || i.code === "two_columns")).toBe(true);
-      // the summary names the cause once, even when two issues share it
-      expect(modern.message.split("depending on how the file is read").length).toBeLessThanOrEqual(2);
+      for (const r of [classic, minimal, word]) {
+        expect(r.fields.read).toBe(r.fields.total);
+        expect(r.worst === null || r.worst === "tip").toBe(true);
+      }
+      expect(codes(classic)).toContain("pdf"); // the tip every PDF gets, with both facts
+      expect(word.worst).toBeNull();
+      expect(modern.worst).toBe("critical");
+      expect(codes(modern)).toContain("two_columns");
+      expect(modern.fields.read).toBeLessThanOrEqual(classic.fields.read);
       for (const r of [classic, minimal, modern, word]) explained(r);
     });
   }
 });
 
 describe("Word layouts people send", () => {
-  it("one column, contacts in the page, standard headings: full marks", async () => {
+  it("one column, contacts in the page, standard headings: every field read, nothing found", async () => {
     const r = await scoreFile(await docx(PLAIN));
-    expect(r.generalScore).toBe(100);
-    expect(r.verdict).toBe("PASS");
+    expect(r.fields.read).toBe(r.fields.total);
+    expect(r.worst).toBeNull();
+    expect(r.message).toMatch(/^Both readers got your name, email, phone, both jobs with their dates and 5 skills\./);
   });
 
-  it("creative headings and dates like “Mar '21 – now”: 30+ points lower", async () => {
-    const plain = await scoreFile(await docx(PLAIN));
-    const creative = await scoreFile(await docx(CREATIVE));
-    expect(creative.generalScore).toBeLessThanOrEqual(plain.generalScore - 30);
-    expect(creative.issues.map((i) => i.code)).toEqual(expect.arrayContaining(["no_jobs", "heading_experience"]));
-    explained(creative);
+  it("creative headings (“Where I've made an impact”) and dates like “Mar '21 – now”: no sections", async () => {
+    const r = await scoreFile(await docx(CREATIVE));
+    expect(r.worst).toBe("critical");
+    expect(codes(r)).toContain("no_sections");
+    explained(r);
   });
 
-  it("contacts only in the page header: flagged, and they cost points", async () => {
+  it("contacts only in the page header: a major finding, and those fields don't count as read", async () => {
     const r = await scoreFile(await docx(JOBS, p("Elena Rusu") + CONTACTS));
-    expect(r.issues.map((i) => i.code)).toContain("contacts_outside_body");
-    expect(r.generalScore).toBeLessThan(100);
+    expect(codes(r)).toContain("contacts_outside_body");
+    expect(r.issues.find((i) => i.code === "contacts_outside_body")!.level).toBe("major");
+    expect(r.fields.read).toBeLessThan(r.fields.total);
     explained(r);
   });
 
@@ -178,20 +198,33 @@ describe("Word layouts people send", () => {
     const main = JOBS.replace(p("Skills") + p("Python, SQL, Power BI, Tableau, Excel"), "");
     const table = `<w:tbl><w:tr><w:tc>${sidebar}</w:tc><w:tc>${main}</w:tc></w:tr></w:tbl>`;
     const r = await scoreFile(await docx(table));
-    expect(r.generalScore).toBeLessThan(80);
-    expect(r.issues.map((i) => i.code)).toContain("tables");
+    expect(codes(r)).toContain("tables");
+    expect(r.fields.read).toBeLessThan(r.fields.total);
     explained(r);
   });
 
-  it("a file over 2.5 MB is capped at 50", async () => {
+  it("a file over 2.5 MB: critical, with Greenhouse's limit, and the fields are still shown", async () => {
     const r = await scoreFile(await docx(PLAIN, undefined, { "word/media/padding.bin": new Uint8Array(ATS_SIZE_LIMIT_BYTES + 1024) }));
-    expect(r.generalScore).toBe(50);
     expect(r.issues[0].code).toBe("over_size");
-    explained(r);
+    expect(r.issues[0].level).toBe("critical");
+    expect(r.issues[0].why).toMatch(/Greenhouse doesn't parse files over 2\.5 MB/);
+    expect(r.fields.read).toBe(r.fields.total);
+  });
+
+  it("a file over 1 MB: a tip with Taleo's default limit", async () => {
+    const r = await scoreFile(await docx(PLAIN, undefined, { "word/media/padding.bin": new Uint8Array(1024 * 1024 + 1024) }));
+    expect(r.issues.map((i) => [i.code, i.level])).toEqual([["size_taleo", "tip"]]);
+  });
+
+  it("a missing Skills section is one finding: no “heading” finding on top", async () => {
+    const r = await scoreFile(await docx(JOBS.replace(p("Skills") + p("Python, SQL, Power BI, Tableau, Excel"), "")));
+    expect(codes(r)).toContain("no_skills");
+    expect(codes(r)).not.toContain("heading_skills");
+    expect(r.issues.find((i) => i.code === "no_skills")!.level).toBe("tip");
   });
 });
 
-describe("fixing a problem raises the score and removes the issue", () => {
+describe("fixing a problem removes the finding and adds a field", () => {
   const cvPdf = (contactLine: React.ReactNode) =>
     renderToBuffer(
       <Document>
@@ -223,10 +256,39 @@ describe("fixing a problem raises the score and removes the issue", () => {
         </Text>,
       ),
     );
-    expect(hidden.issues.map((i) => i.code)).toContain("linkedin_hidden");
-    expect(visible.issues.map((i) => i.code)).not.toContain("linkedin_hidden");
-    expect(visible.generalScore).toBeGreaterThan(hidden.generalScore);
+    expect(codes(hidden)).toContain("linkedin_hidden");
+    expect(hidden.issues.find((i) => i.code === "linkedin_hidden")!.level).toBe("missing");
+    expect(codes(visible)).not.toContain("linkedin_hidden");
+    expect(visible.fields.read).toBe(hidden.fields.read + 1);
+    expect(visible.fields.total).toBe(hidden.fields.total);
     explained(hidden);
+  });
+});
+
+describe("the levels table (ATS-REAL-VS-NOI.md §5.1)", () => {
+  it("says the same as the design doc", () => {
+    const doc: Record<string, string> = {
+      no_sections: "critical", no_jobs: "critical", jobs_no_dates: "critical", no_education: "critical",
+      two_columns: "critical", contacts_missing: "critical", over_size: "critical",
+      name_missing: "major", name_mixed: "major", contacts_outside_body: "major", jobs_disagree: "major",
+      heading_experience: "major", heading_education: "major", heading_skills: "major", education_disagree: "major",
+      skills_list_disagree: "major", skills_unsearchable: "major", skills_ligatures: "major", ligatures: "major",
+      broken_glyphs: "major", tables: "major", text_boxes: "major", email_partial: "major", phone_partial: "major",
+      linkedin_cut: "major",
+      email_missing: "missing", phone_missing: "missing", company_missing: "missing", linkedin_hidden: "missing",
+      linkedin_no_address: "missing",
+      education_no_dates: "tip", no_skills: "tip", skills_unlisted: "tip", diacritics: "tip", pdf: "tip", size_taleo: "tip",
+    };
+    expect(Object.fromEntries(Object.entries(ISSUE_LEVELS).map(([k, v]) => [k, v.level]))).toEqual(doc);
+    expect(ISSUE_LEVELS.two_columns.ref).toMatchObject({ textkernel: "433", rchilli: "4108" });
+    expect(ISSUE_LEVELS.pdf.ref.deviation).toBeTruthy();
+  });
+
+  it("no email and no phone is one critical finding", () => {
+    const r = scoreText("Elena Rusu\nExperience\nData Analyst, Moldcell, June 2018 – February 2021\nEducation\nBSc, TUM, 2014 – 2018\nSkills\nSQL", TODAY);
+    expect(codes(r)).toContain("contacts_missing");
+    expect(codes(r)).not.toContain("email_missing");
+    expect(codes(r)).not.toContain("phone_missing");
   });
 });
 
@@ -268,4 +330,88 @@ describe("the line that says what the file is", () => {
     expect(codes).not.toContain("linkedin_cut");
     expect(codes).not.toContain("name_mixed");
   });
+});
+
+describe("the CV's language", () => {
+  const RU = `Елена Русу
+elena.rusu@example.com | +373 69 555 012
+Опыт работы
+Старший аналитик данных, Orange Moldova, 03.2021 – по настоящее время
+• Создала 12 дашбордов Power BI
+Аналитик данных, Moldcell, 06.2018 – 02.2021
+Образование
+Технический университет Молдовы, 2014 – 2018
+Навыки
+Python, SQL, Power BI, Excel`;
+  const RO = `Elena Rusu
+elena.rusu@example.com | +373 69 555 012
+EXPERIENȚĂ PROFESIONALĂ
+Analist de date senior, Orange Moldova, Martie 2021 – Prezent
+• Am construit 12 dashboard-uri Power BI folosite de 40 de manageri
+Analist de date, Moldcell, Iunie 2018 – Februarie 2021
+• Am automatizat analiza churn în Python
+EDUCAȚIE
+Licență în Informatică, Universitatea Tehnică a Moldovei, 2014 – 2018
+COMPETENȚE
+Python, SQL, Power BI, Excel`;
+  const notes = (r: AtsReport) => r.notes.map((n) => n.code);
+
+  it("Russian: Taleo's language limit, and no “no sections” stated as a fact about the CV", () => {
+    const r = scoreText(RU, TODAY);
+    expect(r.language).toBe("ru");
+    expect(notes(r)).toContain("taleo_language");
+    const none = r.issues.find((i) => i.code === "no_sections");
+    if (none) {
+      expect(notes(r)).toContain("language_unknown");
+      expect(none.title).toBe("No headings our reader knows");
+    }
+  });
+
+  it("Romanian: Taleo's language limit; English: no language note", () => {
+    expect(scoreText(RO, TODAY).language).toBe("ro");
+    expect(notes(scoreText(RO, TODAY))).toContain("taleo_language");
+    expect(scoreText(ANA_TEXT, TODAY).language).toBe("en");
+    expect(notes(scoreText(ANA_TEXT, TODAY))).toEqual(["pasted_text"]);
+  });
+});
+
+describe("Romanian and Russian CVs are read, not just warned about", () => {
+  const RU = `Елена Русу
+elena.rusu@example.com | +373 69 555 012
+Опыт работы
+Старший аналитик данных, Orange Moldova, 03.2021 – по настоящее время
+• Создала 12 дашбордов Power BI
+Аналитик данных, Moldcell, июнь 2018 – февраль 2021
+Образование
+Технический университет Молдовы, 2014 – 2018
+Навыки
+Python, SQL, Power BI, Excel`;
+  const RO = `Elena Rusu
+elena.rusu@example.com | +373 69 555 012
+EXPERIENŢĂ PROFESIONALĂ
+Analist de date senior, Orange Moldova, Martie 2021 – Prezent
+• Am construit 12 dashboard-uri Power BI folosite de 40 de manageri
+Analistă de date, Moldcell, Iunie 2018 – Februarie 2021
+EDUCAŢIE
+Licență în Informatică, Universitatea Tehnică a Moldovei, 2014 – 2018
+COMPETENŢE
+Python, SQL, Power BI, Excel`;
+  const DOTTED = `Elena Rusu
+elena.rusu@example.com | +373 69 555 012
+Experience
+Senior Data Analyst, Orange Moldova, 03.2021 – present
+Data Analyst, Moldcell, 06.2018 – 02.2021
+Education
+BSc Computer Science, Technical University of Moldova, 2014 – 2018
+Skills
+Python, SQL, Power BI, Excel`;
+
+  for (const [name, text] of [["Russian", RU], ["Romanian (with ş ţ)", RO], ["dotted dates", DOTTED]] as const)
+    it(`${name}: both jobs, with their months`, () => {
+      const r = scoreText(text, TODAY);
+      expect(r.sections[1].status).toBe("2 of 2 jobs read in full");
+      expect(r.monthsOfExperience).toBe(102); // June 2018 – November 2026
+      expect(r.worst).toBeNull();
+      expect(r.notes.map((n) => n.code)).not.toContain("language_unknown");
+    });
 });

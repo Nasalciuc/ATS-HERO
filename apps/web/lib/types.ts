@@ -120,12 +120,8 @@ export type ScoreReport = {
   sections: SectionReport[];
 };
 
-export type JobFitReport = {
-  matchScore: number;
-  matched: string[];
-  missing: string[];
-  message: string;
-};
+/** Job Fit: the post's requirements, met or not (lib/job-fit.ts). */
+export type { JobFitReport } from "./job-fit";
 
 /** Each section's emoji (Figma "Icons_tabs"): the builder's stepper and the score page's rows. */
 export const SECTION_EMOJI: Record<SectionKey, string> = {

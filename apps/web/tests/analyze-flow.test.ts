@@ -60,7 +60,7 @@ describe("the file's reading survives Recalculate and Back", () => {
     expect(first.file.kind).toBe("pdf");
     expect(first.file.twoColumns).toBe(true);
     const again = atsReport(sessionStorage.getItem("ats_text")!, storedAtsRead());
-    expect(again.generalScore).toBe(first.generalScore);
+    expect(again.fields).toEqual(first.fields);
     expect(again.file).toEqual(first.file);
     expect(again.issues.map((i) => i.code)).toEqual(first.issues.map((i: { code: string }) => i.code));
   });

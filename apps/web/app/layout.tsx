@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "ATS Hero — Build, improve and match your CV to any job",
   description:
-    "Create an ATS-friendly resume, get an instant ATS score, and check how well your CV matches a job description.",
+    "Create an ATS-friendly resume, see what a tracking system reads from it, and check it against a job's requirements.",
   // Icons come from files Next.js finds in app/: icon.svg, favicon.ico and apple-icon.png
   // (the last two are generated from icon.svg by `npm run icons`).
 };
