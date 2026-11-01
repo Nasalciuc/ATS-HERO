@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             signUpFallbackRedirectUrl="/app"
             afterSignOutUrl="/"
             // Clerk sends SDK telemetry from development instances (the live site runs on one).
-            // The privacy page promises no analytics, so it is off; the CSP doesn't allow it either.
+            // The privacy page lists only Google Analytics (opt-in), not this, so it is off; the CSP doesn't allow it either.
             telemetry={false}
           >
             {inner}

@@ -24,12 +24,12 @@ import { GUEST_RETENTION_DAYS } from "@/lib/retention";
 import { RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /** The date the content last changed. Change it with the content, never compute it. */
-export const PRIVACY_UPDATED: LegalDate = { iso: "2026-10-15", label: "15 October 2026" };
+export const PRIVACY_UPDATED: LegalDate = { iso: "2026-10-31", label: "31 October 2026" };
 
 const RATE_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
 
 const stats: LegalStat[] = [
-  { Icon: GraphBarIcon, size: 27, num: "0 trackers", desc: "no ads, no analytics, no tracking pixels" },
+  { Icon: GraphBarIcon, size: 27, num: "0 ads", desc: "analytics only if you click Allow" },
   { Icon: CvFileIcon, size: 32, num: `${GUEST_RETENTION_DAYS} days`, desc: "then a guest CV is deleted on its own" },
   { Icon: ScanIcon, size: 32, num: "0 uploads", desc: "files you check stay in your browser" },
 ];
@@ -39,7 +39,8 @@ const journey: LegalStep[] = [
     emoji: "🌐",
     title: "You open the site",
     points: [
-      "Visiting without an account puts nothing in our database. There are no analytics, ads or tracking pixels.",
+      "Visiting without an account puts nothing in our database. There are no ads or tracking pixels.",
+      "On the public pages (home, Privacy, Terms, Credits) a banner asks whether we may count your visit with Google Analytics. Nothing is measured unless you click Allow, and never inside the app, where your CVs are.",
       "Our host, Vercel, sees your IP address and browser in its request logs, to deliver the page and stop attacks.",
       "Clerk, our sign-in service, loads on every page to check whether you’re signed in, so it sees your IP address and browser too.",
       `Requests that read or change your data are counted per IP address (and account) for ${RATE_SECONDS} seconds, in our server’s memory only, to stop abuse.`,
@@ -87,7 +88,7 @@ const journey: LegalStep[] = [
 
 const nevers = [
   { title: "We don’t sell or rent your data.", text: "Not to recruiters, not to advertisers, not to anyone." },
-  { title: "No ads, no analytics, no tracking pixels.", text: "The only cookies are the ones sign-in needs." },
+  { title: "No ads, and no analytics without your yes.", text: "Google Analytics runs only on the public pages, only after you click Allow, and never inside the app." },
   { title: "Your CV doesn’t go to AI services.", text: "If we add AI rewriting, we’ll update this page before it’s switched on." },
   { title: "No payments during the free beta.", text: "Before we charge for anything, we’ll name our payment provider here." },
 ];
@@ -122,6 +123,7 @@ const sections: LegalSection[] = [
             ["The job tracker", "What you enter in it", "Our agreement with you"],
             ["Keep the service safe and working: request logs, sign-in checks, rate limits, the bot check", "IP address, browser, guest code, account and CV IDs", "Our legitimate interest in a service that works and isn’t abused"],
             ["Backups", "Everything in our database", "Our legitimate interest in not losing your work"],
+            ["Count visits to the public pages and see which ones are used (Google Analytics)", "Pages you open on the public site, the site that sent you, device, browser, approximate location (country and city, worked out from your IP address), the IDs in the _ga cookies", "Your consent, given with Allow in the cookie banner. You can withdraw it at any time in Cookie settings"],
           ]}
         />
         <p>We don’t use your data for advertising, and nothing on ATS Hero makes automated decisions about you.</p>
@@ -141,11 +143,17 @@ const sections: LegalSection[] = [
             ["Amazon Web Services", "Our database and its backups", "United States (N. Virginia)"],
             ["Clerk, Inc.", "Sign-in and accounts; checks on every page whether you’re signed in", "United States"],
             ["Cloudflare, Inc.", "Protects Clerk’s service and runs the bot check at sign-in", "Worldwide"],
+            ["Google (Google Ireland Limited in the EU and EEA; Google LLC elsewhere)", "Google Analytics, loaded through Google Tag Manager: counts visits to the public pages, only after you click Allow", "European Union and United States"],
           ]}
         />
         <p>
           If you sign in with Google or GitHub, that company shares your email address (and, if your account
           has them, your name and photo) with Clerk. Their own privacy policies apply to what they keep.
+        </p>
+        <p>
+          In Google Analytics, Google signals and every advertising feature are off, and we send no email
+          addresses, names or CV content. The page address it gets has no query string, except campaign tags
+          such as utm_source. Google Analytics does not store IP addresses.
         </p>
       </>
     ),
@@ -157,7 +165,9 @@ const sections: LegalSection[] = [
       <p>
         Vercel, Amazon Web Services, Clerk and Cloudflare are based in the United States, so your data
         leaves Moldova and the EU. Their data processing terms include the European Commission’s Standard
-        Contractual Clauses, which protect data sent from the EU.
+        Contractual Clauses, which protect data sent from the EU. If you allow analytics, Google may also
+        process that data in the United States, under the EU–U.S. Data Privacy Framework and the same
+        Standard Contractual Clauses.
       </p>
     ),
   },
@@ -175,6 +185,8 @@ const sections: LegalSection[] = [
           ["Database logs (slow queries, errors), without what your CV says", "3 days"],
           ["Rate-limit counters", `In our server’s memory only, never saved; each count runs for ${RATE_SECONDS} seconds`],
           ["What you check in Improve My Resume or Check Job Fit", "In your browser tab, until you close it"],
+          ["Google Analytics visit data (only if you clicked Allow)", "14 months (our setting in Google Analytics), then Google deletes it in its monthly clean-up. Totals in its standard reports, which identify no one, are not covered by this limit"],
+          ["Your answer to the cookie banner (cc_cookie)", "182 days, then the banner asks again"],
         ]}
       />
     ),
@@ -192,11 +204,15 @@ const sections: LegalSection[] = [
             ["ats_hero_guest_id", "Your browser’s local storage", "Links guest CVs to this browser"],
             ["ats_hero_cv_id", "Local storage", "Reopens the CV you were editing"],
             ["ats_text, ats_jd and the other ats_ keys", "Session storage", "Hold what you check in Improve My Resume and Check Job Fit, and its score, until you close the tab"],
+            ["cc_cookie", "Cookie set by ATS Hero on the public pages", "Remembers your answer to the cookie banner, for 182 days"],
+            ["_ga and _ga_<ID>", "Cookies set by Google Analytics, only after you click Allow", "Tell one visit from another, for up to 2 years. If you later choose Decline, we delete them"],
           ]}
         />
         <p>
-          All of them are needed for the site to work, which is why there is no cookie banner. We set no
-          advertising or analytics cookies.
+          The first five are needed for the site to work. The _ga cookies are optional: they exist only if you
+          clicked Allow. They belong to the whole site, so your browser also sends them with pages inside the
+          app, but the app never loads Google Analytics and nothing there reads them. We set no advertising
+          cookies.
         </p>
         <CookieSettingsButton />
       </>

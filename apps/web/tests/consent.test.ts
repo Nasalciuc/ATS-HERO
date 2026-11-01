@@ -22,6 +22,7 @@ import {
   CONSENT_MODE_DENIED,
   GOOGLE_CSP_HOSTS,
   PRIVACY_LISTS_CONSENT,
+  analyticsPageLocation,
   consentConfig,
   consentEnabled,
   consentModeFor,
@@ -193,6 +194,15 @@ describe("the banner's configuration", () => {
     expect(names("cc_cookie")).toBe(false);
     expect(names("__session")).toBe(false);
   });
+
+  it("also clears them on the site's own domain when the page is on a subdomain such as staging", () => {
+    const domains = (host: string) =>
+      (consentConfig(host).categories?.[CATEGORY_ANALYTICS]?.autoClear?.cookies ?? []).map((c) => c.domain);
+    expect(domains("staging.atshero.app")).toEqual([undefined, undefined, "atshero.app", "atshero.app"]);
+    for (const host of ["atshero.app", "www.atshero.app", "ats-hero-git-x.vercel.app", "localhost", "evilatshero.app"]) {
+      expect(domains(host)).toEqual([undefined, undefined]);
+    }
+  });
 });
 
 describe("Google Tag Manager loads only through a checked container ID", () => {
@@ -225,6 +235,29 @@ describe("Google Tag Manager loads only through a checked container ID", () => {
     const banner = fs.readFileSync(path.join(WEB, "components/ConsentBanner.tsx"), "utf8");
     expect(banner).toMatch(/const documentStartedPublic = [^;]*isConsentRoute\(window\.location\.pathname\)/);
     expect(banner).toMatch(/if \(documentStartedPublic\) loadGtm\(mode\);\s*else window\.location\.reload\(\);/);
+  });
+});
+
+describe("page addresses sent to Google Analytics", () => {
+  it("keep the origin, the path and the campaign tags", () => {
+    expect(analyticsPageLocation("https://atshero.app/")).toBe("https://atshero.app/");
+    expect(analyticsPageLocation("https://atshero.app/privacy?utm_source=reddit&utm_medium=social")).toBe(
+      "https://atshero.app/privacy?utm_source=reddit&utm_medium=social",
+    );
+  });
+
+  it("drop every other query parameter and the fragment", () => {
+    expect(analyticsPageLocation("https://atshero.app/?name=Alice&email=a%40b.com#top")).toBe("https://atshero.app/");
+    expect(analyticsPageLocation("https://atshero.app/terms?utm_campaign=launch&ref=Alice")).toBe(
+      "https://atshero.app/terms?utm_campaign=launch",
+    );
+  });
+
+  it("are the only addresses the banner gives Google: before the first page view and on every later one", () => {
+    const banner = fs.readFileSync(path.join(WEB, "components/ConsentBanner.tsx"), "utf8");
+    expect(banner.indexOf('gtag("set", { page_location: analyticsPageLocation(')).toBeGreaterThan(-1);
+    expect(banner.indexOf('gtag("set", { page_location: analyticsPageLocation(')).toBeLessThan(banner.indexOf('"gtm.js"'));
+    expect(banner).not.toMatch(/page_location: window\.location\.href/);
   });
 });
 
