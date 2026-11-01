@@ -144,6 +144,8 @@ describe("it ranks layouts the way the ATS lab measures them", () => {
       expect(word.generalScore).toBeGreaterThanOrEqual(95);
       expect(modern.generalScore).toBeLessThan(classic.generalScore);
       expect(modern.issues.some((i) => i.code === "jobs_disagree" || i.code === "two_columns")).toBe(true);
+      // the summary names the cause once, even when two issues share it
+      expect(modern.message.split("depending on how the file is read").length).toBeLessThanOrEqual(2);
       for (const r of [classic, minimal, modern, word]) explained(r);
     });
   }
