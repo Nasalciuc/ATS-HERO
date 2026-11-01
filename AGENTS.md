@@ -68,7 +68,8 @@ npm run design:check          # needs `npm run dev` + local Postgres; 🔒 specs
 npm run icons                 # after changing app/icon.svg: regenerates favicon.ico and apple-icon.png
 npm run db:migrate            # local DB only; production migrations are manual, after a snapshot
 npx tsx --tsconfig lab/tsconfig.json lab/render.tsx      # ATS lab, step 1: render
-npm install --no-save agent-browser@0.41.1 && npm run apply-lab   # apply lab; needs a Chrome (AGENT_BROWSER_EXECUTABLE_PATH)
+npm install --no-save agent-browser@0.41.1 && npm run apply-lab   # apply lab; needs a Chrome (AGENT_BROWSER_EXECUTABLE_PATH).
+                                   # CI installs it outside the app (--prefix) and points AGENT_BROWSER_BIN at it
 
 # ai (from apps/ai)
 python -m venv .venv && source .venv/Scripts/activate    # Linux/Mac: .venv/bin/activate
@@ -91,7 +92,7 @@ graphify update .             # after every change; `graphify explain <Node>` be
 - `design-check.yml` (PRs touching UI): every 🔒 spec within ±2px of Figma.
 - `ats-lab.yml` (PRs touching templates, export or the lab): classic, minimal and DOCX must not FAIL on any extractor.
 - `migrate-check.yml`: a schema change needs its committed migration.
-- `apply-lab.yml` (PRs touching `lib/apply` or the apply lab): the apply agent passes on every synthetic form.
+- `apply-lab.yml` (PRs touching `lib/apply`, the apply lab, or what the lab's CV is made of: the personas, the templates, `cv-print`): the apply agent passes on every synthetic form.
 
 ## Rules
 
@@ -142,7 +143,7 @@ graphify update .             # after every change; `graphify explain <Node>` be
     - LinkedIn: OAuth sign-in only; no scraping or automation.
     - No real user CVs to third-party parsers without explicit consent + DPA; the lab uses fixtures only.
     - Never apply to real employers with test personas.
-    - The apply agent (`lib/apply`) sends an application only on the person's approval of that application; never answers a sensitive question (right to work, visa, salary, gender, ethnicity, disability, health, criminal record, age, consent) itself; never gets past a CAPTCHA, an e-mailed code or a login; never goes to LinkedIn, Indeed Apply or Workday; is tested only on `tools/apply-lab/forms`.
+    - The apply agent (`lib/apply`) sends an application only on the person's approval of that application and of the form they were shown; types from the CV only contact details and the job marked current, only into a field whose own name says what it is; answers no question itself (every other item, sensitive or not, is the person's, and a sensitive one is never stored); never gets past a CAPTCHA, an e-mailed code or a login, and hands over a field it can't set; never goes to LinkedIn, Indeed Apply or Workday; is tested only on `tools/apply-lab/forms`.
     - **Privacy page** (`views/PrivacyPage.tsx`) lists what we keep, where, for how long, every provider and every cookie or storage key. A change to any of that (a new provider or storage key, another retention, payments, turning on `AI_REWRITE_ENABLED` or `NEXT_PUBLIC_ATS_CHECK_ENABLED`) updates the page and its `PRIVACY_UPDATED` date in the same commit. `tests/privacy-page.test.tsx` checks the numbers and keys it quotes.
     - **Terms page** (`views/TermsPage.tsx`) describes ATS Hero as it is today: free, no AI, no job search. Payments, AI features or job search update it and its `TERMS_UPDATED` date in the same commit; the price and the payment and refund terms go there before anything is charged. No payment provider is named until Scaler chooses one. Who runs ATS Hero and the addresses live in `lib/legal.ts`, shared with the Privacy page. `tests/terms-page.test.tsx` checks what it quotes.
 12. **Flags.** `NEXT_PUBLIC_ATS_CHECK_ENABLED` stays off in production until `apps/ai` is deployed behind auth.
