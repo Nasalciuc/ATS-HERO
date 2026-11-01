@@ -40,6 +40,14 @@ DATE_RANGE = re.compile(
     rf"(?P<start>{_DATE})\s*(?:–|—|-|to|until)\s*(?P<end>{_DATE}|present|current|now|prezent)",
     re.IGNORECASE,
 )
+# A single date standing alone (a graduation year: "BSc …, Technical University of Moldova, 2026").
+SINGLE_DATE = re.compile(rf"(?<![\d/.])(?P<date>{_DATE})(?![\d/])", re.IGNORECASE)
+# A range cut after its dash ("2014 –" / "2018") and a LinkedIn address cut right after "/in/":
+# what a reader that re-wraps long lines (PyMuPDF on .docx) produces from one printed line.
+_RANGE_CUT = re.compile(rf"{_DATE}\s*(?:–|—|-|to|until)\s*$", re.IGNORECASE)
+_RANGE_REST = re.compile(rf"^\s*(?:{_DATE}|present|current|now|prezent)\b", re.IGNORECASE)
+_SLUG_CUT = re.compile(r"linkedin\.com/in/$", re.IGNORECASE)
+_SLUG_REST = re.compile(r"^[A-Za-z0-9\-_%]")
 EMAIL = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 PHONE = re.compile(r"(?<![\w/])\+?\d[\d\s().\-]{7,}\d(?![\w/])")
 LINKEDIN = re.compile(r"linkedin\.com/in/([A-Za-z0-9\-_%]+)", re.IGNORECASE)
@@ -51,6 +59,22 @@ def normalize(text: str) -> str:
     """What a careful parser normalises: Unicode NFC, NBSP→space, trailing spaces."""
     text = unicodedata.normalize("NFC", text).replace(" ", " ").replace("﻿", "")
     return "\n".join(line.rstrip() for line in text.splitlines())
+
+
+def join_wraps(text: str) -> str:
+    """Re-join a date range or a LinkedIn address that a reader cut over two lines. Only cuts that
+    can't be anything else are joined: a range ending in its dash, an address ending in "/in/".
+    A slug broken in its middle stays broken (the Modern sidebar case the lab reports)."""
+    out: list[str] = []
+    for line in text.splitlines():
+        prev = out[-1].rstrip() if out else ""
+        if out and _RANGE_CUT.search(prev) and _RANGE_REST.match(line):
+            out[-1] = f"{prev} {line.strip()}"
+        elif out and _SLUG_CUT.search(prev) and _SLUG_REST.match(line.strip()):
+            out[-1] = prev + line.strip()
+        else:
+            out.append(line)
+    return "\n".join(out)
 
 
 def heading_key(line: str) -> str | None:
@@ -85,7 +109,7 @@ class Parsed:
 
 # ------------------------------------------------------------------------- parse
 def parse(raw: str) -> Parsed:
-    text = normalize(raw)
+    text = join_wraps(normalize(raw))
     lines = text.splitlines()
     p = Parsed(text=text)
 
@@ -145,6 +169,11 @@ def _blocks(lines: list[str], span: tuple[int, int] | None) -> list[Block]:
         return []
     start, end = span
     anchors = [i for i in range(start, end) if DATE_RANGE.search(lines[i])]
+    pattern = DATE_RANGE
+    if not anchors:
+        # No date ranges at all: anchor on single dates instead ("…, 2026"), one entry each.
+        anchors = [i for i in range(start, end) if SINGLE_DATE.search(lines[i])]
+        pattern = SINGLE_DATE
     if not anchors:
         return []
     # Entries in one section share a layout, so learn the header depth from the FIRST entry
@@ -157,10 +186,11 @@ def _blocks(lines: list[str], span: tuple[int, int] | None) -> list[Block]:
         starts.append(_header_start(lines, a, floor, depth))
     blocks: list[Block] = []
     for n, a in enumerate(anchors):
-        m = DATE_RANGE.search(lines[a])
+        m = pattern.search(lines[a])
         assert m
         b_end = starts[n + 1] if n + 1 < len(anchors) else end
-        blocks.append(Block(m.group("start"), m.group("end"), "\n".join(lines[starts[n]:max(b_end, a + 1)])))
+        first, last = (m.group("start"), m.group("end")) if pattern is DATE_RANGE else (m.group("date"),) * 2
+        blocks.append(Block(first, last, "\n".join(lines[starts[n]:max(b_end, a + 1)])))
     return blocks
 
 
