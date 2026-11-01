@@ -159,6 +159,13 @@ describe("DOCX: two readings and the layout signals", () => {
     expect(reading(r, "docx-all")).toContain("elena.rusu@example.com");
   });
 
+  it("a date in the header or footer is not a lost phone number; a phone only there is", async () => {
+    const dated = await read(await docx(p("elena.rusu@example.com | +373 69 555 012") + JOB, p("CV updated 01.11.2026") + p("2014-2018")));
+    expect(dated.signals.contactsOutsideBody).toBe(false);
+    const phone = await read(await docx(p("elena.rusu@example.com") + JOB, p("+373 69 555 012")));
+    expect(phone.signals.contactsOutsideBody).toBe(true);
+  });
+
   it("contacts in the body as well: nothing is lost", async () => {
     const r = await read(await docx(p("elena.rusu@example.com | +373 69 555 012") + JOB, p("Elena Rusu")));
     expect(r.signals.contactsOutsideBody).toBe(false);

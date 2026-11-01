@@ -33,7 +33,13 @@ export interface Requirement {
   quote: string;
 }
 
-export type FitSummary = "all_required_most_preferred" | "all_required" | "most_required" | "few_required" | "none_found";
+export type FitSummary =
+  | "all_required_most_preferred"
+  | "all_required"
+  | "most_required"
+  | "few_required"
+  | "preferred_only"
+  | "none_found";
 
 export interface JobFitReport {
   kind: "requirements";
@@ -52,6 +58,7 @@ export const FIT_LABELS: Record<FitSummary, string> = {
   all_required: "Meets all required",
   most_required: "Meets most required",
   few_required: "Meets few required",
+  preferred_only: "No required items we can check",
   none_found: "No requirements we can check",
 };
 
@@ -264,7 +271,9 @@ export function jobFit(cvText: string, postText: string, today = new Date()): Jo
   const summary: FitSummary =
     required.total + preferred.total === 0
       ? "none_found"
-      : required.met === required.total
+      : required.total === 0
+        ? "preferred_only" // nothing required to grade: no HiredScore grade, only the nice-to-haves
+        : required.met === required.total
         ? preferred.total > 0 && preferred.met * 2 > preferred.total
           ? "all_required_most_preferred"
           : "all_required"
@@ -281,6 +290,10 @@ function message(summary: FitSummary, reqs: Requirement[]): string {
   const short = (xs: string[]) => `${xs.slice(0, 4).join(", ")}${xs.length > 4 ? "…" : ""}`;
   const missing = names(true);
   const extra = names(false);
+  if (summary === "preferred_only")
+    return extra.length
+      ? `We found nothing the post marks as required that we can check. Nice to have, not shown: ${short(extra)}.`
+      : "We found nothing the post marks as required that we can check. Your CV shows every nice-to-have we found.";
   const head = missing.length ? `Your CV doesn't show: ${short(missing)}.` : "Your CV shows everything the post marks as required.";
   return extra.length ? `${head} Nice to have, not shown: ${short(extra)}.` : head;
 }
