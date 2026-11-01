@@ -214,7 +214,6 @@ export default function ScorePage() {
   const [saved, setSaved] = useState(false); // Improve / Job Fit: "Saved" for a moment
   const savedTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(savedTimer.current), []);
-  const [secondsLeft, setSecondsLeft] = useState(30);
   const [flow, setFlow] = useState<AtsFlow>("create");
   // Improve / Job Fit with the analysed text kept: "Fix now" edits that text
   const [textFlow, setTextFlow] = useState(false);
@@ -236,10 +235,10 @@ export default function ScorePage() {
     else setOpen(keep && r.sections.some((x) => x.key === keep) ? keep : null);
   };
 
+  // No artificial wait: the loading screen shows only while the score is really being computed
+  // (the builder's CV still loading). Improve / Job Fit arrive with their report ready.
   const compute = async () => {
     setLoading(true);
-    const t0 = Date.now();
-    const MIN_LOADING_MS = 1500;
     try {
       const cached = sessionStorage.getItem("ats_report");
       if (cached) {
@@ -250,8 +249,6 @@ export default function ScorePage() {
         show((await api.score({ data })).report);
       }
     } finally {
-      const wait = MIN_LOADING_MS - (Date.now() - t0);
-      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       setLoading(false);
     }
   };
@@ -264,13 +261,6 @@ export default function ScorePage() {
     void compute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
-
-  useEffect(() => {
-    if (!loading) return;
-    setSecondsLeft(30);
-    const id = setInterval(() => setSecondsLeft((s) => (s > 1 ? s - 1 : s)), 800);
-    return () => clearInterval(id);
-  }, [loading]);
 
   // Fix now shows the section's builder form in its Figma card (383:7664)
   const renderSectionForm = (key: SectionKey) => {
@@ -427,9 +417,6 @@ export default function ScorePage() {
             </div>
             <p className="ats-loading__msg" role="status" data-figma="loading-msg">
               <span aria-hidden="true">🔍 </span>Hunting for hidden resume glitches...
-            </p>
-            <p className="ats-loading__time" aria-hidden="true" data-figma="loading-time">
-              {secondsLeft} sec left
             </p>
           </div>
         </div>
