@@ -15,6 +15,7 @@ import AnalyzeSteps from "../components/app/AnalyzeSteps";
 import { AlertLine, ArrowUp, CvDocument, EyeOptic, MinusThin, PlusThin, SaveDisk } from "../components/figma-icons";
 import { useApp } from "../store/AppContext";
 import { api } from "../lib/api";
+import { storedAtsRead } from "../lib/analyze-flow";
 import { SECTION_EMOJI, type JobFitReport, type ScoreReport, type SectionKey, type SectionReport } from "../lib/types";
 import { fileLine, type AtsReport, type AtsSection, type Issue, type ReadField } from "../lib/ats-read/score";
 import {
@@ -402,7 +403,8 @@ export default function ScorePage() {
     try {
       const text = fromAnalyze ? sessionStorage.getItem("ats_text") : null;
       if (text) {
-        const { report: fresh } = await api.score({ text });
+        // the same file again while the text is unchanged (an edited text is scored as text)
+        const { report: fresh } = await api.score({ text, ats: storedAtsRead() });
         sessionStorage.setItem("ats_report", JSON.stringify(fresh));
         const jd = flow === "jobfit" ? sessionStorage.getItem("ats_jd") : null;
         if (jd) {
