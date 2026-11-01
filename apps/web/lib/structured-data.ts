@@ -46,11 +46,12 @@ export function homeJsonLd(): JsonLd {
         operatingSystem: "Web browser",
         isAccessibleForFree: OFFER_PRICE === "0",
         offers: { "@type": "Offer", price: OFFER_PRICE, priceCurrency: "USD" },
-        // The three tools as the landing page describes them (components/Tool.tsx).
+        // The three tools as they work today. components/Tool.tsx keeps the Figma copy until the
+        // landing frame is updated (rule 6; ATS-REAL-VS-NOI.md §6 in the App Builder project).
         featureList: [
           "Guided CV builder with PDF and DOCX export",
-          "ATS score per section with the critical mistakes to fix",
-          "Job match score with the keywords the posting expects",
+          "What an ATS parser reads from your CV, field by field, with the problems to fix",
+          "Job Fit: each requirement of a job post, met or not, and where your CV shows it",
         ],
         publisher: { "@id": ORGANIZATION_ID },
       },

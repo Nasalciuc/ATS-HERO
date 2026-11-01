@@ -8,7 +8,7 @@ import { homeJsonLd } from "@/lib/structured-data";
 export const metadata: Metadata = {
   title: "ATS Hero — Free ATS resume checker and CV builder",
   description:
-    "Check your resume's ATS score for free, see what a tracking system reads, and match your CV to a job description. No account needed.",
+    "Free ATS resume checker: see what a tracking system reads from your CV, field by field, and which of a job's requirements you meet. No account needed.",
   alternates: { canonical: "/" },
 };
 
