@@ -16,12 +16,15 @@ export interface ApplyProfile {
   currentTitle: string;
 }
 
-/** The profile from the CV the person chose. The first name is the first word; the rest is the last name. */
+/**
+ * The profile from the CV the person chose. The first name is the first word; the rest is the last name.
+ * The current job is the one the CV marks as current, only: a past job is never typed in as the current one.
+ */
 export function applyProfile(cv: CvData): ApplyProfile {
   const p = cv.personalInfo;
   const fullName = p.name.trim().replace(/\s+/g, " ");
   const [firstName = "", ...rest] = fullName.split(" ");
-  const current = cv.work.find((w) => w.current) ?? cv.work[0];
+  const current = cv.work.find((w) => w.current);
   return {
     fullName,
     firstName,

@@ -255,6 +255,11 @@ describe("where the agent may go", () => {
 describe("the profile", () => {
   it("takes contact details and the current job from the CV", () => {
     expect(ana).toMatchObject({ fullName: "Ana Popescu", firstName: "Ana", lastName: "Popescu", email: "ana.popescu@example.com" });
-    expect(ana.currentCompany).not.toBe("");
+    expect(ana.currentCompany).toBe("Fintech Labs SRL");
+  });
+
+  it("never takes a past job for the current one", () => {
+    const past = applyProfile({ ...personas.ana, work: personas.ana.work.map((w) => ({ ...w, current: false })) });
+    expect([past.currentCompany, past.currentTitle]).toEqual(["", ""]);
   });
 });
