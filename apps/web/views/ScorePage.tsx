@@ -394,7 +394,7 @@ function AtsRow({
 }
 
 /** How the check works, what it doesn't do, and what really filters people out. */
-function Method() {
+function Method({ pasted }: { pasted: boolean }) {
   return (
     <section className="score-method" aria-labelledby="score-method-title">
       <h2 id="score-method-title" className="score-method__title">
@@ -402,8 +402,9 @@ function Method() {
       </h2>
       <ul>
         <li>
-          Two free document readers take the text out of your file, in your browser: the first step every ATS parser
-          does. A field counts as read when both get the same thing. Your file never leaves your device.
+          {pasted
+            ? "You pasted text, so we read it as it is, in your browser: a field counts as read when we find it in the text. The file's layout (columns, tables, page headers) isn't checked; upload your PDF or Word file for that. Your text never leaves your device."
+            : "Two free document readers take the text out of your file, in your browser: the first step every ATS parser does. A field counts as read when both get the same thing. Your file never leaves your device."}
         </li>
         <li>
           The levels are the ones the Textkernel and RChilli resume parsers use: Critical is their “Fatal”, Major their
@@ -477,6 +478,7 @@ const FIT_TONE: Record<JobFitReport["summary"], Tone> = {
   all_required: "good",
   most_required: "fair",
   few_required: "poor",
+  preferred_only: "fair",
   none_found: "fair",
 };
 const REQ_MARK = { met: "ok", not_met: "lost", unknown: "partial" } as const;
@@ -488,6 +490,8 @@ const REQ_MARK = { met: "ok", not_met: "lost", unknown: "partial" } as const;
  */
 function JobFitPanel({ fit }: { fit: JobFitReport }) {
   const none = fit.summary === "none_found";
+  // nothing required to check: the circle counts the nice-to-haves instead
+  const shown = fit.summary === "preferred_only" ? fit.preferred : fit.required;
   const list = (required: boolean) =>
     fit.requirements
       .filter((r) => r.required === required)
@@ -498,10 +502,10 @@ function JobFitPanel({ fit }: { fit: JobFitReport }) {
     <section className="score-fit" aria-labelledby="score-fit-title" data-figma="jobfit">
       <div className="score__head score__head--fit">
         <ScoreCircle
-          value={none || !fit.required.total ? 0 : (100 * fit.required.met) / fit.required.total}
-          text={none ? "—" : String(fit.required.met)}
-          of={none ? undefined : fit.required.total}
-          label={none ? "nothing to check" : "required met"}
+          value={none || !shown.total ? 0 : (100 * shown.met) / shown.total}
+          text={none ? "—" : String(shown.met)}
+          of={none ? undefined : shown.total}
+          label={none ? "nothing to check" : shown === fit.preferred ? "preferred met" : "required met"}
           tone={FIT_TONE[fit.summary]}
         />
         <div className="score__msg score__msg--ats">
@@ -511,9 +515,11 @@ function JobFitPanel({ fit }: { fit: JobFitReport }) {
           <p className="score__text">{fit.message}</p>
           {!none && (
             <ul className="score-levels" aria-label="Requirements met">
-              <li className="score-badge score-level score-level--none">
-                <strong>{fit.required.met}</strong> of {fit.required.total} required
-              </li>
+              {fit.required.total > 0 && (
+                <li className="score-badge score-level score-level--none">
+                  <strong>{fit.required.met}</strong> of {fit.required.total} required
+                </li>
+              )}
               {fit.preferred.total > 0 && (
                 <li className="score-badge score-level">
                   <strong>{fit.preferred.met}</strong> of {fit.preferred.total} preferred
@@ -855,7 +861,7 @@ export default function ScorePage() {
               </button>
             </section>
           )}
-          {isAts(report) && <Method />}
+          {isAts(report) && <Method pasted={report.file.kind === "text"} />}
         </div>
       )}
     </AppShell>
