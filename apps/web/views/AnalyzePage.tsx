@@ -5,8 +5,9 @@ import AppShell from "../components/app/AppShell";
 import AnalyzeSteps from "../components/app/AnalyzeSteps";
 import { ArrowUp, SaveDisk, UploadRounded } from "../components/figma-icons";
 import { api } from "../lib/api";
-import { startImprove } from "../lib/analyze-flow";
+import { keepAtsRead, startImprove, storedAtsRead } from "../lib/analyze-flow";
 import { CV_FILE_ACCEPT, CV_FILE_MSG, droppedFile, isFileDrag, readCvFile } from "../lib/cv-file";
+import type { AtsRead } from "../lib/ats-read/types";
 
 type Mode = "improve" | "jobfit";
 
@@ -17,9 +18,12 @@ function TextOrUpload({
   placeholder,
   figma,
   what,
+  onFileRead,
 }: {
   value: string;
   onChange: (v: string) => void;
+  /** the uploaded file read for the ATS check, or null when the text didn't come from a file */
+  onFileRead?: (ats: AtsRead | null) => void;
   placeholder: string;
   figma: string;
   /** read out after the visible label, so the two Job Fit fields don't share one name */
@@ -38,8 +42,10 @@ function TextOrUpload({
     setUploadError(null);
     const res = await readCvFile(file);
     setParsing(false);
-    if (res.ok) onChange(res.text);
-    else setUploadError(CV_FILE_MSG[res.error]);
+    if (res.ok) {
+      onChange(res.text);
+      onFileRead?.(res.ats ?? null);
+    } else setUploadError(CV_FILE_MSG[res.error]);
   };
 
   return (
@@ -112,6 +118,8 @@ function TextOrUpload({
 export default function AnalyzePage({ mode }: { mode: Mode }) {
   const navigate = useNavigate();
   const [cvText, setCvText] = useState("");
+  // the uploaded CV read for the ATS check; the report uses it only while the text is still the file's
+  const [cvFile, setCvFile] = useState<AtsRead | null>(null);
   const [jobText, setJobText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +129,11 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
     const analysed = sessionStorage.getItem("ats_flow") === mode;
     const draftCv = sessionStorage.getItem(`ats_${mode}_cv`) ?? (analysed ? sessionStorage.getItem("ats_text") : null);
     const draftJob = sessionStorage.getItem("ats_jobfit_jd") ?? (analysed ? sessionStorage.getItem("ats_jd") : null);
-    if (draftCv) setCvText(draftCv);
+    if (draftCv) {
+      setCvText(draftCv);
+      // the file behind it, when it was one (used only while the text is still the file's)
+      setCvFile(storedAtsRead());
+    }
     if (mode === "jobfit" && draftJob) setJobText(draftJob);
   }, [mode]);
 
@@ -149,10 +161,11 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
         }
         sessionStorage.setItem("ats_flow", "jobfit");
         const [{ report }, fit] = await Promise.all([
-          api.score({ text: cvText }),
+          api.score({ text: cvText, ats: cvFile }),
           api.jobfit(cvText, jobText),
         ]);
         sessionStorage.setItem("ats_report", JSON.stringify(report));
+        keepAtsRead(cvFile);
         sessionStorage.setItem("ats_jobfit", JSON.stringify(fit.report));
         // kept for "Recalculate Score" on the results page; it replaces an older saved draft
         sessionStorage.setItem("ats_text", cvText);
@@ -160,7 +173,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
         sessionStorage.removeItem("ats_jobfit_cv");
         sessionStorage.removeItem("ats_jobfit_jd");
       } else {
-        startImprove(cvText);
+        startImprove(cvText, cvFile);
       }
       navigate("/app/score");
     } catch (e) {
@@ -184,7 +197,14 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
       <AnalyzeSteps current={0} />
 
       <div className={`analyze-card${mode === "jobfit" ? " analyze-card--two" : ""}`} data-figma="analyze-card">
-        <TextOrUpload figma="analyze-cv" what="your CV" value={cvText} onChange={setCvText} placeholder="Paste your CV text here…" />
+        <TextOrUpload
+          figma="analyze-cv"
+          what="your CV"
+          value={cvText}
+          onChange={setCvText}
+          onFileRead={setCvFile}
+          placeholder="Paste your CV text here…"
+        />
         {mode === "jobfit" && (
           <TextOrUpload
             figma="analyze-job"

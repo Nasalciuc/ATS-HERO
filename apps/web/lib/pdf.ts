@@ -4,7 +4,7 @@ import * as pdfjsLib from "pdfjs-dist";
 // the worker module sets globalThis.pdfjsWorker, so PDF.js needs no worker URL. It used to load
 // the worker from cdnjs, which the CSP (script-src / worker-src 'self') blocks, so every PDF
 // upload failed with "We couldn't read this file".
-async function loadWorker(): Promise<void> {
+export async function loadWorker(): Promise<void> {
   // @ts-expect-error — the worker bundle ships without type declarations
   await import("pdfjs-dist/build/pdf.worker.min.mjs");
 }
@@ -40,7 +40,7 @@ export async function extractPdfText(data: ArrayBuffer): Promise<{ pages: number
     const text = pages
       .join("\n")
       .split("\n")
-      .map((line) => line.replace(/[ \t ]+/g, " ").trim())
+      .map((line) => line.replace(/[ \t\u00A0]+/g, " ").trim())
       .join("\n")
       .replace(/\n{3,}/g, "\n\n")
       .trim();

@@ -135,3 +135,26 @@ def test_wrapped_diacritic_name_is_not_corruption():
     reported = " ".join(p for p in s.problems if p.startswith("diacritics"))
     assert "Universitatea Tehnică a Moldovei" not in reported   # wrapped over two lines, still intact
     assert "Ștefănescu" not in reported
+
+
+def test_single_year_degree_is_one_entry():
+    # "BSc …, 2026" with no range: a graduation year (seen on a real Google Docs CV).
+    p = parse("EDUCATION\nBSc in Software Engineering, Technical University of Moldova Chisinau, 2026\nSKILLS\nGo")
+    assert [(b.start, b.end) for b in p.education] == [("2026", "2026")]
+    assert "Technical University of Moldova" in p.education[0].text
+
+
+def test_single_dates_only_when_a_section_has_no_range():
+    p = parse("EDUCATION\nBSc Computer Science, 2014 – 2018\nCourse, 2019\n")
+    assert [(b.start, b.end) for b in p.education] == [("2014", "2018")]
+
+
+def test_range_cut_after_its_dash_is_rejoined():
+    # PyMuPDF re-wraps long .docx lines: "BSc …, 2014 –" / "2018".
+    p = parse("EXPERIENCE\nData Analyst, Moldcell, June 2018 –\nFebruary 2021\n• Built dashboards")
+    assert [(b.start, b.end) for b in p.experience] == [("June 2018", "February 2021")]
+
+
+def test_linkedin_cut_after_in_is_rejoined_but_a_slug_cut_in_its_middle_is_not():
+    assert parse("Ana Popescu\nlinkedin.com/in/\nanapopescu").linkedin == "anapopescu"
+    assert parse("Ana Popescu\nlinkedin.com/in/ana-popescu-senior-\nfrontend").linkedin == "ana-popescu-senior-"

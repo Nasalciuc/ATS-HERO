@@ -25,8 +25,6 @@ const CORE_SECTIONS: SectionKey[] = [
 
 // Anchored: validates a single, isolated email field (structured CV data).
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Unanchored: finds an email embedded inside free-form CV text (Improve flow).
-const EMAIL_SCAN_RE = /[^\s@]+@[^\s@]+\.[^\s@]+/;
 const ACTION_VERBS = [
   "led",
   "built",
@@ -349,55 +347,4 @@ function messageForScore(score: number): string {
   if (score >= 50)
     return "Your resume has a few critical issues, along with suggestions to help improve your chances of getting hired.";
   return "Your resume needs significant work to pass ATS screening — focus on the critical mistakes first.";
-}
-
-/** Score raw CV text (Function 2 — Improve flow, when no structured data exists). */
-export function scoreRawText(text: string): ScoreReport {
-  const lower = text.toLowerCase();
-  const length = text.trim().length;
-  const sections: SectionReport[] = [];
-
-  const hasEmail = EMAIL_SCAN_RE.test(text);
-  const hasPhone = /(\+?\d[\d\s\-()]{7,})/.test(text);
-  const hasLinkedin = lower.includes("linkedin");
-  const contactScore =
-    (hasEmail ? 45 : 0) + (hasPhone ? 30 : 0) + (hasLinkedin ? 25 : 0);
-  sections.push(
-    finalize(
-      "personalInfo",
-      contactScore,
-      hasEmail ? [] : ["No email address detected"],
-      hasPhone ? [] : ["Add a phone number"],
-      hasEmail ? ["Contact details detected"] : []
-    )
-  );
-
-  const keywords = ["experience", "education", "skills", "summary"];
-  for (const kw of keywords) {
-    const present = lower.includes(kw);
-    const key = (kw === "experience"
-      ? "work"
-      : kw === "summary"
-      ? "summary"
-      : kw) as SectionKey;
-    sections.push(
-      finalize(
-        key,
-        present ? 75 : 20,
-        present ? [] : [`No clear "${kw}" section detected`],
-        present ? [] : [`Add a dedicated ${kw} section`],
-        present ? [`"${kw}" section detected`] : []
-      )
-    );
-  }
-
-  const metricBonus = hasMetric(text) ? 10 : 0;
-  const lengthScore = length > 1500 ? 80 : length > 600 ? 65 : 40;
-  const generalScore = clamp(contactScore * 0.3 + lengthScore * 0.5 + metricBonus);
-
-  return {
-    generalScore,
-    message: messageForScore(generalScore),
-    sections,
-  };
 }

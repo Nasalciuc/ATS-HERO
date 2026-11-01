@@ -3483,31 +3483,6 @@ select.field__input {
 .score__head--fit .score__msg {
   width: 649px;
 }
-.score-keywords {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-.score-keywords__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.score-keywords__list li {
-  padding: 4px 10px;
-  border-radius: 100px;
-  background: #f8f8f8;
-  box-shadow: inset 0 0 0 1px var(--line);
-  font-family: var(--font-inter);
-  font-size: 13px;
-  line-height: 16px;
-  color: var(--ink);
-}
-
 /* the sections: 81px rows 8 apart, each under a 1px line, one more line at the end */
 .score__list {
   display: flex;
@@ -6274,6 +6249,534 @@ select.field__input {
   }
   .tracker__field--wide {
     grid-column: 1 / -1;
+  }
+}
+
+/* ============================================================
+   ATS CHECK VIEW (Improve / Job Fit results, views/ScorePage.tsx)
+   PROVISIONAL (AGENTS.md rule 6): no Figma frame yet (ATS-REAL-VS-NOI.md §6). Built from the
+   score page's own pieces (circle, rows, badges, groups, cards) at Scaler's request; Liubovi
+   draws or checks the frame. The locked score specs inject old-format reports and don't render this.
+   ============================================================ */
+.score__msg--ats {
+  width: 649px;
+}
+.score__file {
+  margin: 0;
+  font-family: var(--font-helvetica);
+  font-size: 14px;
+  line-height: 18px;
+  color: #6b6b6b;
+}
+/* "7 / 9 fields read": the total smaller, after the number */
+.score-circle--fraction {
+  --of: #8a4b00; /* the total in a darker shade of the tone: 4.5:1 or more on the circle */
+}
+.score-circle--fraction.is-good {
+  --of: #006b2f;
+}
+.score-circle--fraction.is-poor {
+  --of: #a32a25;
+}
+.score-circle--fraction .score-circle__value {
+  letter-spacing: -1px;
+}
+.score-circle__of {
+  font-size: 26px;
+  letter-spacing: 0;
+  color: var(--of);
+}
+/* the findings' levels: the score badges' shape, one colour per level (text at 4.5:1 or more:
+   critical 5.7, major 4.7, missing 6.2, tip 6.6, none 5.8) */
+.score-levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.score-level {
+  --level-bg: #eef0f2;
+  --level-fg: #4d5560;
+  background: var(--level-bg);
+  color: var(--level-fg);
+}
+.score-level strong {
+  font-weight: 800;
+}
+.score-level--critical {
+  --level-bg: #ffdcdc;
+  --level-fg: #a32a25;
+}
+.score-level--major {
+  --level-bg: #fff2dc;
+  --level-fg: #a35a00;
+}
+.score-level--missing {
+  --level-bg: #fdf3c7;
+  --level-fg: #735500;
+}
+.score-level--none {
+  --level-bg: #d6f7e2;
+  --level-fg: #006b2f;
+}
+.score-badge--recruiter {
+  background: #eef0f2;
+  color: #4d5560;
+}
+/* a section row of the check: the status in words where the builder shows its scores */
+.score-row--ats .score-row__head {
+  gap: 16px;
+}
+.score-row--ats .score-row__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  grid-template-columns: 87px 224px minmax(0, 1fr);
+}
+.score-row__status {
+  --tone: #00843a;
+  padding-right: 16px;
+  font-family: var(--font-helvetica);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: -0.36px;
+  color: var(--tone);
+}
+.score-row__status.is-fair {
+  --tone: #a35a00;
+}
+.score-row__status.is-poor {
+  --tone: var(--red-text);
+}
+/* what to know that isn't a problem of the CV */
+.score-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 32px;
+  padding: 0;
+  list-style: none;
+}
+.score-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 867px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: #f1efff;
+  font-family: var(--font-helvetica);
+  font-size: 15px;
+  line-height: 21px;
+  color: var(--ink);
+}
+.score-note p {
+  margin: 0;
+}
+.score-note a {
+  color: #5440e0;
+}
+.score-note__icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--violet-600);
+  color: var(--white);
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: center;
+}
+.score-row__icon.is-neutral {
+  --tone: var(--violet-300);
+}
+.score-badge--read {
+  background: #f1efff;
+  color: #5440e0; /* violet-600 is 4.0:1 on this tint; 12px text needs 4.5:1 */
+}
+.score-group--wide {
+  width: 867px;
+}
+.score-reads {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.score-reads__item {
+  display: grid;
+  grid-template-columns: 22px minmax(120px, 220px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  font-family: var(--font-helvetica);
+  font-size: 16px;
+  line-height: 20px;
+  color: #000;
+}
+.score-reads__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+.score-reads__item.is-ok .score-reads__mark {
+  background: #d6f7e2;
+  color: #00843a;
+}
+.score-reads__item.is-partial .score-reads__mark {
+  background: #fff2dc;
+  color: #a35a00;
+}
+.score-reads__item.is-lost .score-reads__mark {
+  background: #ffdcdc;
+  color: var(--red-text);
+}
+.score-reads__label {
+  color: #6b6b6b;
+}
+.score-reads__value {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.score-reads__note {
+  font-size: 14px;
+  line-height: 18px;
+  color: #a35a00;
+}
+.score-reads__item.is-ok .score-reads__note {
+  color: #6b6b6b;
+}
+.score-reads__item.is-lost .score-reads__note {
+  color: var(--red-text);
+}
+.score-fixfirst {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 0 32px;
+}
+.score-fixfirst__title {
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 29px;
+  letter-spacing: -0.48px;
+  color: var(--ink);
+}
+.score-fixfirst__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.score-fixfirst__item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 22px;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.score-fixfirst__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.score-fixfirst__name {
+  margin: 0;
+  font-family: var(--font-helvetica);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 22px;
+  color: #000;
+}
+.score-fixfirst__why,
+.score-fixfirst__fix {
+  margin: 0;
+  font-family: var(--font-helvetica);
+  font-size: 15px;
+  line-height: 21px;
+  color: #333;
+}
+.score-fixfirst__why a {
+  color: var(--violet-600);
+}
+.score-finding__ref {
+  margin: 0;
+  font-family: var(--font-helvetica);
+  font-size: 12px;
+  line-height: 16px;
+  color: #6b6b6b;
+}
+/* the findings inside an open row: the cards' content, divided by lines instead of boxes */
+.score-findings {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 867px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.score-finding {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.score-finding:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.score-good {
+  margin: 0 0 32px;
+}
+.score-robot__hint {
+  max-width: 649px;
+  margin: 0;
+  font-family: var(--font-helvetica);
+  font-size: 15px;
+  line-height: 20px;
+  color: #6b6b6b;
+}
+.score-robot {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 420px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 12px;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+.score-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin: 32px 0 0;
+  padding: 24px 28px;
+  border-radius: 20px;
+  background: var(--bg-page);
+}
+.score-next__text {
+  display: flex;
+  flex: 1 1 360px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-family: var(--font-helvetica);
+  font-size: 16px;
+  line-height: 21px;
+}
+.score-next__text p {
+  margin: 0;
+}
+.score-next__title {
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+}
+.score-next__btn {
+  flex: none;
+  padding: 0 24px;
+}
+.score-method {
+  max-width: 760px;
+  margin: 28px 0 0;
+  font-family: var(--font-helvetica);
+  font-size: 13px;
+  line-height: 19px;
+  color: #6b6b6b;
+}
+/* Job Fit: the requirements, met or not (ScorePage JobFitPanel) */
+.score-fit {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0 0 48px;
+}
+.analyze-steps + .score-fit {
+  margin-top: 57px;
+}
+.score-fit .score__head {
+  margin: 0;
+}
+.score-fit__label {
+  --tone: #00843a;
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 29px;
+  letter-spacing: -0.48px;
+  color: var(--tone);
+}
+.score-fit__label.is-fair {
+  --tone: #a35a00;
+}
+.score-fit__label.is-poor {
+  --tone: var(--red-text);
+}
+.score-fit__lists {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-left: 206px; /* under the message, past the circle */
+}
+.score-fit__method {
+  max-width: 760px;
+  margin: 0 0 0 206px;
+  font-family: var(--font-helvetica);
+  font-size: 13px;
+  line-height: 19px;
+  color: #6b6b6b;
+}
+.score-part-title {
+  margin: 0 0 32px;
+  padding-top: 40px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 29px;
+  letter-spacing: -0.48px;
+  color: var(--ink);
+}
+.score-method__title {
+  margin: 0 0 8px;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 19px;
+  color: var(--ink);
+}
+.score-method ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+}
+@media (max-width: 1279px) {
+  .score-row--ats .score-row__main {
+    grid-template-columns: 87px minmax(0, 1fr);
+    grid-template-areas:
+      "icon label"
+      "icon status";
+  }
+  .score-row__status {
+    grid-area: status;
+    align-self: start;
+    font-size: 16px;
+    line-height: 19px;
+  }
+}
+@media (max-width: 720px) {
+  .score__msg--ats {
+    width: auto;
+  }
+  .score__file {
+    grid-column: 1 / -1;
+    font-size: 13px;
+  }
+  .score-circle__of {
+    font-size: 20px;
+  }
+  .score-levels {
+    grid-column: 1 / -1;
+  }
+  .score-row--ats .score-row__main {
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 12px;
+  }
+  .score-row__status {
+    padding-right: 0;
+    font-size: 13px;
+    line-height: 16px;
+    letter-spacing: -0.26px;
+  }
+  .score-note {
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 19px;
+  }
+  .score-findings {
+    width: auto;
+  }
+  .score-fit__lists {
+    padding-left: 0;
+  }
+  .score-fit__method {
+    margin-left: 0;
+  }
+  .score-fit__label {
+    grid-column: 1 / -1;
+    font-size: 20px;
+    line-height: 24px;
+  }
+  .score-part-title {
+    padding-top: 28px;
+    font-size: 20px;
+    line-height: 24px;
+  }
+  .score-group--wide {
+    width: auto;
+  }
+  .score-reads__item {
+    grid-template-columns: 22px minmax(0, 1fr);
+    font-size: 15px;
+    line-height: 19px;
+  }
+  .score-reads__value {
+    grid-column: 2;
+  }
+  .score-fixfirst__title {
+    font-size: 20px;
+    line-height: 24px;
+  }
+  .score-fixfirst__item {
+    padding: 16px;
+  }
+  .score-next {
+    padding: 18px;
+  }
+  .score-next__btn {
+    width: 100%;
+    height: 51px;
   }
 }
 

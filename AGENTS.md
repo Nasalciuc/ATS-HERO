@@ -24,8 +24,8 @@ without an account; signing in keeps the work (guest → claim).
 | State | Zustand stores, `AppContext` (autosave), SWR for reads | `stores/`, `store/`, `hooks/` |
 | Styling | Hand-written design system (BEM classes) + Tailwind 3 utilities with `preflight: false` and `container: false`. **No shadcn/ui, no UI kit** | `app/styles.css`, `tailwind.config.ts` |
 | CV output | `@react-pdf/renderer` templates (Inter, `fonts.ts`), `docx`, `printableCv()` at every output boundary. Every PDF goes through `renderCvPdfBlob()` | `components/cv/templates/`, `lib/exportPdf.tsx`, `lib/exportDocx.ts`, `lib/cv-print.ts` |
-| PDF reading | PDF.js in-thread (no worker URL, no CSP change) | `components/cv/CvPagedPreview.tsx`, `lib/pdf.ts`, `lib/analyzer/pdf-extractor.ts` |
-| Scoring | Tier 1 in the browser, deterministic | `lib/analyzer/` |
+| PDF reading | PDF.js in-thread (no worker URL, no CSP change) | `components/cv/CvPagedPreview.tsx`, `lib/pdf.ts`, `lib/ats-read/pdf.ts` |
+| Scoring | Tier 1 in the browser, deterministic. Builder CVs: `lib/analyzer/` (its score waits for a Figma frame to be replaced). Uploaded or pasted CVs: the ATS check, **no score** (no ATS gives one without a job): fields read by two readings of the file, a TypeScript port of the lab parser (kept identical by `tools/ats-lab/parity/cases.jsonl`), and findings on the Textkernel/RChilli levels (one table: `lib/ats-read/levels.ts`). Job Fit: the post's requirements met or not (`lib/job-fit.ts`), no percentage. Design: `ATS-REAL-VS-NOI.md` | `lib/analyzer/`, `lib/ats-read/`, `lib/job-fit.ts` |
 | Python | FastAPI + spaCy (Tier 2, `/parse-check`, ATS lab); Lambda entry with Mangum + per-user limit. **Not deployed yet** | `apps/ai` |
 | AI rewrite | Vercel AI SDK; kill-switch + daily quota in `ai_usage` | `app/api/rewrite` |
 | Payments | Paddle (not Stripe) | `app/api/webhooks/paddle`, `lib/paddle-webhook.ts` |
@@ -72,6 +72,8 @@ python -m venv .venv && source .venv/Scripts/activate    # Linux/Mac: .venv/bin/
 pip install -r requirements-dev.txt && python -m pytest -q
 python -m app.lab.run --fixtures ../../tools/ats-lab/fixtures/personas.json \
   --files ../../tools/ats-lab/out/files --out ../../tools/ats-lab/out   # ATS lab, step 2: score
+python -m app.lab.parity --write   # after changing app/lab/parser.py: regenerate the parity cases (see its docstring),
+                                   # then port the change to apps/web/lib/ats-read/parse.ts until vitest passes
 
 # infra and graph
 cfn-lint infra/*.yaml
@@ -156,6 +158,7 @@ graphify update .             # after every change; `graphify explain <Node>` be
 The design documents live in the claude.ai Project "App Builder", not in the repo:
 - `FIGMA-FIDELITY-PLAN.md`
 - `ATS-LAB-DESIGN.md`
+- `ATS-REAL-VS-NOI.md` (how real ATSs judge a CV, and why our check has no score)
 - `AWS-INFRA-DESIGN.md`
 - `RESUME-MATCHER-CV-VARIANTS.md`
 - `PLAN-CE-URMEAZA.md`
