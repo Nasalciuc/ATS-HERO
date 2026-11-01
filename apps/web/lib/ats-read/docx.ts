@@ -1,10 +1,15 @@
 import JSZip from "jszip";
 import { extractDocxText, wordXmlText } from "../docx-text";
+import { DATE_RANGE, PHONE } from "./parse";
 import { ATS_SIZE_LIMIT_BYTES, NO_SIGNALS, type AtsRead } from "./types";
 
 const EMAIL = /[^\s@<>]+@[^\s@<>]+\.[a-z]{2,}/i;
-/** a phone number: 7+ digits, with the usual separators */
-const PHONE = /\+?\d[\d\s().-]{6,}\d/;
+/** "01.11.2026", "11/2026", "2026-11-01": dates, which the phone pattern matches too */
+const DATE_ONLY = /^(?:\d{1,2}[./-]){0,2}(?:19|20)\d{2}(?:[./-]\d{1,2}){0,2}$/;
+
+/** The phone numbers in a text, as the parser finds them (lib/ats-read/parse.ts), without dates. */
+const phonesIn = (text: string) =>
+  [...text.matchAll(PHONE)].map((m) => m[0]).filter((p) => !DATE_RANGE.test(p) && !DATE_ONLY.test(p.replace(/\s+/g, "")));
 
 /** A text box's content, without the copy Word keeps for old readers (<mc:Fallback>). */
 const TEXT_BOX = /<w:txbxContent\b[\s\S]*?<\/w:txbxContent>/g;
@@ -47,11 +52,13 @@ export async function readDocx(data: ArrayBuffer): Promise<AtsRead | null> {
   for (const f of zip.file(/^word\/(header|footer)\d*\.xml$/)) sides.push(wordXmlText(await f.async("string")));
   const outside = [...sides, boxText].join("\n");
 
-  // a contact that a strict reader loses: in a header, footer or text box, and not in the body
-  const lost = (re: RegExp) => {
-    const m = outside.match(re);
-    return m !== null && !strict.replace(/\s+/g, "").includes(m[0].replace(/\s+/g, ""));
-  };
+  // a contact that a strict reader loses: in a header, footer or text box, and not in the body.
+  // A date in a footer ("CV updated 01.11.2026") is not a phone number.
+  const compact = strict.replace(/\s+/g, "");
+  const inBody = (s: string) => compact.includes(s.replace(/\s+/g, ""));
+  const email = outside.match(EMAIL);
+  const lostEmail = email !== null && !inBody(email[0]);
+  const lostPhone = phonesIn(outside).some((p) => !inBody(p));
 
   return {
     kind: "docx",
@@ -65,7 +72,7 @@ export async function readDocx(data: ArrayBuffer): Promise<AtsRead | null> {
     signals: {
       ...NO_SIGNALS,
       overSizeLimit: data.byteLength > ATS_SIZE_LIMIT_BYTES,
-      contactsOutsideBody: lost(EMAIL) || lost(PHONE),
+      contactsOutsideBody: lostEmail || lostPhone,
       tables: (xml.match(/<w:tbl>/g) ?? []).length,
       textBoxes: boxes.length,
       images: (xml.match(/<pic:pic\b/g) ?? []).length,
