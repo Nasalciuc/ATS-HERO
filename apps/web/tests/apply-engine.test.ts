@@ -238,6 +238,14 @@ describe("sending", () => {
     expect(f.verbs()).not.toContain("click");
   });
 
+  it("hands over a field it can't set that appears after an answer, instead of blocking for good", async () => {
+    const { f, r } = await prepared({ reread: `${ANSWERED}- Date "When can you start?"\n  - spinbutton "Month Month" [ref=e20]: 0\n` });
+    expect(await submitApplication(r.session, approve(r, OK))).toMatchObject({ status: "handoff", reason: "unsupported_field", url: LAB });
+    expect(f.verbs()).not.toContain("click");
+    expect(f.verbs().at(-1)).toBe("close");
+    await expect(submitApplication(r.session, approve(r, OK))).rejects.toThrow(/closed/);
+  });
+
   it("shows a question that appears after an answer, and sends only on a new approval", async () => {
     const { f, r } = await prepared({ reread: `${ANSWERED}- textbox "Which visa do you hold?" [ref=e14]\n` });
     const s = await submitApplication(r.session, approve(r, OK));

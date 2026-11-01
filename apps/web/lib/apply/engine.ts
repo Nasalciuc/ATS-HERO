@@ -284,6 +284,9 @@ export async function submitApplication(session: Session, approval: Approval): P
     const blocker = blockerIn(snapshot);
     if (blocker) return await handoff(blocker);
     const now = planApplication(controlsOf(snapshot), session.profile, session.planOptions);
+    // a field the agent can't set (a date, a custom picker) appeared after the answers: no answer
+    // can fit it, so it would block for good; the person finishes the form on their own
+    if (now.person.some((p) => p.kind === "manual")) return await handoff("unsupported_field");
     const { added, wrong } = compare(plan, now, approval.answers);
     if (added.length) {
       // a question that depends on an answer: shown to the person, approved again
