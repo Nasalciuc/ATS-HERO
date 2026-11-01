@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { abandonApplication, blockerIn, prepareApplication, submitApplication, type Session } from "@/lib/apply/engine";
 import { applyProfile } from "@/lib/apply/profile";
-import type { Runner } from "@/lib/apply/runner";
+import { AGENT_BROWSER_VERSION, type Runner } from "@/lib/apply/runner";
 import type { CvData } from "@/lib/types";
 
 const personas = JSON.parse(
@@ -172,4 +172,9 @@ describe("sending", () => {
     await abandonApplication(session);
     expect(f.calls).toEqual([["close"]]);
   });
+});
+
+it("the lab workflow installs the agent-browser version the engine is written for", () => {
+  const wf = fs.readFileSync(path.join(process.cwd(), "../../.github/workflows/apply-lab.yml"), "utf8");
+  expect(wf).toContain(`agent-browser@${AGENT_BROWSER_VERSION}`);
 });

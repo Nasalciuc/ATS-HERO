@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Frontend Engineer at Nordwind (synthetic, Lever-style)</title>
+<style>body{font-family:Arial,sans-serif;max-width:720px;margin:24px auto;padding:0 16px}.row{margin:12px 0}.row label{display:block;font-weight:600}input,select,textarea{width:100%;padding:8px;box-sizing:border-box}.lab{background:#fff3cd;padding:8px}.upload input{display:none}</style>
+</head>
+<body>
+<p class="lab">ATS Hero apply lab: a synthetic posting on localhost, laid out like a Lever application. Not a real employer.</p>
+<h1>Frontend Engineer</h1>
+<form id="lever_form">
+  <h3>Submit your application</h3>
+  <div class="row upload">
+    <span>Resume/CV ✱</span>
+    <button type="button" onclick="document.getElementById('resume-upload-input').click()">ATTACH RESUME/CV</button>
+    <input id="resume-upload-input" name="resume" type="file" accept=".pdf,.doc,.docx">
+  </div>
+  <div class="row"><label for="name">Full name ✱</label><input id="name" name="name" required></div>
+  <div class="row"><label for="email">Email ✱</label><input id="email" name="email" required></div>
+  <div class="row"><label for="phone">Phone</label><input id="phone" name="phone"></div>
+  <div class="row"><label for="location">Current location</label><input id="location" name="location"></div>
+  <div class="row"><label for="org">Current company</label><input id="org" name="org"></div>
+  <h4>Links</h4>
+  <div class="row"><label for="li">LinkedIn URL</label><input id="li" name="urls[LinkedIn]"></div>
+  <div class="row"><label for="gh">GitHub URL</label><input id="gh" name="urls[GitHub]"></div>
+  <div class="row"><label for="pf">Portfolio URL</label><input id="pf" name="urls[Portfolio]"></div>
+  <div class="row"><label for="comments">Additional information</label><textarea id="comments" name="comments"></textarea></div>
+  <h4>U.S. Equal Employment Opportunity information (voluntary)</h4>
+  <div class="row"><label for="eeo_gender">Gender</label><select id="eeo_gender" name="eeo_gender"><option value="">Select ...</option><option>Female</option><option>Male</option><option>Decline to self-identify</option></select></div>
+  <div class="row"><label for="eeo_race">Race</label><select id="eeo_race" name="eeo_race"><option value="">Select ...</option><option>White</option><option>Decline to self-identify</option></select></div>
+  <div class="row"><label for="eeo_veteran">Veteran status</label><select id="eeo_veteran" name="eeo_veteran"><option value="">Select ...</option><option>I am not a protected veteran</option><option>Decline to self-identify</option></select></div>
+  <div class="row"><label><input type="checkbox" id="consent" name="consent" required> I consent to Nordwind processing my data for this application</label></div>
+  <button type="submit">Submit application</button>
+</form>
+<div id="received" hidden><h2></h2><pre></pre></div>
+<script src="_done.js"></script>
+<script>
+document.getElementById("lever_form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const d = Object.fromEntries(new FormData(f));
+  d.resume = f.resume.files[0] ? f.resume.files[0].name : "";
+  d.consent = f.consent.checked;
+  labShow(d, "Application submitted. Thank you for your application!");
+});
+</script>
+</body>
+</html>

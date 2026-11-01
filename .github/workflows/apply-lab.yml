@@ -1,0 +1,44 @@
+name: Apply lab
+# The apply agent's engine (apps/web/lib/apply) in a real browser, through agent-browser, on synthetic
+# application forms served on localhost (tools/apply-lab/forms), with the ATS lab's synthetic persona.
+# It must fill only what it may, attach the CV to the right input, leave every sensitive question to
+# the person, hand over at a CAPTCHA, and send only on the person's approval. Never a real employer
+# (AGENTS.md rule 11). Design: APLICARE-CU-AGENT.md.
+on:
+  pull_request:
+    paths:
+      - "apps/web/lib/apply/**"
+      - "apps/web/tests/apply-*.test.ts"
+      - "apps/web/tests/apply-lab/**"
+      - "apps/web/vitest.apply-lab.config.ts"
+      - "tools/apply-lab/**"
+      - ".github/workflows/apply-lab.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults: { run: { working-directory: apps/web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm, cache-dependency-path: apps/web/package-lock.json }
+      - run: npm ci
+      - name: agent-browser at the version lib/apply/runner.ts names (not a dependency of the app)
+        run: npm install --no-save agent-browser@0.41.1
+      - name: The runner's Chrome, and a folder for the screenshots
+        run: |
+          mkdir -p "$RUNNER_TEMP/apply-lab"
+          echo "TMPDIR=$RUNNER_TEMP/apply-lab" >> "$GITHUB_ENV"
+          echo "AGENT_BROWSER_EXECUTABLE_PATH=$(command -v google-chrome || command -v chromium)" >> "$GITHUB_ENV"
+      - run: npm run apply-lab
+      # the filled form before the approval, and the page after the submit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apply-lab-screenshots
+          path: ${{ runner.temp }}/apply-lab/ats-hero-apply-*/*.png
