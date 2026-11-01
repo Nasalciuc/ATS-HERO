@@ -12,6 +12,10 @@ on:
       - "apps/web/tests/apply-lab/**"
       - "apps/web/vitest.apply-lab.config.ts"
       - "tools/apply-lab/**"
+      # what the lab's CV is made of: the persona and the PDF the app renders
+      - "tools/ats-lab/fixtures/personas.json"
+      - "apps/web/components/cv/templates/**"
+      - "apps/web/lib/cv-print.ts"
       - ".github/workflows/apply-lab.yml"
   workflow_dispatch:
 
@@ -28,13 +32,18 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm, cache-dependency-path: apps/web/package-lock.json }
       - run: npm ci
+      # outside the app's node_modules: the app never depends on it, and its lockfile stays the contract
       - name: agent-browser at the version lib/apply/runner.ts names (not a dependency of the app)
-        run: npm install --no-save agent-browser@0.41.1
+        run: |
+          npm install --prefix "$RUNNER_TEMP/ab" --no-save --no-audit --no-fund agent-browser@0.41.1
+          echo "AGENT_BROWSER_BIN=$RUNNER_TEMP/ab/node_modules/.bin/agent-browser" >> "$GITHUB_ENV"
       - name: The runner's Chrome, and a folder for the screenshots
         run: |
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [ -z "$chrome" ]; then echo "::error::No Chrome on the runner: the apply lab needs one"; exit 1; fi
           mkdir -p "$RUNNER_TEMP/apply-lab"
           echo "TMPDIR=$RUNNER_TEMP/apply-lab" >> "$GITHUB_ENV"
-          echo "AGENT_BROWSER_EXECUTABLE_PATH=$(command -v google-chrome || command -v chromium)" >> "$GITHUB_ENV"
+          echo "AGENT_BROWSER_EXECUTABLE_PATH=$chrome" >> "$GITHUB_ENV"
       - run: npm run apply-lab
       # the filled form before the approval, and the page after the submit
       - uses: actions/upload-artifact@v4
