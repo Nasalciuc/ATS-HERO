@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Frontend Engineer at Nordwind (synthetic, Lever-style)</title>
-<style>body{font-family:Arial,sans-serif;max-width:720px;margin:24px auto;padding:0 16px}.row{margin:12px 0}.row label{display:block;font-weight:600}input,select,textarea{width:100%;padding:8px;box-sizing:border-box}.lab{background:#fff3cd;padding:8px}.upload input{display:none}</style>
+<style>body{font-family:Arial,sans-serif;max-width:720px;margin:24px auto;padding:0 16px}.row{margin:12px 0}.row label{display:block;font-weight:600}input,select,textarea{width:100%;padding:8px;box-sizing:border-box}.lab{background:#fff3cd;padding:8px}.upload input{display:none}ul{list-style:none;padding:0}</style>
 </head>
 <body>
 <p class="lab">ATS Hero apply lab: a synthetic posting on localhost, laid out like a Lever application. Not a real employer.</p>
@@ -25,6 +25,9 @@
   <div class="row"><label for="gh">GitHub URL</label><input id="gh" name="urls[GitHub]"></div>
   <div class="row"><label for="pf">Portfolio URL</label><input id="pf" name="urls[Portfolio]"></div>
   <div class="row"><label for="comments">Additional information</label><textarea id="comments" name="comments"></textarea></div>
+  <div class="row custom-question"><div class="text">Do you have a valid driving licence? ✱</div>
+    <ul><li><label><input type="radio" name="cards[licence]" value="Yes" required> Yes</label></li><li><label><input type="radio" name="cards[licence]" value="No"> No</label></li></ul>
+  </div>
   <h4>U.S. Equal Employment Opportunity information (voluntary)</h4>
   <div class="row"><label for="eeo_gender">Gender</label><select id="eeo_gender" name="eeo_gender"><option value="">Select ...</option><option>Female</option><option>Male</option><option>Decline to self-identify</option></select></div>
   <div class="row"><label for="eeo_race">Race</label><select id="eeo_race" name="eeo_race"><option value="">Select ...</option><option>White</option><option>Decline to self-identify</option></select></div>

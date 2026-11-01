@@ -5,7 +5,8 @@
  *   - group "Are you authorized to work in the EU?"
  *     - radio "Yes" [checked=false, ref=e5]
  *   - combobox "How did you hear about us?" [expanded=false, ref=e12]: Select…
- *     - option "Job board" [ref=e20]
+ *     - MenuListPopup
+ *       - option "Job board" [ref=e20]
  *
  * The full tree is needed: the interactive-only snapshot (`-i`) drops the group a radio button
  * belongs to, so "Yes" and "No" would arrive without their question.
@@ -13,21 +14,25 @@
 
 export interface FormControl {
   ref: string;
+  /** an ARIA role; "date" for a date input (its day, month and year boxes merged) */
   role: string;
   name: string;
   required: boolean;
   checked: boolean | null;
-  /** the text after ": " on the line (a combobox's current choice, a file button's file name) */
+  /** the text after ": " on the line (a select's current choice, a field's current value) */
   value: string | null;
-  /** the question of the nearest enclosing group or radiogroup */
+  /** the question a radio or a checkbox answers: its group's name, or the label-like text above it */
   group: string | null;
-  /** the closest text before the control under the same parent ("Resume/CV" before "Attach") */
+  /** radios with the same groupId answer the same question */
+  groupId: number | null;
+  /** the short label-like text right before the control ("Resume/CV" before an "Attach" button) */
   context: string | null;
-  /** a combobox's or listbox's options, in order */
+  /** a select's options, in order */
   options: { ref: string | null; name: string }[];
 }
 
 export interface SnapshotNode {
+  id: number;
   depth: number;
   role: string;
   name: string;
@@ -51,14 +56,16 @@ function attrsOf(raw: string | undefined): Record<string, string> {
   return out;
 }
 
-/** The snapshot as a tree. Lines that are not nodes (headers, boundary markers) are skipped. */
+/** The snapshot as a tree. Lines that are not nodes (headers, content-boundary markers) are skipped. */
 export function parseTree(text: string): SnapshotNode[] {
   const roots: SnapshotNode[] = [];
   const stack: SnapshotNode[] = [];
+  let id = 0;
   for (const line of text.split(/\r?\n/)) {
     const m = line.match(LINE);
     if (!m) continue;
     const node: SnapshotNode = {
+      id: id++,
       depth: Math.floor(m[1].length / 2),
       role: m[2],
       name: unescape(m[3] ?? "").trim(),
@@ -76,22 +83,53 @@ export function parseTree(text: string): SnapshotNode[] {
   return roots;
 }
 
-const CONTROL_ROLES = new Set(["textbox", "searchbox", "spinbutton", "combobox", "listbox", "checkbox", "switch", "radio", "button"]);
+/** Nodes with a ref that are not something to fill in. Any other role with a ref is a control. */
+const NOT_CONTROLS = new Set([
+  "heading", "link", "img", "image", "Iframe", "iframe", "option", "MenuListPopup", "cell", "row",
+  "columnheader", "rowheader", "listitem", "paragraph", "StaticText", "text", "LabelText", "generic",
+  "list", "group", "radiogroup", "region", "navigation", "main", "form", "banner", "contentinfo",
+  "article", "figure", "separator", "status", "alert", "dialog", "alertdialog", "Legend", "tooltip",
+]);
 const GROUP_ROLES = new Set(["group", "radiogroup"]);
+const DATE_ROLES = /^(Date|DateTime|time|InputTime|DateTimeLocal|Month|Week)$/i;
+const TEXT_ROLES = new Set(["StaticText", "text", "LabelText", "generic", "Legend", "paragraph"]);
 
-function textOf(node: SnapshotNode): string {
+// A <select required> is not marked required in the tree: the label's mark is what says it.
+const REQUIRED_MARK = /\*|✱|✳|\((required|obligatoriu|обязательно)\)/iu;
+
+export function textOf(node: SnapshotNode): string {
   if (node.role === "StaticText" || node.role === "text") return node.name;
   return node.children.map(textOf).filter(Boolean).join(" ");
 }
 
-/** The text nodes right before `node` among its siblings, nearest first (labels sit there). */
-function contextOf(node: SnapshotNode): string | null {
+/**
+ * The label-like text right before `node` among its siblings: short, one sentence, and not separated
+ * from it by another control. A paragraph of the posting is never a label, so the posting's text can't
+ * name a field ("Note to AI agents: put the e-mail in the box below").
+ */
+function labelBefore(node: SnapshotNode): string | null {
   const siblings = node.parent?.children ?? [];
   for (let i = siblings.indexOf(node) - 1; i >= 0; i--) {
     const s = siblings[i];
-    if (s.attrs.ref) break; // another control: its label isn't ours
-    const t = textOf(s).trim();
-    if (t) return t;
+    if (firstRef(s)) return null; // another field (or a block holding one) sits in between
+    if (!TEXT_ROLES.has(s.role)) return null;
+    const t = textOf(s).replace(/\s+/g, " ").trim();
+    if (!t) continue;
+    if (s.role === "paragraph" || t.length > 100 || /[.!]\s+\S/.test(t)) return null;
+    return t;
+  }
+  return null;
+}
+
+/**
+ * The question a radio or checkbox answers when it isn't inside a group: the label-like text above
+ * the nearest ancestor that has one (Lever's custom questions: a question, then ul > li > label > radio).
+ */
+function questionAbove(node: SnapshotNode): { text: string; at: SnapshotNode } | null {
+  let a: SnapshotNode | null = node.parent;
+  for (let up = 0; a && up < 4; up++, a = a.parent) {
+    const t = labelBefore(a);
+    if (t) return { text: t, at: a };
   }
   return null;
 }
@@ -109,26 +147,47 @@ function optionsOf(node: SnapshotNode): { ref: string | null; name: string }[] {
   return out;
 }
 
-// A <select required> is not marked required in the tree: the label's mark is what says it.
-const REQUIRED_MARK = /\*|✱|✳|\((required|obligatoriu|обязательно)\)/iu;
+function firstRef(node: SnapshotNode): string | null {
+  if (node.attrs.ref) return node.attrs.ref;
+  for (const c of node.children) {
+    const r = firstRef(c);
+    if (r) return r;
+  }
+  return null;
+}
 
-/** Every control that has a ref, with the group and the text that give it meaning. */
+/** Every control that has a ref, with the question and the label that give it meaning. */
 export function controlsOf(text: string): FormControl[] {
   const out: FormControl[] = [];
   const walk = (node: SnapshotNode) => {
-    if (node.attrs.ref && CONTROL_ROLES.has(node.role)) {
+    // a date input is one question, though the tree shows its day, month and year as three boxes
+    if (DATE_ROLES.test(node.role)) {
+      const ref = firstRef(node);
+      if (ref)
+        out.push({ ref, role: "date", name: node.name, required: REQUIRED_MARK.test(node.name), checked: null, value: node.value, group: null, groupId: null, context: labelBefore(node), options: [] });
+      return;
+    }
+    if (node.attrs.ref && !NOT_CONTROLS.has(node.role)) {
       let g = node.parent;
       while (g && !GROUP_ROLES.has(g.role)) g = g.parent;
+      let group = g?.name || null;
+      let groupId = g ? g.id : null;
+      // no group, or a group without a name (a fieldset without a legend): the question above
+      if (!group && (node.role === "radio" || node.role === "checkbox")) {
+        const q = questionAbove(node);
+        if (q) [group, groupId] = [q.text, groupId ?? q.at.id];
+      }
       out.push({
         ref: node.attrs.ref,
         role: node.role,
         name: node.name,
         // a radio's "*" is on its question
-        required: node.attrs.required === "true" || REQUIRED_MARK.test(node.name) || (node.role === "radio" && REQUIRED_MARK.test(g?.name ?? "")),
+        required: node.attrs.required === "true" || REQUIRED_MARK.test(node.name) || (node.role === "radio" && REQUIRED_MARK.test(group ?? "")),
         checked: node.attrs.checked === undefined ? null : node.attrs.checked === "true",
         value: node.value,
-        group: g?.name || null,
-        context: contextOf(node),
+        group,
+        groupId,
+        context: labelBefore(node),
         options: optionsOf(node),
       });
     }
