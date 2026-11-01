@@ -197,10 +197,10 @@ const MARK = {
 } as const;
 
 /** What the two readers got in one section, field by field (provisional, rule 6). */
-function ReadList({ reads, many }: { reads: ReadField[]; many: boolean }) {
+function ReadList({ reads, many = true, title }: { reads: ReadField[]; many?: boolean; title?: string }) {
   return (
     <div className="score-group score-group--wide">
-      <span className="score-badge score-badge--read">{many ? "What the readers got" : "What the reader got"}</span>
+      <span className="score-badge score-badge--read">{title ?? (many ? "What the readers got" : "What the reader got")}</span>
       <ul className="score-reads">
         {reads.map((f, i) => (
           <li key={i} className={`score-reads__item is-${f.mark}`}>
@@ -472,34 +472,70 @@ function TextFix({ value, onChange }: { value: string; onChange: (v: string) => 
   );
 }
 
+const FIT_TONE: Record<JobFitReport["summary"], Tone> = {
+  all_required_most_preferred: "good",
+  all_required: "good",
+  most_required: "fair",
+  few_required: "poor",
+  none_found: "fair",
+};
+const REQ_MARK = { met: "ok", not_met: "lost", unknown: "partial" } as const;
+
+/**
+ * Job Fit: the post's requirements, met or not, the way ATSs explain a match (Workday Fit & Gap,
+ * Workable, Teamtailor), with HiredScore's grade definitions as the summary. No percentage.
+ * PROVISIONAL (rule 6): no Figma frame yet.
+ */
 function JobFitPanel({ fit }: { fit: JobFitReport }) {
-  const value = Math.round(fit.matchScore);
+  const none = fit.summary === "none_found";
+  const list = (required: boolean) =>
+    fit.requirements
+      .filter((r) => r.required === required)
+      .map((r): ReadField => ({ label: r.label, value: r.where, mark: REQ_MARK[r.status] }));
+  const req = list(true);
+  const pref = list(false);
   return (
-    <section className="score__head score__head--fit" aria-label="Job match" data-figma="jobfit">
-      <ScoreCircle value={value} text={`${value}%`} label="Job match" />
-      <div className="score__msg">
-        <p className="score__text">{fit.message}</p>
-        {fit.matched.length > 0 && (
-          <div className="score-keywords">
-            <span className="score-badge score-badge--good">Matched keywords</span>
-            <ul className="score-keywords__list">
-              {fit.matched.slice(0, 12).map((k) => (
-                <li key={k}>{k}</li>
-              ))}
+    <section className="score-fit" aria-labelledby="score-fit-title" data-figma="jobfit">
+      <div className="score__head score__head--fit">
+        <ScoreCircle
+          value={none || !fit.required.total ? 0 : (100 * fit.required.met) / fit.required.total}
+          text={none ? "—" : String(fit.required.met)}
+          of={none ? undefined : fit.required.total}
+          label={none ? "nothing to check" : "required met"}
+          tone={FIT_TONE[fit.summary]}
+        />
+        <div className="score__msg score__msg--ats">
+          <h2 id="score-fit-title" className={`score-fit__label is-${FIT_TONE[fit.summary]}`}>
+            {fit.label}
+          </h2>
+          <p className="score__text">{fit.message}</p>
+          {!none && (
+            <ul className="score-levels" aria-label="Requirements met">
+              <li className="score-badge score-level score-level--none">
+                <strong>{fit.required.met}</strong> of {fit.required.total} required
+              </li>
+              {fit.preferred.total > 0 && (
+                <li className="score-badge score-level">
+                  <strong>{fit.preferred.met}</strong> of {fit.preferred.total} preferred
+                </li>
+              )}
             </ul>
-          </div>
-        )}
-        {fit.missing.length > 0 && (
-          <div className="score-keywords">
-            <span className="score-badge score-badge--critical">Missing keywords</span>
-            <ul className="score-keywords__list">
-              {fit.missing.slice(0, 12).map((k) => (
-                <li key={k}>{k}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+      {(req.length > 0 || pref.length > 0) && (
+        <div className="score-fit__lists">
+          {req.length > 0 && <ReadList reads={req} title="Required by the post" />}
+          {pref.length > 0 && <ReadList reads={pref} title="Preferred: nice to have" />}
+        </div>
+      )}
+      <p className="score-fit__method">
+        How Job Fit works: the requirements are the skills from our list and the years of experience we find in the post,
+        required or preferred by its headings (“About us” and “We offer” are skipped). Something missing? Read the post
+        yourself. The summary uses the grade definitions Workday publishes for HiredScore: all required and most preferred
+        (A), all required (B), most required (C), few required (D); “most” means more than half. We don&apos;t run
+        HiredScore.
+      </p>
     </section>
   );
 }
@@ -551,18 +587,30 @@ export default function ScorePage() {
         const { report: fresh } = await api.score({ text, ats: storedAtsRead() });
         sessionStorage.setItem("ats_report", JSON.stringify(fresh));
         show(fresh);
-        const fit = sessionStorage.getItem("ats_jobfit");
-        if (fit) setJobFit(JSON.parse(fit));
+        await loadFit();
       } else if (cached && !stale) {
         show(JSON.parse(cached));
-        const fit = sessionStorage.getItem("ats_jobfit");
-        if (fit) setJobFit(JSON.parse(fit));
+        await loadFit();
       } else {
         show((await api.score({ data })).report);
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  // Job Fit's report; one saved by the old word count (a "matchScore") is computed again.
+  const loadFit = async () => {
+    const saved = sessionStorage.getItem("ats_jobfit");
+    if (!saved) return;
+    const fit = JSON.parse(saved);
+    if (fit?.kind === "requirements") return setJobFit(fit);
+    const text = sessionStorage.getItem("ats_text");
+    const jd = sessionStorage.getItem("ats_jd");
+    if (!text || !jd) return sessionStorage.removeItem("ats_jobfit");
+    const { report: fresh } = await api.jobfit(text, jd);
+    sessionStorage.setItem("ats_jobfit", JSON.stringify(fresh));
+    setJobFit(fresh);
   };
 
   // A results page opened directly (reload) scores the builder's CV: wait until it has loaded.
@@ -736,6 +784,8 @@ export default function ScorePage() {
       ) : (
         <div className="score">
           {fromAnalyze && <AnalyzeSteps current={1} />}
+          {jobFit && <JobFitPanel fit={jobFit} />}
+          {jobFit && isAts(report) && <h2 className="score-part-title">How an ATS parser reads your CV</h2>}
           <div className="score__head" data-figma="score-head">
             {isAts(report) ? (
               <ScoreCircle
@@ -761,8 +811,6 @@ export default function ScorePage() {
             </div>
           </div>
           {isAts(report) && <Notes notes={report.notes} />}
-
-          {jobFit && <JobFitPanel fit={jobFit} />}
 
           {isAts(report) && <FixFirst issues={report.issues} />}
           {isAts(report) && report.good.length > 0 && (

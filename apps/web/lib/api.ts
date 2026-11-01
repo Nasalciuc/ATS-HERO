@@ -4,7 +4,7 @@ import { scoreCv } from "./analyzer/ats-scorer";
 import { atsReport } from "./analyze-flow";
 import type { AtsRead } from "./ats-read/types";
 import type { AtsReport } from "./ats-read/score";
-import { jobFit } from "./analyzer/keyword-matcher";
+import { jobFit } from "./job-fit";
 import { getGuestId } from "./guest";
 import { listMyCvs, getCvById, createCv, updateCv, removeCv, claimGuest } from "@/app/actions/cvs";
 import { saveScan as saveScanAction } from "@/app/actions/scans";
