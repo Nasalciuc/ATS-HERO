@@ -579,7 +579,7 @@ function scoreReadings(
 
   if (file.kind !== "text" && !signals.twoColumns && file.kind === "pdf") good.push("One column");
   if (file.kind === "docx" && !signals.contactsOutsideBody && checks.email === 1) good.push("Contacts in the page, not the header");
-  if (file.bytes !== null && !signals.overSizeLimit) good.push(`${file.pages ? `${plural(file.pages, "page")}, ` : ""}${formatBytes(file.bytes)}`);
+  if (file.bytes !== null && !signals.overSizeLimit) good.push(`${file.pages ? `${plural(file.pages, "page")}, ` : "File size "}${formatBytes(file.bytes)}`);
 
   const content = contentCounts(P.experience);
   const sections = buildSections(checks, issues, contact, jobs, education, skillReads, monthsTotal, good, content);
@@ -645,8 +645,16 @@ function summary(
   const head = read.length ? `An ATS reads ${list(read)}.` : "An ATS reads almost nothing from this CV.";
   const costly = issues.filter((i) => i.points > 0).slice(0, 2);
   if (!costly.length) return `${head} Nothing it needs is lost${many ? ", whichever way the file is read" : ""}.`;
-  return `${head} ${costly.length === 1 ? "What costs you" : "What costs you most"}: ${costly.map((i) => lowerFirst(i.title)).join("; ")}.`;
+  const titles = costly.map((i) => lowerFirst(i.title));
+  // two causes that end alike ("… depending on how the file is read") say it once
+  const said =
+    titles.length === 2 && titles.every((t) => t.endsWith(SAME_CAUSE))
+      ? `${titles[0].slice(0, -SAME_CAUSE.length)}, and ${titles[1]}`
+      : titles.join("; ");
+  return `${head} ${costly.length === 1 ? "What costs you" : "What costs you most"}: ${said}.`;
 }
+
+const SAME_CAUSE = " depending on how the file is read";
 
 const lowerFirst = (s: string) => (/^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s);
 const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);

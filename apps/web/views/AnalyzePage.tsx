@@ -5,7 +5,7 @@ import AppShell from "../components/app/AppShell";
 import AnalyzeSteps from "../components/app/AnalyzeSteps";
 import { ArrowUp, SaveDisk, UploadRounded } from "../components/figma-icons";
 import { api } from "../lib/api";
-import { startImprove } from "../lib/analyze-flow";
+import { keepAtsRead, startImprove, storedAtsRead } from "../lib/analyze-flow";
 import { CV_FILE_ACCEPT, CV_FILE_MSG, droppedFile, isFileDrag, readCvFile } from "../lib/cv-file";
 import type { AtsRead } from "../lib/ats-read/types";
 
@@ -129,7 +129,11 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
     const analysed = sessionStorage.getItem("ats_flow") === mode;
     const draftCv = sessionStorage.getItem(`ats_${mode}_cv`) ?? (analysed ? sessionStorage.getItem("ats_text") : null);
     const draftJob = sessionStorage.getItem("ats_jobfit_jd") ?? (analysed ? sessionStorage.getItem("ats_jd") : null);
-    if (draftCv) setCvText(draftCv);
+    if (draftCv) {
+      setCvText(draftCv);
+      // the file behind it, when it was one (used only while the text is still the file's)
+      setCvFile(storedAtsRead());
+    }
     if (mode === "jobfit" && draftJob) setJobText(draftJob);
   }, [mode]);
 
@@ -161,6 +165,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
           api.jobfit(cvText, jobText),
         ]);
         sessionStorage.setItem("ats_report", JSON.stringify(report));
+        keepAtsRead(cvFile);
         sessionStorage.setItem("ats_jobfit", JSON.stringify(fit.report));
         // kept for "Recalculate Score" on the results page; it replaces an older saved draft
         sessionStorage.setItem("ats_text", cvText);
