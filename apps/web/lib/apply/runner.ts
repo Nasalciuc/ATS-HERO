@@ -80,6 +80,9 @@ export function cliRunner(session: string, opts: RunnerOptions): Runner {
           resolve({ out, why: String(stderr || err?.message || "no output") });
         },
       );
+      // a CLI that exits before reading its input makes the write fail (EPIPE); without a listener
+      // that is an uncaught exception. The callback above reports the real failure.
+      child.stdin?.on("error", () => undefined);
       child.stdin?.end(stdin ?? "");
     });
 

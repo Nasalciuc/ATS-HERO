@@ -7,7 +7,7 @@ import path from "node:path";
 import { abandonApplication, blockerIn, prepareApplication, submitApplication, type Prepared } from "@/lib/apply/engine";
 import { applyProfile, type ApplyProfile } from "@/lib/apply/profile";
 import type { Answers } from "@/lib/apply/plan";
-import { AGENT_BROWSER_VERSION, type Runner, type RunnerOptions } from "@/lib/apply/runner";
+import { AGENT_BROWSER_VERSION, AgentBrowserError, cliRunner, type Runner, type RunnerOptions } from "@/lib/apply/runner";
 import type { CvData } from "@/lib/types";
 
 const personas = JSON.parse(
@@ -287,6 +287,20 @@ describe("sending", () => {
     expect(f.args()).toEqual([["close"]]);
     await expect(submitApplication(r.session, approve(r, OK))).rejects.toThrow(/closed/);
   });
+});
+
+// A CLI that exits without reading its input: the batch is refused with an error, and the process
+// that runs the engine doesn't crash on the failed write.
+it.skipIf(process.platform === "win32")("a CLI that dies before reading the batch is an error, not a crash", async () => {
+  const saved = process.env.AGENT_BROWSER_BIN;
+  process.env.AGENT_BROWSER_BIN = "/bin/true";
+  try {
+    const run = cliRunner("apply-test", { allowedDomains: ["127.0.0.1"] });
+    await expect(run.batch([["fill", "@e1", "x".repeat(2_000_000)]])).rejects.toThrow(AgentBrowserError);
+  } finally {
+    if (saved === undefined) delete process.env.AGENT_BROWSER_BIN;
+    else process.env.AGENT_BROWSER_BIN = saved;
+  }
 });
 
 it("the lab workflow installs the agent-browser version the engine is written for", () => {
