@@ -55,8 +55,8 @@ export interface PersonItem {
 export interface ApplyPlan {
   fill: FillStep[];
   choose: ChooseStep[];
-  /** the form asks for a CV file; the engine finds the file input itself */
-  resume: { label: string } | null;
+  /** the form asks for a CV file; the engine finds the file input itself. Required: marked on the control or on its label */
+  resume: { label: string; required: boolean } | null;
   person: PersonItem[];
   submit: { ref: string; label: string } | null;
 }
@@ -160,7 +160,12 @@ export function planApplication(controls: FormControl[], profile: ApplyProfile, 
     if (c.role === "button") {
       const said = `${c.name} ${c.context ?? ""}`;
       if (SUBMIT.test(named)) plan.submit = { ref: c.ref, label: named };
-      else if (!plan.resume && RESUME.test(said) && !COVER.test(said)) plan.resume = { label: cleanLabel(c.context && RESUME.test(c.context) ? c.context : c.name) };
+      else if (!plan.resume && RESUME.test(said) && !COVER.test(said))
+        plan.resume = {
+          label: cleanLabel(c.context && RESUME.test(c.context) ? c.context : c.name),
+          // Lever puts the mark on the text before its "Attach" button
+          required: c.required || /[*✱✳]/u.test(c.context ?? ""),
+        };
       continue;
     }
 

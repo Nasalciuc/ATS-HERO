@@ -6,7 +6,8 @@
  *   prepareApplication → "ready" (screenshot of the filled form, the items for the person)
  *                      | "refused" (LinkedIn, Workday, an unknown site: no browser was started)
  *                      | "handoff" (a CAPTCHA, an e-mailed code, a login, a field the agent can't
- *                        set: the browser closes and the person continues from the posting's link)
+ *                        set, a required CV it couldn't attach: the browser closes and the person
+ *                        continues from the posting's link)
  *   submitApplication  → "blocked" (an item not gone through, or a new question: nothing was clicked)
  *                      | "sent" | "unconfirmed" | "handoff"
  *
@@ -27,7 +28,7 @@ import { postingTarget, type Refusal } from "./guard";
 import type { ApplyProfile } from "./profile";
 import { cliRunner, type Runner, type RunnerOptions } from "./runner";
 
-export type Handoff = "captcha" | "email_code" | "login" | "no_form" | "unsupported_field";
+export type Handoff = "captcha" | "email_code" | "login" | "no_form" | "unsupported_field" | "resume_not_attached";
 
 // Read from the names of these nodes only, never from the posting's text: a job description that
 // says "security check" doesn't stop the agent, and one can't hide a challenge in a paragraph. A
@@ -168,6 +169,8 @@ export async function prepareApplication(input: PrepareInput): Promise<Prepared>
       await runner.batch([["upload", "[data-ats-hero-resume]", input.cvPdfPath]]);
       resumeAttached = true;
     }
+    // the form needs the CV and we couldn't find where it goes: no "ready" for a form that can't be sent
+    if (plan.resume?.required && !resumeAttached) return await handoff("resume_not_attached", "0-no-resume.png");
 
     const screenshot = await shot("1-filled.png");
     const digest = planDigest(plan);

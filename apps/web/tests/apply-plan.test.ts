@@ -163,7 +163,7 @@ describe("the plan", () => {
   });
 
   it("finds the CV upload and the submit button", () => {
-    expect(plan.resume).toEqual({ label: "Resume/CV" });
+    expect(plan.resume).toEqual({ label: "Resume/CV", required: true });
     expect(plan.submit).toEqual({ ref: "e15", label: "Submit application" });
   });
 
@@ -174,7 +174,7 @@ describe("the plan", () => {
   it("groups radios under their question; a hidden file input behind a button still counts as the CV", () => {
     const p = planApplication(controlsOf(GROUPS), ana);
     expect(p.fill).toEqual([{ ref: "e1", label: "Full name", field: "fullName", value: "Ana Popescu" }]);
-    expect(p.resume).toEqual({ label: "Resume/CV" });
+    expect(p.resume).toEqual({ label: "Resume/CV", required: false });
     const empty = { current: null, placeholder: null };
     expect(p.person).toEqual([
       { id: "q1", kind: "radio", label: "Are you authorized to work in the EU?", required: false, sensitive: true, refs: ["e5", "e6"], options: ["Yes", "No"], ...empty },

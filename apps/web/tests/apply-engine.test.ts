@@ -136,10 +136,13 @@ describe("preparing", () => {
     expect(f.calls.filter((c) => c.via === "run").some((c) => c.args.includes("--headed") || c.args.includes(profile.email))).toBe(false);
   });
 
-  it("says when the CV couldn't be attached", async () => {
+  it("hands over a form that needs the CV when it can't find where the CV goes; an optional one stays ready", async () => {
     const f = fake({ snapshot: FORM, resumeInput: false });
-    expect(ready(await prepare(f)).resumeAttached).toBe(false);
+    expect(await prepare(f)).toMatchObject({ status: "handoff", reason: "resume_not_attached", url: LAB });
     expect(f.verbs()).not.toContain("upload");
+    expect(f.verbs().at(-1)).toBe("close");
+    const optional = fake({ snapshot: FORM.replace('button "Resume/CV *"', 'button "Resume/CV"'), resumeInput: false });
+    expect(ready(await prepare(optional)).resumeAttached).toBe(false);
   });
 
   it("hands over at a CAPTCHA, an e-mailed code, a login or a field it can't set, without filling anything", async () => {
