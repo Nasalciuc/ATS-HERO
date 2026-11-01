@@ -47,6 +47,13 @@ describe("what the post asks for", () => {
     expect(findSkills("R&D budget and a C grade")).toEqual([]);
   });
 
+  it("“or” and “and” in Romanian and Russian lists, with or without diacritics", () => {
+    for (const post of ["Python или R", "Python и R", "Python și R", "Python si R", "Python sau R"])
+      expect(findSkills(post).map((h) => h.name), post).toEqual(["Python", "R"]);
+    expect(findSkills("python or r")).toMatchObject([{ name: "Python" }, { name: "R", start: 10, end: 11 }]);
+    expect(findSkills("Отдел R&D и бюджет")).toEqual([]);
+  });
+
   it("“is a plus” on a line makes it preferred", () => {
     const { skills } = requirementsOf("Requirements:\n- SQL\n- Experience with Airflow is a plus");
     expect(skills.map((s) => [s.label, s.required])).toEqual([

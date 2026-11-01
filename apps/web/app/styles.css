@@ -6269,15 +6269,25 @@ select.field__input {
   color: #6b6b6b;
 }
 /* "7 / 9 fields read": the total smaller, after the number */
+.score-circle--fraction {
+  --of: #8a4b00; /* the total in a darker shade of the tone: 4.5:1 or more on the circle */
+}
+.score-circle--fraction.is-good {
+  --of: #006b2f;
+}
+.score-circle--fraction.is-poor {
+  --of: #a32a25;
+}
 .score-circle--fraction .score-circle__value {
   letter-spacing: -1px;
 }
 .score-circle__of {
   font-size: 26px;
   letter-spacing: 0;
-  opacity: 0.75;
+  color: var(--of);
 }
-/* the findings' levels: the score badges' shape, one colour per level (text at 4.5:1 or more) */
+/* the findings' levels: the score badges' shape, one colour per level (text at 4.5:1 or more:
+   critical 5.7, major 4.7, missing 6.2, tip 6.6, none 5.8) */
 .score-levels {
   display: flex;
   flex-wrap: wrap;
@@ -6297,7 +6307,7 @@ select.field__input {
 }
 .score-level--critical {
   --level-bg: #ffdcdc;
-  --level-fg: var(--red-text);
+  --level-fg: #a32a25;
 }
 .score-level--major {
   --level-bg: #fff2dc;
@@ -6309,7 +6319,7 @@ select.field__input {
 }
 .score-level--none {
   --level-bg: #d6f7e2;
-  --level-fg: #00843a;
+  --level-fg: #006b2f;
 }
 .score-badge--recruiter {
   background: #eef0f2;
@@ -6366,7 +6376,7 @@ select.field__input {
   margin: 0;
 }
 .score-note a {
-  color: var(--violet-600);
+  color: #5440e0;
 }
 .score-note__icon {
   flex: none;
@@ -6387,7 +6397,7 @@ select.field__input {
 }
 .score-badge--read {
   background: #f1efff;
-  color: var(--violet-600);
+  color: #5440e0; /* violet-600 is 4.0:1 on this tint; 12px text needs 4.5:1 */
 }
 .score-group--wide {
   width: 867px;
@@ -6517,7 +6527,7 @@ select.field__input {
   font-family: var(--font-helvetica);
   font-size: 12px;
   line-height: 16px;
-  color: #8c8c8c;
+  color: #6b6b6b;
 }
 /* the findings inside an open row: the cards' content, divided by lines instead of boxes */
 .score-findings {

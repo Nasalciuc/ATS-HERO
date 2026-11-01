@@ -69,9 +69,11 @@ const keyOf = (skill: string) => display(skill).toLowerCase();
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const PHRASE_RES = PHRASES.map((p) => [p, new RegExp(`(?<![\\p{L}\\p{N}])${escape(p)}(?![\\p{L}\\p{N}])`, "giu")] as const);
 const TOKEN_RE = /[\p{L}\p{N}]+(?:[#+]+|(?:[.-][\p{L}\p{N}]+)*)/gu;
-/** "R" and "C" count only in a list: after a comma, "or", "and", "/" or "(", before a comma, "or" or the end. */
+/** "R" and "C" count only in a list: after a comma, "or", "and", "/" or "(", before a comma, "or" or the end.
+ *  Word edges are letters and digits in any script: JavaScript's `\b` knows only Latin, so "și" and "или" never matched. */
+const LIST_WORD = "(?<![\\p{L}\\p{N}])(?:or|and|sau|și|si|или|и)(?![\\p{L}\\p{N}])";
 const singleRe = (letter: string) =>
-  new RegExp(`(?:^|[,;/(]|\\b(?:or|and|sau|și|si|или|и)\\b)\\s*(${letter})\\s*(?=$|[,;/)]|\\s+(?:or|and|sau|și|si|или|и)\\b|\\s*\\.(?:\\s|$))`, "gimu");
+  new RegExp(`(?:^|[,;/(]|${LIST_WORD})\\s*(${letter})\\s*(?=$|[,;/)]|\\s+${LIST_WORD}|\\s*\\.(?:\\s|$))`, "gimu");
 
 interface Hit {
   key: string;
@@ -96,7 +98,7 @@ export function findSkills(text: string): Hit[] {
   }
   for (const letter of SINGLE)
     for (const m of t.matchAll(singleRe(letter))) {
-      const start = m.index! + m[0].indexOf(m[1]);
+      const start = m.index! + m[0].trimEnd().length - 1; // the letter ends the match, before its trailing spaces
       hits.push({ key: keyOf(letter), name: display(letter), start, end: start + 1 });
     }
   return hits.sort((a, b) => a.start - b.start);
