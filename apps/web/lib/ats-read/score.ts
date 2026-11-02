@@ -87,7 +87,8 @@ export interface AtsReport {
 }
 
 // Where findings' facts come from: for whoever maintains them, never shown. The screen names no ATS
-// or parser vendor (Scaler, 2 Nov 2026); the texts say "resume parsers" or "some ATSs" instead.
+// or parser vendor (Scaler, 2 Nov 2026); the texts say "two widely used resume parsers" (Textkernel and RChilli),
+// "some ATSs" or "one widely used ATS" instead, as many as the evidence covers.
 export const GREENHOUSE_PARSE = {
   label: "Greenhouse Support: Unsuccessful resume parse",
   url: "https://support.greenhouse.io/hc/en-us/articles/200989175-Unsuccessful-resume-parse",
@@ -214,7 +215,7 @@ function scoreReadings(
       code: "name_missing",
       section: "personalInfo",
       title: "Your name isn't found",
-      why: "Parsers look for a short line of 2 to 4 capitalised words near the top. Yours is missing, has digits or symbols, or sits in a header or text box. Resume parsers rate a missing name as a major issue.",
+      why: "Parsers look for a short line of 2 to 4 capitalised words near the top. Yours is missing, has digits or symbols, or sits in a header or text box. Two widely used resume parsers rate a missing name as a major issue.",
       fix: "Start the CV with your name alone on its own line, in the page itself (not in the page header).",
     });
   }
@@ -250,7 +251,7 @@ function scoreReadings(
       code: "contacts_missing",
       section: "personalInfo",
       title: "No email and no phone found",
-      why: "Recruiters contact you through what the ATS read. Resume parsers rate a CV with neither an email nor a phone as critical.",
+      why: "Recruiters contact you through what the ATS read. Two widely used resume parsers rate a CV with neither an email nor a phone as fatal.",
       fix: "Add your email and phone under your name, as plain text.",
       source: TEXTKERNEL_QUALITY,
     });
@@ -327,8 +328,8 @@ function scoreReadings(
       title: language === "en" ? "No sections found" : "No headings our reader knows",
       why:
         language === "en"
-          ? "Parsers cut a CV into sections by headings such as “Experience”, “Education” and “Skills”. None was found, so nothing can be placed in the profile. Resume parsers rate this as critical."
-          : "Parsers cut a CV into sections by their headings, and our reader found none it knows. That may be our reader's limit; but parsers that don't know your CV's language place nothing in the profile either, which resume parsers rate as critical.",
+          ? "Parsers cut a CV into sections by headings such as “Experience”, “Education” and “Skills”. None was found, so nothing can be placed in the profile. Two widely used resume parsers rate this as fatal."
+          : "Parsers cut a CV into sections by their headings, and our reader found none it knows. That may be our reader's limit; but parsers that don't know your CV's language place nothing in the profile either, which two widely used resume parsers rate as fatal.",
       fix: "Use standard headings, each on its own line: Experience, Education, Skills.",
       source: TEXTKERNEL_QUALITY,
     });
@@ -346,7 +347,7 @@ function scoreReadings(
         code: "jobs_no_dates",
         section: "work",
         title: "Your jobs have no dates the parser can read",
-        why: "An ATS anchors each job on its date range: that's how it tells jobs apart and counts your years of experience. Resume parsers rate jobs without dates as critical.",
+        why: "An ATS anchors each job on its date range: that's how it tells jobs apart and counts your years of experience. Two widely used resume parsers rate jobs without dates as fatal.",
         fix: "Give every job a date range next to its title, like “March 2021 – Present” or “03/2021 – 02/2023”.",
         source: GREENHOUSE_MATCH,
       });
@@ -355,7 +356,7 @@ function scoreReadings(
         code: "no_jobs",
         section: "work",
         title: "No Experience section found",
-        why: "Parsers look for a heading such as “Experience” or “Work experience” and read the jobs under it. Without it, your jobs aren't read as jobs. Resume parsers rate this as critical.",
+        why: "Parsers look for a heading such as “Experience” or “Work experience” and read the jobs under it. Without it, your jobs aren't read as jobs. Two widely used resume parsers rate this as fatal.",
         fix: "Put your jobs under a heading called “Experience”, each with its title, company and dates.",
         source: TEXTKERNEL_QUALITY,
       });
@@ -423,7 +424,7 @@ function scoreReadings(
         code: "education_no_dates",
         section: "education",
         title: "Our reader couldn't separate your degrees",
-        why: "We found the Education heading, but our reader finds each degree by its years, and yours have none. Many ATS parsers don't need the years (some even advise leaving them out), so this may be our reader's limit, not theirs.",
+        why: "We found the Education heading, but our reader finds each degree by its years, and yours have none. Many ATS parsers don't need the years (one even advises leaving them out), so this may be our reader's limit, not theirs.",
         fix: "If you show years, put them next to each degree, e.g. “2016 – 2020”. If you don't, real parsers can still read your degrees.",
       });
     else if (!noSections)
@@ -431,7 +432,7 @@ function scoreReadings(
         code: "no_education",
         section: "education",
         title: "No Education section found",
-        why: "Resume parsers rate a CV without an Education section as critical: they have nowhere to put your studies.",
+        why: "Two widely used resume parsers rate a CV without an Education section as fatal: they have nowhere to put your studies.",
         fix: "Add a section called “Education”. If you have no degree, list your school, a course or a certification there.",
         source: TEXTKERNEL_QUALITY,
       });
@@ -582,7 +583,7 @@ function scoreReadings(
         (disagree > 0
           ? "Readers that go row by row mix the sidebar into your jobs, so titles, companies and dates end up with the wrong job. "
           : "Both of our readers got it right this time, but readers that go row by row mix the columns. ") +
-        "Resume parsers rate column layouts as critical, and ATS help pages list them among the causes of failed parses.",
+        "Two widely used resume parsers rate column layouts as fatal, and one major ATS lists them among the causes of failed parses.",
       fix: "Use one column: move the sidebar's contacts and skills to the top or the end.",
       source: GREENHOUSE_PARSE,
     });

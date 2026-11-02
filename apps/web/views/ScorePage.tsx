@@ -386,8 +386,9 @@ function Method({ pasted }: { pasted: boolean }) {
             : "Two free document readers take the text out of your file, in your browser: the first step every ATS parser does. A field counts as read when both get the same thing. Your file never leaves your device."}
         </li>
         <li>
-          The levels are the ones resume parsers give their own findings: Critical (they can&apos;t build your profile),
-          Major, Missing (a field they found empty) and Tip. Where our lab disagrees with them, the finding says so.
+          The levels follow two widely used resume parsers: Critical is their &ldquo;Fatal&rdquo; (they can&apos;t build
+          your profile), Major their &ldquo;Major issue&rdquo;, Missing their &ldquo;Data missing&rdquo; (a field they found
+          empty), Tip their &ldquo;Suggested improvement&rdquo;. Where our lab disagrees with them, the finding says so.
         </li>
         <li>
           There is no ATS score: without a job post, an ATS only reads you. With one, ATSs compare you to that job:
