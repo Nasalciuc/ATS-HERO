@@ -44,7 +44,9 @@ const HEADING_INDEX = new Map(Object.entries(HEADINGS).flatMap(([k, vs]) => vs.m
 // A heading that names two sections at once ("Education and languages", "Образование и языки")
 // opens the first: its parts are joined by "and", "&", "/", "," or "+" (and, și, и), and every part
 // after the first is a heading too, or one of these words that name no section of their own.
-const JOINER = /\s+(?:and|și|si|и)\s+|\s*[&/,+]\s*/iu;
+// Python's whitespace, as in strip() below: JavaScript's \s lacks \x1c-\x1f and \x85 (FEFF, which only
+// JavaScript counts, is gone by then: normalize() drops it on both sides)
+const JOINER = /[\s\x1c-\x1f\x85]+(?:and|și|si|и)[\s\x1c-\x1f\x85]+|[\s\x1c-\x1f\x85]*[&/,+][\s\x1c-\x1f\x85]*/iu;
 const TAIL_WORDS = new Set([
   "training", "courses", "interests", "hobbies", "qualifications", "achievements",
   "cursuri", "interese", "hobby-uri", "calificări", "realizări",
@@ -116,7 +118,7 @@ export function headingKey(line: string): SectionKey | null {
   const key = s.toLowerCase().replace(/\u015F/g, "\u0219").replace(/\u0163/g, "\u021B");
   const exact = HEADING_INDEX.get(key);
   if (exact) return exact as SectionKey;
-  const parts = key.split(JOINER).map((p) => p.trim());
+  const parts = key.split(JOINER).map(strip);
   if (parts.length < 2 || parts.length > 3 || !HEADING_INDEX.has(parts[0])) return null;
   return parts.slice(1).every((p) => HEADING_INDEX.has(p) || TAIL_WORDS.has(p)) ? (HEADING_INDEX.get(parts[0]) as SectionKey) : null;
 }

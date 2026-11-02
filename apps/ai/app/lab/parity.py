@@ -98,6 +98,12 @@ EDGE: dict[str, str] = {
         "Ion Bălănescu\nEXPERIENŢĂ PROFESIONALĂ\nInginer software, Bălţi Tech, Septembrie 2020 – până în prezent\n"
         "EDUCAŢIE\nUniversitatea de Stat din Bălţi, 2016 – 2020\nCOMPETENŢE\nC++, Python"
     ),
+    # a control character Python counts as a space and JavaScript's \s does not (U+001F), inside a
+    # heading that names two sections: both readers must split it the same way
+    "compound-heading-unit-separator": (
+        "Mara Lungu\nmara.lungu@example.com\nExperience\nGame Designer, Lumen Games, 03.2021 – present\n"
+        "Skills\x1fand\x1ftraining\nUnity, Jira"
+    ),
 }
 
 
