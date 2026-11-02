@@ -4,6 +4,7 @@ import { scoreCv } from "./analyzer/ats-scorer";
 import { atsReport } from "./analyze-flow";
 import type { AtsRead } from "./ats-read/types";
 import type { AtsReport } from "./ats-read/score";
+import type { JobLinkFailure } from "./job-post/link";
 import { jobFit } from "./job-fit";
 import { getGuestId } from "./guest";
 import { listMyCvs, getCvById, createCv, updateCv, removeCv, claimGuest } from "@/app/actions/cvs";
@@ -89,6 +90,19 @@ export const api = {
   jobfit: async (cvText: string, jobText: string): Promise<{ report: JobFitReport }> => ({
     report: jobFit(cvText, jobText),
   }),
+
+  /** Job Fit: the job text behind a link, read by our server (POST /api/job-post). */
+  jobPost: async (url: string): Promise<{ ok: true; text: string } | { ok: false; reason: JobLinkFailure }> => {
+    const res = await fetch("/api/job-post", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    if (res.status === 429) return { ok: false, reason: "too_many_requests" };
+    const data = (await res.json().catch(() => null)) as { ok?: boolean; text?: string; reason?: JobLinkFailure } | null;
+    if (data?.ok && typeof data.text === "string") return { ok: true, text: data.text };
+    return { ok: false, reason: data?.reason ?? "unreachable" };
+  },
 
   // --- Persist a scan result (optional; call from Score / Job-fit pages) ---
   saveScan: async (args: {

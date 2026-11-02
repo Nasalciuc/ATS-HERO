@@ -24,7 +24,7 @@ import { GUEST_RETENTION_DAYS } from "@/lib/retention";
 import { RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /** The date the content last changed. Change it with the content, never compute it. */
-export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-01", label: "1 November 2026" };
+export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-02", label: "2 November 2026" };
 
 const RATE_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
 
@@ -54,6 +54,7 @@ const journey: LegalStep[] = [
       "The first time you open the app, your browser gets a random guest code, and your CVs are saved under it.",
       "What you type in the builder is saved to our database as you go, with your photo if you add one: a small copy made in your browser, not the original file.",
       "A CV you check (on the home page, in Improve My Resume or in Check Job Fit) is read inside your browser and never uploaded, whether it is a PDF, a Word file or text.",
+      "A job link you paste in Check Job Fit is opened once by our server, to put the job’s text in the field. The job site sees our server, not you, and we keep neither the link nor the page. LinkedIn links aren’t opened.",
       "PDF and Word downloads are made in your browser too.",
     ],
     tag: `Guest CVs: deleted ${GUEST_RETENTION_DAYS} days after your last edit`,
@@ -185,6 +186,7 @@ const sections: LegalSection[] = [
           ["Database logs (slow queries, errors), without what your CV says", "3 days"],
           ["Rate-limit counters", `In our server’s memory only, never saved; each count runs for ${RATE_SECONDS} seconds`],
           ["What you check in Improve My Resume or Check Job Fit", "In your browser tab, until you close it"],
+          ["A job link you paste in Check Job Fit", "Not kept: our server opens the page once and forgets both"],
           ["Google Analytics visit data (only if you clicked Allow)", "14 months (our setting in Google Analytics), then Google deletes it in its monthly clean-up. Totals in its standard reports, which identify no one, are not covered by this limit"],
           ["Your answer to the cookie banner (cc_cookie)", "182 days, then the banner asks again"],
         ]}

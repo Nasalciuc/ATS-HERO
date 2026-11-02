@@ -8,6 +8,7 @@ import { api } from "../lib/api";
 import { keepAtsRead, startImprove, storedAtsRead } from "../lib/analyze-flow";
 import { CV_FILE_ACCEPT, CV_FILE_MSG, droppedFile, isFileDrag, readCvFile } from "../lib/cv-file";
 import type { AtsRead } from "../lib/ats-read/types";
+import { JOB_LINK_MSG, jobLinkIn } from "../lib/job-post/link";
 
 type Mode = "improve" | "jobfit";
 
@@ -18,6 +19,7 @@ function TextOrUpload({
   placeholder,
   figma,
   what,
+  takes = "INSERT TEXT",
   onFileRead,
 }: {
   value: string;
@@ -28,6 +30,8 @@ function TextOrUpload({
   figma: string;
   /** shown after "INSERT TEXT", so nobody pastes the CV into the job field or the other way round */
   what: string;
+  /** what the field takes, when it's more than text ("INSERT TEXT OR LINK") */
+  takes?: string;
 }) {
   const id = useId();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -70,7 +74,7 @@ function TextOrUpload({
     >
       <div className="analyze-field" data-figma={`${figma}-field`}>
         <label className="field__label" htmlFor={id}>
-          INSERT TEXT — {what}
+          {takes} — {what}
         </label>
         <textarea
           id={id}
@@ -122,6 +126,8 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
   const [cvFile, setCvFile] = useState<AtsRead | null>(null);
   const [jobText, setJobText] = useState("");
   const [busy, setBusy] = useState(false);
+  // Job Fit with a link in the job field: our server reads the page first
+  const [readingLink, setReadingLink] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -159,17 +165,31 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
           setBusy(false);
           return;
         }
+        // just a link: the job text comes from the page, and shows in the field before the check
+        let job = jobText;
+        const link = jobLinkIn(jobText);
+        if (link) {
+          setReadingLink(true);
+          const read = await api.jobPost(link).finally(() => setReadingLink(false));
+          if (!read.ok) {
+            setError(JOB_LINK_MSG[read.reason]);
+            setBusy(false);
+            return;
+          }
+          job = read.text;
+          setJobText(job);
+        }
         sessionStorage.setItem("ats_flow", "jobfit");
         const [{ report }, fit] = await Promise.all([
           api.score({ text: cvText, ats: cvFile }),
-          api.jobfit(cvText, jobText),
+          api.jobfit(cvText, job),
         ]);
         sessionStorage.setItem("ats_report", JSON.stringify(report));
         keepAtsRead(cvFile);
         sessionStorage.setItem("ats_jobfit", JSON.stringify(fit.report));
         // kept for "Recalculate Score" on the results page; it replaces an older saved draft
         sessionStorage.setItem("ats_text", cvText);
-        sessionStorage.setItem("ats_jd", jobText);
+        sessionStorage.setItem("ats_jd", job);
         sessionStorage.removeItem("ats_jobfit_cv");
         sessionStorage.removeItem("ats_jobfit_jd");
       } else {
@@ -209,9 +229,10 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
           <TextOrUpload
             figma="analyze-job"
             what="JOB DESCRIPTION"
+            takes="INSERT TEXT OR LINK"
             value={jobText}
             onChange={setJobText}
-            placeholder="Paste the job description here…"
+            placeholder="Paste the job description, or a link to the job post…"
           />
         )}
       </div>
@@ -224,7 +245,7 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
 
       <div className="analyze-footer">
         <button className="topbtn topbtn--dark analyze-check" data-figma="btn-check" onClick={run} disabled={busy}>
-          {busy ? "Analyzing…" : "Check ATS Score"} <ArrowUp className="topbtn__arrow--right" />
+          {readingLink ? "Reading the link…" : busy ? "Analyzing…" : "Check ATS Score"} <ArrowUp className="topbtn__arrow--right" />
         </button>
       </div>
     </AppShell>
