@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { entryParts, monthOf, monthsOfExperience, parse, splitLines, type Block } from "@/lib/ats-read/parse";
+import { entryParts, headingKey, monthOf, monthsOfExperience, parse, splitLines, type Block } from "@/lib/ats-read/parse";
 
 interface Case {
   id: string;
@@ -39,6 +39,25 @@ describe("parity with the lab parser", () => {
   for (const row of rows) {
     it(row.id, () => expect(expected(row.text)).toEqual(row.expected));
   }
+});
+
+describe("section headings", () => {
+  it("reads a heading that names two sections as the first one", () => {
+    expect(headingKey("Education and languages")).toBe("education");
+    expect(headingKey("EDUCATION & LANGUAGES")).toBe("education");
+    expect(headingKey("Education & Training")).toBe("education");
+    expect(headingKey("Образование и языки")).toBe("education");
+    expect(headingKey("Educație și limbi")).toBe("education");
+    expect(headingKey("Projects / Achievements")).toBe("activities");
+  });
+
+  it("reads the common names of the skills section", () => {
+    for (const h of ["Core skills", "Key Skills", "Core competencies", "Ключевые компетенции", "Competențe cheie"]) expect(headingKey(h)).toBe("skills");
+  });
+
+  it("doesn't take a line of skills or a job title for a heading", () => {
+    for (const line of ["Python and SQL", "Experience and passion", "Data Analyst & Developer", "Education and research at USM"]) expect(headingKey(line)).toBeNull();
+  });
 });
 
 describe("Python's splitlines", () => {

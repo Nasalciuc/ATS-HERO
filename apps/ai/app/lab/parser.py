@@ -22,8 +22,11 @@ HEADINGS: dict[str, tuple[str, ...]] = {
                    "experiență de muncă", "опыт работы", "опыт", "профессиональный опыт", "трудовая деятельность"),
     "education": ("education", "educație", "educatie", "studii", "образование"),
     "skills": ("skills", "technical skills", "hard skills", "skills & awards", "skills and awards",
-               "skills & languages", "competențe", "competente", "abilități",
-               "навыки", "ключевые навыки", "профессиональные навыки", "компетенции"),
+               "skills & languages", "core skills", "key skills", "main skills", "skills summary",
+               "core competencies", "key competencies", "competencies", "areas of expertise",
+               "competențe", "competente", "abilități", "competențe cheie", "abilități cheie",
+               "навыки", "ключевые навыки", "профессиональные навыки", "основные навыки", "компетенции",
+               "ключевые компетенции"),
     "tools": ("tools", "instruments", "technologies", "инструменты", "технологии"),
     "soft_skills": ("soft skills",),
     "languages": ("languages", "limbi", "limbi străine", "языки", "знание языков", "иностранные языки"),
@@ -36,6 +39,15 @@ HEADINGS: dict[str, tuple[str, ...]] = {
     "links": ("links", "profiles", "ссылки"),
 }
 _HEADING_INDEX = {v: k for k, vs in HEADINGS.items() for v in vs}
+# A heading that names two sections at once ("Education and languages", "Образование и языки")
+# opens the first: its parts are joined by "and", "&", "/", "," or "+" (and, și, и), and every part
+# after the first is a heading too, or one of these words that name no section of their own.
+_JOINER = re.compile(r"\s+(?:and|și|si|и)\s+|\s*[&/,+]\s*", re.IGNORECASE)
+_TAIL_WORDS = frozenset({
+    "training", "courses", "interests", "hobbies", "qualifications", "achievements",
+    "cursuri", "interese", "hobby-uri", "calificări", "realizări",
+    "курсы", "интересы", "хобби", "квалификация", "достижения",
+})
 
 _MONTHS = (r"jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|"
            r"sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|"
@@ -94,7 +106,15 @@ def heading_key(line: str) -> str | None:
     if not s or len(s) > 40 or any(ch.isdigit() for ch in s):
         return None
     # Romanian written with the cedilla (ş ţ, older keyboards) is the same word as with the comma (ș ț)
-    return _HEADING_INDEX.get(s.lower().replace("\u015f", "\u0219").replace("\u0163", "\u021b"))
+    s = s.lower().replace("\u015f", "\u0219").replace("\u0163", "\u021b")
+    if s in _HEADING_INDEX:
+        return _HEADING_INDEX[s]
+    parts = [p.strip() for p in _JOINER.split(s)]
+    if len(parts) < 2 or len(parts) > 3 or parts[0] not in _HEADING_INDEX:
+        return None
+    if all(p in _HEADING_INDEX or p in _TAIL_WORDS for p in parts[1:]):
+        return _HEADING_INDEX[parts[0]]
+    return None
 
 
 # ------------------------------------------------------------------------- models

@@ -80,6 +80,20 @@ EDGE: dict[str, str] = {
         "Elena Rusu\nExperience\nSenior Data Analyst, Orange Moldova, 03.2021 – present\n"
         "Data Analyst, Moldcell, 06.2018 – 02.2021\nEducation\nBSc Computer Science, 2014 – 2018\nSkills\nPython, SQL"
     ),
+    # a heading that names two sections ("Education and languages") and a "Core skills" heading,
+    # as in a real CV a tester brought (the person here is made up)
+    "compound-headings": (
+        "Mara Lungu\nGame Designer | F2P Games\nmara.lungu@example.com | +373 69 000 111\nProfile\n"
+        "Game designer with 6 years on free-to-play projects.\nCore skills\nLevel design, narrative design, economy balancing\n"
+        "Tools: Unity, Jira, Figma\nExperience\nGame Designer, Lumen Games, 03.2021 – present\n- Designed 40 levels\n"
+        "Education and languages\nUSM, Moldova | Bachelor's in Game Design | 2016 - 2020\n"
+        "Russian: native | Romanian: fluent | English: working proficiency"
+    ),
+    "compound-headings-ru": (
+        "Мара Лунгу\nmara.lungu@example.com\nОпыт работы\nГеймдизайнер, Lumen Games, 03.2021 – по настоящее время\n"
+        "Образование и языки\nМолдавский государственный университет, 2016 – 2020\nРусский: родной\n"
+        "Ключевые компетенции\nUnity, Jira"
+    ),
     "cedilla-headings": (
         "Ion Bălănescu\nEXPERIENŢĂ PROFESIONALĂ\nInginer software, Bălţi Tech, Septembrie 2020 – până în prezent\n"
         "EDUCAŢIE\nUniversitatea de Stat din Bălţi, 2016 – 2020\nCOMPETENŢE\nC++, Python"

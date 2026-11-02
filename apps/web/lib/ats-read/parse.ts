@@ -24,8 +24,11 @@ const HEADINGS: Record<string, string[]> = {
     "experiență de muncă", "опыт работы", "опыт", "профессиональный опыт", "трудовая деятельность"],
   education: ["education", "educație", "educatie", "studii", "образование"],
   skills: ["skills", "technical skills", "hard skills", "skills & awards", "skills and awards",
-    "skills & languages", "competențe", "competente", "abilități",
-    "навыки", "ключевые навыки", "профессиональные навыки", "компетенции"],
+    "skills & languages", "core skills", "key skills", "main skills", "skills summary",
+    "core competencies", "key competencies", "competencies", "areas of expertise",
+    "competențe", "competente", "abilități", "competențe cheie", "abilități cheie",
+    "навыки", "ключевые навыки", "профессиональные навыки", "основные навыки", "компетенции",
+    "ключевые компетенции"],
   tools: ["tools", "instruments", "technologies", "инструменты", "технологии"],
   soft_skills: ["soft skills"],
   languages: ["languages", "limbi", "limbi străine", "языки", "знание языков", "иностранные языки"],
@@ -38,6 +41,15 @@ const HEADINGS: Record<string, string[]> = {
   links: ["links", "profiles", "ссылки"],
 };
 const HEADING_INDEX = new Map(Object.entries(HEADINGS).flatMap(([k, vs]) => vs.map((v) => [v, k] as const)));
+// A heading that names two sections at once ("Education and languages", "Образование и языки")
+// opens the first: its parts are joined by "and", "&", "/", "," or "+" (and, și, и), and every part
+// after the first is a heading too, or one of these words that name no section of their own.
+const JOINER = /\s+(?:and|și|si|и)\s+|\s*[&/,+]\s*/iu;
+const TAIL_WORDS = new Set([
+  "training", "courses", "interests", "hobbies", "qualifications", "achievements",
+  "cursuri", "interese", "hobby-uri", "calificări", "realizări",
+  "курсы", "интересы", "хобби", "квалификация", "достижения",
+]);
 
 export type SectionKey = keyof typeof HEADINGS;
 
@@ -101,7 +113,12 @@ export function headingKey(line: string): SectionKey | null {
   const s = strip(strip(line).replace(/[:\s]+$/u, ""));
   if (!s || len(s) > 40 || /[\p{Nd}\p{No}]/u.test(s)) return null;
   // Romanian written with the cedilla (ş ţ, older keyboards) is the same word as with the comma (ș ț)
-  return HEADING_INDEX.get(s.toLowerCase().replace(/\u015F/g, "\u0219").replace(/\u0163/g, "\u021B")) ?? null;
+  const key = s.toLowerCase().replace(/\u015F/g, "\u0219").replace(/\u0163/g, "\u021B");
+  const exact = HEADING_INDEX.get(key);
+  if (exact) return exact as SectionKey;
+  const parts = key.split(JOINER).map((p) => p.trim());
+  if (parts.length < 2 || parts.length > 3 || !HEADING_INDEX.has(parts[0])) return null;
+  return parts.slice(1).every((p) => HEADING_INDEX.has(p) || TAIL_WORDS.has(p)) ? (HEADING_INDEX.get(parts[0]) as SectionKey) : null;
 }
 
 /** Text anchored on one date range: one job or one degree, as the parser segments it. */
