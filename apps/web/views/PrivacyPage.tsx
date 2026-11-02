@@ -122,6 +122,7 @@ const sections: LegalSection[] = [
             ["Save and show your CVs, as a guest or signed in", "What you type in the builder, your photo if you add one, your guest code, CV IDs", "You asked us to (our agreement with you)"],
             ["Your account and sign-in", "Email address, Clerk ID, the date you joined, sometimes your name", "Our agreement with you"],
             ["The job tracker", "What you enter in it", "Our agreement with you"],
+            ["Read a job post from a link you paste in Check Job Fit", "The link, and the page it leads to (neither is kept)", "You asked us to (our agreement with you)"],
             ["Keep the service safe and working: request logs, sign-in checks, rate limits, the bot check", "IP address, browser, guest code, account and CV IDs", "Our legitimate interest in a service that works and isn’t abused"],
             ["Backups", "Everything in our database", "Our legitimate interest in not losing your work"],
             ["Count visits to the public pages and see which ones are used (Google Analytics)", "Pages you open on the public site, the site that sent you, device, browser, approximate location (country and city, worked out from your IP address), the IDs in the _ga cookies", "Your consent, given with Allow in the cookie banner. You can withdraw it at any time in Cookie settings"],
