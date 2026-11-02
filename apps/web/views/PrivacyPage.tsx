@@ -24,7 +24,7 @@ import { GUEST_RETENTION_DAYS } from "@/lib/retention";
 import { RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /** The date the content last changed. Change it with the content, never compute it. */
-export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-01", label: "1 November 2026" };
+export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-02", label: "2 November 2026" };
 
 const RATE_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
 
@@ -54,6 +54,7 @@ const journey: LegalStep[] = [
       "The first time you open the app, your browser gets a random guest code, and your CVs are saved under it.",
       "What you type in the builder is saved to our database as you go, with your photo if you add one: a small copy made in your browser, not the original file.",
       "A CV you check (on the home page, in Improve My Resume or in Check Job Fit) is read inside your browser and never uploaded, whether it is a PDF, a Word file or text.",
+      "A job link you paste in Check Job Fit is opened once by our server, to put the job’s text in the field. The job site sees our server, not you, and we keep neither the link nor the page. LinkedIn links aren’t opened.",
       "PDF and Word downloads are made in your browser too.",
     ],
     tag: `Guest CVs: deleted ${GUEST_RETENTION_DAYS} days after your last edit`,
@@ -121,6 +122,7 @@ const sections: LegalSection[] = [
             ["Save and show your CVs, as a guest or signed in", "What you type in the builder, your photo if you add one, your guest code, CV IDs", "You asked us to (our agreement with you)"],
             ["Your account and sign-in", "Email address, Clerk ID, the date you joined, sometimes your name", "Our agreement with you"],
             ["The job tracker", "What you enter in it", "Our agreement with you"],
+            ["Read a job post from a link you paste in Check Job Fit", "The link, and the page it leads to (neither is kept)", "You asked us to (our agreement with you)"],
             ["Keep the service safe and working: request logs, sign-in checks, rate limits, the bot check", "IP address, browser, guest code, account and CV IDs", "Our legitimate interest in a service that works and isn’t abused"],
             ["Backups", "Everything in our database", "Our legitimate interest in not losing your work"],
             ["Count visits to the public pages and see which ones are used (Google Analytics)", "Pages you open on the public site, the site that sent you, device, browser, approximate location (country and city, worked out from your IP address), the IDs in the _ga cookies", "Your consent, given with Allow in the cookie banner. You can withdraw it at any time in Cookie settings"],
@@ -185,6 +187,7 @@ const sections: LegalSection[] = [
           ["Database logs (slow queries, errors), without what your CV says", "3 days"],
           ["Rate-limit counters", `In our server’s memory only, never saved; each count runs for ${RATE_SECONDS} seconds`],
           ["What you check in Improve My Resume or Check Job Fit", "In your browser tab, until you close it"],
+          ["A job link you paste in Check Job Fit", "Not kept: our server opens the page once and forgets both"],
           ["Google Analytics visit data (only if you clicked Allow)", "14 months (our setting in Google Analytics), then Google deletes it in its monthly clean-up. Totals in its standard reports, which identify no one, are not covered by this limit"],
           ["Your answer to the cookie banner (cc_cookie)", "182 days, then the banner asks again"],
         ]}
@@ -203,7 +206,7 @@ const sections: LegalSection[] = [
             ["_cfuvid", "Cookie set by Cloudflare, for Clerk", "Protects sign-in from abuse"],
             ["ats_hero_guest_id", "Your browser’s local storage", "Links guest CVs to this browser"],
             ["ats_hero_cv_id", "Local storage", "Reopens the CV you were editing"],
-            ["ats_text, ats_jd and the other ats_ keys", "Session storage", "Hold what you check in Improve My Resume and Check Job Fit, and its result, until you close the tab"],
+            ["ats_text, ats_jd, ats_text_draft and the other ats_ keys", "Session storage", "Hold what you check in Improve My Resume and Check Job Fit, an edit of your CV text you haven’t saved yet (ats_text_draft), and the result, until you close the tab"],
             ["cc_cookie", "Cookie set by ATS Hero on the public pages", "Remembers your answer to the cookie banner, for 182 days"],
             ["_ga and _ga_<ID>", "Cookies set by Google Analytics, only after you click Allow", "Tell one visit from another, for up to 2 years. If you later choose Decline, we delete them"],
           ]}

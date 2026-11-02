@@ -19,7 +19,7 @@ import { api } from "../lib/api";
 import { storedAtsRead } from "../lib/analyze-flow";
 import { SECTION_EMOJI, type JobFitReport, type ScoreReport, type SectionKey, type SectionReport } from "../lib/types";
 import { fileLine, toneOfLevel, type AtsReport, type AtsSection, type Issue, type Note, type ReadField } from "../lib/ats-read/score";
-import { LEVEL_ORDER, LEVELS, refLine, type Level } from "../lib/ats-read/levels";
+import { LEVEL_ORDER, LEVELS, type Level } from "../lib/ats-read/levels";
 import {
   PersonalInfoStep,
   EducationStep,
@@ -242,33 +242,22 @@ function LevelCounts({ counts }: { counts: Record<Level, number> }) {
   );
 }
 
-/** One finding: its level, what happens, why, the source and the fix (provisional, rule 6). */
+/**
+ * One finding: its level, what happens, why and the fix (provisional, rule 6). Its sources and
+ * the parser codes it mirrors stay in the code: the screen names no ATS or parser vendor.
+ */
 function Finding({ issue, card }: { issue: Issue; card?: boolean }) {
-  const ref = refLine(issue.ref);
   return (
     <li className={card ? "score-fixfirst__item" : "score-finding"}>
       <div className="score-fixfirst__top">
         <h3 className="score-fixfirst__name">{issue.title}</h3>
         <LevelChip level={issue.level} />
       </div>
-      <p className="score-fixfirst__why">
-        {issue.why}
-        {issue.source && (
-          <>
-            {" "}
-            <a href={issue.source.url} target="_blank" rel="noopener noreferrer">
-              {issue.source.label}
-            </a>
-          </>
-        )}
-      </p>
+      <p className="score-fixfirst__why">{issue.why}</p>
       <p className="score-fixfirst__fix">
         <strong>Fix:</strong> {issue.fix}
       </p>
-      <p className="score-finding__ref">
-        {ref ? `Parser codes: ${ref}` : "Our check: no parser code"}
-        {issue.ref.deviation ? ` · Our level differs: ${issue.ref.deviation}.` : ""}
-      </p>
+      {issue.ref.deviation && <p className="score-finding__ref">Our level differs from the parsers&apos;: {issue.ref.deviation}.</p>}
     </li>
   );
 }
@@ -302,17 +291,7 @@ function Notes({ notes }: { notes: Note[] }) {
           <span className="score-note__icon" aria-hidden="true">
             i
           </span>
-          <p>
-            {n.text}
-            {n.source && (
-              <>
-                {" "}
-                <a href={n.source.url} target="_blank" rel="noopener noreferrer">
-                  {n.source.label}
-                </a>
-              </>
-            )}
-          </p>
+          <p>{n.text}</p>
         </li>
       ))}
     </ul>
@@ -407,9 +386,9 @@ function Method({ pasted }: { pasted: boolean }) {
             : "Two free document readers take the text out of your file, in your browser: the first step every ATS parser does. A field counts as read when both get the same thing. Your file never leaves your device."}
         </li>
         <li>
-          The levels are the ones the Textkernel and RChilli resume parsers use: Critical is their “Fatal”, Major their
-          “Major issue”, Missing their “Data missing”, Tip their “Suggested improvement”. Where our lab disagrees with
-          them, the finding says so.
+          The levels follow two widely used resume parsers: Critical is their &ldquo;Fatal&rdquo; (they can&apos;t build
+          your profile), Major their &ldquo;Major issue&rdquo;, Missing their &ldquo;Data missing&rdquo; (a field they found
+          empty), Tip their &ldquo;Suggested improvement&rdquo;. Where our lab disagrees with them, the finding says so.
         </li>
         <li>
           There is no ATS score: without a job post, an ATS only reads you. With one, ATSs compare you to that job:
@@ -460,15 +439,43 @@ function RobotRow({ text, readings }: { text: string; readings: number }) {
   );
 }
 
-/** Improve / Job Fit: the score comes from the pasted text, so "Fix now" edits that text. */
-function TextFix({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+/**
+ * Improve / Job Fit: the score comes from the pasted text, so "Fix now" edits that text. Save and
+ * Cancel sit under the text too: the title's Save is out of sight when the section is far down
+ * (a tester looked for a "Done" there). PROVISIONAL (rule 6): no Figma frame has them yet.
+ */
+function TextFix({
+  value,
+  onChange,
+  onSave,
+  onCancel,
+  busy,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  busy: boolean;
+}) {
   return (
     <div className="builder__panel score-textfix" data-figma="form-card">
       <label className="field__label" htmlFor="score-textfix">
         YOUR CV TEXT
       </label>
       <textarea id="score-textfix" className="analyze-textarea score-textfix__area" value={value} onChange={(e) => onChange(e.target.value)} />
-      <p className="score-textfix__hint">Save re-scores the edited text; Back leaves it as it was.</p>
+      <p className="score-textfix__hint">
+        {value.trim()
+          ? "Save checks the edited text again. Closing the section keeps your changes too; Cancel drops them."
+          : "The text is empty, so there is nothing to check. Cancel brings your CV’s text back."}
+      </p>
+      <div className="score-textfix__actions">
+        <button type="button" className="topbtn topbtn--dark" onClick={onSave} disabled={busy || !value.trim()}>
+          {busy ? "Checking…" : "Save"}
+        </button>
+        <button type="button" className="topbtn topbtn--ghost" onClick={onCancel} disabled={busy}>
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
@@ -485,7 +492,8 @@ const REQ_MARK = { met: "ok", not_met: "lost", unknown: "partial" } as const;
 
 /**
  * Job Fit: the post's requirements, met or not, the way ATSs explain a match (Workday Fit & Gap,
- * Workable, Teamtailor), with HiredScore's grade definitions as the summary. No percentage.
+ * Workable, Teamtailor), with HiredScore's grade definitions as the summary. No percentage. The
+ * screen names none of them (Scaler, 2 Nov 2026).
  * PROVISIONAL (rule 6): no Figma frame yet.
  */
 function JobFitPanel({ fit }: { fit: JobFitReport }) {
@@ -538,13 +546,21 @@ function JobFitPanel({ fit }: { fit: JobFitReport }) {
       <p className="score-fit__method">
         How Job Fit works: the requirements are the skills from our list and the years of experience we find in the post,
         required or preferred by its headings (“About us” and “We offer” are skipped). Something missing? Read the post
-        yourself. The summary uses the grade definitions Workday publishes for HiredScore: all required and most preferred
-        (A), all required (B), most required (C), few required (D); “most” means more than half. We don&apos;t run
-        HiredScore.
+        yourself. The summary says how many of them your CV shows: all required and most preferred, all required, most
+        required or few required; “most” means more than half. We don&apos;t run any ATS&apos;s own ranking.
       </p>
     </section>
   );
 }
+
+/**
+ * Improve / Job Fit: the text being fixed, kept in the tab while it is edited, so leaving the page
+ * (the sidebar, "Check Job Fit", Back, a reload) doesn't lose it. It comes back only onto the text
+ * it was made from: a new check on the analyze page starts clean. Covered on the Privacy page by
+ * "the other ats_ keys" (session storage, gone when the tab closes).
+ */
+const DRAFT_KEY = "ats_text_draft";
+type StoredDraft = { section: SectionKey; text: string; base: string };
 
 export default function ScorePage() {
   const { data, update, updateLater, save, saving, saveError, ready } = useApp();
@@ -676,15 +692,26 @@ export default function ScorePage() {
 
   // Figma 383:7664: while a section is being fixed the title buttons are "Back" (close the form)
   // and "Save". Builder flow: the form edits the CV as you type, so both re-score (Save also saves
-  // the CV). Improve / Job Fit: Save re-scores the edited text, Back drops the edit.
+  // the CV). Improve / Job Fit: Save (in the title or under the text), closing the section and
+  // "Check again" keep the edit and check it; only Back and Cancel drop it. An edit used to be
+  // lost on anything but the title's Save, and "Fix now" then showed the old text again.
   const startFix = (key: SectionKey) => {
     if (textFlow) setDraft(sessionStorage.getItem("ats_text") ?? "");
     setFixing(key);
   };
+  const editDraft = (text: string) => {
+    setDraft(text);
+    if (!fixing) return;
+    const kept: StoredDraft = { section: fixing, text, base: sessionStorage.getItem("ats_text") ?? "" };
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(kept));
+  };
   const finishFix = async (persist: boolean, keep: SectionKey | null = open) => {
     setFixing(null);
+    sessionStorage.removeItem(DRAFT_KEY);
     if (textFlow) {
-      if (!persist) return;
+      // An empty text is never saved: the CV's own text stays (Save under the text is off then).
+      // Saving it used to drop Job Fit and score the builder's CV instead.
+      if (!persist || !draft.trim()) return;
       sessionStorage.setItem("ats_text", draft);
       // a draft saved with Save follows the edit, so the analyze page doesn't show an older text
       if (sessionStorage.getItem(`ats_${flow}_cv`) !== null) sessionStorage.setItem(`ats_${flow}_cv`, draft);
@@ -693,6 +720,27 @@ export default function ScorePage() {
     }
     await recalculate(keep);
   };
+
+  // A draft kept from an earlier visit comes back open in its section, if it was made from this text.
+  const draftRestored = useRef(false);
+  useEffect(() => {
+    if (draftRestored.current || !report || !textFlow) return;
+    draftRestored.current = true;
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    try {
+      const kept = JSON.parse(raw) as StoredDraft;
+      if (kept.base === (sessionStorage.getItem("ats_text") ?? "") && report.sections.some((x) => x.key === kept.section)) {
+        setOpen(kept.section);
+        setDraft(kept.text);
+        setFixing(kept.section);
+        return;
+      }
+    } catch {
+      // a broken entry: drop it below
+    }
+    sessionStorage.removeItem(DRAFT_KEY);
+  }, [report, textFlow]);
 
   // Focus follows the form: into its first field when it opens, back to the section's
   // "Fix now" when it closes (the button under focus would otherwise vanish).
@@ -811,7 +859,13 @@ export default function ScorePage() {
               </p>
               {isAts(report) && <p className="score__file">{fileLine(report)}</p>}
               {isAts(report) && <LevelCounts counts={report.counts} />}
-              <button className="topbtn topbtn--dark score__recalc" data-figma="btn-recalc" onClick={() => void recalculate()} disabled={busy}>
+              <button
+                className="topbtn topbtn--dark score__recalc"
+                data-figma="btn-recalc"
+                // an edit in progress is what the person wants checked
+                onClick={() => void (fixing && textFlow ? finishFix(true) : recalculate())}
+                disabled={busy}
+              >
                 {isAts(report) ? (busy ? "Checking…" : "Check again") : busy ? "Recalculating…" : "Recalculate Score"}
               </button>
             </div>
@@ -833,11 +887,19 @@ export default function ScorePage() {
                 onToggle: () => {
                   const next = open === s.key ? null : s.key;
                   setOpen(next);
-                  // opening or closing any section ends a fix the way Back does
-                  if (fixing) void finishFix(false, next);
+                  // opening or closing any section ends a fix. Builder flow: as Back does (the CV
+                  // was edited as you typed). Improve / Job Fit: the edited text is kept and checked.
+                  if (fixing) void finishFix(textFlow && draft !== (sessionStorage.getItem("ats_text") ?? ""), next);
                 },
                 onFix: () => startFix(s.key),
-                form: fixing === s.key ? (textFlow ? <TextFix value={draft} onChange={setDraft} /> : renderSectionForm(s.key)) : null,
+                form:
+                  fixing === s.key ? (
+                    textFlow ? (
+                      <TextFix value={draft} onChange={editDraft} onSave={() => void finishFix(true)} onCancel={closeFix} busy={busy} />
+                    ) : (
+                      renderSectionForm(s.key)
+                    )
+                  ) : null,
               };
               return isAts(report) ? (
                 <AtsRow key={s.key} s={s as AtsSection} many={report.readings > 1} {...props} />

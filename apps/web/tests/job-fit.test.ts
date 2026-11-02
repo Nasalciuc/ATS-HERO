@@ -86,6 +86,93 @@ describe("what the post asks for", () => {
   });
 });
 
+// Mara Lungu, a synthetic game designer, against posts like the one a tester brought (in Russian).
+const GAME_POST_RU = `Геймдизайнер (контент), Lumen Games
+Требования:
+- опыт в геймдизайне от 3 лет
+- знание Unity и Jira
+- опыт работы с монетизацией и балансом экономики в F2P играх
+Будет плюсом:
+- нарративный дизайн
+Мы предлагаем: удалённую работу и гибкий график.`;
+
+const MARA = `Mara Lungu
+Game Designer | F2P Games
+Experience
+Game Designer, Lumen Games, 03.2021 – present
+- Led game design for 3 F2P titles in Unity; tracked tasks in Jira
+- Tuned monetization and the game economy; wrote narrative design docs
+Skills
+Unity, Jira, level design`;
+
+describe("posts and CVs in other languages, and game design", () => {
+  it("a Russian post names the skills an English CV has: they meet on one key", () => {
+    const { skills, years } = requirementsOf(GAME_POST_RU);
+    expect(labels(skills.filter((s) => s.required))).toEqual(["Game design", "Unity", "Jira", "Monetization", "Game economy", "F2P"]);
+    expect(labels(skills.filter((s) => !s.required))).toEqual(["Narrative design"]);
+    expect(years).toMatchObject({ n: 3 });
+    const fit = jobFit(MARA, GAME_POST_RU, TODAY);
+    expect(fit.summary).toBe("all_required_most_preferred");
+  });
+
+  it("the ways people write Romanian and Russian: cedilla or comma, no diacritics, ё or е", () => {
+    const names = (t: string) => findSkills(t).map((h) => h.name);
+    expect(names("Achiziţii publice; Relaţii cu clienţii; Învăţare automată")).toEqual(["Procurement", "Customer service", "Machine learning"]);
+    expect(names("vanzari, invatarea automata, relatii cu clientii, logistica")).toEqual(["Sales", "Machine learning", "Customer service", "Logistics"]);
+    expect(names("Бухгалтерский учёт, бухгалтерский учет")).toEqual(["Accounting", "Accounting"]);
+  });
+
+  it("a job title names the person, not the skill: 'Геймдизайнер' alone doesn't require Game design", () => {
+    const post = `Геймдизайнер (контент), Lumen Games
+Требования:
+- знание Unity и Jira
+- опыт работы с аналитикой`;
+    expect(labels(requirementsOf(post).skills)).not.toContain("Game design");
+    const names = (t: string) => findSkills(t).map((h) => h.name);
+    expect(names("геймдизайнер, левел-дизайнер, нарративный дизайнер, дизайнер уровней, плейтестер, designer narativ")).toEqual([]);
+    expect(names("опыт в геймдизайне, левел-дизайна, нарративного дизайна, дизайн уровней, плейтесты")).toEqual([
+      "Game design",
+      "Level design",
+      "Narrative design",
+      "Level design",
+      "Playtesting",
+    ]);
+    // the English title doesn't name the skill either
+    expect(names("Game Designer")).not.toContain("Game design");
+  });
+
+  it("a Romanian form that is also an English word: 'logistic regression' is not Logistics", () => {
+    const names = (t: string) => findSkills(t).map((h) => h.name);
+    expect(names("Experience with logistic regression")).not.toContain("Logistics");
+    expect(names("Logistica, logisticii, logistică")).toEqual(["Logistics", "Logistics", "Logistics"]);
+  });
+
+  it("Russian and Romanian word endings: cases and articles", () => {
+    const names = (t: string) => findSkills(t).map((h) => h.name);
+    expect(names("Опыт геймдизайна, знание геймдизайну и геймдизайном")).toEqual(["Game design", "Game design", "Game design"]);
+    expect(names("Cerințe: analiza datelor, managementul proiectelor; avantaj: învățarea automată")).toEqual([
+      "Data analysis",
+      "Project management",
+      "Machine learning",
+    ]);
+  });
+
+  it("the game design words in English", () => {
+    expect(findSkills("Game design, level design and LiveOps in Unreal Engine; free-to-play monetization").map((h) => h.name)).toEqual([
+      "Game design",
+      "Level design",
+      "LiveOps",
+      "Unreal Engine",
+      "F2P",
+      "Monetization",
+    ]);
+  });
+
+  it("a job title or a near word isn't a skill", () => {
+    expect(findSkills("Аналитик, дизайнер, геймер, analist, designer")).toEqual([]);
+  });
+});
+
 describe("the match", () => {
   it("a paragraph about benefits meets no requirement", () => {
     const r = jobFit(BENEFITS, POST, TODAY);

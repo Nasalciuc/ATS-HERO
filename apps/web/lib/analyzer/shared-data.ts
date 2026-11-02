@@ -28,6 +28,8 @@ export const skills = skillsJson as {
   single_letter: string[];
   phrases: string[];
   display: Record<string, string>;
+  /** Russian and Romanian forms ("геймдизайн*") → the English skill they name; "_comment" isn't one */
+  localized?: Record<string, string>;
 };
 
 export const sections = sectionsJson as {

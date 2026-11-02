@@ -20,6 +20,6 @@ describe("the analyze fields' labels", () => {
   });
 
   it("Job Fit: the CV field and the job description field are named apart", () => {
-    expect(labels("jobfit")).toEqual(["INSERT TEXT — YOUR CV", "INSERT TEXT — JOB DESCRIPTION"]);
+    expect(labels("jobfit")).toEqual(["INSERT TEXT — YOUR CV", "INSERT TEXT OR LINK — JOB DESCRIPTION"]);
   });
 });

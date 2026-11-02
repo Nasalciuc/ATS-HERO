@@ -86,6 +86,9 @@ export interface AtsReport {
   robotText: string;
 }
 
+// Where findings' facts come from: for whoever maintains them, never shown. The screen names no ATS
+// or parser vendor (Scaler, 2 Nov 2026); the texts say "two widely used resume parsers" (Textkernel and RChilli),
+// "some ATSs" or "one widely used ATS" instead, as many as the evidence covers.
 export const GREENHOUSE_PARSE = {
   label: "Greenhouse Support: Unsuccessful resume parse",
   url: "https://support.greenhouse.io/hc/en-us/articles/200989175-Unsuccessful-resume-parse",
@@ -178,7 +181,7 @@ function scoreReadings(
   if (language !== "en")
     notes.push({
       code: "taleo_language",
-      text: "Some ATSs parse only some languages. Oracle Taleo lists full resume parsing for English only, limited parsing for Dutch, French, German, Italian, Brazilian Portuguese and Spanish, and none for Romanian or Russian. For an international employer, an English CV is the safer choice.",
+      text: "Some ATSs parse only some languages: one widely used ATS reads English CVs in full, a few Western European languages only in part, and Romanian or Russian not at all. For an international employer, an English CV is the safer choice.",
       source: TALEO_LANGUAGES,
     });
 
@@ -212,7 +215,7 @@ function scoreReadings(
       code: "name_missing",
       section: "personalInfo",
       title: "Your name isn't found",
-      why: "Parsers look for a short line of 2 to 4 capitalised words near the top. Yours is missing, has digits or symbols, or sits in a header or text box. Textkernel and RChilli rate a missing name as a major issue.",
+      why: "Parsers look for a short line of 2 to 4 capitalised words near the top. Yours is missing, has digits or symbols, or sits in a header or text box. Two widely used resume parsers rate a missing name as a major issue.",
       fix: "Start the CV with your name alone on its own line, in the page itself (not in the page header).",
     });
   }
@@ -248,7 +251,7 @@ function scoreReadings(
       code: "contacts_missing",
       section: "personalInfo",
       title: "No email and no phone found",
-      why: "Recruiters contact you through what the ATS read. Textkernel and RChilli rate a CV with neither an email nor a phone as fatal.",
+      why: "Recruiters contact you through what the ATS read. Two widely used resume parsers rate a CV with neither an email nor a phone as fatal.",
       fix: "Add your email and phone under your name, as plain text.",
       source: TEXTKERNEL_QUALITY,
     });
@@ -312,7 +315,7 @@ function scoreReadings(
       code: "contacts_outside_body",
       section: "personalInfo",
       title: "Your contacts are only in the page header or a text box",
-      why: "Stricter readers take the page body only. Greenhouse documents that contact details in a header, footer or text box aren't parsed, and iCIMS can't parse a name in the page header.",
+      why: "Stricter readers take the page body only. Some ATSs document that contact details in a header, footer or text box aren't parsed, and some can't read a name in the page header.",
       fix: "Move your name, email, phone and LinkedIn into the page itself, at the top.",
       source: GREENHOUSE_PARSE,
     });
@@ -325,8 +328,8 @@ function scoreReadings(
       title: language === "en" ? "No sections found" : "No headings our reader knows",
       why:
         language === "en"
-          ? "Parsers cut a CV into sections by headings such as “Experience”, “Education” and “Skills”. None was found, so nothing can be placed in the profile. Textkernel and RChilli rate this as fatal."
-          : "Parsers cut a CV into sections by their headings, and our reader found none it knows. That may be our reader's limit; but parsers that don't know your CV's language place nothing in the profile either, which Textkernel and RChilli rate as fatal.",
+          ? "Parsers cut a CV into sections by headings such as “Experience”, “Education” and “Skills”. None was found, so nothing can be placed in the profile. Two widely used resume parsers rate this as fatal."
+          : "Parsers cut a CV into sections by their headings, and our reader found none it knows. That may be our reader's limit; but parsers that don't know your CV's language place nothing in the profile either, which two widely used resume parsers rate as fatal.",
       fix: "Use standard headings, each on its own line: Experience, Education, Skills.",
       source: TEXTKERNEL_QUALITY,
     });
@@ -344,7 +347,7 @@ function scoreReadings(
         code: "jobs_no_dates",
         section: "work",
         title: "Your jobs have no dates the parser can read",
-        why: "An ATS anchors each job on its date range: that's how it tells jobs apart and counts your years of experience. Textkernel and RChilli rate jobs without dates as fatal.",
+        why: "An ATS anchors each job on its date range: that's how it tells jobs apart and counts your years of experience. Two widely used resume parsers rate jobs without dates as fatal.",
         fix: "Give every job a date range next to its title, like “March 2021 – Present” or “03/2021 – 02/2023”.",
         source: GREENHOUSE_MATCH,
       });
@@ -353,7 +356,7 @@ function scoreReadings(
         code: "no_jobs",
         section: "work",
         title: "No Experience section found",
-        why: "Parsers look for a heading such as “Experience” or “Work experience” and read the jobs under it. Without it, your jobs aren't read as jobs. Textkernel and RChilli rate this as fatal.",
+        why: "Parsers look for a heading such as “Experience” or “Work experience” and read the jobs under it. Without it, your jobs aren't read as jobs. Two widely used resume parsers rate this as fatal.",
         fix: "Put your jobs under a heading called “Experience”, each with its title, company and dates.",
         source: TEXTKERNEL_QUALITY,
       });
@@ -421,7 +424,7 @@ function scoreReadings(
         code: "education_no_dates",
         section: "education",
         title: "Our reader couldn't separate your degrees",
-        why: "We found the Education heading, but our reader finds each degree by its years, and yours have none. Many ATS parsers don't need the years (Textkernel even advises leaving them out), so this may be our reader's limit, not theirs.",
+        why: "We found the Education heading, but our reader finds each degree by its years, and yours have none. Many ATS parsers don't need the years (one even advises leaving them out), so this may be our reader's limit, not theirs.",
         fix: "If you show years, put them next to each degree, e.g. “2016 – 2020”. If you don't, real parsers can still read your degrees.",
       });
     else if (!noSections)
@@ -429,7 +432,7 @@ function scoreReadings(
         code: "no_education",
         section: "education",
         title: "No Education section found",
-        why: "Textkernel and RChilli rate a CV without an Education section as fatal: the parser has nowhere to put your studies.",
+        why: "Two widely used resume parsers rate a CV without an Education section as fatal: they have nowhere to put your studies.",
         fix: "Add a section called “Education”. If you have no degree, list your school, a course or a certification there.",
         source: TEXTKERNEL_QUALITY,
       });
@@ -472,7 +475,7 @@ function scoreReadings(
         code: "no_skills",
         section: "skills",
         title: "No skills list found",
-        why: "Recruiters search for skills, and Greenhouse matches the skills its parser finds. Textkernel prefers skills shown inside your jobs, and Workday doesn't fill its Skills field from the CV at all, so both places help.",
+        why: "Recruiters search for skills, and some ATSs match the skills their parser finds. Some parsers prefer skills shown inside your jobs, and some ATSs don't fill their Skills field from the CV at all, so both places help.",
         fix: "Add a short “Skills” list separated by commas, and show your main skills in the jobs where you used them.",
         source: GREENHOUSE_MATCH,
       });
@@ -580,7 +583,7 @@ function scoreReadings(
         (disagree > 0
           ? "Readers that go row by row mix the sidebar into your jobs, so titles, companies and dates end up with the wrong job. "
           : "Both of our readers got it right this time, but readers that go row by row mix the columns. ") +
-        "Textkernel and RChilli rate column layouts as fatal, and Greenhouse lists them among the causes of failed parses.",
+        "Two widely used resume parsers rate column layouts as fatal, and one major ATS lists them among the causes of failed parses.",
       fix: "Use one column: move the sidebar's contacts and skills to the top or the end.",
       source: GREENHOUSE_PARSE,
     });
@@ -589,7 +592,7 @@ function scoreReadings(
       code: "tables",
       section: "file",
       title: `Your Word file uses ${plural(signals.tables, "table")}`,
-      why: "Greenhouse lists tables among the causes of failed parses: some readers take the cells in an order that splits a job from its dates.",
+      why: "ATS help pages list tables among the causes of failed parses: some readers take the cells in an order that splits a job from its dates.",
       fix: "Replace the table with plain lines: title, company and dates, then the bullets.",
       source: GREENHOUSE_PARSE,
     });
@@ -598,7 +601,7 @@ function scoreReadings(
       code: "text_boxes",
       section: "file",
       title: `Your Word file uses ${plural(signals.textBoxes, "text box", "text boxes")}`,
-      why: "Stricter readers skip text boxes, so what's inside them can be lost. Greenhouse and iCIMS name text boxes among what parses worst.",
+      why: "Stricter readers skip text boxes, so what's inside them can be lost. ATS help pages name text boxes among what parses worst.",
       fix: "Move the text out of the boxes into the page.",
       source: GREENHOUSE_PARSE,
     });
@@ -618,8 +621,8 @@ function scoreReadings(
       title: `The file is ${formatBytes(file.bytes)}`,
       why:
         file.bytes > 5 * MB
-          ? "Workable doesn't accept files over 5 MB, and Greenhouse doesn't parse files over 2.5 MB: there, the whole CV goes unread."
-          : "Greenhouse doesn't parse files over 2.5 MB: there, the whole CV goes unread. Other ATSs may still read it.",
+          ? "Some ATSs don't accept files over 5 MB, and some don't parse files over 2.5 MB: there, the whole CV goes unread."
+          : "Some ATSs don't parse files over 2.5 MB: there, the whole CV goes unread. Others may still read it.",
       fix: "Export again without large pictures, or save the PDF at a smaller size.",
       source: file.bytes > 5 * MB ? WORKABLE_FILES : GREENHOUSE_PARSE,
     });
@@ -628,7 +631,7 @@ function scoreReadings(
       code: "size_taleo",
       section: "file",
       title: `The file is ${formatBytes(file.bytes)}`,
-      why: "Oracle Taleo's default limit is 1 MB per attachment, and employers often keep it.",
+      why: "One widely used ATS has a default limit of 1 MB per attachment, and employers often keep it.",
       fix: "Export again without large pictures, or save the PDF at a smaller size.",
       source: TALEO_ATTACHMENTS,
     });
@@ -637,7 +640,7 @@ function scoreReadings(
       code: "pdf",
       section: "file",
       title: "Some parsers prefer Word to PDF",
-      why: "Textkernel and RChilli flag every PDF as a major issue, because a PDF keeps no reading order. In our lab, one-column PDFs read almost perfectly and Word files perfectly.",
+      why: "Some resume parsers flag every PDF as a major issue, because a PDF keeps no reading order. In our lab, one-column PDFs read almost perfectly and Word files perfectly.",
       fix: "If the job site accepts .docx, upload the Word version. Otherwise a one-column PDF is fine.",
       source: TEXTKERNEL_QUALITY,
     });
@@ -732,7 +735,7 @@ function summary(contact: ReadField[], jobs: ReadField[], nJobs: number, nSkills
   return `${head} Nothing the profile needs is lost.`;
 }
 
-const lowerFirst = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^(LinkedIn|Word|Greenhouse)\b/.test(s) ? s[0].toLowerCase() + s.slice(1) : s);
+const lowerFirst = (s: string) => (/^[A-Z][a-z]/.test(s) && !/^(LinkedIn|Word)\b/.test(s) ? s[0].toLowerCase() + s.slice(1) : s);
 const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 
 /**

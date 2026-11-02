@@ -207,7 +207,7 @@ describe("Word layouts people send", () => {
     const r = await scoreFile(await docx(PLAIN, undefined, { "word/media/padding.bin": new Uint8Array(ATS_SIZE_LIMIT_BYTES + 1024) }));
     expect(r.issues[0].code).toBe("over_size");
     expect(r.issues[0].level).toBe("critical");
-    expect(r.issues[0].why).toMatch(/Greenhouse doesn't parse files over 2\.5 MB/);
+    expect(r.issues[0].why).toMatch(/don't parse files over 2\.5 MB/);
     expect(r.fields.read).toBe(r.fields.total);
   });
 

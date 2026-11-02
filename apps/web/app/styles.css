@@ -3683,6 +3683,14 @@ select.field__input {
   line-height: 15px;
   color: #757575;
 }
+/* Save and Cancel under the text: the title's buttons are out of sight lower down the page.
+   Provisional (rule 6): no Figma frame has them yet. */
+.score-textfix__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
 
 /* narrower than the Figma frame: the entry score goes under the label */
 @media (max-width: 1279px) {

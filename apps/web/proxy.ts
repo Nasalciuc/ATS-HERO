@@ -2,6 +2,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isClerkConfigured } from "@/lib/clerk-config";
+import { jobPostRefusal } from "@/lib/job-post/link";
 import { allow, RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /**
@@ -9,19 +10,26 @@ import { allow, RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
  * (value-before-paywall): guests use the builder; sign-in only persists/claims.
  * Next.js 16 uses this `proxy.ts` file (not `middleware.ts`).
  *
- * Rate limiting rides along here so both the AI route and Server Actions are covered
- * before they reach a Function.
+ * Rate limiting rides along here so the AI route, Job Fit's job-link route and Server Actions
+ * are covered before they reach a Function.
  */
 function tooManyRequests(req: NextRequest, userId: string | null): NextResponse | null {
   const path = req.nextUrl.pathname;
   const isRewrite = path.startsWith("/api/rewrite");
+  // Job Fit's job link: each request makes our server open a page somewhere, so fewer of them
+  const isJobPost = path.startsWith("/api/job-post");
+  if (isJobPost && req.method === "POST") {
+    // refused before it counts: another site's page can't use up a visitor's ten links a minute
+    const refusal = jobPostRefusal(req.headers);
+    if (refusal) return NextResponse.json({ ok: false, reason: refusal.reason }, { status: refusal.status });
+  }
   const needsLimit =
-    req.method === "POST" && (isRewrite || Boolean(req.headers.get("next-action")));
+    req.method === "POST" && (isRewrite || isJobPost || Boolean(req.headers.get("next-action")));
   if (!needsLimit) return null;
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "ip";
-  const key = `${isRewrite ? "rw" : "act"}:${ip}:${userId ?? "anon"}`;
-  const limit = isRewrite ? 10 : 30;
+  const key = `${isRewrite ? "rw" : isJobPost ? "jp" : "act"}:${ip}:${userId ?? "anon"}`;
+  const limit = isRewrite || isJobPost ? 10 : 30;
   if (allow(key, limit, RATE_LIMIT_WINDOW_MS)) return null;
   return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 }

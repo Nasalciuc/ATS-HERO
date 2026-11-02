@@ -71,7 +71,7 @@ export const ISSUE_LEVELS: Record<string, { level: Level; ref: ParserRef }> = {
   // worth changing
   education_no_dates: {
     level: "tip",
-    ref: { textkernel: "233", deviation: "Textkernel 233 says degrees don't need dates; our reader finds degrees by their years" },
+    ref: { textkernel: "233", deviation: "one widely used parser says degrees don't need dates; our reader finds degrees by their years" },
   },
   no_skills: {
     level: "tip",
