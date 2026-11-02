@@ -47,6 +47,10 @@ const HEADING_INDEX = new Map(Object.entries(HEADINGS).flatMap(([k, vs]) => vs.m
 // Python's whitespace, as in strip() below: JavaScript's \s lacks \x1c-\x1f and \x85 (FEFF, which only
 // JavaScript counts, is gone by then: normalize() drops it on both sides)
 const JOINER = /[\s\x1c-\x1f\x85]+(?:and|și|si|и)[\s\x1c-\x1f\x85]+|[\s\x1c-\x1f\x85]*[&/,+][\s\x1c-\x1f\x85]*/iu;
+// Sections read in different ways (jobs by their dates, degrees by theirs) can't share a heading:
+// under "Experience and Education" the degrees would be read as jobs and counted as years of work.
+// Such a line isn't taken for a heading, as before compound headings were read.
+const READ_APART = ["experience", "education"];
 const TAIL_WORDS = new Set([
   "training", "courses", "interests", "hobbies", "qualifications", "achievements",
   "cursuri", "interese", "hobby-uri", "calificări", "realizări",
@@ -120,7 +124,10 @@ export function headingKey(line: string): SectionKey | null {
   if (exact) return exact as SectionKey;
   const parts = key.split(JOINER).map(strip);
   if (parts.length < 2 || parts.length > 3 || !HEADING_INDEX.has(parts[0])) return null;
-  return parts.slice(1).every((p) => HEADING_INDEX.has(p) || TAIL_WORDS.has(p)) ? (HEADING_INDEX.get(parts[0]) as SectionKey) : null;
+  if (!parts.slice(1).every((p) => HEADING_INDEX.has(p) || TAIL_WORDS.has(p))) return null;
+  const keys = new Set(parts.map((p) => HEADING_INDEX.get(p)).filter(Boolean));
+  if (READ_APART.every((k) => keys.has(k))) return null;
+  return HEADING_INDEX.get(parts[0]) as SectionKey;
 }
 
 /** Text anchored on one date range: one job or one degree, as the parser segments it. */

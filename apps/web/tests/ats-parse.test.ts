@@ -58,6 +58,10 @@ describe("section headings", () => {
   it("doesn't take a line of skills or a job title for a heading", () => {
     for (const line of ["Python and SQL", "Experience and passion", "Data Analyst & Developer", "Education and research at USM"]) expect(headingKey(line)).toBeNull();
   });
+
+  it("doesn't join jobs and degrees under one heading: a degree's years would count as work", () => {
+    for (const line of ["Experience and Education", "Education & Experience", "Опыт работы и образование", "Experiență și educație"]) expect(headingKey(line)).toBeNull();
+  });
 });
 
 describe("Python's splitlines", () => {

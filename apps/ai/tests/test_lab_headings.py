@@ -22,6 +22,9 @@ def test_heading(line, key):
 
 
 @pytest.mark.parametrize("line", ["Python and SQL", "Experience and passion", "Data Analyst & Developer",
-                                  "Education and research at USM"])
+                                  "Education and research at USM",
+                                  # jobs and degrees are read apart: their years must not mix
+                                  "Experience and Education", "Education & Experience", "Опыт работы и образование",
+                                  "Experiență și educație"])
 def test_not_a_heading(line):
     assert heading_key(line) is None

@@ -43,6 +43,10 @@ _HEADING_INDEX = {v: k for k, vs in HEADINGS.items() for v in vs}
 # opens the first: its parts are joined by "and", "&", "/", "," or "+" (and, și, и), and every part
 # after the first is a heading too, or one of these words that name no section of their own.
 _JOINER = re.compile(r"\s+(?:and|și|si|и)\s+|\s*[&/,+]\s*", re.IGNORECASE)
+# Sections read in different ways (jobs by their dates, degrees by theirs) can't share a heading:
+# under "Experience and Education" the degrees would be read as jobs and counted as years of work.
+# Such a line isn't taken for a heading, as before compound headings were read.
+_READ_APART = ("experience", "education")
 _TAIL_WORDS = frozenset({
     "training", "courses", "interests", "hobbies", "qualifications", "achievements",
     "cursuri", "interese", "hobby-uri", "calificări", "realizări",
@@ -112,9 +116,12 @@ def heading_key(line: str) -> str | None:
     parts = [p.strip() for p in _JOINER.split(s)]
     if len(parts) < 2 or len(parts) > 3 or parts[0] not in _HEADING_INDEX:
         return None
-    if all(p in _HEADING_INDEX or p in _TAIL_WORDS for p in parts[1:]):
-        return _HEADING_INDEX[parts[0]]
-    return None
+    if not all(p in _HEADING_INDEX or p in _TAIL_WORDS for p in parts[1:]):
+        return None
+    keys = {_HEADING_INDEX[p] for p in parts if p in _HEADING_INDEX}
+    if all(k in keys for k in _READ_APART):
+        return None
+    return _HEADING_INDEX[parts[0]]
 
 
 # ------------------------------------------------------------------------- models
