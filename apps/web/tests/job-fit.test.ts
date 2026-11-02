@@ -115,6 +115,19 @@ describe("posts and CVs in other languages, and game design", () => {
     expect(fit.summary).toBe("all_required_most_preferred");
   });
 
+  it("the ways people write Romanian and Russian: cedilla or comma, no diacritics, ё or е", () => {
+    const names = (t: string) => findSkills(t).map((h) => h.name);
+    expect(names("Achiziţii publice; Relaţii cu clienţii; Învăţare automată")).toEqual(["Procurement", "Customer service", "Machine learning"]);
+    expect(names("vanzari, invatarea automata, relatii cu clientii, logistica")).toEqual(["Sales", "Machine learning", "Customer service", "Logistics"]);
+    expect(names("Бухгалтерский учёт, бухгалтерский учет")).toEqual(["Accounting", "Accounting"]);
+  });
+
+  it("a Romanian form that is also an English word: 'logistic regression' is not Logistics", () => {
+    const names = (t: string) => findSkills(t).map((h) => h.name);
+    expect(names("Experience with logistic regression")).not.toContain("Logistics");
+    expect(names("Logistica, logisticii, logistică")).toEqual(["Logistics", "Logistics", "Logistics"]);
+  });
+
   it("Russian and Romanian word endings: cases and articles", () => {
     const names = (t: string) => findSkills(t).map((h) => h.name);
     expect(names("Опыт геймдизайна, знание геймдизайну и геймдизайном")).toEqual(["Game design", "Game design", "Game design"]);

@@ -121,7 +121,7 @@
     "game development": "Game development"
   },
   "localized": {
-    "_comment": "Russian and Romanian names of the skills above, for posts and CVs in those languages. Each maps to an English skill, so a Russian post and an English CV meet on the same key. '*' stands for a word ending of up to 4 letters (Russian cases, Romanian articles); words are separated by spaces; matched as whole words.",
+    "_comment": "Russian and Romanian names of the skills above, for posts and CVs in those languages. Each maps to an English skill, so a Russian post and an English CV meet on the same key. '*' stands for a word ending of up to 4 letters (Russian cases, Romanian articles), or none: a form that is also an English word gets its endings listed instead ('logistic*' would match 'logistic regression'); words are separated by spaces; matched as whole words.",
     "геймдизайн*": "game design",
     "гейм-дизайн*": "game design",
     "левел-дизайн*": "level design",
@@ -175,7 +175,10 @@
     "relați* cu clienți*": "customer service",
     "negocier*": "negotiation",
     "recrutar*": "recruitment",
-    "logistic*": "logistics",
+    "logistică": "logistics",
+    "logistica": "logistics",
+    "logisticii": "logistics",
+    "logisticile": "logistics",
     "achiziți*": "procurement"
   }
 }

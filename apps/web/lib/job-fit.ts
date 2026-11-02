@@ -80,11 +80,17 @@ const PHRASE_RES = PHRASES.map((p) => [p, new RegExp(`(?<![\\p{L}\\p{N}])${escap
  * Russian and Romanian names of skills ("геймдизайна", "analiza datelor"), each found as the English
  * skill it names, so a Russian post and an English CV meet on one key. "*" in skills.json is a word
  * ending of up to 4 letters (Russian cases, Romanian articles).
+ * Both the forms and the text are folded first, so the ways people write these words in Moldova all
+ * count: Romanian with ş/ţ (cedilla) or ș/ț (comma), or with no diacritics at all ("invatare
+ * automata"), and Russian with ё or е ("учёт", "учет").
  */
+const FOLD: Record<string, string> = { ă: "a", â: "a", î: "i", ș: "s", ş: "s", ț: "t", ţ: "t", Ă: "A", Â: "A", Î: "I", Ș: "S", Ş: "S", Ț: "T", Ţ: "T", ё: "е", Ё: "Е" };
+/** One character for one, so every index in the folded text is the same in the text. */
+const fold = (s: string) => s.replace(/[ăâîșşțţĂÂÎȘŞȚŢёЁ]/g, (c) => FOLD[c]);
 const LOCALIZED_RES = Object.entries(SKILLS.localized ?? {})
   .filter(([form]) => form !== "_comment")
   .map(([form, skill]) => {
-    const words = form.split(/\s+/).map((w) => escape(w).replace(/\\\*/g, "\\p{L}{0,4}"));
+    const words = fold(form).split(/\s+/).map((w) => escape(w).replace(/\\\*/g, "\\p{L}{0,4}"));
     return [skill.toLowerCase(), new RegExp(`(?<![\\p{L}\\p{N}])${words.join("\\s+")}(?![\\p{L}\\p{N}])`, "giu")] as const;
   });
 const TOKEN_RE = /[\p{L}\p{N}]+(?:[#+]+|(?:[.-][\p{L}\p{N}]+)*)/gu;
@@ -106,8 +112,9 @@ export function findSkills(text: string): Hit[] {
   const hits: Hit[] = [];
   for (const [p, re] of PHRASE_RES)
     for (const m of t.matchAll(re)) hits.push({ key: keyOf(p), name: display(p), start: m.index!, end: m.index! + m[0].length });
+  const folded = fold(t);
   for (const [skill, re] of LOCALIZED_RES)
-    for (const m of t.matchAll(re)) {
+    for (const m of folded.matchAll(re)) {
       const start = m.index!;
       const end = start + m[0].length;
       if (!hits.some((h) => h.start <= start && end <= h.end)) hits.push({ key: keyOf(skill), name: display(skill), start, end });
