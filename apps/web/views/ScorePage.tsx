@@ -460,15 +460,39 @@ function RobotRow({ text, readings }: { text: string; readings: number }) {
   );
 }
 
-/** Improve / Job Fit: the score comes from the pasted text, so "Fix now" edits that text. */
-function TextFix({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+/**
+ * Improve / Job Fit: the score comes from the pasted text, so "Fix now" edits that text. Save and
+ * Cancel sit under the text too: the title's Save is out of sight when the section is far down
+ * (a tester looked for a "Done" there). PROVISIONAL (rule 6): no Figma frame has them yet.
+ */
+function TextFix({
+  value,
+  onChange,
+  onSave,
+  onCancel,
+  busy,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  busy: boolean;
+}) {
   return (
     <div className="builder__panel score-textfix" data-figma="form-card">
       <label className="field__label" htmlFor="score-textfix">
         YOUR CV TEXT
       </label>
       <textarea id="score-textfix" className="analyze-textarea score-textfix__area" value={value} onChange={(e) => onChange(e.target.value)} />
-      <p className="score-textfix__hint">Save re-scores the edited text; Back leaves it as it was.</p>
+      <p className="score-textfix__hint">Save checks the edited text again. Closing the section keeps your changes too; Cancel drops them.</p>
+      <div className="score-textfix__actions">
+        <button type="button" className="topbtn topbtn--dark" onClick={onSave} disabled={busy}>
+          {busy ? "Checking…" : "Save"}
+        </button>
+        <button type="button" className="topbtn topbtn--ghost" onClick={onCancel} disabled={busy}>
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
@@ -676,7 +700,9 @@ export default function ScorePage() {
 
   // Figma 383:7664: while a section is being fixed the title buttons are "Back" (close the form)
   // and "Save". Builder flow: the form edits the CV as you type, so both re-score (Save also saves
-  // the CV). Improve / Job Fit: Save re-scores the edited text, Back drops the edit.
+  // the CV). Improve / Job Fit: Save (in the title or under the text), closing the section and
+  // "Check again" keep the edit and check it; only Back and Cancel drop it. An edit used to be
+  // lost on anything but the title's Save, and "Fix now" then showed the old text again.
   const startFix = (key: SectionKey) => {
     if (textFlow) setDraft(sessionStorage.getItem("ats_text") ?? "");
     setFixing(key);
@@ -811,7 +837,13 @@ export default function ScorePage() {
               </p>
               {isAts(report) && <p className="score__file">{fileLine(report)}</p>}
               {isAts(report) && <LevelCounts counts={report.counts} />}
-              <button className="topbtn topbtn--dark score__recalc" data-figma="btn-recalc" onClick={() => void recalculate()} disabled={busy}>
+              <button
+                className="topbtn topbtn--dark score__recalc"
+                data-figma="btn-recalc"
+                // an edit in progress is what the person wants checked
+                onClick={() => void (fixing && textFlow ? finishFix(true) : recalculate())}
+                disabled={busy}
+              >
                 {isAts(report) ? (busy ? "Checking…" : "Check again") : busy ? "Recalculating…" : "Recalculate Score"}
               </button>
             </div>
@@ -833,11 +865,19 @@ export default function ScorePage() {
                 onToggle: () => {
                   const next = open === s.key ? null : s.key;
                   setOpen(next);
-                  // opening or closing any section ends a fix the way Back does
-                  if (fixing) void finishFix(false, next);
+                  // opening or closing any section ends a fix. Builder flow: as Back does (the CV
+                  // was edited as you typed). Improve / Job Fit: the edited text is kept and checked.
+                  if (fixing) void finishFix(textFlow && draft !== (sessionStorage.getItem("ats_text") ?? ""), next);
                 },
                 onFix: () => startFix(s.key),
-                form: fixing === s.key ? (textFlow ? <TextFix value={draft} onChange={setDraft} /> : renderSectionForm(s.key)) : null,
+                form:
+                  fixing === s.key ? (
+                    textFlow ? (
+                      <TextFix value={draft} onChange={setDraft} onSave={() => void finishFix(true)} onCancel={closeFix} busy={busy} />
+                    ) : (
+                      renderSectionForm(s.key)
+                    )
+                  ) : null,
               };
               return isAts(report) ? (
                 <AtsRow key={s.key} s={s as AtsSection} many={report.readings > 1} {...props} />
