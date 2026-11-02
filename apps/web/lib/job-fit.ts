@@ -79,7 +79,8 @@ const PHRASE_RES = PHRASES.map((p) => [p, new RegExp(`(?<![\\p{L}\\p{N}])${escap
 /**
  * Russian and Romanian names of skills ("геймдизайна", "analiza datelor"), each found as the English
  * skill it names, so a Russian post and an English CV meet on one key. "*" in skills.json is a word
- * ending of up to 4 letters (Russian cases, Romanian articles).
+ * ending of up to 4 letters (Russian cases, Romanian articles); "+" is one that doesn't name the
+ * person ("геймдизайна", never the title "геймдизайнер": English "game design" isn't "game designer").
  * Both the forms and the text are folded first, so the ways people write these words in Moldova all
  * count: Romanian with ş/ţ (cedilla) or ș/ț (comma), or with no diacritics at all ("invatare
  * automata"), and Russian with ё or е ("учёт", "учет").
@@ -90,7 +91,10 @@ const fold = (s: string) => s.replace(/[ăâîșşțţĂÂÎȘŞȚŢёЁ]/g, (c)
 const LOCALIZED_RES = Object.entries(SKILLS.localized ?? {})
   .filter(([form]) => form !== "_comment")
   .map(([form, skill]) => {
-    const words = fold(form).split(/\s+/).map((w) => escape(w).replace(/\\\*/g, "\\p{L}{0,4}"));
+    // "*": an ending of up to 4 letters; "+": the same, but never "-er"/"-ер" (the person, not the skill)
+    const words = fold(form)
+      .split(/\s+/)
+      .map((w) => escape(w).replace(/\\\*/g, "\\p{L}{0,4}").replace(/\\\+/g, "(?!ер|er)\\p{L}{0,4}"));
     return [skill.toLowerCase(), new RegExp(`(?<![\\p{L}\\p{N}])${words.join("\\s+")}(?![\\p{L}\\p{N}])`, "giu")] as const;
   });
 const TOKEN_RE = /[\p{L}\p{N}]+(?:[#+]+|(?:[.-][\p{L}\p{N}]+)*)/gu;

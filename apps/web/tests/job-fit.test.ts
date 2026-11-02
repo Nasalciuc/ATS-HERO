@@ -122,6 +122,25 @@ describe("posts and CVs in other languages, and game design", () => {
     expect(names("Бухгалтерский учёт, бухгалтерский учет")).toEqual(["Accounting", "Accounting"]);
   });
 
+  it("a job title names the person, not the skill: 'Геймдизайнер' alone doesn't require Game design", () => {
+    const post = `Геймдизайнер (контент), Lumen Games
+Требования:
+- знание Unity и Jira
+- опыт работы с аналитикой`;
+    expect(labels(requirementsOf(post).skills)).not.toContain("Game design");
+    const names = (t: string) => findSkills(t).map((h) => h.name);
+    expect(names("геймдизайнер, левел-дизайнер, нарративный дизайнер, дизайнер уровней, плейтестер, designer narativ")).toEqual([]);
+    expect(names("опыт в геймдизайне, левел-дизайна, нарративного дизайна, дизайн уровней, плейтесты")).toEqual([
+      "Game design",
+      "Level design",
+      "Narrative design",
+      "Level design",
+      "Playtesting",
+    ]);
+    // the English title doesn't name the skill either
+    expect(names("Game Designer")).not.toContain("Game design");
+  });
+
   it("a Romanian form that is also an English word: 'logistic regression' is not Logistics", () => {
     const names = (t: string) => findSkills(t).map((h) => h.name);
     expect(names("Experience with logistic regression")).not.toContain("Logistics");
