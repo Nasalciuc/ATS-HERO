@@ -40,6 +40,19 @@ export const JOB_LINK_MSG: Record<JobLinkFailure, string> = {
 export const isLinkedIn = (host: string) => /(?:^|\.)(?:linkedin\.com|lnkd\.in)\.*$/i.test(host);
 
 /**
+ * Why POST /api/job-post refuses a request before anything is read, or null for our own page: the
+ * body must be JSON (so a browser on another site has to ask first, and we never answer), and a
+ * request the browser marks as coming from another site is refused. Checked in proxy.ts before the
+ * rate limit counts it, and again in the route.
+ */
+export function jobPostRefusal(headers: Headers): { status: 415 | 403; reason: JobLinkFailure } | null {
+  if (!/^application\/json\b/i.test(headers.get("content-type") ?? "")) return { status: 415, reason: "invalid_url" };
+  const site = headers.get("sec-fetch-site");
+  if (site && site !== "same-origin") return { status: 403, reason: "blocked" };
+  return null;
+}
+
+/**
  * The link, when the job field holds only a link (with or without "https://"); null when it holds
  * text, even text with a link in it: then the text is the post.
  */

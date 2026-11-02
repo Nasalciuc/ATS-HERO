@@ -2,7 +2,9 @@
 // coming from another site. Nothing here reaches the network: every request is refused before the
 // link would be opened, or names LinkedIn, which is never opened.
 import { describe, expect, it } from "vitest";
+import { NextRequest } from "next/server";
 import { POST } from "@/app/api/job-post/route";
+import proxy from "@/proxy";
 
 const post = (headers: Record<string, string>, body: unknown = { url: "https://www.linkedin.com/jobs/view/1" }) =>
   POST(new Request("http://localhost/api/job-post", { method: "POST", headers, body: typeof body === "string" ? body : JSON.stringify(body) }));
@@ -33,5 +35,16 @@ describe("POST /api/job-post", () => {
   it("refuses a body that isn't a link", async () => {
     expect((await post({ "content-type": "application/json" }, "not json")).status).toBe(400);
     expect((await post({ "content-type": "application/json" }, { url: "" })).status).toBe(400);
+  });
+
+  it("the proxy refuses another site's requests before they count toward the visitor's ten a minute", async () => {
+    // no Clerk keys in tests: the proxy is the plain rate-limit function
+    const send = (headers: Record<string, string>) =>
+      (proxy as unknown as (req: NextRequest) => Promise<Response> | Response)(
+        new NextRequest("http://localhost/api/job-post", { method: "POST", headers: { "x-forwarded-for": "203.0.113.77", ...headers }, body: "{}" }),
+      );
+    for (let i = 0; i < 12; i++) expect((await send({ "content-type": "text/plain" })).status).toBe(415);
+    expect((await send({ "content-type": "application/json", "sec-fetch-site": "cross-site" })).status).toBe(403);
+    expect((await send({ "content-type": "application/json", "sec-fetch-site": "same-origin" })).status).not.toBe(429);
   });
 });

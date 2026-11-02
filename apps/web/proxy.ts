@@ -2,6 +2,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isClerkConfigured } from "@/lib/clerk-config";
+import { jobPostRefusal } from "@/lib/job-post/link";
 import { allow, RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /**
@@ -17,6 +18,11 @@ function tooManyRequests(req: NextRequest, userId: string | null): NextResponse 
   const isRewrite = path.startsWith("/api/rewrite");
   // Job Fit's job link: each request makes our server open a page somewhere, so fewer of them
   const isJobPost = path.startsWith("/api/job-post");
+  if (isJobPost && req.method === "POST") {
+    // refused before it counts: another site's page can't use up a visitor's ten links a minute
+    const refusal = jobPostRefusal(req.headers);
+    if (refusal) return NextResponse.json({ ok: false, reason: refusal.reason }, { status: refusal.status });
+  }
   const needsLimit =
     req.method === "POST" && (isRewrite || isJobPost || Boolean(req.headers.get("next-action")));
   if (!needsLimit) return null;
