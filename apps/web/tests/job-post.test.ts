@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import http from "node:http";
 import zlib from "node:zlib";
 import type { AddressInfo } from "node:net";
-import { jobLinkIn } from "@/lib/job-post/link";
+import { isLinkedIn, jobLinkIn } from "@/lib/job-post/link";
 import { isPublicAddress } from "@/lib/job-post/address";
 import { extractJobPost, htmlToText } from "@/lib/job-post/extract";
 import { readJobPost } from "@/lib/job-post/read";
@@ -52,6 +52,14 @@ beforeAll(async () => {
     if (path === "/jsonld") return html(JSON_LD_PAGE);
     if (path === "/plain") return html(PLAIN_PAGE);
     if (path === "/gzip") return html(zlib.gzipSync(PLAIN_PAGE), { "content-encoding": "gzip" });
+    if (path === "/gzip-cut") {
+      // half a gzipped page, then the site drops the connection
+      const zipped = zlib.gzipSync(PLAIN_PAGE + "<p>" + "more text ".repeat(2000) + "</p>");
+      res.writeHead(200, { "content-type": "text/html", "content-encoding": "gzip" });
+      res.write(zipped.subarray(0, zipped.length >> 1));
+      setTimeout(() => res.socket?.destroy(), 20);
+      return;
+    }
     if (path === "/ru") return res.writeHead(200, { "content-type": "text/html" }).end(Buffer.concat([cp1251(RU)]));
     if (path === "/shell") return html(JS_SHELL);
     if (path === "/redirect") return res.writeHead(302, { location: "/jsonld" }).end();
@@ -83,8 +91,13 @@ beforeAll(async () => {
 });
 afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
 
-// The test server is on this machine: "localhost" is let through, any other name is not.
-const onlyLocalhost = { allowAddress: (_a: string, host: string) => host === "localhost", anyPort: true };
+// The test server is on this machine: "localhost" (127.0.0.1 here, without asking DNS) is let
+// through, any other name is not.
+const onlyLocalhost = {
+  allowAddress: (_a: string, host: string) => host === "localhost",
+  anyPort: true,
+  resolve: async (host: string) => (host === "localhost" ? [{ address: "127.0.0.1", family: 4 }] : []),
+};
 
 describe("what counts as a link in the job field", () => {
   it("a field that holds only a link, with or without https://", () => {
@@ -251,6 +264,15 @@ describe("reading a link", () => {
     expect(await readJobPost("http://169.254.169.254/latest/meta-data/")).toEqual({ ok: false, reason: "private_address" });
   });
 
+  it("the LinkedIn check costs no more than the name's length", () => {
+    const t0 = performance.now();
+    expect(isLinkedIn(".".repeat(16_000) + "a")).toBe(false);
+    expect(isLinkedIn("linkedin.com" + ".".repeat(16_000))).toBe(true);
+    expect(performance.now() - t0).toBeLessThan(50);
+    expect(isLinkedIn("notlinkedin.com")).toBe(false);
+    expect(isLinkedIn("linkedin.com.evil.example")).toBe(false);
+  });
+
   it("never opens LinkedIn, even through a redirect", async () => {
     for (const link of ["https://www.linkedin.com/jobs/view/123", "https://www.linkedin.com./jobs/view/123", "https://LNKD.IN./abc", "https://linkedin.com../x"])
       expect(await readJobPost(link)).toEqual({ ok: false, reason: "linkedin" });
@@ -271,6 +293,18 @@ describe("reading a link", () => {
     expect(await readJobPost("ftp://example.com/job")).toEqual({ ok: false, reason: "invalid_url" });
     expect(await readJobPost("https://user:pw@jobs.example.com/1")).toEqual({ ok: false, reason: "invalid_url" });
     expect(await readJobPost("https://jobs.example.com:8443/1")).toEqual({ ok: false, reason: "other_port" });
+  });
+
+  it("gives up at once on a compressed body the site cuts off, not at the deadline", async () => {
+    const t0 = Date.now();
+    expect(await readJobPost(`${base}/gzip-cut`, { ...onlyLocalhost, timeoutMs: 3000 })).toEqual({ ok: false, reason: "unreachable" });
+    expect(Date.now() - t0).toBeLessThan(1500);
+  });
+
+  it("a name nobody answers for is unreachable within the deadline", async () => {
+    const t0 = Date.now();
+    expect(await readJobPost("https://no-such-host.invalid/jobs/1", { timeoutMs: 1500 })).toEqual({ ok: false, reason: "unreachable" });
+    expect(Date.now() - t0).toBeLessThan(2500);
   });
 
   it("closes a redirect without reading its body", async () => {

@@ -13,8 +13,8 @@
  */
 import http from "node:http";
 import https from "node:https";
-import { lookup as dnsLookup } from "node:dns/promises";
-import type { LookupFunction } from "node:net";
+import { Resolver } from "node:dns/promises";
+import { isIP, type LookupFunction } from "node:net";
 import zlib from "node:zlib";
 import { isPublicAddress } from "./address";
 import { extractJobPost, type JobPost } from "./extract";
@@ -35,8 +35,8 @@ export interface ReadOptions {
   /** any port, not just 80 and 443: tests only */
   anyPort?: boolean;
   timeoutMs?: number;
-  /** the name lookup: tests only (a slow one, to check the deadline holds) */
-  resolve?: (host: string) => Promise<Resolved>;
+  /** the name lookup: tests only (localhost, or a slow one to check the deadline holds) */
+  resolve?: (host: string, signal: AbortSignal) => Promise<Resolved>;
 }
 
 class Refused extends Error {
@@ -60,28 +60,59 @@ function checkUrl(raw: string, anyPort = false): URL {
   return url;
 }
 
-const systemLookup = (host: string) => dnsLookup(host, { all: true, verbatim: false }); // IPv4 first
+/**
+ * A name's addresses, IPv4 first, asked of DNS directly (c-ares). The system lookup (getaddrinfo)
+ * runs on libuv's four-thread pool, shared with zlib, files, crypto and the database's own
+ * lookups: four names whose name server never answers would stall all of them. These queries
+ * stop at the deadline.
+ */
+async function dnsResolve(host: string, signal: AbortSignal): Promise<Resolved> {
+  const resolver = new Resolver({ timeout: 3_000, tries: 1 });
+  const cancel = () => resolver.cancel();
+  signal.addEventListener("abort", cancel, { once: true });
+  try {
+    const [v4, v6] = await Promise.allSettled([resolver.resolve4(host), resolver.resolve6(host)]);
+    return [
+      ...(v4.status === "fulfilled" ? v4.value.map((address) => ({ address, family: 4 })) : []),
+      ...(v6.status === "fulfilled" ? v6.value.map((address) => ({ address, family: 6 })) : []),
+    ];
+  } finally {
+    signal.removeEventListener("abort", cancel);
+  }
+}
 
 /**
  * The address to connect to: every address of the name must be allowed; the first one is used.
- * The lookup counts toward the deadline like the rest: a slow name server can't stretch it.
+ * The lookup counts toward the deadline like the rest: a slow name server can't stretch it, and
+ * its queries are cancelled when the time is up.
  */
 async function addressOf(
   url: URL,
   allow: (a: string, h: string) => boolean,
   deadline: number,
-  resolve: (host: string) => Promise<Resolved>,
+  resolve: (host: string, signal: AbortSignal) => Promise<Resolved>,
 ): Promise<{ address: string; family: number }> {
   const host = url.hostname.replace(/^\[|\]$/g, "");
+  // an address written in the link is its own answer: no lookup
+  const family = isIP(host);
+  if (family) {
+    if (!allow(host, host)) throw new Refused("private_address");
+    return { address: host, family };
+  }
   const left = deadline - Date.now();
   if (left <= 0) throw new Refused("unreachable");
+  const stop = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   const late = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Refused("unreachable")), left);
+    timer = setTimeout(() => {
+      stop.abort();
+      reject(new Refused("unreachable"));
+    }, left);
   });
   let addresses: Resolved;
   try {
-    addresses = await Promise.race([resolve(host), late]);
+    addresses = await Promise.race([resolve(host, stop.signal), late]);
+    if (!addresses.length) throw new Refused("unreachable"); // the name has no address
   } catch {
     throw new Refused("unreachable");
   } finally {
@@ -143,13 +174,20 @@ function get(url: URL, pinned: { address: string; family: number }, deadline: nu
           return resolve({ status, location, contentType, body: Buffer.alloc(0) });
         }
         const encoding = String(res.headers["content-encoding"] ?? "").toLowerCase();
-        const stream =
-          encoding === "gzip" ? res.pipe(zlib.createGunzip()) : encoding === "deflate" ? res.pipe(zlib.createInflate()) : encoding === "br" ? res.pipe(zlib.createBrotliDecompress()) : res;
+        const unzip =
+          encoding === "gzip" ? zlib.createGunzip() : encoding === "deflate" ? zlib.createInflate() : encoding === "br" ? zlib.createBrotliDecompress() : null;
+        const stream = unzip ? res.pipe(unzip) : res;
+        // a body the site cuts off never "ends" through the decompressor: give up now, not at the deadline
+        res.on("close", () => {
+          if (!res.complete) reject(new Refused("unreachable"));
+        });
+        res.on("error", () => reject(new Refused("unreachable")));
         const chunks: Buffer[] = [];
         let size = 0;
         stream.on("data", (c: Buffer) => {
           size += c.length;
           if (size > MAX_BYTES) {
+            unzip?.destroy(); // stop inflating what already arrived
             req?.destroy();
             reject(new Refused("too_large"));
             return;
@@ -185,7 +223,7 @@ export async function readJobPost(raw: string, opts: ReadOptions = {}): Promise<
   try {
     let url = checkUrl(raw, opts.anyPort);
     for (let hop = 0; ; hop++) {
-      const page = await get(url, await addressOf(url, allow, deadline, opts.resolve ?? systemLookup), deadline);
+      const page = await get(url, await addressOf(url, allow, deadline, opts.resolve ?? dnsResolve), deadline);
       if (page.status >= 300 && page.status < 400) {
         if (!page.location || hop >= MAX_REDIRECTS) return { ok: false, reason: "unreachable" };
         url = checkUrl(new URL(page.location, url).href, opts.anyPort);

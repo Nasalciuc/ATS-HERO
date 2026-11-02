@@ -34,9 +34,10 @@ export const JOB_LINK_MSG: Record<JobLinkFailure, string> = {
 
 /**
  * LinkedIn is never opened (AGENTS.md rule 11: no scraping or automation of LinkedIn). A name may
- * end with dots ("www.linkedin.com." is the same site), so they go before the check.
+ * end with dots ("www.linkedin.com." is the same site). One pattern, anchored on the names, so a
+ * long run of dots costs no more than its length.
  */
-export const isLinkedIn = (host: string) => /(^|\.)linkedin\.com$|(^|\.)lnkd\.in$/i.test(host.replace(/\.+$/, ""));
+export const isLinkedIn = (host: string) => /(?:^|\.)(?:linkedin\.com|lnkd\.in)\.*$/i.test(host);
 
 /**
  * The link, when the job field holds only a link (with or without "https://"); null when it holds
