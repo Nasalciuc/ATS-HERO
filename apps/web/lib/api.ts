@@ -38,6 +38,9 @@ function toCv(row: CvRow): Cv {
   };
 }
 
+/** How long the page waits for a job link to be read (the server stops at 8 s). */
+export const JOB_POST_TIMEOUT_MS = 20_000;
+
 export const api = {
   listCvs: async (): Promise<{ cvs: Cv[] }> => {
     const rows = await listMyCvs(getGuestId());
@@ -93,18 +96,27 @@ export const api = {
 
   /** Job Fit: the job text behind a link, read by our server (POST /api/job-post). */
   jobPost: async (url: string): Promise<{ ok: true; text: string } | { ok: false; reason: JobLinkFailure }> => {
-    // offline, a dropped connection or a Function that never answered: the same "paste the text"
-    // advice as every other failure, not the browser's "Failed to fetch"
-    const res = await fetch("/api/job-post", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ url }),
-    }).catch(() => null);
-    if (!res) return { ok: false, reason: "unreachable" };
-    if (res.status === 429) return { ok: false, reason: "too_many_requests" };
-    const data = (await res.json().catch(() => null)) as { ok?: boolean; text?: string; reason?: JobLinkFailure } | null;
-    if (data?.ok && typeof data.text === "string") return { ok: true, text: data.text };
-    return { ok: false, reason: data?.reason ?? "unreachable" };
+    // Offline, a dropped connection or a Function that never answered: the same "paste the text"
+    // advice as every other failure, not the browser's "Failed to fetch". The server gives up after
+    // 8 s (15 s at most); the page gives up at 20 s, answer and body included, so a stalled
+    // connection never leaves the button disabled.
+    const stop = new AbortController();
+    const timer = setTimeout(() => stop.abort(), JOB_POST_TIMEOUT_MS);
+    try {
+      const res = await fetch("/api/job-post", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url }),
+        signal: stop.signal,
+      }).catch(() => null);
+      if (!res) return { ok: false, reason: "unreachable" };
+      if (res.status === 429) return { ok: false, reason: "too_many_requests" };
+      const data = (await res.json().catch(() => null)) as { ok?: boolean; text?: string; reason?: JobLinkFailure } | null;
+      if (data?.ok && typeof data.text === "string") return { ok: true, text: data.text };
+      return { ok: false, reason: data?.reason ?? "unreachable" };
+    } finally {
+      clearTimeout(timer);
+    }
   },
 
   // --- Persist a scan result (optional; call from Score / Job-fit pages) ---
