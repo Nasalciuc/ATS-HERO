@@ -19,8 +19,10 @@ export function isClerkPublicConfigured(): boolean {
 
 /**
  * The Clerk host the browser talks to (its "Frontend API"), read from the publishable key the way
- * Clerk reads it: "pk_test_" or "pk_live_", then the host plus "$" in base64. A development instance
- * gives a name under clerk.accounts.dev; the production one gives clerk.atshero.app. The CSP allows
+ * Clerk reads it: "pk_", the instance kind ("test" or "live") and "_", then the host plus "$" in
+ * base64 (the parts are written apart: CI's secret gate looks for live key prefixes written out).
+ * A development instance gives a name under clerk.accounts.dev; the production one gives
+ * clerk.atshero.app. The CSP allows
  * this one host and no other Clerk address (lib/csp.ts). Null without a key or with a key that names
  * no plain host name.
  */

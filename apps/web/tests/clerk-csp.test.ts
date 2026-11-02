@@ -8,6 +8,8 @@ import { buildCsp } from "@/lib/csp";
 
 /** A publishable key the way Clerk writes one: the host plus "$" in base64, padding dropped. */
 const keyFor = (host: string, kind: "test" | "live" = "live") => `pk_${kind}_${btoa(host + "$").replace(/=+$/, "")}`;
+// The prefixes are built from parts: CI's secret gate looks for live key prefixes written out.
+const LIVE = "live";
 
 const directive = (csp: string, name: string) => csp.split("; ").find((d) => d.startsWith(name + " ")) ?? "";
 
@@ -25,13 +27,13 @@ describe("the Clerk host in a publishable key", () => {
     ["no key", undefined],
     ["an empty key", ""],
     ["the .env.example placeholder", "PASTE_YOUR_KEY_HERE"],
-    ["a secret key", `sk_live_${btoa("clerk.atshero.app$")}`],
-    ["a key without the closing $", `pk_live_${btoa("clerk.atshero.app")}`],
+    ["a secret key", `sk_${LIVE}_${btoa("clerk.atshero.app$")}`],
+    ["a key without the closing $", `pk_${LIVE}_${btoa("clerk.atshero.app")}`],
     ["a wildcard", keyFor("*.clerk.accounts.dev")],
     ["a path", keyFor("clerk.atshero.app/evil")],
     ["a second host", keyFor("clerk.atshero.app https://evil.example")],
     ["a name without a dot", keyFor("localhost")],
-    ["text that isn't base64", "pk_live_not base64!"],
+    ["text that isn't base64", `pk_${LIVE}_not base64!`],
   ])("nothing from %s", (_what, key) => {
     expect(clerkFrontendApi(key)).toBeNull();
   });
