@@ -11,6 +11,14 @@ export const maxDuration = 15;
 const Body = z.object({ url: z.string().trim().min(4).max(2000) });
 
 export async function POST(req: Request) {
+  // Only our own page: JSON only, so a browser on another site has to ask first (a CORS preflight,
+  // which we never answer), and a request the browser marks as coming from another site is refused.
+  // Otherwise any site could make its visitors' browsers send our server to read pages for it.
+  if (!/^application\/json\b/i.test(req.headers.get("content-type") ?? "")) {
+    return NextResponse.json({ ok: false, reason: "invalid_url" }, { status: 415 });
+  }
+  const site = req.headers.get("sec-fetch-site");
+  if (site && site !== "same-origin") return NextResponse.json({ ok: false, reason: "blocked" }, { status: 403 });
   let body: unknown;
   try {
     body = await req.json();
