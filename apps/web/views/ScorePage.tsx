@@ -19,7 +19,7 @@ import { api } from "../lib/api";
 import { storedAtsRead } from "../lib/analyze-flow";
 import { SECTION_EMOJI, type JobFitReport, type ScoreReport, type SectionKey, type SectionReport } from "../lib/types";
 import { fileLine, toneOfLevel, type AtsReport, type AtsSection, type Issue, type Note, type ReadField } from "../lib/ats-read/score";
-import { LEVEL_ORDER, LEVELS, refLine, type Level } from "../lib/ats-read/levels";
+import { LEVEL_ORDER, LEVELS, type Level } from "../lib/ats-read/levels";
 import {
   PersonalInfoStep,
   EducationStep,
@@ -242,33 +242,22 @@ function LevelCounts({ counts }: { counts: Record<Level, number> }) {
   );
 }
 
-/** One finding: its level, what happens, why, the source and the fix (provisional, rule 6). */
+/**
+ * One finding: its level, what happens, why and the fix (provisional, rule 6). Its sources and
+ * the parser codes it mirrors stay in the code: the screen names no ATS or parser vendor.
+ */
 function Finding({ issue, card }: { issue: Issue; card?: boolean }) {
-  const ref = refLine(issue.ref);
   return (
     <li className={card ? "score-fixfirst__item" : "score-finding"}>
       <div className="score-fixfirst__top">
         <h3 className="score-fixfirst__name">{issue.title}</h3>
         <LevelChip level={issue.level} />
       </div>
-      <p className="score-fixfirst__why">
-        {issue.why}
-        {issue.source && (
-          <>
-            {" "}
-            <a href={issue.source.url} target="_blank" rel="noopener noreferrer">
-              {issue.source.label}
-            </a>
-          </>
-        )}
-      </p>
+      <p className="score-fixfirst__why">{issue.why}</p>
       <p className="score-fixfirst__fix">
         <strong>Fix:</strong> {issue.fix}
       </p>
-      <p className="score-finding__ref">
-        {ref ? `Parser codes: ${ref}` : "Our check: no parser code"}
-        {issue.ref.deviation ? ` · Our level differs: ${issue.ref.deviation}.` : ""}
-      </p>
+      {issue.ref.deviation && <p className="score-finding__ref">Our level differs from the parsers&apos;: {issue.ref.deviation}.</p>}
     </li>
   );
 }
@@ -302,17 +291,7 @@ function Notes({ notes }: { notes: Note[] }) {
           <span className="score-note__icon" aria-hidden="true">
             i
           </span>
-          <p>
-            {n.text}
-            {n.source && (
-              <>
-                {" "}
-                <a href={n.source.url} target="_blank" rel="noopener noreferrer">
-                  {n.source.label}
-                </a>
-              </>
-            )}
-          </p>
+          <p>{n.text}</p>
         </li>
       ))}
     </ul>
@@ -407,9 +386,8 @@ function Method({ pasted }: { pasted: boolean }) {
             : "Two free document readers take the text out of your file, in your browser: the first step every ATS parser does. A field counts as read when both get the same thing. Your file never leaves your device."}
         </li>
         <li>
-          The levels are the ones the Textkernel and RChilli resume parsers use: Critical is their “Fatal”, Major their
-          “Major issue”, Missing their “Data missing”, Tip their “Suggested improvement”. Where our lab disagrees with
-          them, the finding says so.
+          The levels are the ones resume parsers give their own findings: Critical (they can&apos;t build your profile),
+          Major, Missing (a field they found empty) and Tip. Where our lab disagrees with them, the finding says so.
         </li>
         <li>
           There is no ATS score: without a job post, an ATS only reads you. With one, ATSs compare you to that job:
@@ -509,7 +487,8 @@ const REQ_MARK = { met: "ok", not_met: "lost", unknown: "partial" } as const;
 
 /**
  * Job Fit: the post's requirements, met or not, the way ATSs explain a match (Workday Fit & Gap,
- * Workable, Teamtailor), with HiredScore's grade definitions as the summary. No percentage.
+ * Workable, Teamtailor), with HiredScore's grade definitions as the summary. No percentage. The
+ * screen names none of them (Scaler, 2 Nov 2026).
  * PROVISIONAL (rule 6): no Figma frame yet.
  */
 function JobFitPanel({ fit }: { fit: JobFitReport }) {
@@ -562,9 +541,8 @@ function JobFitPanel({ fit }: { fit: JobFitReport }) {
       <p className="score-fit__method">
         How Job Fit works: the requirements are the skills from our list and the years of experience we find in the post,
         required or preferred by its headings (“About us” and “We offer” are skipped). Something missing? Read the post
-        yourself. The summary uses the grade definitions Workday publishes for HiredScore: all required and most preferred
-        (A), all required (B), most required (C), few required (D); “most” means more than half. We don&apos;t run
-        HiredScore.
+        yourself. The summary says how many of them your CV shows: all required and most preferred, all required, most
+        required or few required; “most” means more than half. We don&apos;t run any ATS&apos;s own ranking.
       </p>
     </section>
   );
