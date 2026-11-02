@@ -2,7 +2,7 @@
 // its error message and Postgres puts the failing row in `detail`; withLog keeps neither, in the
 // line it logs and in the error it rethrows (Next.js logs what a Server Action throws).
 import { inspect } from "node:util";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { makeTestDb } from "./setup";
 import { cvs } from "@/db/schema";
 import { emptyCvData } from "@/lib/types";
@@ -10,11 +10,14 @@ import { withLog } from "@/lib/log";
 
 const SECRET = "Ana Popescu, +40 721 234 567";
 
+// Built in a hook, like the other db tests: running the migrations can take longer than a test's
+// 5 seconds on a slow machine, and hooks get 30 (vitest.config.ts).
+let db: Awaited<ReturnType<typeof makeTestDb>>;
+beforeEach(async () => { db = await makeTestDb(); });
 afterEach(() => vi.restoreAllMocks());
 
 describe("withLog and a failed query", () => {
   it("logs and rethrows the database's message, never the CV", async () => {
-    const db = await makeTestDb();
     const data = emptyCvData();
     data.personalInfo = { ...data.personalInfo, name: SECRET };
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
