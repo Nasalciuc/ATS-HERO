@@ -225,6 +225,9 @@ export default function AnalyzePage({ mode }: { mode: Mode }) {
           onFileRead={setCvFile}
           placeholder="Paste your CV text here…"
         />
+        {/* PROVISIONAL (rule 6): "INSERT TEXT OR LINK", this placeholder and "Reading the link…" below are
+            new copy on frame 398:8400, for the job link (a tester asked for it); Liubovi updates the frame.
+            The locked spec measures boxes only, and they don't change. */}
         {mode === "jobfit" && (
           <TextOrUpload
             figma="analyze-job"
