@@ -105,6 +105,10 @@ EDGE: dict[str, str] = {
         "Game Designer, Lumen Games, 03.2021 – present\nUSM, Moldova | Bachelor's in Game Design | 2016 - 2020\n"
         "Опыт работы и образование\nГеймдизайнер, Lumen Games, 03.2021 – по настоящее время"
     ),
+    # a mixed heading after a section of jobs: it ends the jobs, and the degree under it is not a job
+    "mixed-heading-after-experience": (
+        "Mara Lungu\nmara.lungu@example.com\nExperience and training\nGame Designer, Lumen Games, 2020 – 2022\nExperience and Education\nBSc in Game Design, USM, 2014 – 2018"
+    ),
     # a control character Python counts as a space and JavaScript's \s does not (U+001F), inside a
     # heading that names two sections: both readers must split it the same way
     "compound-heading-unit-separator": (

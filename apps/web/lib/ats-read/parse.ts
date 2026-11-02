@@ -49,7 +49,7 @@ const HEADING_INDEX = new Map(Object.entries(HEADINGS).flatMap(([k, vs]) => vs.m
 const JOINER = /[\s\x1c-\x1f\x85]+(?:and|și|si|и)[\s\x1c-\x1f\x85]+|[\s\x1c-\x1f\x85]*[&/,+][\s\x1c-\x1f\x85]*/iu;
 // Sections read in different ways (jobs by their dates, degrees by theirs) can't share a heading:
 // under "Experience and Education" the degrees would be read as jobs and counted as years of work.
-// Such a line isn't taken for a heading, as before compound headings were read.
+// Such a heading is "mixed": it ends the section before it, and nothing under it is read.
 const READ_APART = ["experience", "education"];
 const TAIL_WORDS = new Set([
   "training", "courses", "interests", "hobbies", "qualifications", "achievements",
@@ -57,7 +57,8 @@ const TAIL_WORDS = new Set([
   "курсы", "интересы", "хобби", "квалификация", "достижения",
 ]);
 
-export type SectionKey = keyof typeof HEADINGS;
+/** A section the reader knows, or "mixed": a heading that ends the section before it and is not read. */
+export type SectionKey = keyof typeof HEADINGS | "mixed";
 
 const MONTHS =
   "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|" +
@@ -126,7 +127,7 @@ export function headingKey(line: string): SectionKey | null {
   if (parts.length < 2 || parts.length > 3 || !HEADING_INDEX.has(parts[0])) return null;
   if (!parts.slice(1).every((p) => HEADING_INDEX.has(p) || TAIL_WORDS.has(p))) return null;
   const keys = new Set(parts.map((p) => HEADING_INDEX.get(p)).filter(Boolean));
-  if (READ_APART.every((k) => keys.has(k))) return null;
+  if (READ_APART.every((k) => keys.has(k))) return "mixed";
   return HEADING_INDEX.get(parts[0]) as SectionKey;
 }
 

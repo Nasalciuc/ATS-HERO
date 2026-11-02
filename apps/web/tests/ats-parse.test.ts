@@ -60,7 +60,11 @@ describe("section headings", () => {
   });
 
   it("doesn't join jobs and degrees under one heading: a degree's years would count as work", () => {
-    for (const line of ["Experience and Education", "Education & Experience", "Опыт работы и образование", "Experiență și educație"]) expect(headingKey(line)).toBeNull();
+    for (const line of ["Experience and Education", "Education & Experience", "Опыт работы и образование", "Experiență și educație"]) expect(headingKey(line)).toBe("mixed");
+    // the mixed heading ends the jobs above it, and nothing under it is read
+    const p = parse("Mara Lungu\nmara.lungu@example.com\nExperience and training\nGame Designer, Lumen Games, 2020 – 2022\nExperience and Education\nBSc in Game Design, USM, 2014 – 2018");
+    expect(p.experience.map((b) => b.start)).toEqual(["2020"]);
+    expect(p.education).toEqual([]);
   });
 });
 

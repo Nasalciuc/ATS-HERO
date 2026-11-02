@@ -45,8 +45,9 @@ _HEADING_INDEX = {v: k for k, vs in HEADINGS.items() for v in vs}
 _JOINER = re.compile(r"\s+(?:and|și|si|и)\s+|\s*[&/,+]\s*", re.IGNORECASE)
 # Sections read in different ways (jobs by their dates, degrees by theirs) can't share a heading:
 # under "Experience and Education" the degrees would be read as jobs and counted as years of work.
-# Such a line isn't taken for a heading, as before compound headings were read.
+# Such a heading is "mixed": it ends the section before it, and nothing under it is read.
 _READ_APART = ("experience", "education")
+MIXED = "mixed"
 _TAIL_WORDS = frozenset({
     "training", "courses", "interests", "hobbies", "qualifications", "achievements",
     "cursuri", "interese", "hobby-uri", "calificări", "realizări",
@@ -120,7 +121,7 @@ def heading_key(line: str) -> str | None:
         return None
     keys = {_HEADING_INDEX[p] for p in parts if p in _HEADING_INDEX}
     if all(k in keys for k in _READ_APART):
-        return None
+        return MIXED
     return _HEADING_INDEX[parts[0]]
 
 
