@@ -54,14 +54,18 @@ function v6Public(ip: string): boolean {
   if (!g) return false;
   if (g.every((x) => x === 0)) return false; // ::
   if (g.slice(0, 7).every((x) => x === 0) && g[7] === 1) return false; // ::1
+  const v4 = (hi: number, lo: number) => `${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`;
   // an IPv4 address inside IPv6 (::ffff:a.b.c.d, ::a.b.c.d, 64:ff9b::a.b.c.d): judged as IPv4
-  const embedded = `${g[6] >> 8}.${g[6] & 255}.${g[7] >> 8}.${g[7] & 255}`;
-  if (g.slice(0, 5).every((x) => x === 0) && (g[5] === 0xffff || g[5] === 0)) return v4Public(embedded);
-  if (g[0] === 0x64 && g[1] === 0xff9b) return v4Public(embedded);
-  if ((g[0] & 0xfe00) === 0xfc00) return false; // unique local fc00::/7
-  if ((g[0] & 0xffc0) === 0xfe80) return false; // link-local fe80::/10
-  if ((g[0] & 0xff00) === 0xff00) return false; // multicast
+  if (g.slice(0, 5).every((x) => x === 0) && (g[5] === 0xffff || g[5] === 0)) return v4Public(v4(g[6], g[7]));
+  if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every((x) => x === 0)) return v4Public(v4(g[6], g[7]));
+  // Otherwise only global unicast (2000::/3) is public. That leaves out unique local (fc00::/7),
+  // link-local (fe80::/10), the old site-local (fec0::/10), multicast, ::ffff:0:a.b.c.d, 100::/64
+  // and local NAT64 (64:ff9b:1::/48).
+  if ((g[0] & 0xe000) !== 0x2000) return false;
+  if (g[0] === 0x2001 && g[1] === 0) return false; // Teredo: the IPv4 inside is scrambled, refuse it
   if (g[0] === 0x2001 && g[1] === 0x0db8) return false; // documentation
+  if (g[0] === 0x3fff && g[1] < 0x1000) return false; // documentation (3fff::/20)
+  if (g[0] === 0x2002) return v4Public(v4(g[1], g[2])); // 6to4: judged as the IPv4 it carries
   return true;
 }
 

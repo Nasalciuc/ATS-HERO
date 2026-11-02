@@ -40,6 +40,7 @@ function cp1251(s: string): Buffer {
 const RU = `<html><head><meta charset="windows-1251"></head><body><main><h1>Геймдизайнер</h1><p>Требования: опыт от 3 лет в геймдизайне, знание Unity и Jira, опыт работы с балансом экономики в мобильных играх, умение писать документацию для команды, работа с аналитикой и проведение тестов.</p></main></body></html>`;
 
 let server: http.Server;
+let endlessClosed = false;
 let base = "";
 let local = "";
 
@@ -56,6 +57,18 @@ beforeAll(async () => {
     if (path === "/redirect") return res.writeHead(302, { location: "/jsonld" }).end();
     if (path === "/to-private") return res.writeHead(302, { location: `${local}/jsonld` }).end();
     if (path === "/to-linkedin") return res.writeHead(301, { location: "https://www.linkedin.com/jobs/view/1" }).end();
+    if (path === "/to-linkedin-dot") return res.writeHead(301, { location: "https://www.linkedin.com./jobs/view/1" }).end();
+    if (path === "/endless-redirect") {
+      // a redirect whose body never ends: the reader must close it, not read it
+      res.on("close", () => (endlessClosed = true));
+      res.writeHead(302, { location: "/gone" });
+      const chunk = Buffer.alloc(64 * 1024, 120);
+      const pump = () => {
+        while (!res.destroyed && res.write(chunk));
+        if (!res.destroyed) res.once("drain", pump);
+      };
+      return pump();
+    }
     if (path === "/loop") return res.writeHead(302, { location: "/loop" }).end();
     if (path === "/forbidden") return res.writeHead(403).end("no bots");
     if (path === "/gone") return res.writeHead(404).end("not here");
@@ -87,11 +100,16 @@ describe("what counts as a link in the job field", () => {
 });
 
 describe("which addresses our server may open", () => {
-  it.each(["8.8.8.8", "151.101.1.69", "2606:4700::6810:84e5", "::ffff:8.8.8.8"])("public: %s", (ip) => expect(isPublicAddress(ip)).toBe(true));
+  it.each(["8.8.8.8", "151.101.1.69", "2606:4700::6810:84e5", "2a00:1450:4001::1", "::ffff:8.8.8.8", "2002:808:808::1"])(
+    "public: %s",
+    (ip) => expect(isPublicAddress(ip)).toBe(true),
+  );
   it.each([
     "127.0.0.1", "10.1.2.3", "172.16.0.1", "172.31.255.255", "192.168.1.1", "169.254.169.254", "100.64.0.1", "0.0.0.0",
     "224.0.0.1", "255.255.255.255", "198.18.0.1", "::1", "::", "fc00::1", "fd12:3456::1", "fe80::1", "ff02::1",
     "::ffff:127.0.0.1", "::ffff:10.0.0.1", "64:ff9b::a00:1", "2001:db8::1", "not an ip",
+    // outside global unicast, or carrying a private IPv4
+    "fec0::1", "::ffff:0:7f00:1", "100::1", "64:ff9b:1::a00:1", "2001::1", "2002:a9fe:a9fe::1", "2002:7f00:1::", "3fff::1",
   ])("not public: %s", (ip) => expect(isPublicAddress(ip)).toBe(false));
 });
 
@@ -179,8 +197,10 @@ describe("reading a link", () => {
   });
 
   it("never opens LinkedIn, even through a redirect", async () => {
-    expect(await readJobPost("https://www.linkedin.com/jobs/view/123")).toEqual({ ok: false, reason: "linkedin" });
+    for (const link of ["https://www.linkedin.com/jobs/view/123", "https://www.linkedin.com./jobs/view/123", "https://LNKD.IN./abc", "https://linkedin.com../x"])
+      expect(await readJobPost(link)).toEqual({ ok: false, reason: "linkedin" });
     expect(await readJobPost(`${base}/to-linkedin`, onlyLocalhost)).toEqual({ ok: false, reason: "linkedin" });
+    expect(await readJobPost(`${base}/to-linkedin-dot`, onlyLocalhost)).toEqual({ ok: false, reason: "linkedin" });
   });
 
   it("says why a page can't be read", async () => {
@@ -195,6 +215,19 @@ describe("reading a link", () => {
   it("refuses what isn't a web link, a link with a password, and other ports", async () => {
     expect(await readJobPost("ftp://example.com/job")).toEqual({ ok: false, reason: "invalid_url" });
     expect(await readJobPost("https://user:pw@jobs.example.com/1")).toEqual({ ok: false, reason: "invalid_url" });
-    expect(await readJobPost("https://jobs.example.com:8443/1")).toEqual({ ok: false, reason: "private_address" });
+    expect(await readJobPost("https://jobs.example.com:8443/1")).toEqual({ ok: false, reason: "other_port" });
+  });
+
+  it("closes a redirect without reading its body", async () => {
+    expect(await readJobPost(`${base}/endless-redirect`, onlyLocalhost)).toEqual({ ok: false, reason: "not_found" });
+    await new Promise((r) => setTimeout(r, 200));
+    expect(endlessClosed).toBe(true);
+  });
+
+  it("a slow name lookup counts toward the deadline", async () => {
+    const slow = () => new Promise<{ address: string; family: number }[]>((r) => setTimeout(() => r([{ address: "127.0.0.1", family: 4 }]), 3000));
+    const t0 = Date.now();
+    expect(await readJobPost(`${base}/jsonld`, { ...onlyLocalhost, resolve: slow, timeoutMs: 300 })).toEqual({ ok: false, reason: "unreachable" });
+    expect(Date.now() - t0).toBeLessThan(1000);
   });
 });

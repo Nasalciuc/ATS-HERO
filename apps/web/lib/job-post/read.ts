@@ -7,7 +7,8 @@
  *   (so a name can't switch to an internal address between the check and the connection).
  * - Every redirect is checked the same way, at most 4 of them.
  * - LinkedIn is never opened (AGENTS.md rule 11), not even through a redirect.
- * - 8 seconds in all, at most 3 MB, and only HTML pages. Nothing is kept: not the link, not the page.
+ * - 8 seconds in all, name lookups included; at most 3 MB; only HTML pages on ports 80 and 443.
+ *   Nothing is kept: not the link, not the page.
  * - The site sees our server and an honest user agent, never the person's address or cookies.
  */
 import http from "node:http";
@@ -26,12 +27,16 @@ const MAX_REDIRECTS = 4;
 
 export type JobPostResult = ({ ok: true } & JobPost) | { ok: false; reason: JobLinkFailure };
 
+type Resolved = { address: string; family: number }[];
+
 export interface ReadOptions {
   /** may we connect to this address? Default: public addresses only. Tests serve pages locally. */
   allowAddress?: (address: string, host: string) => boolean;
   /** any port, not just 80 and 443: tests only */
   anyPort?: boolean;
   timeoutMs?: number;
+  /** the name lookup: tests only (a slow one, to check the deadline holds) */
+  resolve?: (host: string) => Promise<Resolved>;
 }
 
 class Refused extends Error {
@@ -50,19 +55,37 @@ function checkUrl(raw: string, anyPort = false): URL {
   }
   if (url.protocol !== "https:" && url.protocol !== "http:") throw new Refused("invalid_url");
   if (url.username || url.password) throw new Refused("invalid_url");
-  if (url.port && url.port !== "80" && url.port !== "443" && !anyPort) throw new Refused("private_address");
+  if (url.port && url.port !== "80" && url.port !== "443" && !anyPort) throw new Refused("other_port");
   if (isLinkedIn(url.hostname)) throw new Refused("linkedin");
   return url;
 }
 
-/** The address to connect to: every address of the name must be allowed; the first one is used. */
-async function addressOf(url: URL, allow: (a: string, h: string) => boolean): Promise<{ address: string; family: number }> {
+const systemLookup = (host: string) => dnsLookup(host, { all: true, verbatim: false }); // IPv4 first
+
+/**
+ * The address to connect to: every address of the name must be allowed; the first one is used.
+ * The lookup counts toward the deadline like the rest: a slow name server can't stretch it.
+ */
+async function addressOf(
+  url: URL,
+  allow: (a: string, h: string) => boolean,
+  deadline: number,
+  resolve: (host: string) => Promise<Resolved>,
+): Promise<{ address: string; family: number }> {
   const host = url.hostname.replace(/^\[|\]$/g, "");
-  let addresses: { address: string; family: number }[];
+  const left = deadline - Date.now();
+  if (left <= 0) throw new Refused("unreachable");
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Refused("unreachable")), left);
+  });
+  let addresses: Resolved;
   try {
-    addresses = await dnsLookup(host, { all: true, verbatim: false }); // IPv4 first
+    addresses = await Promise.race([resolve(host), late]);
   } catch {
     throw new Refused("unreachable");
+  } finally {
+    clearTimeout(timer);
   }
   if (!addresses.length || addresses.some((a) => !allow(a.address, host))) throw new Refused("private_address");
   return addresses[0];
@@ -85,9 +108,10 @@ function get(url: URL, pinned: { address: string; family: number }, deadline: nu
   return new Promise((resolve, reject) => {
     const left = deadline - Date.now();
     if (left <= 0) return reject(new Refused("unreachable"));
+    let req: http.ClientRequest | undefined;
     // the whole answer within the time left, not just no silence that long
     const timer = setTimeout(() => {
-      req.destroy();
+      req?.destroy();
       reject(new Refused("unreachable"));
     }, left);
     const done = <T,>(fn: (v: T) => void) => (v: T) => {
@@ -96,7 +120,7 @@ function get(url: URL, pinned: { address: string; family: number }, deadline: nu
     };
     resolve = done(resolve);
     reject = done(reject);
-    const req = client.get(
+    req = client.get(
       url,
       {
         lookup,
@@ -113,7 +137,9 @@ function get(url: URL, pinned: { address: string; family: number }, deadline: nu
         const location = typeof res.headers.location === "string" ? res.headers.location : null;
         const contentType = String(res.headers["content-type"] ?? "");
         if (status >= 300 && status < 400) {
-          res.resume();
+          // the redirect's own body is never read: close the connection, or it would be read to
+          // its end (endless, if the site wants) after the deadline is gone
+          res.destroy();
           return resolve({ status, location, contentType, body: Buffer.alloc(0) });
         }
         const encoding = String(res.headers["content-encoding"] ?? "").toLowerCase();
@@ -124,7 +150,7 @@ function get(url: URL, pinned: { address: string; family: number }, deadline: nu
         stream.on("data", (c: Buffer) => {
           size += c.length;
           if (size > MAX_BYTES) {
-            req.destroy();
+            req?.destroy();
             reject(new Refused("too_large"));
             return;
           }
@@ -159,7 +185,7 @@ export async function readJobPost(raw: string, opts: ReadOptions = {}): Promise<
   try {
     let url = checkUrl(raw, opts.anyPort);
     for (let hop = 0; ; hop++) {
-      const page = await get(url, await addressOf(url, allow), deadline);
+      const page = await get(url, await addressOf(url, allow, deadline, opts.resolve ?? systemLookup), deadline);
       if (page.status >= 300 && page.status < 400) {
         if (!page.location || hop >= MAX_REDIRECTS) return { ok: false, reason: "unreachable" };
         url = checkUrl(new URL(page.location, url).href, opts.anyPort);

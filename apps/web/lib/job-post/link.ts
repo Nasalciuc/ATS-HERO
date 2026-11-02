@@ -8,6 +8,7 @@ export type JobLinkFailure =
   | "invalid_url"
   | "linkedin"
   | "private_address"
+  | "other_port"
   | "blocked"
   | "not_found"
   | "unreachable"
@@ -20,6 +21,7 @@ export const JOB_LINK_MSG: Record<JobLinkFailure, string> = {
   invalid_url: "This doesn't look like a link to a job post. Paste the job text instead.",
   linkedin: "We don't open LinkedIn pages. Copy the job text from LinkedIn and paste it here.",
   private_address: "This link doesn't lead to a public web page. Paste the job text instead.",
+  other_port: "We only open ordinary web links, without a port number such as :8443. Paste the job text instead.",
   blocked: "This site doesn't let us read the page. Copy the job text and paste it here.",
   not_found: "This link leads to a missing page: the job may be closed. Check the link, or paste the job text.",
   unreachable: "We couldn't open this link. Check it, or copy the job text and paste it here.",
@@ -30,8 +32,11 @@ export const JOB_LINK_MSG: Record<JobLinkFailure, string> = {
   too_many_requests: "Too many links in a row. Wait a minute, or paste the job text.",
 };
 
-/** LinkedIn is never opened (AGENTS.md rule 11: no scraping or automation of LinkedIn). */
-export const isLinkedIn = (host: string) => /(^|\.)linkedin\.com$|(^|\.)lnkd\.in$/i.test(host);
+/**
+ * LinkedIn is never opened (AGENTS.md rule 11: no scraping or automation of LinkedIn). A name may
+ * end with dots ("www.linkedin.com." is the same site), so they go before the check.
+ */
+export const isLinkedIn = (host: string) => /(^|\.)linkedin\.com$|(^|\.)lnkd\.in$/i.test(host.replace(/\.+$/, ""));
 
 /**
  * The link, when the job field holds only a link (with or without "https://"); null when it holds
