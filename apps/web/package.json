@@ -19,7 +19,8 @@
     "db:seed": "tsx db/seed.ts",
     "design:check": "node design-check/run.mjs",
     "icons": "node scripts/build-icons.mjs",
-    "credits": "node scripts/software-credits.mjs"
+    "credits": "node scripts/software-credits.mjs",
+    "apply-lab": "vitest run -c vitest.apply-lab.config.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.0",

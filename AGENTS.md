@@ -28,6 +28,7 @@ without an account; signing in keeps the work (guest → claim).
 | Scoring | Tier 1 in the browser, deterministic. Builder CVs: `lib/analyzer/` (its score waits for a Figma frame to be replaced). Uploaded or pasted CVs: the ATS check, **no score** (no ATS gives one without a job): fields read by two readings of the file, a TypeScript port of the lab parser (kept identical by `tools/ats-lab/parity/cases.jsonl`), and findings on the Textkernel/RChilli levels (one table: `lib/ats-read/levels.ts`). Job Fit: the post's requirements met or not (`lib/job-fit.ts`), no percentage. Design: `ATS-REAL-VS-NOI.md` | `lib/analyzer/`, `lib/ats-read/`, `lib/job-fit.ts` |
 | Python | FastAPI + spaCy (Tier 2, `/parse-check`, ATS lab); Lambda entry with Mangum + per-user limit. **Not deployed yet** | `apps/ai` |
 | AI rewrite | Vercel AI SDK; kill-switch + daily quota in `ai_usage` | `app/api/rewrite` |
+| Apply agent | Engine only, **nothing calls it yet**: opens a posting, fills what the plan allows, attaches the CV, stops for the person's approval. Drives agent-browser 0.41.1 (vercel-labs, Apache-2.0), which is **not a dependency** of the app; production will run it in a Vercel Sandbox. Design: `APLICARE-CU-AGENT.md` | `lib/apply/`, `tools/apply-lab/` |
 | Payments | Paddle (not Stripe) | `app/api/webhooks/paddle`, `lib/paddle-webhook.ts` |
 | Infra | Vercel for the web app. AWS (us-east-1) as CloudFormation, **not deployed yet** | `infra/` (see `infra/README.md`) |
 
@@ -45,6 +46,7 @@ without an account; signing in keeps the work (guest → claim).
 - `apps/ai`: `app/` (routers, analyzers, parsers, `lab/`) and `tests/`.
 - `infra/`: AWS stacks; the deploy workflow stays in `infra/github/` until AWS phase F3.
 - `tools/ats-lab/fixtures/`: synthetic people only.
+- `tools/apply-lab/forms/`: synthetic application forms for the apply agent (localhost only).
 - `reference/figma/`: exported Figma frames.
 - `packages/shared/data/`: JSON data used by `apps/ai`.
 - `auth-flow-pkg/`: legacy and unused. Don't import from it.
@@ -66,6 +68,8 @@ npm run design:check          # needs `npm run dev` + local Postgres; 🔒 specs
 npm run icons                 # after changing app/icon.svg: regenerates favicon.ico and apple-icon.png
 npm run db:migrate            # local DB only; production migrations are manual, after a snapshot
 npx tsx --tsconfig lab/tsconfig.json lab/render.tsx      # ATS lab, step 1: render
+npm install --no-save agent-browser@0.41.1 && npm run apply-lab   # apply lab; needs a Chrome (AGENT_BROWSER_EXECUTABLE_PATH).
+                                   # CI installs it outside the app (--prefix) and points AGENT_BROWSER_BIN at it
 
 # ai (from apps/ai)
 python -m venv .venv && source .venv/Scripts/activate    # Linux/Mac: .venv/bin/activate
@@ -88,6 +92,7 @@ graphify update .             # after every change; `graphify explain <Node>` be
 - `design-check.yml` (PRs touching UI): every 🔒 spec within ±2px of Figma.
 - `ats-lab.yml` (PRs touching templates, export or the lab): classic, minimal and DOCX must not FAIL on any extractor.
 - `migrate-check.yml`: a schema change needs its committed migration.
+- `apply-lab.yml` (PRs touching `lib/apply`, the apply lab, or what the lab's CV is made of: the personas, the templates, `cv-print`): the apply agent passes on every synthetic form.
 
 ## Rules
 
@@ -138,6 +143,7 @@ graphify update .             # after every change; `graphify explain <Node>` be
     - LinkedIn: OAuth sign-in only; no scraping or automation.
     - No real user CVs to third-party parsers without explicit consent + DPA; the lab uses fixtures only.
     - Never apply to real employers with test personas.
+    - The apply agent (`lib/apply`) sends an application only on the person's approval of that application and of the form they were shown; types from the CV only contact details and the job marked current, only into a field whose own name says what it is; answers no question itself (every other item, sensitive or not, is the person's, and a sensitive one is never stored); never gets past a CAPTCHA, an e-mailed code or a login, and hands over a field it can't set; never goes to LinkedIn, Indeed Apply or Workday; is tested only on `tools/apply-lab/forms`.
     - **Privacy page** (`views/PrivacyPage.tsx`) lists what we keep, where, for how long, every provider and every cookie or storage key. A change to any of that (a new provider or storage key, another retention, payments, turning on `AI_REWRITE_ENABLED` or `NEXT_PUBLIC_ATS_CHECK_ENABLED`) updates the page and its `PRIVACY_UPDATED` date in the same commit. `tests/privacy-page.test.tsx` checks the numbers and keys it quotes.
     - **Terms page** (`views/TermsPage.tsx`) describes ATS Hero as it is today: free, no AI, no job search. Payments, AI features or job search update it and its `TERMS_UPDATED` date in the same commit; the price and the payment and refund terms go there before anything is charged. No payment provider is named until Scaler chooses one. Who runs ATS Hero and the addresses live in `lib/legal.ts`, shared with the Privacy page. `tests/terms-page.test.tsx` checks what it quotes.
 12. **Flags.** `NEXT_PUBLIC_ATS_CHECK_ENABLED` stays off in production until `apps/ai` is deployed behind auth.

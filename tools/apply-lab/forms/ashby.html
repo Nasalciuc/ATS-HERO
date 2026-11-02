@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Product Analyst at Lumen (synthetic, Ashby-style)</title>
+<style>body{font-family:Arial,sans-serif;max-width:720px;margin:24px auto;padding:0 16px}.q{margin:14px 0}.q>label,.q>span{display:block;font-weight:600}input[type=text],input[type=email],input[type=tel],select{width:100%;padding:8px;box-sizing:border-box}.lab{background:#fff3cd;padding:8px}.file input{display:none}[role=radio]{padding:6px 14px;margin-right:6px}[aria-checked=true]{background:#222;color:#fff}</style>
+</head>
+<body>
+<p class="lab">ATS Hero apply lab: a synthetic posting on localhost, built like an Ashby form, where the page keeps the values in its own state (as React does) and ignores the inputs' DOM values. Not a real employer.</p>
+<h1>Product Analyst</h1>
+<form id="ashby_form" novalidate>
+  <div class="q"><label for="_systemfield_name">Name *</label><input type="text" id="_systemfield_name" required></div>
+  <div class="q"><label for="_systemfield_email">Email *</label><input type="email" id="_systemfield_email" required></div>
+  <div class="q"><label for="_systemfield_phone">Phone</label><input type="tel" id="_systemfield_phone"></div>
+  <div class="q file"><span>Resume *</span><button type="button" onclick="document.getElementById('_systemfield_resume').click()">Upload File</button><input type="file" id="_systemfield_resume" accept="application/pdf"></div>
+  <div class="q"><span id="auth-q">Are you legally authorized to work in Romania? *</span>
+    <div role="radiogroup" aria-labelledby="auth-q" aria-required="true" id="auth">
+      <button type="button" role="radio" aria-checked="false" data-v="Yes">Yes</button><button type="button" role="radio" aria-checked="false" data-v="No">No</button>
+    </div>
+  </div>
+  <fieldset class="q"><legend>Are you open to a hybrid schedule (two office days a week)? *</legend>
+    <label><input type="radio" name="hybrid" value="Yes" required> Yes</label>
+    <label><input type="radio" name="hybrid" value="No"> No</label>
+  </fieldset>
+  <div class="q"><label for="src">How did you hear about us?</label><select id="src"><option value="">Select…</option><option>Job board</option><option>Friend</option></select></div>
+  <p id="form-error" role="alert"></p>
+  <button type="submit">Submit Application</button>
+</form>
+<div id="received" hidden><h2></h2><pre></pre></div>
+<script src="_done.js"></script>
+<script>
+// The page's own state, fed only by input/change events, like a React form: a value written into
+// the DOM without those events would be lost.
+const state = { name: "", email: "", phone: "", resume: "", auth: "", hybrid: "", source: "" };
+const bind = (id, key, ev = "input") => document.getElementById(id).addEventListener(ev, (e) => { state[key] = e.target.value; });
+bind("_systemfield_name", "name");
+bind("_systemfield_email", "email");
+bind("_systemfield_phone", "phone");
+bind("src", "source", "change");
+document.getElementById("_systemfield_resume").addEventListener("change", (e) => { state.resume = e.target.files[0] ? e.target.files[0].name : ""; });
+document.querySelectorAll("input[name=hybrid]").forEach((r) => r.addEventListener("change", (e) => { state.hybrid = e.target.value; }));
+document.querySelectorAll("#auth [role=radio]").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll("#auth [role=radio]").forEach((o) => o.setAttribute("aria-checked", String(o === b)));
+  state.auth = b.dataset.v;
+}));
+document.getElementById("ashby_form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!state.name || !state.email || !state.resume || !state.auth || !state.hybrid) {
+    document.getElementById("form-error").textContent = "Please fill in the required fields.";
+    return;
+  }
+  labShow({ ...state }, "Thank you for your application!");
+});
+</script>
+</body>
+</html>
