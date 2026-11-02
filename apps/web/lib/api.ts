@@ -93,11 +93,14 @@ export const api = {
 
   /** Job Fit: the job text behind a link, read by our server (POST /api/job-post). */
   jobPost: async (url: string): Promise<{ ok: true; text: string } | { ok: false; reason: JobLinkFailure }> => {
+    // offline, a dropped connection or a Function that never answered: the same "paste the text"
+    // advice as every other failure, not the browser's "Failed to fetch"
     const res = await fetch("/api/job-post", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ url }),
-    });
+    }).catch(() => null);
+    if (!res) return { ok: false, reason: "unreachable" };
     if (res.status === 429) return { ok: false, reason: "too_many_requests" };
     const data = (await res.json().catch(() => null)) as { ok?: boolean; text?: string; reason?: JobLinkFailure } | null;
     if (data?.ok && typeof data.text === "string") return { ok: true, text: data.text };
