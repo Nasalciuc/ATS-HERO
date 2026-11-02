@@ -5,6 +5,11 @@
  * 2. otherwise the visible text of the page's main block (`<main>`, `<article>`, or the body), with
  *    scripts, styles, navigation, header and footer left out.
  * The result is plain text: it goes into the job field as text and is never shown as HTML.
+ *
+ * Every step takes time in proportion to the page's length, whatever the page holds: blocks are
+ * found with indexOf on a lowercased copy, and no pattern can scan past the next "<" or ">". A
+ * pattern like `<script[\s\S]*?</script>` would scan to the end of the page once per opener, and a
+ * page of openers with no closer (a few KB gzipped) would hold the server for hours.
  */
 
 export interface JobPost {
@@ -22,7 +27,7 @@ const MAX_JOB_TEXT = 30_000;
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—", hellip: "…", bull: "•", rsquo: "’", lsquo: "‘", rdquo: "”", ldquo: "“" };
 
 function decodeEntities(s: string): string {
-  return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e: string) => {
+  return s.replace(/&(#x[0-9a-f]{1,6}|#\d{1,7}|[a-z]{2,8});/gi, (m, e: string) => {
     if (e[0] === "#") {
       const code = e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
       return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : m;
@@ -31,17 +36,66 @@ function decodeEntities(s: string): string {
   });
 }
 
+/** What isn't shown: their content never reaches the text. */
+const HIDDEN = ["script", "style", "noscript", "template", "svg", "iframe"];
+/** Around the job, not the job. */
+const AROUND = ["nav", "header", "footer", "form", "aside"];
+
+/** Lowercase that keeps every index: only A–Z change ("İ".toLowerCase() is two characters). */
+const asciiLower = (s: string) => s.replace(/[A-Z]+/g, (c) => c.toLowerCase());
+
+/**
+ * The HTML without its `<name …>…</name>` blocks (and comments, if asked), in one pass. A comment
+ * or a hidden block that is never closed takes the rest of the page with it, as in a browser; an
+ * unclosed block around the job keeps what follows it.
+ */
+function dropBlocks(html: string, names: string[], unclosed: "drop_rest" | "keep", comments = false): string {
+  const lower = asciiLower(html);
+  const opener = new RegExp(`<(?:(${names.join("|")})\\b${comments ? "|(!--)" : ""})`, "gi");
+  // a closer not found from one place is not found from any later place: search for it once
+  const neverClosed = new Set<string>();
+  let out = "";
+  let from = 0;
+  for (let m = opener.exec(html); m; m = opener.exec(html)) {
+    const comment = Boolean(m[2]);
+    const closer = comment ? "-->" : `</${asciiLower(m[1])}`;
+    const at = neverClosed.has(closer) ? -1 : lower.indexOf(closer, m.index + m[0].length);
+    if (at < 0) {
+      if (comment || unclosed === "drop_rest") return out + html.slice(from, m.index);
+      neverClosed.add(closer);
+      continue; // keep the opener and what follows it; the tag pass drops the opener itself
+    }
+    out += html.slice(from, m.index) + " ";
+    const gt = lower.indexOf(">", at);
+    from = comment ? at + 3 : gt < 0 ? html.length : gt + 1;
+    opener.lastIndex = from;
+  }
+  return out + html.slice(from);
+}
+
+/**
+ * The HTML without its `<head>`: up to `</head>`, or up to `<body>` when the page leaves `</head>`
+ * out (HTML allows that). With neither, only the `<head>` tag goes.
+ */
+function dropHead(html: string): string {
+  const open = /<head\b[^<>]*>/i.exec(html);
+  if (!open) return html;
+  const start = open.index + open[0].length;
+  const end = /<\/head\b|<body\b/gi; // the first of the two, never "</header"
+  end.lastIndex = start;
+  const at = end.exec(html)?.index ?? start;
+  return html.slice(0, open.index) + " " + html.slice(at);
+}
+
 /** HTML as plain text: one line per block, "• " for list items, no tags, no scripts. */
 export function htmlToText(html: string): string {
-  const text = html
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<(script|style|noscript|template|svg|iframe|head)\b[\s\S]*?<\/\1\s*>/gi, " ")
-    .replace(/<li\b[^>]*>/gi, "\n• ")
+  const text = dropBlocks(dropHead(html), HIDDEN, "drop_rest", true)
+    .replace(/<li\b[^<>]*>/gi, "\n• ")
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/?(p|div|section|article|main|header|footer|ul|ol|li|h[1-6]|tr|table|dl|dt|dd|blockquote|pre)\b[^>]*>/gi, "\n")
-    .replace(/<[^>]+>/g, " ");
+    .replace(/<\/?(?:p|div|section|article|main|header|footer|ul|ol|li|h[1-6]|tr|table|dl|dt|dd|blockquote|pre)\b[^<>]*>/gi, "\n")
+    .replace(/<[^<>]*>/g, " ");
   return decodeEntities(text)
-    .replace(/[ \t ​]+/g, " ")
+    .replace(/[ \t\u00a0\u200b]+/g, " ")
     .split("\n")
     .map((l) => l.trim())
     .filter((l, i, all) => l || (i > 0 && all[i - 1]))
@@ -67,11 +121,24 @@ function* objectsIn(value: unknown, depth = 0): Generator<Record<string, unknown
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? decodeEntities(v.trim()) : null);
 
+/** The contents of each `<script type="application/ld+json">` block. */
+function* jsonLdBlocks(html: string): Generator<string> {
+  const lower = asciiLower(html);
+  const opener = /<script\b[^<>]*>/gi;
+  for (let m = opener.exec(html); m; m = opener.exec(html)) {
+    const start = m.index + m[0].length;
+    const end = lower.indexOf("</script", start);
+    if (end < 0) return;
+    if (/type\s*=\s*["']?application\/ld\+json/i.test(m[0])) yield html.slice(start, end);
+    opener.lastIndex = end;
+  }
+}
+
 function fromStructuredData(html: string): JobPost | null {
-  for (const m of html.matchAll(/<script\b[^>]*type\s*=\s*["']?application\/ld\+json["']?[^>]*>([\s\S]*?)<\/script\s*>/gi)) {
+  for (const block of jsonLdBlocks(html)) {
     let data: unknown;
     try {
-      data = JSON.parse(m[1].trim());
+      data = JSON.parse(block.trim());
     } catch {
       continue; // a broken block: try the next one
     }
@@ -90,15 +157,22 @@ function fromStructuredData(html: string): JobPost | null {
   return null;
 }
 
+/** What is inside the first `<name …>` block, up to its first closer; null without both. */
+function inside(html: string, lower: string, name: string): string | null {
+  const open = new RegExp(`<${name}\\b[^<>]*>`, "i").exec(html);
+  if (!open) return null;
+  const start = open.index + open[0].length;
+  const end = lower.indexOf(`</${name}`, start);
+  return end < 0 ? null : html.slice(start, end);
+}
+
 function fromPageText(html: string): JobPost {
-  const without = html.replace(/<(script|style|noscript|template|svg|iframe|head)\b[\s\S]*?<\/\1\s*>/gi, " ");
-  const block =
-    without.match(/<main\b[^>]*>([\s\S]*?)<\/main\s*>/i)?.[1] ??
-    without.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i)?.[1] ??
-    without.match(/<body\b[^>]*>([\s\S]*?)<\/body\s*>/i)?.[1] ??
-    without;
-  const cleaned = block.replace(/<(nav|header|footer|form|aside)\b[\s\S]*?<\/\1\s*>/gi, " ");
-  const title = str(html.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i)?.[1]?.replace(/\s+/g, " "));
+  const titleBlock = inside(html, asciiLower(html), "title");
+  const visible = dropBlocks(dropHead(html), HIDDEN, "drop_rest", true);
+  const lower = asciiLower(visible);
+  const block = inside(visible, lower, "main") ?? inside(visible, lower, "article") ?? inside(visible, lower, "body") ?? visible;
+  const cleaned = dropBlocks(block, AROUND, "keep");
+  const title = str(titleBlock?.replace(/\s+/g, " "));
   return { title, company: null, text: htmlToText(cleaned).slice(0, MAX_JOB_TEXT), from: "page_text" };
 }
 

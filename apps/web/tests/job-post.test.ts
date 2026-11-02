@@ -118,6 +118,43 @@ describe("the job text out of a page", () => {
   it("entities and line breaks as text", () => {
     expect(htmlToText("<p>R&amp;D&nbsp;team &#8211; 3&#x2B; years</p>next<br>line")).toBe("R&D team – 3+ years\nnext\nline");
   });
+
+  it("a page that leaves out </head>, an unclosed <nav>, an unclosed <script>", () => {
+    // HTML lets a page end its head at <body>: the job is still there, the title isn't text
+    expect(extractJobPost(`<html><head><title>Game Designer</title><body><main>${REQUIREMENTS}</main></body></html>`)?.text).not.toContain("Game Designer\n");
+    expect(extractJobPost(`<html><head><title>Game Designer</title><body><main>${REQUIREMENTS}</main></body></html>`)?.text).toContain("Unity & Jira");
+    // an unclosed block around the job keeps what follows it
+    expect(extractJobPost(`<body><nav>Home<main>${REQUIREMENTS}</main></body>`)?.text).toContain("Unity & Jira");
+    // an unclosed script takes the rest of the page, as in a browser, and nothing before it
+    const unclosed = extractJobPost(`<body><main>${REQUIREMENTS}<script>var secret = "x"; </main></body>`);
+    expect(unclosed?.text).toContain("Unity & Jira");
+    expect(unclosed?.text).not.toContain("secret");
+  });
+
+  it("a letter whose lowercase is longer (İ) shifts nothing", () => {
+    const post = extractJobPost(`<body>${"İ".repeat(50)}<script>x()</script><main>${REQUIREMENTS}</main></body>`)!;
+    expect(post.text).toContain("• Unity & Jira");
+    expect(post.text).not.toContain("x()");
+  });
+
+  // A page of openers with no closer used to take hours: each opener scanned to the end of the page.
+  it.each([
+    ["<", "<"],
+    ["<li", "<li"],
+    ["<!--", "<!--"],
+    ["<svg", "<svg"],
+    ["<nav", "<nav"],
+    ["<script", "<script"],
+    ['<script type="application/ld+json">', '<script type="application/ld+json">'],
+    ["<main", "<main"],
+    ["<a ", "<a "],
+    ["&", "&aaaaaaaa"],
+  ])("3 MB of %s is read in under 2 seconds (it used to take hours)", (_name, unit) => {
+    const page = `<html><body>${unit.repeat(Math.floor((3 * 1024 * 1024) / unit.length))}</body></html>`;
+    const t0 = performance.now();
+    extractJobPost(page);
+    expect(performance.now() - t0).toBeLessThan(2000);
+  });
 });
 
 describe("reading a link", () => {
