@@ -462,9 +462,13 @@ function TextFix({
         YOUR CV TEXT
       </label>
       <textarea id="score-textfix" className="analyze-textarea score-textfix__area" value={value} onChange={(e) => onChange(e.target.value)} />
-      <p className="score-textfix__hint">Save checks the edited text again. Closing the section keeps your changes too; Cancel drops them.</p>
+      <p className="score-textfix__hint">
+        {value.trim()
+          ? "Save checks the edited text again. Closing the section keeps your changes too; Cancel drops them."
+          : "The text is empty, so there is nothing to check. Cancel brings your CV’s text back."}
+      </p>
       <div className="score-textfix__actions">
-        <button type="button" className="topbtn topbtn--dark" onClick={onSave} disabled={busy}>
+        <button type="button" className="topbtn topbtn--dark" onClick={onSave} disabled={busy || !value.trim()}>
           {busy ? "Checking…" : "Save"}
         </button>
         <button type="button" className="topbtn topbtn--ghost" onClick={onCancel} disabled={busy}>
@@ -547,6 +551,15 @@ function JobFitPanel({ fit }: { fit: JobFitReport }) {
     </section>
   );
 }
+
+/**
+ * Improve / Job Fit: the text being fixed, kept in the tab while it is edited, so leaving the page
+ * (the sidebar, "Check Job Fit", Back, a reload) doesn't lose it. It comes back only onto the text
+ * it was made from: a new check on the analyze page starts clean. Covered on the Privacy page by
+ * "the other ats_ keys" (session storage, gone when the tab closes).
+ */
+const DRAFT_KEY = "ats_text_draft";
+type StoredDraft = { section: SectionKey; text: string; base: string };
 
 export default function ScorePage() {
   const { data, update, updateLater, save, saving, saveError, ready } = useApp();
@@ -685,10 +698,19 @@ export default function ScorePage() {
     if (textFlow) setDraft(sessionStorage.getItem("ats_text") ?? "");
     setFixing(key);
   };
+  const editDraft = (text: string) => {
+    setDraft(text);
+    if (!fixing) return;
+    const kept: StoredDraft = { section: fixing, text, base: sessionStorage.getItem("ats_text") ?? "" };
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(kept));
+  };
   const finishFix = async (persist: boolean, keep: SectionKey | null = open) => {
     setFixing(null);
+    sessionStorage.removeItem(DRAFT_KEY);
     if (textFlow) {
-      if (!persist) return;
+      // An empty text is never saved: the CV's own text stays (Save under the text is off then).
+      // Saving it used to drop Job Fit and score the builder's CV instead.
+      if (!persist || !draft.trim()) return;
       sessionStorage.setItem("ats_text", draft);
       // a draft saved with Save follows the edit, so the analyze page doesn't show an older text
       if (sessionStorage.getItem(`ats_${flow}_cv`) !== null) sessionStorage.setItem(`ats_${flow}_cv`, draft);
@@ -697,6 +719,27 @@ export default function ScorePage() {
     }
     await recalculate(keep);
   };
+
+  // A draft kept from an earlier visit comes back open in its section, if it was made from this text.
+  const draftRestored = useRef(false);
+  useEffect(() => {
+    if (draftRestored.current || !report || !textFlow) return;
+    draftRestored.current = true;
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    try {
+      const kept = JSON.parse(raw) as StoredDraft;
+      if (kept.base === (sessionStorage.getItem("ats_text") ?? "") && report.sections.some((x) => x.key === kept.section)) {
+        setOpen(kept.section);
+        setDraft(kept.text);
+        setFixing(kept.section);
+        return;
+      }
+    } catch {
+      // a broken entry: drop it below
+    }
+    sessionStorage.removeItem(DRAFT_KEY);
+  }, [report, textFlow]);
 
   // Focus follows the form: into its first field when it opens, back to the section's
   // "Fix now" when it closes (the button under focus would otherwise vanish).
@@ -851,7 +894,7 @@ export default function ScorePage() {
                 form:
                   fixing === s.key ? (
                     textFlow ? (
-                      <TextFix value={draft} onChange={setDraft} onSave={() => void finishFix(true)} onCancel={closeFix} busy={busy} />
+                      <TextFix value={draft} onChange={editDraft} onSave={() => void finishFix(true)} onCancel={closeFix} busy={busy} />
                     ) : (
                       renderSectionForm(s.key)
                     )
