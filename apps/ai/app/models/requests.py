@@ -58,7 +58,7 @@ class JobSearchRequest(BaseModel):
     country: str = Field(default="usa", min_length=2, max_length=40,
                          description="Indeed and Glassdoor country, as JobSpy names it, e.g. 'romania', 'nigeria', 'uk'")
     results_wanted: int = Field(default=20, ge=1, le=50, description="Postings per board")
-    hours_old: int | None = Field(default=None, ge=1, le=720, description="Only postings this many hours old or newer")
+    hours_old: int | None = Field(default=None, ge=1, le=2160, description="Only postings this many hours old or newer (90 days at most)")
     is_remote: bool = False
     job_type: Literal["fulltime", "parttime", "contract", "temporary", "internship"] | None = None
 

@@ -62,7 +62,7 @@ LOGGERS = {
 
 MAX_RESULTS = 50  # per board
 MAX_SITES = 4
-MAX_HOURS_OLD = 24 * 30
+MAX_HOURS_OLD = 24 * 90
 MAX_DESCRIPTION_CHARS = 20_000
 MIN_TERM_CHARS = 2
 # API Gateway ends a request after 29 s
