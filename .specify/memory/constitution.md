@@ -21,7 +21,8 @@ template recommendations.
 ### IV. Security and privacy by default
 No secrets in code, commits, logs or chats. Every data access is scoped to its owner. Users'
 CVs never go to third parties without explicit consent and a DPA; test data is synthetic.
-No scraping or automation of LinkedIn. No fake applications to real employers.
+LinkedIn job search may go through JobSpy only (`apps/ai` `/jobs/search`); no apply bots or
+other LinkedIn automation beyond that. No fake applications to real employers.
 
 ### V. Measured design fidelity
 Figma is the source of truth for the UI. Screens are matched within ±2px and locked by the

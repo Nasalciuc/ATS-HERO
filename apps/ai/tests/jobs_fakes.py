@@ -41,10 +41,25 @@ INDEED = {
     "is_remote": False,
 }
 GLASSDOOR = {"id": "gd-2", "site": "glassdoor", "title": "BI Analyst", "company": "Acme", "job_url": "https://www.glassdoor.com/job-listing/j?jl=2"}
+LINKEDIN = {
+    "id": "li-3",
+    "site": "linkedin",
+    "title": "ML Engineer",
+    "company": "Moldova Tech",
+    "location": "Chișinău, Moldova",
+    "date_posted": date(2026, 10, 20),
+    "job_url": "https://www.linkedin.com/jobs/view/3",
+    "description": "PyTorch and SQL.",
+    "is_remote": False,
+}
 
 
 def one_indeed(**_) -> pd.DataFrame:
     return frame([INDEED])
+
+
+def one_linkedin(**_) -> pd.DataFrame:
+    return frame([LINKEDIN])
 
 
 def two_boards_and_a_google_error(**_) -> pd.DataFrame:
