@@ -55,11 +55,16 @@ export default function TrackerPage() {
   const { reports, against } = useMemo(() => {
     const reports: Record<string, JobFitReport | undefined> = {};
     const against: Record<string, string | undefined> = {};
+    const texts = new Map<string, string>(); // each CV's text once, however many jobs use it
+    const textOf = (cv: (typeof cvList)[number]) => {
+      if (!texts.has(cv.id)) texts.set(cv.id, cvToText(cv.data));
+      return texts.get(cv.id) as string;
+    };
     for (const j of list) {
       const sent = cvList.find((c) => c.id === j.cvId);
       const cv = sent ?? cvList[0];
       if (!cv || !j.description) continue;
-      reports[j.id] = jobFit(cvToText(cv.data), j.description);
+      reports[j.id] = jobFit(textOf(cv), j.description);
       against[j.id] = sent ? `the CV you sent, ${cv.title}` : `your latest CV, ${cv.title}`;
     }
     return { reports, against };

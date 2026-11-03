@@ -83,6 +83,8 @@ export default function TrackerBoard({ jobs, now, fit, onOpen, onAdd, onStatus, 
   const saved = boardColumns(jobs, "").saved.length;
   const archived = archivedCount(jobs);
   const total = BOARD_STATUSES.reduce((n, s) => n + cols[s].length, 0);
+  // the chosen status's last job moved away: its chip is gone, so the list shows everything again
+  const shown = phoneFilter !== "all" && cols[phoneFilter].length === 0 ? "all" : phoneFilter;
 
   return (
     <div className="trk">
@@ -147,16 +149,16 @@ export default function TrackerBoard({ jobs, now, fit, onOpen, onAdd, onStatus, 
       {/* phone: the list */}
       <div className="trk-phone">
         <div className="trk-filters" role="group" aria-label="Show">
-          <button type="button" className="trk-filter" aria-pressed={phoneFilter === "all"} onClick={() => setPhoneFilter("all")}>
+          <button type="button" className="trk-filter" aria-pressed={shown === "all"} onClick={() => setPhoneFilter("all")}>
             All {total}
           </button>
           {BOARD_STATUSES.filter((s) => cols[s].length > 0).map((s) => (
-            <button key={s} type="button" className="trk-filter" aria-pressed={phoneFilter === s} onClick={() => setPhoneFilter(s)}>
+            <button key={s} type="button" className="trk-filter" aria-pressed={shown === s} onClick={() => setPhoneFilter(s)}>
               {STATUS_LABEL[s]} {cols[s].length}
             </button>
           ))}
         </div>
-        {BOARD_STATUSES.filter((s) => cols[s].length > 0 && (phoneFilter === "all" || phoneFilter === s)).map((s) => (
+        {BOARD_STATUSES.filter((s) => cols[s].length > 0 && (shown === "all" || shown === s)).map((s) => (
           <section key={s} className="trk-group" aria-label={STATUS_LABEL[s]}>
             <h2 className="trk-group__head">{STATUS_LABEL[s]} · {cols[s].length}</h2>
             {cols[s].map((j) => (
