@@ -1,14 +1,14 @@
 """Job postings from job boards, through JobSpy (python-jobspy, MIT, pinned in requirements.txt).
 
-Scaler's decisions (15-16 Oct 2026):
+Scaler's decisions (15-16 Oct 2026; LinkedIn allowed Oct 2026):
 - JobSpy is used as it is ("Integrează la noi jobspy și gata"). It reaches the boards its own
   way: Indeed through the API of Indeed's iPhone app, Glassdoor through its website API with a
-  browser's TLS fingerprint, Google through its search page. Those sites' terms forbid that; the
-  risk is the product's. Nothing here adds proxies or anything else to get past a block: a board
-  that refuses us is reported as an error, not retried.
-- LinkedIn is never scraped (automating LinkedIn is forbidden for ATS Hero): `linkedin` is
-  refused here, whatever the caller asks for.
-- The other boards are chosen per search. Indeed is the default: JobSpy's README calls it the most
+  browser's TLS fingerprint, Google through its search page, LinkedIn through JobSpy's LinkedIn
+  path. Those sites' terms forbid that; the risk is the product's. Nothing here adds proxies or
+  anything else to get past a block: a board that refuses us is reported as an error, not retried.
+- LinkedIn is available as a JobSpy board for job search only. Apply bots and other LinkedIn
+  automation outside JobSpy stay forbidden (AGENTS.md).
+- The boards are chosen per search. Indeed is the default: JobSpy's README calls it the most
   reliable board, and it covers Romania, Nigeria, South Africa, Germany, France, the UK and more,
   but not Moldova.
 
@@ -34,13 +34,23 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any, Callable, Iterator
 
-# JobSpy's boards (jobspy.model.Site), without LinkedIn
-SITES = ("indeed", "glassdoor", "google", "zip_recruiter", "bayt", "naukri", "bdjobs", "hellowork")
-FORBIDDEN_SITES = {"linkedin": "LinkedIn is never scraped: automating LinkedIn is forbidden for ATS Hero."}
+# JobSpy's boards (jobspy.model.Site), including LinkedIn for job search
+SITES = (
+    "indeed",
+    "linkedin",
+    "glassdoor",
+    "google",
+    "zip_recruiter",
+    "bayt",
+    "naukri",
+    "bdjobs",
+    "hellowork",
+)
 DEFAULT_SITES = ("indeed",)
 # JobSpy 1.3.0's logger for each board
 LOGGERS = {
     "JobSpy:Indeed": "indeed",
+    "JobSpy:LinkedIn": "linkedin",
     "JobSpy:Glassdoor": "glassdoor",
     "JobSpy:Google": "google",
     "JobSpy:ZipRecruiter": "zip_recruiter",
@@ -52,7 +62,7 @@ LOGGERS = {
 
 MAX_RESULTS = 50  # per board
 MAX_SITES = 4
-MAX_HOURS_OLD = 24 * 30
+MAX_HOURS_OLD = 24 * 90
 MAX_DESCRIPTION_CHARS = 20_000
 MIN_TERM_CHARS = 2
 # API Gateway ends a request after 29 s
@@ -111,12 +121,10 @@ class JobQuery:
 
 
 def check_sites(sites: list[str] | tuple[str, ...]) -> tuple[str, ...]:
-    """The boards to search, lower case and without repeats. ValueError for LinkedIn or an unknown one."""
+    """The boards to search, lower case and without repeats. ValueError for an unknown board."""
     out: list[str] = []
     for raw in sites:
         site = raw.strip().lower()
-        if site in FORBIDDEN_SITES:
-            raise ValueError(FORBIDDEN_SITES[site])
         if site not in SITES:
             raise ValueError(f"Unknown job board: {raw!r}. Use one of: {', '.join(SITES)}.")
         if site not in out:

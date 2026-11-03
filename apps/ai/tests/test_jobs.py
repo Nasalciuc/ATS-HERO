@@ -1,8 +1,8 @@
 """POST /jobs/search and app/jobs/search.py: JobSpy is called with the right arguments, LinkedIn is
-refused, what JobSpy returns (a pandas DataFrame with NaN, numpy numbers and dates) comes back as
-clean JSON, and a search never outlives its deadline or spills into another search. JobSpy itself
-is not called over the network here: app/jobs/smoke.py does that, on GitHub's runners
-(.github/workflows/jobs-smoke.yml). The stand-ins for JobSpy are in tests/jobs_fakes.py."""
+accepted as a board, what JobSpy returns (a pandas DataFrame with NaN, numpy numbers and dates)
+comes back as clean JSON, and a search never outlives its deadline or spills into another search.
+JobSpy itself is not called over the network here: app/jobs/smoke.py does that, on GitHub's
+runners (.github/workflows/jobs-smoke.yml). The stand-ins for JobSpy are in tests/jobs_fakes.py."""
 from __future__ import annotations
 
 import logging
@@ -40,10 +40,8 @@ def test_indeed_is_the_default_and_jobspy_gets_clean_arguments():
     }
 
 
-def test_linkedin_is_refused_whatever_the_case():
-    for name in ("linkedin", "LinkedIn", " LINKEDIN "):
-        with pytest.raises(ValueError, match="LinkedIn is never scraped"):
-            check_sites(["indeed", name])
+def test_linkedin_is_accepted_and_unknown_boards_are_refused():
+    assert check_sites(["linkedin", "LinkedIn", " LINKEDIN ", "indeed"]) == ("linkedin", "indeed")
     with pytest.raises(ValueError, match="Unknown job board"):
         check_sites(["monster"])
     assert check_sites(["Indeed", "indeed", "glassdoor"]) == ("indeed", "glassdoor")
@@ -159,9 +157,23 @@ def test_endpoint_returns_the_postings(client, monkeypatch):
     assert seen["q"].sites == ("indeed",) and seen["q"].country == "romania"
 
 
-def test_endpoint_refuses_linkedin_and_out_of_range_values(client):
-    r = client.post("/jobs/search", json={"search_term": "analyst", "sites": ["indeed", "linkedin"]})
-    assert r.status_code == 422 and "LinkedIn is never scraped" in r.text
+def test_endpoint_accepts_linkedin_and_refuses_out_of_range_values(client, monkeypatch):
+    seen = {}
+
+    def fake(q: JobQuery):
+        seen["q"] = q
+        return search_jobs(q, scrape=fakes.one_linkedin)
+
+    monkeypatch.setattr("app.routers.jobs.search_jobs", fake)
+    r = client.post(
+        "/jobs/search",
+        json={"search_term": "analyst", "sites": ["linkedin"], "location": "Chisinau"},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["count"] == 1 and body["by_site"] == {"linkedin": 1}
+    assert body["jobs"][0]["company"] == "Moldova Tech"
+    assert seen["q"].sites == ("linkedin",)
     assert client.post("/jobs/search", json={"search_term": "analyst", "results_wanted": 51}).status_code == 422
     assert client.post("/jobs/search", json={"search_term": "a"}).status_code == 422
     assert client.post("/jobs/search", json={"search_term": "analyst", "sites": ["indeed"] * 5}).status_code == 422
