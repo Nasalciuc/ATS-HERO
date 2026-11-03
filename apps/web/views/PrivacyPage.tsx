@@ -69,7 +69,7 @@ const journey: LegalStep[] = [
     points: [
       "Clerk runs the sign-in: an email code, or your Google or GitHub account. Cloudflare checks that you aren’t a bot.",
       "We keep your Clerk ID, your email address, the date you joined and sometimes the name on your account. Your guest CVs move into your account.",
-      "If you use the job tracker, we keep what you enter (company, role, link, status and notes), the date you added it and the history of its status: each change and its date.",
+      "If you use the job tracker, we keep what you enter (company, role, link, location, the job post’s text, status and notes), which of your CVs you say you sent, the date you added it and the history of each job: every change and its date.",
       "Our logs hold technical IDs (account, CV, guest code) and error messages, never what your CV says.",
     ],
     tag: "Kept until you delete it",

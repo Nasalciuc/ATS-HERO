@@ -25,7 +25,12 @@ vi.mock("@clerk/nextjs/server", () => ({
   clerkClient: async () => ({ users: { deleteUser: async () => undefined } }),
 }));
 
-import { createApplication, listMyApplications, removeApplication, updateStatus } from "@/app/actions/applications";
+import {
+  answerFollowUp, archiveApplication, createApplication, listApplicationEvents, listMyApplications,
+  removeApplication, setCvSent, unarchiveApplication, updateApplicationDetails, updateStatus,
+} from "@/app/actions/applications";
+import { cvs } from "@/db/schema";
+import { emptyCvData } from "@/lib/types";
 import { deleteAccount } from "@/app/actions/users";
 
 let db: Awaited<ReturnType<typeof makeTestDb>>;
@@ -112,7 +117,7 @@ describe("Tracker v2: changing the status", () => {
   });
 
   it("sets the sending date the first time a job moves to applied, and never moves it after", async () => {
-    const row = await createApplication({ company: "Acme", role: "PM", status: "interview" });
+    const row = await createApplication({ company: "Acme", role: "PM", status: "saved" });
     expect(row.submittedAt).toBeNull();
     const applied = await updateStatus(row.id, "applied");
     expect(applied.submittedAt).toBeTypeOf("number");
@@ -155,6 +160,76 @@ describe("Tracker v2: deleting", () => {
     expect(await db.select().from(applications).where(eq(applications.ownerId, "u1"))).toEqual([]);
     expect(await db.select().from(applicationEvents).where(eq(applicationEvents.ownerId, "u1"))).toEqual([]);
     expect((await db.select().from(applicationEvents)).length).toBe(1);
+  });
+});
+
+describe("Tracker v2: the screen's actions", () => {
+  it("a saved job has no sending date until it moves to applied", async () => {
+    const row = await createApplication({ company: "Altamira", role: "Data Analyst", status: "saved", description: "SQL, Python", location: "Bucharest" });
+    expect(row.status).toBe("saved");
+    expect(row.submittedAt).toBeNull();
+    expect(row.description).toBe("SQL, Python");
+    const sent = await updateStatus(row.id, "applied");
+    expect(sent.submittedAt).toBeTypeOf("number");
+  });
+
+  it("edits the details; a link that is another job of the owner is refused", async () => {
+    const a = await createApplication({ company: "A", role: "R", url: "https://acme.com/jobs/1" });
+    const b = await createApplication({ company: "B", role: "R" });
+    const edited = await updateApplicationDetails(b.id, { notes: "Recruiter: Maria", role: "Senior R" });
+    expect(edited.notes).toBe("Recruiter: Maria");
+    expect(edited.role).toBe("Senior R");
+    await expect(updateApplicationDetails(b.id, { url: "http://www.acme.com/jobs/1/" })).rejects.toThrow(/already another job/);
+    await expect(updateApplicationDetails(b.id, { url: "javascript:alert(1)" })).rejects.toThrow(/http/);
+    expect((await updateApplicationDetails(a.id, { url: "https://acme.com/jobs/1?utm_source=x" })).id).toBe(a.id);
+    holder.owner = "u2";
+    await expect(updateApplicationDetails(a.id, { notes: "mine now" })).rejects.toThrow("Not found");
+  });
+
+  it("archives and brings back, each written to the history", async () => {
+    const row = await createApplication({ company: "Acme", role: "PM" });
+    expect((await archiveApplication(row.id, "withdrawn")).archiveReason).toBe("withdrawn");
+    expect((await unarchiveApplication(row.id)).archivedAt).toBeNull();
+    expect((await listApplicationEvents(row.id)).map((e) => e.kind)).toEqual(["created", "archived", "unarchived"]);
+  });
+
+  it("answers Did you hear back: Interview moves it, Not yet asks again in 14 days, No reply archives it", async () => {
+    const a = await createApplication({ company: "A", role: "R" });
+    const b = await createApplication({ company: "B", role: "R" });
+    const c = await createApplication({ company: "C", role: "R" });
+    expect((await answerFollowUp(a.id, "interview")).status).toBe("interview");
+    const snoozed = await answerFollowUp(b.id, "not_yet");
+    expect(snoozed.followUpAt! - Date.now()).toBeGreaterThan(13.9 * 24 * 3600 * 1000);
+    const archived = await answerFollowUp(c.id, "no_reply");
+    expect(archived.archiveReason).toBe("no_response");
+    const [listed] = (await listMyApplications()).filter((j) => j.id === a.id);
+    expect(listed.reachedInterview).toBe(true);
+  });
+
+  it("keeps a rejection after an interview counted as an interview", async () => {
+    const row = await createApplication({ company: "Acme", role: "PM" });
+    await updateStatus(row.id, "interview");
+    await updateStatus(row.id, "rejected");
+    const [listed] = await listMyApplications();
+    expect(listed.status).toBe("rejected");
+    expect(listed.reachedInterview).toBe(true);
+  });
+
+  it("What did you send: one of the owner's CVs with its version, or another file; never another owner's CV", async () => {
+    const [mine] = await db.insert(cvs).values({ ownerId: "u1", title: "Base", data: emptyCvData() }).returning();
+    const [theirs] = await db.insert(cvs).values({ ownerId: "u2", title: "Theirs", data: emptyCvData() }).returning();
+    const row = await createApplication({ company: "Acme", role: "PM" });
+    const sent = await setCvSent(row.id, { cvId: mine.id });
+    expect(sent.cvId).toBe(mine.id);
+    expect(sent.cvHash).toMatch(/^[0-9a-f]{64}$/);
+    await expect(setCvSent(row.id, { cvId: theirs.id })).rejects.toThrow("Not found");
+    expect((await setCvSent(row.id, { other: true })).cvId).toBe("other");
+  });
+
+  it("the history of a job is its owner's only", async () => {
+    const row = await createApplication({ company: "Acme", role: "PM" });
+    holder.owner = "u2";
+    expect(await listApplicationEvents(row.id)).toEqual([]);
   });
 });
 
