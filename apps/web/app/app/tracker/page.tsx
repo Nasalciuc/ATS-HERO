@@ -33,7 +33,11 @@ export default function TrackerPage() {
     setBusy(true);
     setError(null);
     try {
-      await create({ company, role, url, notes });
+      const added = await create({ company, role, url, notes });
+      if (added.duplicate) {
+        setError(`This job is already in your tracker: ${added.role} at ${added.company}.`);
+        return;
+      }
       setCompany("");
       setRole("");
       setUrl("");

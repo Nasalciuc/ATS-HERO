@@ -24,7 +24,7 @@ import { GUEST_RETENTION_DAYS } from "@/lib/retention";
 import { RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /** The date the content last changed. Change it with the content, never compute it. */
-export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-02", label: "2 November 2026" };
+export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-03", label: "3 November 2026" };
 
 const RATE_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
 
@@ -69,7 +69,7 @@ const journey: LegalStep[] = [
     points: [
       "Clerk runs the sign-in: an email code, or your Google or GitHub account. Cloudflare checks that you aren’t a bot.",
       "We keep your Clerk ID, your email address, the date you joined and sometimes the name on your account. Your guest CVs move into your account.",
-      "If you use the job tracker, we keep what you enter (company, role, link, status and notes) and the date you added it.",
+      "If you use the job tracker, we keep what you enter (company, role, link, status and notes), the date you added it and the history of its status: each change and its date.",
       "Our logs hold technical IDs (account, CV, guest code) and error messages, never what your CV says.",
     ],
     tag: "Kept until you delete it",

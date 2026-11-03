@@ -87,6 +87,16 @@ export type ScanKind = "score" | "jobfit";
 export type ApplicationStatus = "applied" | "interview" | "offer" | "rejected";
 export const APPLICATION_STATUSES: ApplicationStatus[] = ["applied", "interview", "offer", "rejected"];
 
+/** Tracker v2 (TRACKER-V2-DESIGN.md §7). Where a job came from. */
+export type ApplicationSource = "manual" | "job_fit" | "job_search" | "share" | "extension";
+/** The system the job is applied through, from the posting's link. */
+export type ApplyPlatform = "greenhouse" | "lever" | "ashby" | "workday" | "indeed" | "linkedin" | "other" | "unknown";
+/** Who sent the application. */
+export type AppliedVia = "self" | "agent" | "extension" | "copy_panel";
+export type ArchiveReason = "no_response" | "withdrawn" | "closed" | "other";
+/** One line of a job's history in `application_events`: only added, never rewritten. */
+export type ApplicationEventKind = "created" | "status_changed";
+
 /** Presentation preference stored on a CV. Canonical union lives with the templates. */
 export type { TemplateId } from "../components/cv/templates";
 
