@@ -2,7 +2,10 @@ import { pgTable, text, jsonb, timestamp, doublePrecision, integer,
          index, uniqueIndex, check } from "drizzle-orm/pg-core";
 import { relations, sql, type InferSelectModel } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import type { CvData, ScanKind, ScoreReport, JobFitReport, TemplateId, ApplicationStatus } from "@/lib/types";
+import type {
+  CvData, ScanKind, ScoreReport, JobFitReport, TemplateId, ApplicationStatus,
+  ApplicationSource, ApplyPlatform, AppliedVia, ArchiveReason, ApplicationEventKind,
+} from "@/lib/types";
 
 const id = () => text("id").primaryKey().$defaultFn(() => nanoid());
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -101,19 +104,59 @@ export const applications = pgTable("applications", {
   url: text("url"),
   status: text("status").$type<ApplicationStatus>().notNull().default("applied"),
   notes: text("notes"),
+  /** v1 meaning kept: the day the row was added. The real sending date is `submittedAt`. */
   appliedAt: timestamp("applied_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull().defaultNow().$onUpdate(() => new Date()),
-}, (t) => [index("apps_by_owner").on(t.ownerId)]);
+  /* ── Tracker v2 (TRACKER-V2-DESIGN.md §7.1): all nullable, added without touching v1 rows ── */
+  source: text("source").$type<ApplicationSource>(),
+  platform: text("platform").$type<ApplyPlatform>(),
+  location: text("location"),
+  description: text("description"),
+  /** the link, normalised (`lib/job-url.ts`): one row per job and owner */
+  urlKey: text("url_key"),
+  /** the CV that was sent, and its exact version */
+  cvId: text("cv_id"),
+  cvHash: text("cv_hash"),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  appliedVia: text("applied_via").$type<AppliedVia>(),
+  /** the post's required items the CV met, when it was sent */
+  fitMet: integer("fit_met"),
+  fitTotal: integer("fit_total"),
+  followUpAt: timestamp("follow_up_at", { withTimezone: true }),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+  archiveReason: text("archive_reason").$type<ArchiveReason>(),
+}, (t) => [
+  index("apps_by_owner").on(t.ownerId),
+  uniqueIndex("apps_by_owner_url").on(t.ownerId, t.urlKey).where(sql`${t.urlKey} IS NOT NULL`),
+]);
+
+/** A job's history: one row per event, only added (TRACKER-V2-DESIGN.md §7.2). No CV text, no answers. */
+export const applicationEvents = pgTable("application_events", {
+  id: id(),
+  applicationId: text("application_id").notNull(),
+  ownerId: text("owner_id").notNull(),
+  kind: text("kind").$type<ApplicationEventKind>().notNull(),
+  fromStatus: text("from_status").$type<ApplicationStatus>(),
+  toStatus: text("to_status").$type<ApplicationStatus>(),
+  at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("app_events_by_app").on(t.applicationId),
+  index("app_events_by_owner").on(t.ownerId),
+]);
 
 /* ── relations (app-level; Ep5-7 pattern; NO hard FK to Clerk identity) ── */
 export const usersRelations = relations(users, ({ many }) => ({
   cvs: many(cvs),
   applications: many(applications),
 }));
-export const applicationsRelations = relations(applications, ({ one }) => ({
+export const applicationsRelations = relations(applications, ({ one, many }) => ({
   owner: one(users, { fields: [applications.ownerId], references: [users.clerkId] }),
+  events: many(applicationEvents),
+}));
+export const applicationEventsRelations = relations(applicationEvents, ({ one }) => ({
+  application: one(applications, { fields: [applicationEvents.applicationId], references: [applications.id] }),
 }));
 export const cvsRelations = relations(cvs, ({ one, many }) => ({
   owner: one(users, { fields: [cvs.ownerId], references: [users.clerkId] }),
@@ -128,3 +171,4 @@ export type User = InferSelectModel<typeof users>;
 export type Cv   = InferSelectModel<typeof cvs>;
 export type Scan = InferSelectModel<typeof scans>;
 export type Application = InferSelectModel<typeof applications>;
+export type ApplicationEvent = InferSelectModel<typeof applicationEvents>;

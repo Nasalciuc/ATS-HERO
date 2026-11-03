@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { makeTestDb } from "./setup";
-import { aiUsage, applications, cvs, scans, users } from "@/db/schema";
+import { aiUsage, applicationEvents, applications, cvs, scans, users } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { emptyCvData } from "@/lib/types";
 
@@ -45,9 +45,11 @@ describe("ownership & integrity", () => {
     const [cv] = await db.insert(cvs).values({ ownerId: "u1", title: "t", data: data() }).returning();
     await db.insert(scans).values({ ownerId: "u1", cvId: cv.id, kind: "score", generalScore: 10, result: {} as never });
     await db.insert(aiUsage).values({ ownerId: "u1", day: "2026-01-01", count: 3 });
-    await db.insert(applications).values({ ownerId: "u1", company: "Acme", role: "Engineer" });
+    const [app] = await db.insert(applications).values({ ownerId: "u1", company: "Acme", role: "Engineer" }).returning();
+    await db.insert(applicationEvents).values({ applicationId: app.id, ownerId: "u1", kind: "created", toStatus: "applied" });
 
     await db.transaction(async (tx) => {
+      await tx.delete(applicationEvents).where(eq(applicationEvents.ownerId, "u1"));
       await tx.delete(applications).where(eq(applications.ownerId, "u1"));
       await tx.delete(scans).where(eq(scans.ownerId, "u1"));
       await tx.delete(cvs).where(eq(cvs.ownerId, "u1"));
@@ -56,6 +58,7 @@ describe("ownership & integrity", () => {
     });
 
     expect((await db.select().from(applications)).length).toBe(0);
+    expect((await db.select().from(applicationEvents)).length).toBe(0);
     expect((await db.select().from(scans)).length).toBe(0);
     expect((await db.select().from(cvs)).length).toBe(0);
     expect((await db.select().from(aiUsage)).length).toBe(0);

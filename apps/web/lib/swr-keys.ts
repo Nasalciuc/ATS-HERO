@@ -7,4 +7,5 @@ export const K = {
   cv:    (id: string) => ["cv", id] as const,               // per-document, ok as-is
   scans: (userId: string | null | undefined, guestId?: string) => ["scans", scope(userId, guestId)] as const,
   apps:  (userId: string | null | undefined) => ["applications", scope(userId)] as const,
+  appEvents: (userId: string | null | undefined, id: string) => ["application-events", scope(userId), id] as const,
 };

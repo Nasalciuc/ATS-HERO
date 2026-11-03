@@ -84,8 +84,20 @@ export type Cv = {
 
 /** Scan flavours persisted in `scans.kind`. Mirrors the previous Convex scanKindValidator. */
 export type ScanKind = "score" | "jobfit";
-export type ApplicationStatus = "applied" | "interview" | "offer" | "rejected";
-export const APPLICATION_STATUSES: ApplicationStatus[] = ["applied", "interview", "offer", "rejected"];
+/** Saved = not sent yet (Tracker v2). The column is text, so a new status needs no migration. */
+export type ApplicationStatus = "saved" | "applied" | "interview" | "offer" | "rejected";
+export const APPLICATION_STATUSES: ApplicationStatus[] = ["saved", "applied", "interview", "offer", "rejected"];
+
+/** Tracker v2 (TRACKER-V2-DESIGN.md §7). Where a job came from. */
+export type ApplicationSource = "manual" | "job_fit" | "job_search" | "share" | "extension";
+/** The system the job is applied through, from the posting's link. */
+export type ApplyPlatform = "greenhouse" | "lever" | "ashby" | "workday" | "indeed" | "linkedin" | "other" | "unknown";
+/** Who sent the application. */
+export type AppliedVia = "self" | "agent" | "extension" | "copy_panel";
+export type ArchiveReason = "no_response" | "withdrawn" | "closed" | "other";
+/** One line of a job's history in `application_events`: only added, never rewritten. */
+export type ApplicationEventKind =
+  | "created" | "status_changed" | "archived" | "unarchived" | "cv_sent" | "follow_up_snoozed";
 
 /** Presentation preference stored on a CV. Canonical union lives with the templates. */
 export type { TemplateId } from "../components/cv/templates";
@@ -172,20 +184,48 @@ export function emptyCvData(): CvData {
   };
 }
 
-/** Flatten CV data into plain text for scoring / job-fit. */
+/**
+ * The CV as text, laid out like the templates print it (headings, then each entry's role, company
+ * and dates), so Job Fit reads the jobs' dates the way it does in an uploaded file: a builder CV's
+ * "3+ years" is counted from its dates, not missed.
+ */
 export function cvToText(data: CvData): string {
-  const parts: string[] = [];
+  const range = (start?: string, end?: string, ongoing?: boolean) =>
+    [start, ongoing ? "Present" : end].filter(Boolean).join(" – ");
+  const line = (...xs: (string | undefined)[]) => xs.filter(Boolean).join(" · ");
+  const out: string[] = [];
+  // an empty string between entries keeps them apart; blank runs collapse at the end
+  const section = (title: string, lines: (string | undefined)[]) => {
+    if (lines.some(Boolean)) out.push("", title, ...lines.map((l) => l ?? ""));
+  };
   const p = data.personalInfo;
-  parts.push(p.name, p.email, p.phone, p.linkedin, p.website, p.country, p.cityState);
-  parts.push(data.summary.position, data.summary.valueProposition);
-  for (const w of data.work)
-    parts.push(w.role, w.company, w.description, w.country, w.cityState);
-  for (const e of data.education)
-    parts.push(e.institution, e.degree, e.minor, e.location, e.additional);
-  parts.push(...data.skills, ...data.instruments, ...data.softSkills);
-  for (const l of data.languages) parts.push(l.name, l.level);
-  for (const list of [data.awards, data.certifications, data.publications, data.volunteering, data.activities])
-    for (const it of list)
-      parts.push(it.title, it.description, it.organisation ?? "", it.issuer ?? "", it.publisher ?? "", it.role ?? "");
-  return parts.filter(Boolean).join("\n");
+  out.push(p.name, line(p.email, p.phone, p.linkedin, p.website, p.cityState, p.country));
+  section("SUMMARY", [data.summary.position, data.summary.valueProposition]);
+  section("SKILLS", [[...data.skills, ...data.instruments, ...data.softSkills].join(", ")]);
+  section("EXPERIENCE", data.work.flatMap((w) => [
+    w.role || w.company,
+    line(w.role ? w.company : "", range(w.startDate, w.endDate, w.current), line(w.cityState, w.country)),
+    w.description,
+    "",
+  ]));
+  section("EDUCATION", data.education.flatMap((e) => [
+    e.degree || e.institution,
+    line(e.degree ? e.institution : "", range(e.startDate, e.endDate), e.location),
+    e.minor,
+    e.additional,
+    "",
+  ]));
+  section("LANGUAGES", data.languages.map((l) => line(l.name, l.level)));
+  const simple: [string, SimpleEntry[]][] = [
+    ["AWARDS", data.awards], ["CERTIFICATIONS", data.certifications], ["PUBLICATIONS", data.publications],
+    ["VOLUNTEERING", data.volunteering], ["ACTIVITIES", data.activities],
+  ];
+  for (const [title, list] of simple)
+    section(title, list.flatMap((it) => [
+      it.title,
+      line(it.role, it.organisation || it.issuer || it.publisher, range(it.date, it.endDate, it.ongoing)),
+      it.description,
+      "",
+    ]));
+  return out.filter((l, i, a) => l !== "" || (i > 0 && a[i - 1] !== "")).join("\n").trim();
 }
