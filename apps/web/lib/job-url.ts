@@ -9,7 +9,7 @@
  *   other query parameter stays: on many boards it is the job's id (Indeed's `?jk=…`).
  */
 
-const TRACKING = /^(utm_[a-z]+|gclid|fbclid|msclkid|mc_cid|mc_eid|gh_src|_hsenc|_hsmi)$/i;
+const TRACKING = /^(utm_[a-z0-9_]+|gclid|fbclid|msclkid|mc_cid|mc_eid|gh_src|_hsenc|_hsmi)$/i;
 
 export const MAX_JOB_URL_CHARS = 500;
 

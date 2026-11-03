@@ -6941,6 +6941,11 @@ select.field__input {
   text-transform: uppercase;
   color: #6b6b6b;
 }
+.trk-panel__against {
+  margin: -4px 0 0;
+  font-size: 13px;
+  color: #555555;
+}
 .trk-panel__note {
   margin: 0;
   font-size: 15px;

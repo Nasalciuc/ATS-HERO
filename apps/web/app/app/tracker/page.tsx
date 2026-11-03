@@ -4,7 +4,7 @@
  * on 3 Nov 2026): the board, a job's card, "Add a job" and "What did you send?". This file holds
  * the data and the handlers; views/tracker/ draws them.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/app/AppShell";
 import Modal from "@/components/ui/Modal";
 import { DownloadArrow } from "@/components/icons";
@@ -38,21 +38,31 @@ export default function TrackerPage() {
   const [adding, setAdding] = useState(false);
   // reopen: the job's card was open; it closes while the dialog asks (one dialog at a time) and comes back
   const [askCv, setAskCv] = useState<{ id: string; justApplied: boolean; reopen: boolean } | null>(null);
-  const [now] = useState(() => Date.now());
+  // "Did you hear back?" comes due while the page is open too
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
   const [failed, setFailed] = useState<string | null>(null);
   const events = useApplicationEvents(openId);
 
   const list: TrackedJob[] = useMemo(() => jobs ?? [], [jobs]);
   const cvList = useMemo(() => cvs ?? [], [cvs]);
 
-  // Job Fit per job: the post's text against the CV that was sent, else the latest one.
-  const reports = useMemo(() => {
-    const out: Record<string, JobFitReport | undefined> = {};
+  // Job Fit per job: the post's text against the CV that was sent; when that isn't one of the
+  // person's CVs (not marked, another file, deleted), against the latest one, and the card says so.
+  const { reports, against } = useMemo(() => {
+    const reports: Record<string, JobFitReport | undefined> = {};
+    const against: Record<string, string | undefined> = {};
     for (const j of list) {
-      const cv = cvList.find((c) => c.id === j.cvId) ?? cvList[0];
-      if (cv && j.description) out[j.id] = jobFit(cvToText(cv.data), j.description);
+      const sent = cvList.find((c) => c.id === j.cvId);
+      const cv = sent ?? cvList[0];
+      if (!cv || !j.description) continue;
+      reports[j.id] = jobFit(cvToText(cv.data), j.description);
+      against[j.id] = sent ? `the CV you sent, ${cv.title}` : `your latest CV, ${cv.title}`;
     }
-    return out;
+    return { reports, against };
   }, [list, cvList]);
   const fit = useMemo(() => {
     const out: Record<string, Fit | undefined> = {};
@@ -75,6 +85,9 @@ export default function TrackerPage() {
       return undefined;
     }
   };
+
+  /** The same, for a dialog that stays open until its change is saved. */
+  const save = async (fn: () => Promise<unknown>) => (await run(async () => { await fn(); return true; })) === true;
 
   function askWhichCv(id: string, justApplied: boolean) {
     const reopen = openId === id;
@@ -152,12 +165,13 @@ export default function TrackerPage() {
           <JobPanel
             job={open}
             fit={reports[open.id] ?? null}
+            fitAgainst={against[open.id] ?? null}
             cvSentTitle={cvTitle(open)}
             hasCv={cvList.length > 0}
             events={events}
             onClose={() => setOpenId(null)}
             onStatus={(s) => void changeStatus(open.id, s)}
-            onSaveDetails={(patch) => run(() => m.updateDetails(open.id, patch))}
+            onSaveDetails={(patch) => save(() => m.updateDetails(open.id, patch))}
             onAskCv={() => askWhichCv(open.id, false)}
             onArchive={() => { void run(() => m.archive(open.id)); setOpenId(null); }}
             onUnarchive={() => void run(() => m.unarchive(open.id))}
@@ -180,7 +194,7 @@ export default function TrackerPage() {
           if (askCv?.reopen) setOpenId(askCv.id);
           setAskCv(null);
         }}
-        onSave={(choice) => run(() => m.setCvSent(asked!.id, choice))}
+        onSave={(choice) => save(() => m.setCvSent(asked!.id, choice))}
       />
     </AppShell>
   );

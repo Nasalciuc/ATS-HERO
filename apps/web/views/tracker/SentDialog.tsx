@@ -21,22 +21,24 @@ export interface SentDialogProps {
   justApplied: boolean;
   cvs: SentCv[];
   onClose: () => void;
-  onSave: (choice: { cvId: string } | { other: true }) => Promise<unknown>;
+  /** resolves false when it didn't save: the dialog stays open */
+  onSave: (choice: { cvId: string } | { other: true }) => Promise<boolean>;
 }
 
 export default function SentDialog({ open, job, justApplied, cvs, onClose, onSave }: SentDialogProps) {
   const [choice, setChoice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   const picked = choice ?? job?.cvId ?? null;
 
-  function close() { setChoice(null); onClose(); }
+  function close() { setChoice(null); setFailed(false); onClose(); }
 
   async function save() {
     if (!picked) return;
     setBusy(true);
     try {
-      await onSave(picked === "other" ? { other: true } : { cvId: picked });
-      close();
+      if (await onSave(picked === "other" ? { other: true } : { cvId: picked })) close();
+      else setFailed(true);
     } finally {
       setBusy(false);
     }
@@ -65,6 +67,7 @@ export default function SentDialog({ open, job, justApplied, cvs, onClose, onSav
           <span className="trk-cv__text"><strong>Another file</strong><span>One I made somewhere else</span></span>
         </label>
       </fieldset>
+      {failed && <p className="trk-error" role="alert">That didn’t save. Try again.</p>}
       <button type="button" className="trk-btn trk-btn--wide" disabled={!picked || busy} onClick={save}>
         {busy ? "Saving…" : "Save"}
       </button>

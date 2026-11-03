@@ -22,13 +22,16 @@ export interface JobPanelProps {
   job: TrackedJob;
   /** Job Fit on the post's text and the CV (the one sent, else the latest); null when one is missing */
   fit: JobFitReport | null;
+  /** which CV the check used: "the CV you sent, …" or "your latest CV, …" */
+  fitAgainst: string | null;
   /** the title of the CV that was sent, "Another file", or null */
   cvSentTitle: string | null;
   hasCv: boolean;
   events: PanelEvent[] | undefined;
   onClose: () => void;
   onStatus: (status: ApplicationStatus) => void;
-  onSaveDetails: (patch: { notes?: string; description?: string }) => Promise<unknown>;
+  /** resolves false when it didn't save (the page shows why) */
+  onSaveDetails: (patch: { notes?: string; description?: string }) => Promise<boolean>;
   onAskCv: () => void;
   onArchive: () => void;
   onUnarchive: () => void;
@@ -53,6 +56,7 @@ export default function JobPanel(p: JobPanelProps) {
   const [notes, setNotes] = useState(job.notes ?? "");
   const [post, setPost] = useState(job.description ?? "");
   const [editingPost, setEditingPost] = useState(false);
+  const [unsaved, setUnsaved] = useState<"post" | "notes" | null>(null);
   useEffect(() => { setNotes(job.notes ?? ""); setPost(job.description ?? ""); }, [job.id, job.notes, job.description]);
 
   const platform = platformOf(job.url);
@@ -93,6 +97,7 @@ export default function JobPanel(p: JobPanelProps) {
         {p.fit && reqs.length > 0 ? (
           <>
             <h3 className="trk-label">Requirements · {p.fit.required.met} of {p.fit.required.total} required met</h3>
+            {p.fitAgainst && <p className="trk-panel__against">Checked against {p.fitAgainst}</p>}
             <ul className="trk-reqs">
               {reqs.map((r, i) => (
                 <li key={i} className="trk-req">
@@ -128,9 +133,14 @@ export default function JobPanel(p: JobPanelProps) {
               <textarea rows={6} value={post} maxLength={30000} onChange={(e) => setPost(e.target.value)} />
             </label>
             <div className="trk-panel__actions">
-              <button type="button" className="topbtn topbtn--dark" onClick={async () => { await p.onSaveDetails({ description: post }); setEditingPost(false); }}>Save</button>
-              <button type="button" className="topbtn topbtn--ghost" onClick={() => { setPost(job.description ?? ""); setEditingPost(false); }}>Cancel</button>
+              <button type="button" className="topbtn topbtn--dark" onClick={async () => {
+                const ok = await p.onSaveDetails({ description: post });
+                setUnsaved(ok ? null : "post");
+                if (ok) setEditingPost(false);
+              }}>Save</button>
+              <button type="button" className="topbtn topbtn--ghost" onClick={() => { setPost(job.description ?? ""); setEditingPost(false); setUnsaved(null); }}>Cancel</button>
             </div>
+            {unsaved === "post" && <p className="trk-error" role="alert">The post’s text didn’t save. Try again.</p>}
           </div>
         ) : (
           <button type="button" className="trk-link" onClick={() => setEditingPost(true)}>
@@ -174,9 +184,13 @@ export default function JobPanel(p: JobPanelProps) {
           value={notes}
           maxLength={400}
           onChange={(e) => setNotes(e.target.value)}
-          onBlur={() => { if (notes !== (job.notes ?? "")) void p.onSaveDetails({ notes }); }}
+          onBlur={async () => {
+            if (notes === (job.notes ?? "")) return;
+            setUnsaved((await p.onSaveDetails({ notes })) ? null : "notes");
+          }}
         />
       </label>
+      {unsaved === "notes" && <p className="trk-error" role="alert">Your notes didn’t save. Click outside the box to try again.</p>}
 
       <div className="trk-panel__foot">
         {job.archivedAt

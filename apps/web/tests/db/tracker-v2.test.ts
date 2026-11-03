@@ -206,6 +206,29 @@ describe("Tracker v2: the screen's actions", () => {
     expect(listed.reachedInterview).toBe(true);
   });
 
+  it("archives once: a second Archive or No reply writes no second history line", async () => {
+    const a = await createApplication({ company: "A", role: "R" });
+    await answerFollowUp(a.id, "no_reply");
+    const again = await answerFollowUp(a.id, "no_reply");
+    expect(again.archiveReason).toBe("no_response");
+    await archiveApplication(a.id, "withdrawn");
+    expect((await listApplicationEvents(a.id)).map((e) => e.kind)).toEqual(["created", "archived"]);
+    const both = await Promise.all([unarchiveApplication(a.id), unarchiveApplication(a.id)]);
+    expect(both.every((r) => r.archivedAt === null)).toBe(true);
+    expect((await listApplicationEvents(a.id)).filter((e) => e.kind === "unarchived").length).toBe(1);
+  });
+
+  it("two saves of one new link at the same time make one job", async () => {
+    const url = "https://jobs.lever.co/zeta/1";
+    const [x, y] = await Promise.all([
+      createApplication({ company: "Zeta", role: "Data Engineer", url }),
+      createApplication({ company: "Zeta", role: "Data Engineer", url }),
+    ]);
+    expect(x.id).toBe(y.id);
+    expect([x.duplicate, y.duplicate].sort()).toEqual([false, true]);
+    expect((await db.select().from(applications)).length).toBe(1);
+  });
+
   it("keeps a rejection after an interview counted as an interview", async () => {
     const row = await createApplication({ company: "Acme", role: "PM" });
     await updateStatus(row.id, "interview");

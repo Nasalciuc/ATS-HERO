@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { db } from "@/db";
 import { applications, applicationEvents, cvs, type Application } from "@/db/schema";
-import { and, eq, desc, asc, inArray } from "drizzle-orm";
+import { and, eq, desc, asc, inArray, isNull, isNotNull } from "drizzle-orm";
 import { getOwnerId } from "./_shared";
 import { APPLICATION_STATUSES, type ApplicationStatus, type ArchiveReason } from "@/lib/types";
 import { withLog } from "@/lib/log";
@@ -130,6 +130,8 @@ export async function createApplication(input: {
         if (existing) return { ...serialize(existing), duplicate: true as const };
       }
       const now = new Date();
+      // Two saves of one new link at once can both miss the lookup above: the unique index lets one
+      // insert through, and the other returns the row that won.
       const [row] = await tx.insert(applications).values({
         ownerId,
         company,
@@ -142,7 +144,14 @@ export async function createApplication(input: {
         status,
         source: "manual",
         submittedAt: status === "saved" ? null : now,
-      }).returning();
+      }).onConflictDoNothing().returning();
+      if (!row) {
+        const winner = urlKey
+          ? await tx.query.applications.findFirst({ where: and(eq(applications.ownerId, ownerId), eq(applications.urlKey, urlKey)) })
+          : undefined;
+        if (!winner) throw new Error("Could not add the job. Try again.");
+        return { ...serialize(winner), duplicate: true as const };
+      }
       await tx.insert(applicationEvents).values({ applicationId: row.id, ownerId, kind: "created", toStatus: status, at: now });
       return { ...serialize(row), duplicate: false as const };
     });
@@ -192,9 +201,11 @@ async function moveStatus(tx: Tx, current: Application, ownerId: string, next: A
       status: next,
       ...(next === "applied" && !current.submittedAt ? { submittedAt: now } : {}),
     })
-    .where(and(eq(applications.id, current.id), eq(applications.ownerId, ownerId)))
+    // only from the status this change was based on: of two changes made at once, the second
+    // matches no row and rolls back instead of writing a history line with a stale "from"
+    .where(and(eq(applications.id, current.id), eq(applications.ownerId, ownerId), eq(applications.status, current.status)))
     .returning();
-  if (!row) throw new Error("Not found");
+  if (!row) throw new Error("This job changed in the meantime. Reload and try again.");
   await tx.insert(applicationEvents).values({
     applicationId: current.id, ownerId, kind: "status_changed", fromStatus: current.status, toStatus: next, at: now,
   });
@@ -215,6 +226,17 @@ export async function updateStatus(id: string, status: ApplicationStatus) {
 
 const ARCHIVE_REASONS: ArchiveReason[] = ["no_response", "withdrawn", "closed", "other"];
 
+/** Archives a job once: a second archive made at the same time matches no row and writes nothing. */
+async function archiveRow(tx: Tx, current: Application, ownerId: string, reason: ArchiveReason) {
+  const now = new Date();
+  const [row] = await tx.update(applications).set({ archivedAt: now, archiveReason: reason })
+    .where(and(eq(applications.id, current.id), eq(applications.ownerId, ownerId), isNull(applications.archivedAt)))
+    .returning();
+  if (!row) return ownedRow(tx, current.id, ownerId);
+  await tx.insert(applicationEvents).values({ applicationId: current.id, ownerId, kind: "archived", at: now });
+  return row;
+}
+
 export async function archiveApplication(id: string, reason: ArchiveReason = "other") {
   const ownerId = await requireOwner();
   if (!ARCHIVE_REASONS.includes(reason)) throw new Error("Invalid reason");
@@ -222,11 +244,7 @@ export async function archiveApplication(id: string, reason: ArchiveReason = "ot
     return db.transaction(async (tx) => {
       const current = await ownedRow(tx, id, ownerId);
       if (current.archivedAt) return serialize(current);
-      const now = new Date();
-      const [row] = await tx.update(applications).set({ archivedAt: now, archiveReason: reason })
-        .where(and(eq(applications.id, id), eq(applications.ownerId, ownerId))).returning();
-      await tx.insert(applicationEvents).values({ applicationId: id, ownerId, kind: "archived", at: now });
-      return serialize(row);
+      return serialize(await archiveRow(tx, current, ownerId, reason));
     });
   });
 }
@@ -239,7 +257,8 @@ export async function unarchiveApplication(id: string) {
       if (!current.archivedAt) return serialize(current);
       const now = new Date();
       const [row] = await tx.update(applications).set({ archivedAt: null, archiveReason: null })
-        .where(and(eq(applications.id, id), eq(applications.ownerId, ownerId))).returning();
+        .where(and(eq(applications.id, id), eq(applications.ownerId, ownerId), isNotNull(applications.archivedAt))).returning();
+      if (!row) return serialize(await ownedRow(tx, id, ownerId)); // brought back by a change made at the same time
       await tx.insert(applicationEvents).values({ applicationId: id, ownerId, kind: "unarchived", at: now });
       return serialize(row);
     });
@@ -266,10 +285,8 @@ export async function answerFollowUp(id: string, answer: FollowUpAnswer) {
         await tx.insert(applicationEvents).values({ applicationId: id, ownerId, kind: "follow_up_snoozed", at: now });
         return serialize(row);
       }
-      const [row] = await tx.update(applications).set({ archivedAt: now, archiveReason: "no_response" })
-        .where(and(eq(applications.id, id), eq(applications.ownerId, ownerId))).returning();
-      await tx.insert(applicationEvents).values({ applicationId: id, ownerId, kind: "archived", at: now });
-      return serialize(row);
+      if (current.archivedAt) return serialize(current); // "No reply" pressed twice
+      return serialize(await archiveRow(tx, current, ownerId, "no_response"));
     });
   });
 }

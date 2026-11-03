@@ -32,6 +32,7 @@ describe("jobUrlKey: one key per job", () => {
     expect(jobUrlKey("https://ro.indeed.com/viewjob?jk=abc123&utm_source=x&gclid=1&from=serp"))
       .toBe("ro.indeed.com/viewjob?from=serp&jk=abc123");
     expect(jobUrlKey("https://boards.greenhouse.io/acme/jobs/123?gh_src=abc")).toBe("boards.greenhouse.io/acme/jobs/123");
+    expect(jobUrlKey("https://jobs.lever.co/acme/1?utm_source_platform=li&utm_campaign2=x")).toBe("jobs.lever.co/acme/1");
   });
 
   it("keeps the port and tells different jobs apart", () => {
