@@ -1,6 +1,6 @@
 "use server";
 import { db } from "@/db";
-import { users, cvs, scans, aiUsage, applications, applicationEvents, jobSearches } from "@/db/schema";
+import { users, cvs, scans, aiUsage, applications, applicationEvents, jobSearches, applyQueue, applySettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { withLog } from "@/lib/log";
@@ -40,6 +40,8 @@ export async function deleteAccount() {
     // and decide the retention policy for subscriptionEvents (delete vs anonymize). Tracked for
     // the Ⓑ billing-activation milestone — do not implement against an unprovisioned account.
     await db.transaction(async (tx) => {
+      await tx.delete(applyQueue).where(eq(applyQueue.ownerId, userId));
+      await tx.delete(applySettings).where(eq(applySettings.ownerId, userId));
       await tx.delete(jobSearches).where(eq(jobSearches.ownerId, userId));
       await tx.delete(applicationEvents).where(eq(applicationEvents.ownerId, userId));
       await tx.delete(applications).where(eq(applications.ownerId, userId));

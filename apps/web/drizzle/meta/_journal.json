@@ -29,6 +29,13 @@
       "when": 1793789391883,
       "tag": "0003_job_searches",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793790412625,
+      "tag": "0004_apply_queue",
+      "breakpoints": true
     }
   ]
 }

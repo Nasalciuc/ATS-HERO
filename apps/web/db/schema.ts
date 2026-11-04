@@ -4,7 +4,7 @@ import { relations, sql, type InferSelectModel } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import type {
   CvData, ScanKind, ScoreReport, JobFitReport, TemplateId, ApplicationStatus,
-  ApplicationSource, ApplyPlatform, AppliedVia, ArchiveReason, ApplicationEventKind, JobBoard,
+  ApplicationSource, ApplyPlatform, AppliedVia, ArchiveReason, ApplicationEventKind, JobBoard, QueueStatus,
 } from "@/lib/types";
 
 const id = () => text("id").primaryKey().$defaultFn(() => nanoid());
@@ -178,6 +178,44 @@ export const jobSearches = pgTable("job_searches", {
   check("job_searches_per_day", sql`${t.perDay} BETWEEN 1 AND 20`),
 ]);
 
+/**
+ * "Ready to send" (canvas page "Search & agent"): the jobs a person queued for the apply agent, one
+ * row per job. No answers, no screenshots, nothing the form showed: only where the job is and when.
+ */
+export const applyQueue = pgTable("apply_queue", {
+  id: id(),
+  ownerId: text("owner_id").notNull(),
+  applicationId: text("application_id").notNull(),
+  /** the CV the agent attaches and takes the contact details from */
+  cvId: text("cv_id").notNull(),
+  status: text("status").$type<QueueStatus>().notNull().default("waiting"),
+  /** why it stopped: a handoff (captcha, login…), a refusal (workday, linkedin…), or what broke */
+  reason: text("reason"),
+  /** the form stays open for the person until then */
+  readyUntil: timestamp("ready_until", { withTimezone: true }),
+  /** Send was pressed: counts against the daily limit from here */
+  sendingAt: timestamp("sending_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  /** the words on the page that confirmed it ("Thank you for applying"), nothing else of the page */
+  confirmation: text("confirmation"),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [
+  index("apply_queue_by_owner").on(t.ownerId),
+  uniqueIndex("apply_queue_by_application").on(t.applicationId),
+]);
+
+/** The daily limit the person set for the agent's applications (1 to 10, 5 until they change it). */
+export const applySettings = pgTable("apply_settings", {
+  ownerId: text("owner_id").primaryKey(),
+  dailyLimit: integer("daily_limit").notNull().default(5),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [
+  check("apply_settings_daily_limit", sql`${t.dailyLimit} BETWEEN 1 AND 10`),
+]);
+
 /* ── relations (app-level; Ep5-7 pattern; NO hard FK to Clerk identity) ── */
 export const usersRelations = relations(users, ({ many }) => ({
   cvs: many(cvs),
@@ -205,3 +243,4 @@ export type Scan = InferSelectModel<typeof scans>;
 export type Application = InferSelectModel<typeof applications>;
 export type ApplicationEvent = InferSelectModel<typeof applicationEvents>;
 export type JobSearch = InferSelectModel<typeof jobSearches>;
+export type QueueItem = InferSelectModel<typeof applyQueue>;

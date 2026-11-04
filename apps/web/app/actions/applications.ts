@@ -2,7 +2,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { db } from "@/db";
-import { applications, applicationEvents, cvs, type Application } from "@/db/schema";
+import { applications, applicationEvents, applyQueue, cvs, type Application } from "@/db/schema";
 import { and, eq, desc, asc, inArray, isNull, isNotNull } from "drizzle-orm";
 import { getOwnerId } from "./_shared";
 import { APPLICATION_STATUSES, type ApplicationStatus, type ArchiveReason } from "@/lib/types";
@@ -329,6 +329,7 @@ export async function removeApplication(id: string) {
       if (!deleted.length) throw new Error("Not found");
       await tx.delete(applicationEvents)
         .where(and(eq(applicationEvents.applicationId, id), eq(applicationEvents.ownerId, ownerId)));
+      await tx.delete(applyQueue).where(and(eq(applyQueue.applicationId, id), eq(applyQueue.ownerId, ownerId)));
       return { ok: true };
     });
   });
