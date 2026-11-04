@@ -13,23 +13,28 @@ vi.mock("@/db", () => ({
   },
 }));
 vi.mock("@/app/actions/_shared", () => ({ getOwnerId: async () => holder.owner }));
+// the morning run's gap between two searches, short here (10 s in the app)
+vi.mock("@/lib/job-search", async (original) => ({ ...(await original<typeof import("@/lib/job-search")>()), CRON_SEARCH_GAP_MS: 300 }));
 
 import { getMyJobSearch, runMyJobSearchNow, saveJobSearch } from "@/app/actions/job-search";
 import { GET as cron } from "@/app/api/cron/job-search/route";
 
 let db: Awaited<ReturnType<typeof makeTestDb>>;
 let aiCalls = 0;
+let aiCalledAt: number[] = [];
 beforeEach(async () => {
   db = await makeTestDb();
   holder.db = db;
   holder.owner = "u1";
   aiCalls = 0;
+  aiCalledAt = [];
   vi.stubEnv("NEXT_PUBLIC_JOB_SEARCH_ENABLED", "true");
   vi.stubEnv("CRON_SECRET", "s3cret");
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubGlobal("fetch", async () => {
     aiCalls++;
+    aiCalledAt.push(Date.now());
     return new Response(JSON.stringify({
       count: 1, by_site: { indeed: 1 }, errors: {},
       jobs: [{ site: "indeed", title: "Data Analyst", company: `Acme ${aiCalls}`, job_url: `https://ro.indeed.com/viewjob?jk=${aiCalls}`, description: "SQL" }],
@@ -120,6 +125,8 @@ describe("/api/cron/job-search", () => {
     expect(await res.json()).toEqual({ searches: 2, added: 2, failed: 0 });
     const owners = (await db.select().from(applications)).map((a) => a.ownerId).sort();
     expect(owners).toEqual(["u1", "u2"]);
+    // no faster than apps/ai takes them from one address
+    expect(aiCalledAt[1] - aiCalledAt[0]).toBeGreaterThanOrEqual(290);
     // a second call the same day finds nothing due
     expect(await (await call("Bearer s3cret")).json()).toEqual({ searches: 0, added: 0, failed: 0 });
   });

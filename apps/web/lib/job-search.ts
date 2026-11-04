@@ -15,6 +15,11 @@ import type { JobBoard } from "./types";
 export const PER_DAY_CHOICES = [5, 10, 20] as const;
 /** "Search now" waits this long after the last run: each run sends requests to the boards. */
 export const SEARCH_NOW_GAP_MS = 5 * 60 * 1000;
+/**
+ * The morning run starts one search at most this often. apps/ai takes 6 searches a minute from one
+ * address (apps/ai app/routers/jobs.py), and every morning search comes from our server.
+ */
+export const CRON_SEARCH_GAP_MS = 10_000;
 export const MAX_PER_DAY = 20;
 /** A day and a half: a run that comes late, or a post published at night, is still caught. The tracker's link check drops repeats. */
 export const HOURS_OLD = 36;
