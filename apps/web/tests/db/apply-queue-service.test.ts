@@ -24,8 +24,9 @@ import {
   cancel, dequeue, enqueue, prepare, QueueError, queueView, review, screenshotPath, send, sentToday, setDailyLimit,
   type QueueDeps,
 } from "@/lib/apply/queue";
-import { clearForms, READY_MS } from "@/lib/apply/sessions";
+import { clearForms, getForm, READY_MS } from "@/lib/apply/sessions";
 import { getMyQueue } from "@/app/actions/apply-queue";
+import { removeApplication } from "@/app/actions/applications";
 
 const ana = (JSON.parse(fs.readFileSync(path.join(process.cwd(), "../../tools/ats-lab/fixtures/personas.json"), "utf8")) as Record<string, CvData>).ana;
 
@@ -44,8 +45,11 @@ const FORM = `
 const ANSWERED = FORM.replace("ref=e5]: Select…", "ref=e5]: No").replace("checked=false, required, ref=e7", "checked=true, required, ref=e7");
 const CAPTCHA = `- Iframe "reCAPTCHA challenge" [ref=e1]\n${FORM}`;
 
-/** A fake agent-browser per session: answers like the form, writes screenshots, records commands. */
-function fakeBrowser(first = FORM) {
+/**
+ * A fake agent-browser per session: answers like the form, writes screenshots, records commands.
+ * `afterClick`: the page after Submit; `onOpen`: runs when the agent opens the posting.
+ */
+function fakeBrowser(first = FORM, opts: { afterClick?: string; onOpen?: () => Promise<unknown> } = {}) {
   const log: { session: string; args: string[] }[] = [];
   const runner = (session: string, _o: RunnerOptions): Runner => {
     let clicked = false;
@@ -53,14 +57,20 @@ function fakeBrowser(first = FORM) {
     const one = (args: string[]): Record<string, unknown> => {
       log.push({ session, args });
       const cmd = args.find((a) => !a.startsWith("--")) ?? "";
-      if (cmd === "snapshot") return { snapshot: clicked ? "" : snapshots++ === 0 ? first : ANSWERED };
+      if (cmd === "snapshot") return { snapshot: clicked ? (opts.afterClick ?? "") : snapshots++ === 0 ? first : ANSWERED };
       if (cmd === "get") return { text: clicked ? "Data Analyst\nThank you for applying! We'll be in touch." : "Data Analyst" };
       if (cmd === "eval") return { result: true };
       if (cmd === "screenshot") fs.writeFileSync(args[1], "png");
       if (cmd === "click" && args.includes("@e8")) clicked = true;
       return {};
     };
-    return { run: async (a) => one(a), batch: async (cmds) => cmds.map(one) };
+    return {
+      run: async (a) => {
+        if (a[0] === "open") await opts.onOpen?.();
+        return one(a);
+      },
+      batch: async (cmds) => cmds.map(one),
+    };
   };
   const clicks = () => log.filter((l) => l.args[0] === "click").length;
   const closes = () => log.filter((l) => l.args[0] === "close").length;
@@ -200,6 +210,49 @@ describe("preparing and checking", () => {
     await cancel("u1", row.id);
     expect(fs.existsSync(pdf)).toBe(false);
   });
+
+  it("fills one form at a time for a person", async () => {
+    await cvOf("u1");
+    const a = await saved("u1", "https://boards.greenhouse.io/acme/jobs/1", "A");
+    const b = await saved("u1", "https://boards.greenhouse.io/acme/jobs/2", "B");
+    await enqueue("u1", [a.id, b.id], null, deps());
+    const outcomes = await Promise.allSettled([prepare("u1", (await rowOf(a.id)).id, deps()), prepare("u1", (await rowOf(b.id)).id, deps())]);
+    expect(outcomes.filter((o) => o.status === "fulfilled").map((o) => o.value)).toEqual(["ready"]);
+    expect(outcomes.find((o) => o.status === "rejected")?.reason).toMatchObject({ message: expect.stringMatching(/filling another form/) });
+  });
+
+  it("a form filled for a job taken out of the queue meanwhile closes, with its CV", async () => {
+    await cvOf("u1");
+    const job = await saved("u1", "https://boards.greenhouse.io/acme/jobs/1");
+    await enqueue("u1", [job.id], null, deps());
+    const row = await rowOf(job.id);
+    browser = fakeBrowser(FORM, { onOpen: () => dequeue("u1", row.id) });
+    expect(await prepare("u1", row.id, deps())).toBe("waiting");
+    expect(await getForm(row.id, "u1", now.getTime())).toBeNull();
+    const pdf = browser.log.find((l) => l.args[0] === "upload")?.args.at(-1) as string;
+    expect(fs.existsSync(pdf)).toBe(false);
+    expect(browser.closes()).toBe(1);
+  });
+
+  it("doesn't prepare a job that left Saved after it was queued", async () => {
+    await cvOf("u1");
+    const job = await saved("u1", "https://boards.greenhouse.io/acme/jobs/1");
+    await enqueue("u1", [job.id], null, deps());
+    await db.update(applications).set({ status: "applied" }).where(eq(applications.id, job.id));
+    expect(await prepare("u1", (await rowOf(job.id)).id, deps())).toBe("refused");
+    expect(await rowOf(job.id)).toMatchObject({ status: "refused", reason: "not_saved" });
+    expect(browser.log).toHaveLength(0);
+  });
+
+  it("closes a form past its time even if its owner never comes back", async () => {
+    await cvOf("u1");
+    await readyJob();
+    const pdf = browser.log.find((l) => l.args[0] === "upload")?.args.at(-1) as string;
+    now = new Date(now.getTime() + READY_MS + 1);
+    await queueView("u2", deps()); // someone else's visit
+    expect(browser.closes()).toBe(1);
+    expect(fs.existsSync(pdf)).toBe(false);
+  });
 });
 
 describe("sending", () => {
@@ -241,6 +294,17 @@ describe("sending", () => {
     expect(await sentToday("u1", now)).toBe(0);
   });
 
+  it("a challenge after the click counts as sent, and the job isn't prepared again", async () => {
+    await cvOf("u1");
+    browser = fakeBrowser(FORM, { afterClick: CAPTCHA });
+    const { job, row } = await readyJob();
+    const r = await review("u1", row.id, deps());
+    expect(await send("u1", row.id, { digest: r!.digest, answers: answersFor(r!.items) }, deps())).toEqual({ status: "unconfirmed", reason: "captcha" });
+    expect(await rowOf(job.id)).toMatchObject({ status: "unconfirmed", reason: "captcha" });
+    expect(await sentToday("u1", now)).toBe(1);
+    await expect(prepare("u1", row.id, deps())).rejects.toThrow(/already prepared or sent/);
+  });
+
   it("another owner can't send someone's form", async () => {
     await cvOf("u1");
     const { row } = await readyJob();
@@ -266,6 +330,21 @@ describe("the daily limit", () => {
     await enqueue("u1", [c.id], null, deps());
     await expect(prepare("u1", (await rowOf(c.id)).id, deps())).rejects.toThrow(/1 of 1 today/);
     expect(browser.clicks()).toBe(1);
+  });
+
+  it("taking a sent job out of the queue, or deleting it, doesn't give the day's send back", async () => {
+    await cvOf("u1");
+    await setDailyLimit("u1", 1);
+    const a = await readyJob("u1", "https://boards.greenhouse.io/acme/jobs/1", "A");
+    const ra = await review("u1", a.row.id, deps());
+    expect((await send("u1", a.row.id, { digest: ra!.digest, answers: answersFor(ra!.items) }, deps())).status).toBe("sent");
+    await dequeue("u1", a.row.id);
+    expect(await sentToday("u1", now)).toBe(1);
+    await removeApplication(a.job.id);
+    expect(await sentToday("u1", now)).toBe(1);
+    const b = await saved("u1", "https://boards.greenhouse.io/acme/jobs/2", "B");
+    await enqueue("u1", [b.id], null, deps());
+    await expect(prepare("u1", (await rowOf(b.id)).id, deps())).rejects.toThrow(/1 of 1 today/);
   });
 
   it("two sends at once can't both pass the limit", async () => {

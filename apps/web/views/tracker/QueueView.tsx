@@ -26,6 +26,7 @@ const REFUSED_TEXT: Record<string, string> = {
   workday: "the agent doesn’t apply on Workday",
   unsupported: "the agent works only on Greenhouse, Lever and Ashby",
   invalid_url: "the job’s link doesn’t work",
+  not_saved: "this job isn’t in Saved any more",
   not_https: "the job’s link isn’t secure (https)",
 };
 
@@ -34,6 +35,8 @@ const sentWhen = (at: number, now: number) =>
   new Date(at).toDateString() === new Date(now).toDateString() ? `today, ${time(at)}` : `${shortDate(at)}, ${time(at)}`;
 const minutesLeft = (until: number | null, now: number) => Math.max(1, Math.ceil(((until ?? now) - now) / 60_000));
 const platform = (p: string) => PLATFORM_LABEL[p as ApplyPlatform] ?? "Site";
+/** When the day's count starts again: the next UTC midnight, in the person's own time. */
+export const countResetsAt = (now: number) => time(Date.UTC(new Date(now).getUTCFullYear(), new Date(now).getUTCMonth(), new Date(now).getUTCDate() + 1));
 
 export interface QueueViewProps {
   view: View;
@@ -68,6 +71,8 @@ function Status({ r, now, preparing }: { r: QueueRow; now: number; preparing: bo
     case "sent":
       return <><span className="trk-q__sent">Sent {r.sentAt ? sentWhen(r.sentAt, now) : ""}</span>, after you checked it. It moved to Applied.</>;
     case "unconfirmed":
+      if (r.reason && HANDOFF_TEXT[r.reason])
+        return <><span className="trk-q__warn">Send was pressed, then {HANDOFF_TEXT[r.reason]}.</span> Check the site or your e-mail before you apply again.</>;
       return <><span className="trk-q__warn">Send was pressed, but the page didn’t confirm it.</span> Check your e-mail or the site before you apply again.</>;
   }
 }
@@ -76,6 +81,7 @@ export default function QueueView({ view, now, cvs, preparingId, message, onLimi
   const [picked, setPicked] = useState<string[]>([]);
   const [cvId, setCvId] = useState<string>("");
   const atLimit = view.sentToday >= view.dailyLimit;
+  const resetsAt = countResetsAt(now);
   const busy = preparingId !== null || view.rows.some((r) => r.status === "preparing");
   const choices = LIMIT_CHOICES.includes(view.dailyLimit) ? LIMIT_CHOICES : [...LIMIT_CHOICES, view.dailyLimit].sort((a, b) => a - b);
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
@@ -102,7 +108,7 @@ export default function QueueView({ view, now, cvs, preparingId, message, onLimi
 
       {atLimit && (
         <section className="trk-q__banner" aria-label="Daily limit reached">
-          <strong>You sent {view.sentToday} of {view.dailyLimit} today.</strong> The jobs below wait for tomorrow. You set this limit; you can change it above.
+          <strong>You sent {view.sentToday} of {view.dailyLimit} today.</strong> The jobs below wait until {resetsAt}, when the count starts again. You set this limit; you can change it above.
         </section>
       )}
 
@@ -127,7 +133,7 @@ export default function QueueView({ view, now, cvs, preparingId, message, onLimi
                   )}
                   {canPrepare && (
                     atLimit
-                      ? <button type="button" className="trk-pill trk-q__btn" disabled>Tomorrow</button>
+                      ? <button type="button" className="trk-pill trk-q__btn" disabled>After {resetsAt}</button>
                       : <button type="button" className="trk-pill trk-q__btn" disabled={busy} onClick={() => onPrepare(r.id)}>{r.status === "waiting" ? "Prepare" : "Try again"}</button>
                   )}
                   {(r.status === "handoff" || r.status === "refused" || r.status === "unconfirmed") && r.url && (

@@ -32,8 +32,9 @@ export default function SendPage() {
       if (!r.ok) return say(r);
       if (r.status === "ready") window.location.assign(`/app/tracker/send/${id}`);
       else if (r.status === "handoff") {
-        const row = result?.ok ? result.view.rows.find((x) => x.id === id) : undefined;
-        await refresh();
+        // the reason is on the row as Prepare left it
+        const fresh = await refresh();
+        const row = fresh?.ok ? fresh.view.rows.find((x) => x.id === id) : undefined;
         setMessage({ error: true, text: `Continue on the site: ${HANDOFF_TEXT[row?.reason ?? ""] ?? "the agent couldn’t finish the form"}. Nothing was sent.` });
       }
     } finally {

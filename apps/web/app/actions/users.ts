@@ -1,6 +1,7 @@
 "use server";
 import { db } from "@/db";
 import { users, cvs, scans, aiUsage, applications, applicationEvents, jobSearches, applyQueue, applySettings } from "@/db/schema";
+import { dropOwnerForms } from "@/lib/apply/sessions";
 import { eq } from "drizzle-orm";
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { withLog } from "@/lib/log";
@@ -50,6 +51,8 @@ export async function deleteAccount() {
       await tx.delete(aiUsage).where(eq(aiUsage.ownerId, userId));
       await tx.delete(users).where(eq(users.clerkId, userId));
     });
+    // forms the apply agent keeps open for this person close, with the CV and screenshots they hold
+    await dropOwnerForms(userId);
     try {
       const client = await clerkClient();
       await client.users.deleteUser(userId);

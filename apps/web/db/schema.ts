@@ -210,6 +210,12 @@ export const applyQueue = pgTable("apply_queue", {
 export const applySettings = pgTable("apply_settings", {
   ownerId: text("owner_id").primaryKey(),
   dailyLimit: integer("daily_limit").notNull().default(5),
+  /**
+   * Sends pressed on `countedDay` (a UTC day's start). Kept here, not counted from the queue: taking
+   * a sent job out of the queue, or deleting it, doesn't give the day's sends back.
+   */
+  countedDay: timestamp("counted_day", { withTimezone: true }),
+  sentCount: integer("sent_count").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull().defaultNow().$onUpdate(() => new Date()),
 }, (t) => [

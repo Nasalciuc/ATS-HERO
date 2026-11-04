@@ -8,7 +8,7 @@ import { useApplyQueueMutations, useReview } from "@/hooks/use-apply-queue";
 import { applyAgentEnabled } from "@/lib/features";
 import type { Answers } from "@/lib/apply/plan";
 import ReviewView from "@/views/tracker/ReviewView";
-import { HANDOFF_TEXT } from "@/views/tracker/QueueView";
+import { countResetsAt, HANDOFF_TEXT } from "@/views/tracker/QueueView";
 
 type Done = { kind: "sent"; text: string } | { kind: "stopped"; text: string; url?: string | null };
 
@@ -47,11 +47,17 @@ export default function ReviewPage() {
           await refresh();
           return setMessage({ error: true, text: "Nothing was sent: the form asked something new after your answers. Check it again." });
         case "limit":
-          return setMessage({ error: true, text: `Nothing was sent: you sent ${o.sent} of ${o.limit} today. Change your limit in Ready to send, or send this one tomorrow.` });
+          return setMessage({ error: true, text: `Nothing was sent: you sent ${o.sent} of ${o.limit} today. Change your limit in Ready to send, or send this one after ${countResetsAt(Date.now())}.` });
         case "handoff":
           return setDone({ kind: "stopped", text: `Continue on the site: ${HANDOFF_TEXT[o.reason] ?? "the agent couldn’t finish the form"}.`, url: o.url });
         case "unconfirmed":
-          return setDone({ kind: "stopped", text: "Send was pressed, but the page didn’t confirm it. Check your e-mail or the site before you apply again.", url: review.url });
+          return setDone({
+            kind: "stopped",
+            text: o.reason && HANDOFF_TEXT[o.reason]
+              ? `Send was pressed, then ${HANDOFF_TEXT[o.reason]}. Check the site or your e-mail before you apply again.`
+              : "Send was pressed, but the page didn’t confirm it. Check your e-mail or the site before you apply again.",
+            url: review.url,
+          });
         case "closed":
           return setDone({ kind: "stopped", text: "The form closed before it was sent. Nothing was sent. Prepare it again from Ready to send." });
       }

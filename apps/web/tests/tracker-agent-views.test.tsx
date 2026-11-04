@@ -98,10 +98,11 @@ describe("Ready to send", () => {
     expect(html).toContain("The form stays open 12 more minutes.");
   });
 
-  it("stops at the person's limit: no Prepare, only Tomorrow", () => {
+  it("stops at the person's limit: no Prepare, and says when the count starts again", () => {
     const html = queue({ rows: [row({})], sentToday: 5, dailyLimit: 5 });
     expect(html).toContain("You sent 5 of 5 today.");
-    expect(html).toMatch(/disabled="">Tomorrow</);
+    expect(html).toMatch(/disabled="">After \d\d:\d\d</);
+    expect(html).toMatch(/wait until \d\d:\d\d, when the count starts again/);
     expect(html).not.toContain(">Prepare<");
   });
 

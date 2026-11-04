@@ -10,11 +10,13 @@
  *   answers, which are never stored;
  * - the daily limit the person set is checked when they press Send, in one transaction, so two
  *   sends at once can't both pass it; a send that was pressed counts even if the page didn't confirm.
+ *   The day's count lives on the owner's settings row: removing a sent job doesn't give it back;
+ * - one form is filled at a time per person, and every form that closes takes its files with it.
  */
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { and, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { applicationEvents, applications, applyQueue, applySettings, cvs, type QueueItem } from "@/db/schema";
 import { renderCvPdfBlob } from "@/lib/exportPdf";
@@ -26,7 +28,7 @@ import { postingTarget } from "./guard";
 import { applyProfile } from "./profile";
 import type { Answers, PersonItem } from "./plan";
 import type { Runner, RunnerOptions } from "./runner";
-import { dropForm, getForm, putForm, READY_MS } from "./sessions";
+import { dropForm, getForm, putForm, READY_MS, sweepForms } from "./sessions";
 
 export const DEFAULT_DAILY_LIMIT = 5;
 export const MAX_DAILY_LIMIT = 10;
@@ -51,7 +53,21 @@ export const dayStart = (now: Date) => new Date(Date.UTC(now.getUTCFullYear(), n
 /** Can the agent go to this job's link? (guard.ts: Greenhouse, Lever, Ashby; the lab on localhost.) */
 export const agentCanGo = (url: string | null, allowLocal = false) => Boolean(url) && postingTarget(url as string, { allowLocal }).ok;
 
-const COUNTED: QueueStatus[] = ["sending", "sent", "unconfirmed"];
+const PREPARABLE: QueueStatus[] = ["waiting", "handoff", "failed"];
+
+type Settings = typeof applySettings.$inferSelect;
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** Sends pressed on `now`'s UTC day, from the settings row. */
+const countOn = (s: Settings | undefined, now: Date) =>
+  s?.countedDay && s.countedDay.getTime() === dayStart(now).getTime() ? s.sentCount : 0;
+
+/** The owner's settings row, made if missing and held until the transaction ends: the limit's lock. */
+async function lockSettings(tx: Tx, ownerId: string): Promise<Settings> {
+  await tx.insert(applySettings).values({ ownerId }).onConflictDoNothing();
+  const [settings] = await tx.select().from(applySettings).where(eq(applySettings.ownerId, ownerId)).for("update");
+  return settings;
+}
 
 export async function dailyLimitOf(ownerId: string): Promise<number> {
   const row = await db.query.applySettings.findFirst({ where: eq(applySettings.ownerId, ownerId) });
@@ -67,14 +83,12 @@ export async function setDailyLimit(ownerId: string, limit: number): Promise<num
 
 /** Applications sent today (Send pressed), whatever the page said after. */
 export async function sentToday(ownerId: string, now: Date): Promise<number> {
-  const [r] = await db.select({ n: sql<number>`count(*)::int` }).from(applyQueue).where(and(
-    eq(applyQueue.ownerId, ownerId), inArray(applyQueue.status, COUNTED), gte(applyQueue.sendingAt, dayStart(now)),
-  ));
-  return r?.n ?? 0;
+  return countOn(await db.query.applySettings.findFirst({ where: eq(applySettings.ownerId, ownerId) }), now);
 }
 
 /** Rows a stopped server or a closed form left behind, put right: a form that closed waits again. */
 async function settle(ownerId: string, now: Date): Promise<void> {
+  await sweepForms(now.getTime());
   const stuck = new Date(now.getTime() - STUCK_MS);
   const mine = eq(applyQueue.ownerId, ownerId);
   await db.update(applyQueue).set({ status: "waiting", reason: "interrupted" })
@@ -188,28 +202,42 @@ const defaultPdf = async (data: CvData, template: string, accent?: string) =>
   new Uint8Array(await (await renderCvPdfBlob(data, template, accent)).arrayBuffer());
 
 /**
- * The agent fills the form: one job, when the person presses Prepare. Refused before a browser starts
- * when today's limit is reached: a form that couldn't be sent would only close again.
+ * The agent fills the form: one job, when the person presses Prepare, and one at a time per person.
+ * Refused before a browser starts when today's limit is reached: a form that couldn't be sent would
+ * only close again.
  */
 export async function prepare(ownerId: string, id: string, deps: QueueDeps = {}): Promise<QueueStatus> {
   const now = nowOf(deps);
+  await settle(ownerId, now);
   const row = await ownedRow(ownerId, id);
-  if (!["waiting", "handoff", "failed"].includes(row.status)) throw new QueueError("This job is already prepared or sent.");
-  const [count, limit] = await Promise.all([sentToday(ownerId, now), dailyLimitOf(ownerId)]);
-  if (count >= limit) throw new QueueError(`You sent ${count} of ${limit} today. The rest wait for tomorrow.`);
+  if (!PREPARABLE.includes(row.status)) throw new QueueError("This job is already prepared or sent.");
 
-  const [claimed] = await db.update(applyQueue).set({ status: "preparing", reason: null })
-    .where(and(eq(applyQueue.id, id), eq(applyQueue.ownerId, ownerId), inArray(applyQueue.status, ["waiting", "handoff", "failed"])))
-    .returning();
-  if (!claimed) throw new QueueError("This job is already being prepared.");
+  const claimed = await db.transaction(async (tx) => {
+    const settings = await lockSettings(tx, ownerId);
+    const count = countOn(settings, now);
+    if (count >= settings.dailyLimit) throw new QueueError(`You sent ${count} of ${settings.dailyLimit} today. The rest wait until the count starts again.`);
+    const [busy] = await tx.select({ id: applyQueue.id }).from(applyQueue)
+      .where(and(eq(applyQueue.ownerId, ownerId), eq(applyQueue.status, "preparing"))).limit(1);
+    if (busy) throw new QueueError("The agent is filling another form. Wait for it, then press Prepare.");
+    const [c] = await tx.update(applyQueue).set({ status: "preparing", reason: null })
+      .where(and(eq(applyQueue.id, id), eq(applyQueue.ownerId, ownerId), inArray(applyQueue.status, PREPARABLE)))
+      .returning();
+    if (!c) throw new QueueError("This job is already being prepared.");
+    return c;
+  });
+  // What this prepare may still change: the row as it claimed it. Remove, or the reset of a row left
+  // "preparing" too long, changes it, and then the form this prepare filled closes instead.
+  const mine = and(eq(applyQueue.id, id), eq(applyQueue.status, "preparing"), eq(applyQueue.updatedAt, claimed.updatedAt));
+  const fail = async (status: QueueStatus, reason: string) => {
+    await db.update(applyQueue).set({ status, reason, readyUntil: null }).where(mine);
+    return status;
+  };
 
   const job = await db.query.applications.findFirst({ where: and(eq(applications.id, row.applicationId), eq(applications.ownerId, ownerId)) });
   const cv = await db.query.cvs.findFirst({ where: and(eq(cvs.id, row.cvId), eq(cvs.ownerId, ownerId)) });
-  const fail = async (status: QueueStatus, reason: string) => {
-    await db.update(applyQueue).set({ status, reason, readyUntil: null }).where(eq(applyQueue.id, id));
-    return status;
-  };
   if (!job?.url) return fail("refused", "invalid_url");
+  // marked Applied, or archived, since it was queued: a second application would be a duplicate
+  if (job.status !== "saved" || job.archivedAt) return fail("refused", "not_saved");
   if (!cv) return fail("failed", "cv_missing");
 
   return withLog("applyQueue.prepare", { ownerId, queueId: id }, async () => {
@@ -236,8 +264,13 @@ export async function prepare(ownerId: string, id: string, deps: QueueDeps = {})
       return fail("handoff", result.reason);
     }
     const expiresAt = now.getTime() + READY_MS;
-    putForm(id, { ownerId, session: result.session, screenshot: result.screenshot, cvDir, expiresAt });
-    await db.update(applyQueue).set({ status: "ready", reason: null, readyUntil: new Date(expiresAt) }).where(eq(applyQueue.id, id));
+    await putForm(id, { ownerId, session: result.session, screenshot: result.screenshot, cvDir, expiresAt });
+    const [ok] = await db.update(applyQueue).set({ status: "ready", reason: null, readyUntil: new Date(expiresAt) })
+      .where(mine).returning({ id: applyQueue.id });
+    if (!ok) {
+      await dropForm(id);
+      return "waiting";
+    }
     return "ready";
   });
 }
@@ -286,7 +319,9 @@ export async function screenshotPath(ownerId: string, id: string, now = Date.now
 
 export type SendOutcome =
   | { status: "sent"; confirmation: string }
-  | { status: "unconfirmed" }
+  /** Send was pressed and counts; the page didn't confirm, or asked for something after (`reason`) */
+  | { status: "unconfirmed"; reason?: string }
+  /** the form asked for something before Send was pressed: nothing was sent */
   | { status: "handoff"; reason: string; url: string }
   | { status: "missing"; labels: string[] }
   | { status: "changed" }
@@ -309,20 +344,23 @@ export async function send(ownerId: string, id: string, approval: { digest: stri
   }
 
   const claim = await db.transaction(async (tx) => {
-    await tx.insert(applySettings).values({ ownerId }).onConflictDoNothing();
-    const [settings] = await tx.select().from(applySettings).where(eq(applySettings.ownerId, ownerId)).for("update");
-    const [{ n }] = await tx.select({ n: sql<number>`count(*)::int` }).from(applyQueue).where(and(
-      eq(applyQueue.ownerId, ownerId), inArray(applyQueue.status, COUNTED), gte(applyQueue.sendingAt, dayStart(now)),
-    ));
+    const settings = await lockSettings(tx, ownerId);
+    const n = countOn(settings, now);
     if (n >= settings.dailyLimit) return { ok: false as const, sent: n, limit: settings.dailyLimit };
     const [mine] = await tx.update(applyQueue).set({ status: "sending", sendingAt: now })
       .where(and(eq(applyQueue.id, id), eq(applyQueue.status, "ready"))).returning({ id: applyQueue.id });
-    return mine ? { ok: true as const } : { ok: false as const, sent: n, limit: settings.dailyLimit, gone: true };
+    if (!mine) return { ok: false as const, sent: n, limit: settings.dailyLimit, gone: true };
+    await tx.update(applySettings).set({ countedDay: dayStart(now), sentCount: n + 1 }).where(eq(applySettings.ownerId, ownerId));
+    return { ok: true as const };
   });
   if (!claim.ok) return "gone" in claim ? { status: "closed" } : { status: "limit", sent: claim.sent, limit: claim.limit };
 
   const back = (status: QueueStatus, extra: Partial<typeof applyQueue.$inferInsert> = {}) =>
     db.update(applyQueue).set({ status, ...extra }).where(eq(applyQueue.id, id));
+  /** Send was never pressed after all: the day's count gets this one back. */
+  const uncount = () => db.update(applySettings)
+    .set({ sentCount: sql`greatest(${applySettings.sentCount} - 1, 0)` })
+    .where(and(eq(applySettings.ownerId, ownerId), eq(applySettings.countedDay, dayStart(now))));
 
   return withLog("applyQueue.send", { ownerId, queueId: id }, async () => {
     let r: Awaited<ReturnType<typeof submitApplication>>;
@@ -333,19 +371,27 @@ export async function send(ownerId: string, id: string, approval: { digest: stri
     } catch {
       // before the click (a wrong approval, a broken browser): nothing was sent, it doesn't count
       await back("failed", { reason: "agent_error", sendingAt: null, readyUntil: null });
+      await uncount();
       await dropForm(id);
       return { status: "closed" } as SendOutcome;
     }
     if (r.status === "blocked") {
       await back("ready", { sendingAt: null });
+      await uncount();
       return r.reason === "missing"
         ? { status: "missing", labels: r.missing.map((m) => m.label) }
         : { status: "changed" };
     }
     await dropForm(id);
+    if (r.status === "handoff" && r.clicked) {
+      // the page asked for something after Submit was pressed: the application may have gone out,
+      // so it counts, and the job is not offered to the agent again
+      await back("unconfirmed", { reason: r.reason, readyUntil: null });
+      return { status: "unconfirmed", reason: r.reason };
+    }
     if (r.status === "handoff") {
-      // a handoff after the click is reported as one: the person sees the site and decides
       await back("handoff", { reason: r.reason, sendingAt: null, readyUntil: null });
+      await uncount();
       return { status: "handoff", reason: r.reason, url: r.url };
     }
     if (r.status === "unconfirmed") {

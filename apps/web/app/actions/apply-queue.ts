@@ -7,6 +7,7 @@
 import { z } from "zod";
 import { getOwnerId } from "./_shared";
 import { applyAgentEnabled } from "@/lib/features";
+import { withLog } from "@/lib/log";
 import {
   cancel, dequeue, enqueue, MAX_DAILY_LIMIT, prepare, queueView, QueueError, review, send, setDailyLimit,
   type QueueDeps, type QueueView, type Review, type SendOutcome,
@@ -26,33 +27,36 @@ async function owner(): Promise<string | { ok: false; message: string }> {
   return (await getOwnerId()) ?? SIGNED_OUT;
 }
 
-async function guarded<T extends object>(fn: (ownerId: string) => Promise<T>): Promise<Result<T>> {
+const FAILED = "Something went wrong. Try again.";
+
+/** The owner, the action in the log, and an expected failure as its message; any other as `failed`. */
+async function guarded<T extends object>(action: string, fn: (ownerId: string) => Promise<T>, failed = FAILED): Promise<Result<T>> {
   const o = await owner();
   if (typeof o !== "string") return o;
   try {
-    return { ok: true, ...(await fn(o)) };
+    return { ok: true, ...(await withLog(`applyQueue.${action}`, { ownerId: o }, () => fn(o))) };
   } catch (e) {
     if (e instanceof QueueError) return { ok: false, message: e.message };
-    return { ok: false, message: "Something went wrong. Nothing was sent. Try again." };
+    return { ok: false, message: failed };
   }
 }
 
 const Id = z.string().min(1).max(64);
 
 export async function getMyQueue(): Promise<Result<{ view: QueueView }>> {
-  return guarded(async (ownerId) => ({ view: await queueView(ownerId, deps()) }));
+  return guarded("view", async (ownerId) => ({ view: await queueView(ownerId, deps()) }));
 }
 
 export async function addToQueue(applicationIds: string[], cvId?: string | null): Promise<Result<{ added: number }>> {
   const ids = z.array(Id).max(50).safeParse(applicationIds);
   const cv = Id.nullable().optional().safeParse(cvId);
   if (!ids.success || !cv.success) return { ok: false, message: "Choose the jobs again." };
-  return guarded(async (ownerId) => ({ added: await enqueue(ownerId, ids.data, cv.data ?? null, deps()) }));
+  return guarded("add", async (ownerId) => ({ added: await enqueue(ownerId, ids.data, cv.data ?? null, deps()) }));
 }
 
 export async function removeFromQueue(id: string): Promise<Result> {
   if (!Id.safeParse(id).success) return { ok: false, message: "Choose the job again." };
-  return guarded(async (ownerId) => {
+  return guarded("remove", async (ownerId) => {
     await dequeue(ownerId, id);
     return {};
   });
@@ -61,18 +65,19 @@ export async function removeFromQueue(id: string): Promise<Result> {
 export async function setMyDailyLimit(limit: number): Promise<Result<{ limit: number }>> {
   const n = z.number().int().min(1).max(MAX_DAILY_LIMIT).safeParse(limit);
   if (!n.success) return { ok: false, message: `Choose a limit from 1 to ${MAX_DAILY_LIMIT} a day.` };
-  return guarded(async (ownerId) => ({ limit: await setDailyLimit(ownerId, n.data) }));
+  return guarded("limit", async (ownerId) => ({ limit: await setDailyLimit(ownerId, n.data) }));
 }
 
-/** The agent fills the form; about a minute. */
+/** The agent fills the form; about a minute. Nothing is sent here. */
 export async function prepareQueued(id: string): Promise<Result<{ status: QueueStatus }>> {
   if (!Id.safeParse(id).success) return { ok: false, message: "Choose the job again." };
-  return guarded(async (ownerId) => ({ status: await prepare(ownerId, id, deps()) }));
+  return guarded("prepare", async (ownerId) => ({ status: await prepare(ownerId, id, deps()) }),
+    "Something went wrong. Nothing was sent. Try again.");
 }
 
 export async function getReview(id: string): Promise<Result<{ review: Review | null }>> {
   if (!Id.safeParse(id).success) return { ok: false, message: "Choose the job again." };
-  return guarded(async (ownerId) => ({ review: await review(ownerId, id, deps()) }));
+  return guarded("review", async (ownerId) => ({ review: await review(ownerId, id, deps()) }));
 }
 
 const Approval = z.object({
@@ -84,13 +89,15 @@ const Approval = z.object({
 export async function sendQueued(id: string, approval: { digest: string; answers: Record<string, string | boolean> }): Promise<Result<{ outcome: SendOutcome }>> {
   const a = Approval.safeParse(approval);
   if (!Id.safeParse(id).success || !a.success) return { ok: false, message: "Check your answers and press Send again." };
-  return guarded(async (ownerId) => ({ outcome: await send(ownerId, id, a.data, deps()) }));
+  // after the click an error can't say whether the application went out
+  return guarded("send", async (ownerId) => ({ outcome: await send(ownerId, id, a.data, deps()) }),
+    "Something went wrong while sending. Check Ready to send and your e-mail before you try again.");
 }
 
 /** "Cancel, send nothing": the form closes, the job waits in the queue again. */
 export async function cancelQueued(id: string): Promise<Result> {
   if (!Id.safeParse(id).success) return { ok: false, message: "Choose the job again." };
-  return guarded(async (ownerId) => {
+  return guarded("cancel", async (ownerId) => {
     await cancel(ownerId, id);
     return {};
   });
