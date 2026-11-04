@@ -125,7 +125,31 @@ describe("runJobSearch", () => {
   });
 });
 
+describe("up to N a day", () => {
+  it("adds no more than the search's number a day, over every run that day", async () => {
+    await db.insert(cvs).values({ ownerId: "u1", title: "Base", data: cvData() });
+    const search = await makeSearch(); // 2 a day
+    const first = fakeAi({ count: 3, by_site: { indeed: 3 }, errors: {}, jobs: [posting(1, "SQL"), posting(2, "SQL"), posting(3, "SQL")] });
+    expect((await runJobSearch(search, { fetch: first.f, aiUrl: "http://ai", now: NOW })).added).toBe(2);
+    // later the same day: the boards aren't asked
+    const second = fakeAi({ count: 1, by_site: { indeed: 1 }, errors: {}, jobs: [posting(4, "SQL")] });
+    expect(await runJobSearch(search, { fetch: second.f, aiUrl: "http://ai", now: new Date(NOW.getTime() + 3600e3) }))
+      .toEqual({ found: 0, added: 0, repeats: 0, failed: [] });
+    expect(second.calls).toHaveLength(0);
+    // the next day there is room again
+    const third = fakeAi({ count: 1, by_site: { indeed: 1 }, errors: {}, jobs: [posting(5, "SQL")] });
+    expect((await runJobSearch(search, { fetch: third.f, aiUrl: "http://ai", now: new Date("2026-11-05T04:30:00Z") })).added).toBe(1);
+  });
+});
+
 describe("dueSearches", () => {
+  it("reaches a search that never ran first, then the one run longest ago", async () => {
+    await makeSearch({ ownerId: "old", lastRunAt: new Date("2026-11-01T07:30:00Z") });
+    await makeSearch({ ownerId: "older", lastRunAt: new Date("2026-10-30T07:30:00Z") });
+    await makeSearch({ ownerId: "new" });
+    expect((await dueSearches(NOW, 2)).map((s) => s.ownerId)).toEqual(["new", "older"]);
+  });
+
   it("returns the searches that are on and haven't run since the day began", async () => {
     await makeSearch({ ownerId: "never" });
     await makeSearch({ ownerId: "yesterday", lastRunAt: new Date("2026-11-03T07:30:00Z") });

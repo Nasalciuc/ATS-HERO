@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { jobSearchEnabled } from "@/lib/features";
 import { CRON_SEARCH_GAP_MS } from "@/lib/job-search";
-import { dueSearches, runJobSearch } from "@/lib/job-search-run";
+import { dueSearches, runJobSearch, SEARCH_TIMEOUT_MS } from "@/lib/job-search-run";
 
 export const runtime = "nodejs";
 /** Searches one after another, one every CRON_SEARCH_GAP_MS at most; apps/ai takes up to ~25 s each. */
@@ -9,6 +9,8 @@ export const maxDuration = 300;
 
 /** At most this many searches per call, so a run ends well inside the function's time. */
 const PER_CALL = 8;
+/** No search starts later than this into the call: it may take SEARCH_TIMEOUT_MS to answer. */
+const LAST_START_MS = maxDuration * 1000 - SEARCH_TIMEOUT_MS - 15_000;
 
 /**
  * The daily search's morning run (vercel.json). Searches that are on and haven't run today, the
@@ -24,19 +26,24 @@ export async function GET(req: Request) {
   if (!jobSearchEnabled()) return NextResponse.json({ disabled: true });
 
   const now = new Date();
+  const t0 = Date.now();
   const due = await dueSearches(now, PER_CALL);
+  let ran = 0;
   let added = 0;
   let failed = 0;
   let started = 0;
   for (const search of due) {
     const wait = started + CRON_SEARCH_GAP_MS - Date.now();
     if (started && wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    // the rest stay due: they run first on the next call
+    if (Date.now() - t0 > LAST_START_MS) break;
     started = Date.now();
+    ran++;
     try {
       added += (await runJobSearch(search, { now })).added;
     } catch {
       failed++; // recorded on the search by runJobSearch
     }
   }
-  return NextResponse.json({ searches: due.length, added, failed });
+  return NextResponse.json({ searches: ran, added, failed });
 }

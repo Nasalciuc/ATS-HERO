@@ -84,7 +84,8 @@ export default function SearchPanel({ search, cvs, now, onClose, onSave, onRunNo
     setSaid(null);
     try {
       if (kind === "run") {
-        const r = await onRunNow(input(true));
+        // a search the person turned off stays off: this runs it once
+        const r = await onRunNow(input());
         if (!r.ok) return setSaid({ error: true, text: r.message });
         setRan(true);
         const { found, added, failed } = r.summary;
@@ -134,7 +135,7 @@ export default function SearchPanel({ search, cvs, now, onClose, onSave, onRunNo
         </label>
         <label className="trk-field">
           <span>City <em>(optional)</em></span>
-          <input type="text" value={city} maxLength={100} onChange={(e) => setCity(e.target.value)} />
+          <input type="text" value={city} maxLength={60} onChange={(e) => setCity(e.target.value)} />
         </label>
       </div>
 

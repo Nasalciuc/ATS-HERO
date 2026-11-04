@@ -5,14 +5,14 @@
  * hides a thrown message in production, and the screen needs to say what went wrong.
  */
 import { z } from "zod";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "@/db";
 import { cvs, jobSearches, type JobSearch } from "@/db/schema";
 import { getOwnerId } from "./_shared";
 import { withLog } from "@/lib/log";
 import { jobSearchEnabled } from "@/lib/features";
 import { JOB_BOARDS, JOB_COUNTRIES, MAX_PER_DAY, SEARCH_NOW_GAP_MS } from "@/lib/job-search";
-import { runJobSearch, SearchFailed, type RunSummary } from "@/lib/job-search-run";
+import { addedToday, runJobSearch, SearchFailed, type RunSummary } from "@/lib/job-search-run";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; message: string };
 
@@ -41,7 +41,8 @@ const COUNTRY_IDS = JOB_COUNTRIES.map((c) => c.id) as [string, ...string[]];
 const SearchInput = z.object({
   searchTerm: z.string().trim().min(2).max(100),
   country: z.enum(COUNTRY_IDS),
-  city: z.string().trim().max(100).optional(),
+  // with the country, the place apps/ai gets stays within its 100 characters
+  city: z.string().trim().max(60).optional(),
   remoteOnly: z.boolean().default(false),
   boards: z.array(z.enum(JOB_BOARDS as [string, ...string[]])).min(1).max(JOB_BOARDS.length),
   perDay: z.number().int().min(1).max(MAX_PER_DAY),
@@ -55,7 +56,7 @@ export async function getMyJobSearch(): Promise<MyJobSearch | null> {
   if (!jobSearchEnabled()) return null;
   const ownerId = await getOwnerId();
   if (!ownerId) return null;
-  const row = await db.query.jobSearches.findFirst({ where: eq(jobSearches.ownerId, ownerId) });
+  const row = await withLog("jobSearch.get", { ownerId }, () => db.query.jobSearches.findFirst({ where: eq(jobSearches.ownerId, ownerId) }));
   return row ? serialize(row) : null;
 }
 
@@ -97,11 +98,18 @@ export async function runMyJobSearchNow(): Promise<Result<{ summary: RunSummary;
   if (!ownerId) return SIGNED_OUT;
   const search = await db.query.jobSearches.findFirst({ where: eq(jobSearches.ownerId, ownerId) });
   if (!search) return { ok: false, message: "Save the search first." };
-  if (search.lastRunAt && Date.now() - search.lastRunAt.getTime() < SEARCH_NOW_GAP_MS) {
-    return { ok: false, message: "You searched a moment ago. Try again in a few minutes." };
+  const now = new Date();
+  if (await addedToday(ownerId, now) >= search.perDay) {
+    const n = search.perDay;
+    return { ok: false, message: `Saved already has today’s ${n} new ${n === 1 ? "job" : "jobs"} from the search. The next search runs tomorrow morning.` };
   }
+  // the claim: one "Search now" passes in the gap, even when pressed twice at once
+  const [claimed] = await db.update(jobSearches).set({ lastRunAt: now })
+    .where(and(eq(jobSearches.id, search.id), or(isNull(jobSearches.lastRunAt), lt(jobSearches.lastRunAt, new Date(now.getTime() - SEARCH_NOW_GAP_MS)))))
+    .returning();
+  if (!claimed) return { ok: false, message: "You searched a moment ago. Try again in a few minutes." };
   try {
-    const summary = await runJobSearch(search);
+    const summary = await runJobSearch(claimed, { now });
     const after = await db.query.jobSearches.findFirst({ where: eq(jobSearches.id, search.id) });
     return { ok: true, summary, search: serialize(after ?? search) };
   } catch (e) {

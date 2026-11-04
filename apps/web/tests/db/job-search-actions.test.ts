@@ -95,6 +95,26 @@ describe("saveJobSearch / getMyJobSearch", () => {
   });
 });
 
+describe("runMyJobSearchNow, pressed twice or after the day's jobs", () => {
+  it("runs once when pressed twice at once", async () => {
+    await saveJobSearch(input);
+    const [a, b] = await Promise.all([runMyJobSearchNow(), runMyJobSearchNow()]);
+    expect([a.ok, b.ok].sort()).toEqual([false, true]);
+    expect([a, b].find((r) => !r.ok)).toMatchObject({ message: "You searched a moment ago. Try again in a few minutes." });
+    expect(aiCalls).toBe(1);
+  });
+
+  it("doesn't search once today's jobs are in Saved", async () => {
+    await saveJobSearch({ ...input, perDay: 1 });
+    expect(await runMyJobSearchNow()).toMatchObject({ ok: true, summary: { added: 1 } });
+    await db.update(jobSearches).set({ lastRunAt: new Date(Date.now() - 3600e3) });
+    expect(await runMyJobSearchNow()).toEqual({
+      ok: false, message: "Saved already has today’s 1 new job from the search. The next search runs tomorrow morning.",
+    });
+    expect(aiCalls).toBe(1);
+  });
+});
+
 describe("runMyJobSearchNow", () => {
   it("runs the person's search, then waits a few minutes before another", async () => {
     expect(await runMyJobSearchNow()).toEqual({ ok: false, message: "Save the search first." });
