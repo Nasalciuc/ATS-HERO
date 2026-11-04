@@ -8,4 +8,7 @@ export const K = {
   scans: (userId: string | null | undefined, guestId?: string) => ["scans", scope(userId, guestId)] as const,
   apps:  (userId: string | null | undefined) => ["applications", scope(userId)] as const,
   appEvents: (userId: string | null | undefined, id: string) => ["application-events", scope(userId), id] as const,
+  jobSearch: (userId: string | null | undefined) => ["job-search", scope(userId)] as const,
+  applyQueue: (userId: string | null | undefined) => ["apply-queue", scope(userId)] as const,
+  applyReview: (userId: string | null | undefined, id: string) => ["apply-review", scope(userId), id] as const,
 };

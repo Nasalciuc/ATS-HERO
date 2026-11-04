@@ -2,7 +2,7 @@
  * Tracker v2, the rules on data (TRACKER-V2-DESIGN.md §6): pure functions, no model, no network.
  * The screens and the Server Actions share them, and tests/tracker.test.ts holds them.
  */
-import type { ApplicationStatus, ApplyPlatform } from "./types";
+import type { ApplicationSource, ApplicationStatus, ApplyPlatform } from "./types";
 
 /** "Did you hear back?" comes this many days after sending, and again after "Not yet". */
 export const FOLLOW_UP_DAYS = 14;
@@ -38,6 +38,8 @@ export interface TrackedJob {
   archivedAt: number | null;
   cvId: string | null;
   reachedInterview?: boolean;
+  /** where the job came from: "job_search" for the daily search */
+  source?: ApplicationSource | null;
 }
 
 /** The ATS a link goes to, from its host. Null link: unknown. */

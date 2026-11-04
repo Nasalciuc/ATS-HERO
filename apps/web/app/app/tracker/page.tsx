@@ -13,12 +13,17 @@ import { useCvs } from "@/hooks/use-cvs";
 import { useApplicationEvents, useApplicationMutations, useApplications } from "@/hooks/use-applications";
 import { cvToText, type ApplicationStatus } from "@/lib/types";
 import { jobFit, type JobFitReport } from "@/lib/job-fit";
-import { trackerCsv, type TrackedJob } from "@/lib/tracker";
+import { daysSince, resultsByCv, trackerCsv, type TrackedJob } from "@/lib/tracker";
+import { applyAgentEnabled, jobSearchEnabled } from "@/lib/features";
+import { useJobSearch, useJobSearchMutations } from "@/hooks/use-job-search";
+import { useApplyQueue } from "@/hooks/use-apply-queue";
 import type { FollowUpAnswer } from "@/app/actions/applications";
 import TrackerBoard, { PlusBold, type Fit } from "@/views/tracker/TrackerBoard";
 import JobPanel from "@/views/tracker/JobPanel";
 import AddJobDialog from "@/views/tracker/AddJobDialog";
 import SentDialog from "@/views/tracker/SentDialog";
+import CvResults from "@/views/tracker/CvResults";
+import SearchPanel, { SearchStrip } from "@/views/tracker/SearchPanel";
 
 function downloadCsv(jobs: TrackedJob[]) {
   const blob = new Blob([trackerCsv(jobs)], { type: "text/csv;charset=utf-8" });
@@ -45,7 +50,12 @@ export default function TrackerPage() {
     return () => clearInterval(timer);
   }, []);
   const [failed, setFailed] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   const events = useApplicationEvents(openId);
+  const { search } = useJobSearch();
+  const searchMutations = useJobSearchMutations();
+  const { result: queue } = useApplyQueue();
+  const queued = queue?.ok ? queue.view.rows.filter((r) => ["waiting", "preparing", "ready", "handoff"].includes(r.status)).length : 0;
 
   const list: TrackedJob[] = useMemo(() => jobs ?? [], [jobs]);
   const cvList = useMemo(() => cvs ?? [], [cvs]);
@@ -74,6 +84,21 @@ export default function TrackerPage() {
     for (const [id, r] of Object.entries(reports)) if (r) out[id] = r.required;
     return out;
   }, [reports]);
+
+  const results = useMemo(() => resultsByCv(list, now), [list, now]);
+  const cvLabel = (id: string) =>
+    id === "other"
+      ? { title: "Another file", kind: "Made somewhere else" }
+      : (() => {
+          const cv = cvList.find((c) => c.id === id);
+          return cv ? { title: cv.title, kind: "Saved in ATS Hero" } : { title: "A CV you deleted", kind: "Was in ATS Hero" };
+        })();
+  const firstUnmarked = list.find((j) => j.submittedAt != null && j.status !== "saved" && !j.cvId);
+  const searchToday = useMemo(() => {
+    const fresh = list.filter((j) => j.source === "job_search" && j.status === "saved" && daysSince(j.appliedAt, now) === 0);
+    return { added: fresh.length, allMet: fresh.filter((j) => fit[j.id] && fit[j.id]!.total > 0 && fit[j.id]!.met === fit[j.id]!.total).length };
+  }, [list, now, fit]);
+  const searchOn = jobSearchEnabled() && search !== undefined;
 
   const open = list.find((j) => j.id === openId) ?? null;
   const asked = list.find((j) => j.id === askCv?.id) ?? null;
@@ -115,6 +140,13 @@ export default function TrackerPage() {
       actions={
         signedIn && list.length > 0 ? (
           <>
+            {applyAgentEnabled() && (
+              <a href="/app/tracker/send" className="topbtn topbtn--ghost trk-send-btn">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+                <span className="topbtn__label">Ready to send</span>
+                {queued > 0 && <span className="trk-badge" aria-label={`${queued} in the queue`}>{queued}</span>}
+              </a>
+            )}
             <button type="button" className="topbtn topbtn--ghost topbtn--no-phone" onClick={() => downloadCsv(list)}>
               <DownloadArrow size={18} aria-hidden="true" /> <span className="topbtn__label">Export CSV</span>
             </button>
@@ -139,6 +171,9 @@ export default function TrackerPage() {
       ) : (
         <>
           {failed && <p className="trk-error" role="alert">{failed}</p>}
+          {searchOn && (list.length > 0 || search) && (
+            <SearchStrip search={search ?? null} today={searchToday} onEdit={() => setSearchOpen(true)} />
+          )}
           <TrackerBoard
             jobs={list}
             now={now}
@@ -147,6 +182,8 @@ export default function TrackerPage() {
             onAdd={() => setAdding(true)}
             onStatus={changeStatus}
             onFollowUp={(id, answer: FollowUpAnswer) => void run(() => m.followUp(id, answer))}
+            onSearch={searchOn ? () => setSearchOpen(true) : undefined}
+            afterStats={<CvResults results={results} cvLabel={cvLabel} onMark={() => firstUnmarked && setOpenId(firstUnmarked.id)} />}
           />
         </>
       )}
@@ -185,6 +222,23 @@ export default function TrackerPage() {
               const id = open.id;
               setOpenId(null);
               void run(() => m.remove(id));
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal open={searchOpen} variant="side" onClose={() => setSearchOpen(false)} overlayClassName="trk-drawer" panelClassName="trk-drawer__panel">
+        {searchOpen && (
+          <SearchPanel
+            search={search ?? null}
+            cvs={cvList.map((c) => ({ id: c.id, title: c.title }))}
+            now={now}
+            onClose={() => setSearchOpen(false)}
+            onSave={(input) => searchMutations.save(input)}
+            onRunNow={async (input) => {
+              const saved = await searchMutations.save(input);
+              if (!saved.ok) return saved;
+              return searchMutations.runNow();
             }}
           />
         )}

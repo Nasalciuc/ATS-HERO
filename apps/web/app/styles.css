@@ -7153,6 +7153,701 @@ select.field__input {
   }
 }
 
+/* ---------------- daily search, "Which CV gets answers", "Ready to send", "Check before sending" --------
+   Claude Design canvas "ATS Hero Tracker v2", page "Search & agent" (Ready to send, Daily search, Which CV
+   gets answers, the two phone frames), approved by Scaler on 4 Nov 2026; "Check before sending" is the
+   canvas's Review frame from 3 Nov. */
+.trk-chip--new {
+  background: var(--violet-600);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 11px;
+}
+.trk-tile__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.trk-tile__top .trk-tile__role {
+  flex-grow: 1;
+}
+.trk-row__role .trk-chip--new {
+  margin-left: 8px;
+  vertical-align: 2px;
+}
+.trk-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.trk-check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+.trk-send-btn {
+  position: relative;
+}
+.trk-badge {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: var(--violet-600);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* the daily search's strip over the tracker */
+.trk-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 24px; /* it sits over .trk, outside its gap */
+  padding: 10px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--violet-200);
+  background: rgba(114, 91, 254, 0.07);
+  font-family: var(--font-helvetica);
+}
+.trk-strip__text {
+  flex: 1 1 260px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/* the daily search's panel (in the job card's drawer) */
+.trk-search__lead {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #444444;
+}
+.trk-search__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.trk-search__pair .trk-field select {
+  min-width: 0;
+}
+.trk-search__set {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.trk-search__set legend {
+  margin-bottom: 8px;
+}
+.trk-search__seg {
+  display: flex;
+  gap: 8px;
+}
+.trk-seg {
+  flex: 1 1 0;
+  height: 44px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.trk-seg.is-on {
+  border: 2px solid var(--ink);
+}
+.trk-seg:has(input:focus-visible) {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
+.trk-search__note {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #555555;
+}
+.trk-search__last {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f7f7f7;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.trk-search__said,
+.trk-q__said {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #0a6b35;
+}
+.trk-search__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+}
+.trk-text-btn--danger:disabled {
+  opacity: 0.5;
+}
+
+/* "Which CV gets answers" */
+.trk-bycv {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.trk-bycv__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+}
+.trk-bycv__title {
+  flex-grow: 1;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+.trk-bycv__sub {
+  font-size: 14px;
+  color: #555555;
+}
+.trk-bycv__scroll {
+  position: relative;
+  overflow-x: auto;
+}
+.trk-bycv__table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.trk-bycv__table thead th {
+  padding: 8px 12px 10px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+.trk-bycv__table :is(thead th, tbody th):first-child {
+  padding-left: 0;
+}
+.trk-bycv__table tbody tr {
+  border-top: 1px solid #ececec;
+}
+.trk-bycv__table tbody :is(th, td) {
+  padding: 14px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.trk-bycv__table tbody th {
+  font-weight: 700;
+}
+.trk-bycv__kind {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #555555;
+}
+.trk-bycv__note,
+.trk-bycv__few {
+  font-size: 13px;
+  font-weight: 400;
+  color: #555555;
+}
+/* On a phone the note goes under the CV's name, so the table fits without a sideways scroll. */
+.trk-bycv__few {
+  display: none;
+}
+.trk-bycv__empty,
+.trk-bycv__foot {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #555555;
+}
+.trk-bycv__mark {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff3e0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #5c3200;
+}
+.trk-bycv__mark > span {
+  flex: 1 1 320px;
+}
+.trk-bycv__mark .trk-link {
+  color: #5c3200;
+}
+
+/* "Ready to send" */
+.trk-q {
+  gap: 22px;
+  max-width: 1126px;
+}
+.trk-q__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #5b45e0;
+  text-decoration: none;
+}
+.trk-q__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 24px;
+}
+.trk-q__lead {
+  flex: 1 1 420px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.45;
+  color: #444444;
+  max-width: 680px;
+}
+.trk-q__limit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.trk-q__limit .trk-field select {
+  min-width: 150px;
+}
+.trk-q__count {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  background: #f7f7f7;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.trk-q__banner {
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #fff3e0;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #5c3200;
+}
+.trk-q__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.trk-q__list .trk-label {
+  margin: 0;
+}
+.trk-q__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.trk-q__job {
+  flex: 1 1 300px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.trk-q__role {
+  font-size: 16px;
+  font-weight: 700;
+}
+.trk-q__role .trk-muted {
+  font-weight: 400;
+}
+.trk-q__status {
+  flex: 1 1 260px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #444444;
+}
+.trk-q__ready {
+  color: #5b45e0;
+  font-weight: 700;
+}
+.trk-q__warn {
+  color: #8a4b00;
+  font-weight: 700;
+}
+.trk-q__sent {
+  color: #0a6b35;
+  font-weight: 700;
+}
+.trk-q__actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.trk-q__btn {
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 22px;
+  font-size: 15px;
+  text-decoration: none;
+}
+.trk-pill.trk-q__btn:disabled {
+  border-color: #c9c9c9;
+  color: #6b6b6b;
+  cursor: default;
+}
+.trk-q__site {
+  display: inline-flex;
+  align-items: center;
+}
+.trk-q__remove {
+  padding: 0 6px;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #555555;
+}
+.trk-q__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 32px;
+  border: 1px dashed #c9c9c9;
+  border-radius: 16px;
+}
+.trk-q__empty h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.trk-q__empty p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #444444;
+}
+.trk-q__add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #f7f7f7;
+}
+.trk-q__add-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.trk-q__add-head h2 {
+  flex-grow: 1;
+  margin: 0;
+  font-size: 16px;
+}
+.trk-q__cv {
+  max-width: 360px;
+  margin-top: 8px;
+}
+.trk-q__note {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #555555;
+}
+
+/* "Check before sending" */
+.trk-rv {
+  gap: 22px;
+  max-width: 1126px;
+}
+.trk-rv__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+}
+.trk-rv__timer {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 20px;
+  background: #fff3e0;
+  color: #8a4b00;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.trk-rv__cols {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 28px;
+}
+.trk-rv__shot {
+  flex: 1 1 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+}
+.trk-rv__shot img {
+  width: 100%;
+  max-height: 720px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: #f7f7f7;
+}
+.trk-rv__side {
+  flex: 1 1 420px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.trk-rv__filled,
+.trk-rv__answers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.trk-rv__filled .trk-label,
+.trk-rv__answers .trk-label {
+  margin: 0;
+}
+.trk-rv__table {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.trk-rv__line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 15px;
+}
+.trk-rv__line:last-child {
+  border-bottom: none;
+}
+.trk-rv__line > span:first-child {
+  flex: 0 0 150px;
+  color: #555555;
+}
+.trk-rv__line > strong {
+  flex: 1 1 140px;
+  overflow-wrap: anywhere;
+}
+.trk-rv__line > .trk-muted {
+  align-self: center;
+  font-size: 12px;
+}
+.trk-rv__item {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trk-rv__item.is-open {
+  border: 2px solid var(--violet-600);
+}
+.trk-rv__item :is(select, textarea) {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--ink);
+}
+.trk-rv__item select {
+  height: 44px;
+  padding: 0 12px;
+}
+.trk-rv__item textarea {
+  resize: vertical;
+  line-height: 1.4;
+}
+.trk-rv__q {
+  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.trk-rv__tag {
+  font-weight: 400;
+  color: #6b6b6b;
+}
+.trk-rv__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+}
+.trk-rv__box {
+  align-items: flex-start;
+}
+.trk-rv__box input {
+  margin-top: 1px;
+}
+.trk-rv__send {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  font-size: 14px;
+}
+.trk-rv__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  font-size: 14px;
+}
+.trk-rv__cancel {
+  color: var(--ink);
+}
+.trk-rv__done {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px 24px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  font-family: var(--font-helvetica);
+  font-size: 16px;
+  line-height: 1.45;
+}
+.trk-rv__done.is-sent {
+  border-color: transparent;
+  background: var(--green-tint);
+  color: #0a5c2e;
+}
+.trk-rv__done p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .appshell__actions .trk-send-btn .trk-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 11px;
+  }
+  .trk-strip {
+    margin-bottom: 16px;
+    padding: 10px 14px;
+  }
+  .trk-search__pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .trk-bycv {
+    padding: 16px;
+  }
+  .trk-bycv__table {
+    min-width: 0;
+    font-size: 14px;
+  }
+  .trk-bycv__table thead th {
+    padding: 6px 6px 8px;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .trk-bycv__table tbody :is(th, td) {
+    padding: 12px 6px;
+  }
+  .trk-bycv__table :is(thead th:last-child, .trk-bycv__note) {
+    display: none;
+  }
+  .trk-bycv__few {
+    display: block;
+    margin-top: 4px;
+  }
+  .trk-q__top,
+  .trk-q__limit {
+    align-items: stretch;
+  }
+  .trk-q__limit {
+    width: 100%;
+  }
+  .trk-q__count {
+    flex-grow: 1;
+  }
+  .trk-q__row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+    border: none;
+    background: #f7f7f7;
+    border-radius: 14px;
+  }
+  .trk-q__job,
+  .trk-q__status {
+    flex: none;
+  }
+  .trk-q__actions > :is(a, button):not(.trk-q__remove) {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+  .trk-q__empty {
+    padding: 20px;
+  }
+  .trk-rv__line > span:first-child {
+    flex-basis: 100%;
+  }
+}
+
 /* ============================================================
    ATS CHECK VIEW (Improve / Job Fit results, views/ScorePage.tsx)
    PROVISIONAL (AGENTS.md rule 6): no Figma frame yet (ATS-REAL-VS-NOI.md §6). Built from the
