@@ -17,15 +17,14 @@ let registered = false;
 export function registerFonts(): void {
   if (registered) return;
 
+  // In the browser "/fonts/..." is a URL on our site. On our server (the apply agent attaches the CV,
+  // lib/apply/queue.ts) react-pdf reads a file, so the same fonts come from public/ on disk.
+  const dir = typeof window === "undefined" ? `${process.cwd()}/public/fonts` : "/fonts";
   // Two family names so templates can keep `fontFamily: FONT` / `fontFamily: FONT_BOLD`.
-  Font.register({ family: "CvSans", src: "/fonts/Inter-Regular.ttf" });
-  Font.register({ family: "CvSansBold", src: "/fonts/Inter-Bold.ttf" });
+  Font.register({ family: "CvSans", src: `${dir}/Inter-Regular.ttf` });
+  Font.register({ family: "CvSansBold", src: `${dir}/Inter-Bold.ttf` });
 
   Font.registerHyphenationCallback(hyphenationCallback);
-
-  // NOTE on server-side export: a "/fonts/..." URL resolves in the browser (client-side
-  // download). If you render the PDF in an API route, pass an absolute URL or a filesystem
-  // path instead, e.g. `${process.env.NEXT_PUBLIC_APP_URL}/fonts/Inter-Regular.ttf`.
 
   registered = true;
 }

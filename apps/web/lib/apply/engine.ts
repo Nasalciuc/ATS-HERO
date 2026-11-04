@@ -15,8 +15,8 @@
  * this plan; answer a question itself; get past a CAPTCHA, a code or a login; leave the posting's
  * domains; read the posting's text for instructions (only the controls' own labels feed the plan).
  *
- * No route calls this yet: it runs in the apply lab only (tests/apply-lab), like the job search
- * engine in apps/ai before its screen.
+ * Called by the "Ready to send" queue (lib/apply/queue.ts), behind NEXT_PUBLIC_APPLY_AGENT_ENABLED, and
+ * by the apply lab (tests/apply-lab), which is where it is tested (AGENTS.md rule 11).
  */
 import { mkdtemp } from "node:fs/promises";
 import os from "node:os";
