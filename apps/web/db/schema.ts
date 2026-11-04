@@ -1,10 +1,10 @@
-import { pgTable, text, jsonb, timestamp, doublePrecision, integer,
+import { pgTable, text, jsonb, timestamp, doublePrecision, integer, boolean,
          index, uniqueIndex, check } from "drizzle-orm/pg-core";
 import { relations, sql, type InferSelectModel } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import type {
   CvData, ScanKind, ScoreReport, JobFitReport, TemplateId, ApplicationStatus,
-  ApplicationSource, ApplyPlatform, AppliedVia, ArchiveReason, ApplicationEventKind,
+  ApplicationSource, ApplyPlatform, AppliedVia, ArchiveReason, ApplicationEventKind, JobBoard,
 } from "@/lib/types";
 
 const id = () => text("id").primaryKey().$defaultFn(() => nanoid());
@@ -146,6 +146,38 @@ export const applicationEvents = pgTable("application_events", {
   index("app_events_by_owner").on(t.ownerId),
 ]);
 
+/**
+ * Daily search (canvas "ATS Hero Tracker v2", page "Search & agent"): one per owner. Each morning
+ * the new postings that fit the CV best go to Saved. Only the title and the place reach the boards.
+ */
+export const jobSearches = pgTable("job_searches", {
+  id: id(),
+  ownerId: text("owner_id").notNull(),
+  /** the job title searched for, e.g. "Data Analyst" */
+  searchTerm: text("search_term").notNull(),
+  /** the country as JobSpy names it for Indeed ("romania"); `lib/job-search.ts` lists them */
+  country: text("country").notNull(),
+  city: text("city"),
+  remoteOnly: boolean("remote_only").notNull().default(false),
+  boards: jsonb("boards").$type<JobBoard[]>().notNull(),
+  /** at most this many new jobs go to Saved a day */
+  perDay: integer("per_day").notNull().default(10),
+  /** the CV the postings are checked against; null: the one changed last */
+  cvId: text("cv_id"),
+  enabled: boolean("enabled").notNull().default(true),
+  /** the last run, for "Last search": when, how many found, how many added, what failed */
+  lastRunAt: timestamp("last_run_at", { withTimezone: true }),
+  lastFound: integer("last_found"),
+  lastAdded: integer("last_added"),
+  lastError: text("last_error"),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [
+  uniqueIndex("job_searches_by_owner").on(t.ownerId),
+  check("job_searches_per_day", sql`${t.perDay} BETWEEN 1 AND 20`),
+]);
+
 /* ── relations (app-level; Ep5-7 pattern; NO hard FK to Clerk identity) ── */
 export const usersRelations = relations(users, ({ many }) => ({
   cvs: many(cvs),
@@ -172,3 +204,4 @@ export type Cv   = InferSelectModel<typeof cvs>;
 export type Scan = InferSelectModel<typeof scans>;
 export type Application = InferSelectModel<typeof applications>;
 export type ApplicationEvent = InferSelectModel<typeof applicationEvents>;
+export type JobSearch = InferSelectModel<typeof jobSearches>;
