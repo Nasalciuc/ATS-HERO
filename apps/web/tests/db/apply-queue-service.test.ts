@@ -189,6 +189,17 @@ describe("preparing and checking", () => {
     expect(browser.clicks()).toBe(0);
     expect(browser.closes()).toBe(2);
   });
+
+  it("keeps the CV file while the form is open (a board may read it only at Send), and drops it with the form", async () => {
+    await cvOf("u1");
+    const { row } = await readyJob();
+    const upload = browser.log.find((l) => l.args[0] === "upload");
+    const pdf = upload?.args.at(-1) as string;
+    expect(pdf).toMatch(/Ana_Popescu_CV\.pdf$/);
+    expect(fs.existsSync(pdf)).toBe(true);
+    await cancel("u1", row.id);
+    expect(fs.existsSync(pdf)).toBe(false);
+  });
 });
 
 describe("sending", () => {

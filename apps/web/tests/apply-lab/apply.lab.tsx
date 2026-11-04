@@ -124,6 +124,7 @@ describe("Greenhouse-style: one page, a visible file input, a second file input 
       linkedin: profile.linkedin,
       website: profile.website,
       resume: "Ana_Popescu.pdf",
+      resume_starts: "%PDF-",
       cover_letter_file: "",
       work_auth: "Yes",
       sponsorship: "No",

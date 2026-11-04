@@ -214,27 +214,29 @@ export async function prepare(ownerId: string, id: string, deps: QueueDeps = {})
 
   return withLog("applyQueue.prepare", { ownerId, queueId: id }, async () => {
     const data = cv.data as CvData;
-    const dir = await mkdtemp(path.join(os.tmpdir(), "ats-hero-cv-"));
+    // The browser reads the CV's bytes when the form uploads it, which can be at Send: the file stays
+    // until the form closes (sessions.ts dropForm), and goes now if no form stays open.
+    const cvDir = await mkdtemp(path.join(os.tmpdir(), "ats-hero-cv-"));
+    const dropCv = () => rm(cvDir, { recursive: true, force: true }).catch(() => undefined);
     let result: Prepared;
     try {
-      const cvPdfPath = path.join(dir, pdfName(data.personalInfo.name));
+      const cvPdfPath = path.join(cvDir, pdfName(data.personalInfo.name));
       await writeFile(cvPdfPath, await (deps.renderPdf ?? defaultPdf)(data, cv.template ?? "classic", cv.accent ?? undefined));
       result = await prepareApplication({
         url: job.url as string, profile: applyProfile(data), cvPdfPath, allowLocal: deps.allowLocal, runner: deps.runner,
       });
     } catch {
+      await dropCv();
       return fail("failed", "agent_error");
-    } finally {
-      // the file went into the form already; the form keeps it
-      await rm(dir, { recursive: true, force: true }).catch(() => undefined);
     }
+    if (result.status !== "ready") await dropCv();
     if (result.status === "refused") return fail("refused", result.reason);
     if (result.status === "handoff") {
       await rm(path.dirname(result.screenshot), { recursive: true, force: true }).catch(() => undefined);
       return fail("handoff", result.reason);
     }
     const expiresAt = now.getTime() + READY_MS;
-    putForm(id, { ownerId, session: result.session, screenshot: result.screenshot, expiresAt });
+    putForm(id, { ownerId, session: result.session, screenshot: result.screenshot, cvDir, expiresAt });
     await db.update(applyQueue).set({ status: "ready", reason: null, readyUntil: new Date(expiresAt) }).where(eq(applyQueue.id, id));
     return "ready";
   });

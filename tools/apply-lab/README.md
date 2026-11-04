@@ -1,11 +1,13 @@
 # Apply lab
 
 Synthetic job application forms for the apply agent's engine (`apps/web/lib/apply`), served on
-localhost by `apps/web/tests/apply-lab/apply.lab.tsx`. Design: `APLICARE-CU-AGENT.md` (Project).
+localhost by `apps/web/tests/apply-lab/apply.lab.tsx` (the engine) and `queue.lab.tsx` ("Ready to
+send": the queue, the person's answers and their daily limit, on the real migrations).
+Design: `APLICARE-CU-AGENT.md` (Project).
 
 | Form | Built like | What it checks |
 |---|---|---|
-| `greenhouse.html` | a Greenhouse job board | a visible file input next to a second one for a cover letter; sensitive selects; a source question; a hidden instruction for AI agents; the invisible-reCAPTCHA notice, which is not a challenge |
+| `greenhouse.html` | a Greenhouse job board | a visible file input next to a second one for a cover letter; sensitive selects; a source question; a hidden instruction for AI agents; the invisible-reCAPTCHA notice, which is not a challenge; on submit it reads the CV's first bytes, as a board that uploads at Send would |
 | `lever.html` | a Lever application | the CV behind an "ATTACH" button; full name; current location and company; links; a custom question whose radios sit in a list under it; a U.S. EEO survey; a consent box |
 | `ashby.html` | an Ashby form | values kept in the page's own state (fed only by input events, as React does); an ARIA radiogroup and a fieldset of radios |
 | `captcha.html` | a CAPTCHA challenge before the form | the engine hands over without filling anything |

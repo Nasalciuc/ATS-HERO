@@ -18,6 +18,8 @@ export interface LiveForm {
   session: Session;
   /** the filled form as the page showed it, on this machine */
   screenshot: string;
+  /** the CV's PDF the form holds: the browser may read it only at Send, so it goes when the form does */
+  cvDir?: string;
   expiresAt: number;
 }
 
@@ -40,13 +42,13 @@ export async function getForm(queueId: string, ownerId: string, now = Date.now()
   return f;
 }
 
-/** Closes the browser (unless a send is closing it) and forgets the form and its pictures. */
+/** Closes the browser (unless a send is closing it) and forgets the form, its pictures and the CV file. */
 export async function dropForm(queueId: string): Promise<void> {
   const f = forms.get(queueId);
   if (!f) return;
   forms.delete(queueId);
   await abandonApplication(f.session).catch(() => undefined);
-  await rm(f.session.dir, { recursive: true, force: true }).catch(() => undefined);
+  await Promise.all([f.session.dir, f.cvDir].filter((d): d is string => Boolean(d)).map((d) => rm(d, { recursive: true, force: true }).catch(() => undefined)));
 }
 
 /** For tests: forget every form without touching a browser. */

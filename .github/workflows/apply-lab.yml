@@ -12,6 +12,9 @@ on:
       - "apps/web/tests/apply-lab/**"
       - "apps/web/vitest.apply-lab.config.ts"
       - "tools/apply-lab/**"
+      # queue.lab.tsx runs "Ready to send" on the real migrations
+      - "apps/web/db/schema.ts"
+      - "apps/web/drizzle/**"
       # what the lab's CV is made of: the persona and the PDF the app renders
       - "tools/ats-lab/fixtures/personas.json"
       - "apps/web/components/cv/templates/**"
