@@ -6,6 +6,7 @@
   "crons": [
     { "path": "/api/cron/purge-guests", "schedule": "0 4 * * *" },
     { "path": "/api/cron/billing-audit", "schedule": "0 5 * * *" },
-    { "path": "/api/cron/job-search", "schedule": "30 4 * * *" }
+    { "path": "/api/cron/job-search", "schedule": "30 4 * * *" },
+    { "path": "/api/cron/purge-interviews", "schedule": "15 4 * * *" }
   ]
 }

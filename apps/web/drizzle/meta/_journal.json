@@ -43,6 +43,13 @@
       "when": 1793794217210,
       "tag": "0005_apply_count",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794035819559,
+      "tag": "0006_interview_trainer",
+      "breakpoints": true
     }
   ]
 }

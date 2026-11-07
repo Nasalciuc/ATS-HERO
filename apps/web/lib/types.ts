@@ -109,6 +109,49 @@ export type JobBoard = "indeed" | "linkedin";
 export type QueueStatus =
   | "waiting" | "preparing" | "ready" | "sending" | "sent" | "unconfirmed" | "handoff" | "refused" | "failed";
 
+/* ── Interview Trainer (ANTRENOR-INTERVIU-VOCE.md §12; canvas "ATS Hero Tracker v2", page "Interview trainer") ── */
+/** The interview practised (IV-1). */
+export type InterviewKind = "recruiter" | "technical" | "manager";
+/** How hard the interviewer pushes (IV-11). Tough insists on numbers; it never mocks. */
+export type InterviewStyle = "friendly" | "neutral" | "tough";
+/** How the person answers: speaking, or typing (the fallback, with the same feedback). */
+export type InterviewMode = "voice" | "typing";
+/** live ⇄ paused → done. A session ended early is done too, with what was said. */
+export type InterviewStatus = "live" | "paused" | "done";
+/** When the feedback shows (IV-15): after each answer, or at the end, like a real interview. */
+export type InterviewFeedbackWhen = "each" | "end";
+/** "Do you feel more prepared?" at the end of a report (B7): an answer, never text. */
+export type InterviewPrepared = "yes" | "a_bit" | "no";
+/** A CV line a question is tied to: where it is in the CV ("work.0.highlights.2") and its words then. */
+export type CvBulletRef = { ref: string; text: string };
+/**
+ * One question of a session's pack. Every question is tied to a CV line that exists (APPLY-COPILOT-DESIGN.md
+ * §11) and, when it asks about one, to a requirement of the post (Job Fit's words).
+ */
+export type InterviewQuestion = { id: string; text: string; requirement: string | null; bullet: CvBulletRef };
+export type InterviewPack = { questions: InterviewQuestion[] };
+/** What an answer measured, without AI (IV-17): information, never a grade. */
+export type InterviewMeasures = {
+  seconds: number;
+  words: number;
+  wordsPerMinute: number;
+  /** pauses longer than 3 s inside the answer (voice only; 0 when typed) */
+  longPauses: number;
+  fillers: { word: string; count: number }[];
+};
+/** One criterion of an answer (IV-6): met or not, with the person's words that show it. */
+export type InterviewCriterion = {
+  key: "situation" | "task" | "action" | "result" | "proof" | "requirement";
+  met: boolean;
+  quote: string | null;
+};
+/** The feedback on one answer: criteria, vague phrases with their question (IV-13), English notes (IV-12, at most 3). */
+export type InterviewFeedback = {
+  criteria: InterviewCriterion[];
+  vague: { phrase: string; ask: string }[];
+  english: { quote: string; better: string }[];
+};
+
 /** Presentation preference stored on a CV. Canonical union lives with the templates. */
 export type { TemplateId } from "../components/cv/templates";
 

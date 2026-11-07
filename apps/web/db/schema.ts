@@ -5,6 +5,8 @@ import { nanoid } from "nanoid";
 import type {
   CvData, ScanKind, ScoreReport, JobFitReport, TemplateId, ApplicationStatus,
   ApplicationSource, ApplyPlatform, AppliedVia, ArchiveReason, ApplicationEventKind, JobBoard, QueueStatus,
+  InterviewKind, InterviewStyle, InterviewMode, InterviewStatus, InterviewFeedbackWhen, InterviewPrepared,
+  InterviewPack, CvBulletRef, InterviewMeasures, InterviewFeedback,
 } from "@/lib/types";
 
 const id = () => text("id").primaryKey().$defaultFn(() => nanoid());
@@ -222,6 +224,86 @@ export const applySettings = pgTable("apply_settings", {
   check("apply_settings_daily_limit", sql`${t.dailyLimit} BETWEEN 1 AND 10`),
 ]);
 
+/**
+ * Interview Trainer (ANTRENOR-INTERVIU-VOCE.md §12.7): one row per practice session, for a job in the
+ * Tracker and one of the person's CVs. Signed-in only. The voice is never kept (IV-5): a session holds
+ * the questions, the transcript and the feedback, deleted with the job, the account, from its report,
+ * or on their own INTERVIEW_RETENTION_DAYS after the session (lib/retention.ts).
+ */
+export const interviewSessions = pgTable("interview_sessions", {
+  id: id(),
+  ownerId: text("owner_id").notNull(),
+  /** the job practised for; a pasted post becomes a Saved job first (IV-19) */
+  applicationId: text("application_id").notNull(),
+  /** the CV the questions come from */
+  cvId: text("cv_id").notNull(),
+  kind: text("kind").$type<InterviewKind>().notNull(),
+  style: text("style").$type<InterviewStyle>().notNull(),
+  /** the length chosen at setup: 10 or 20 minutes */
+  minutes: integer("minutes").notNull(),
+  mode: text("mode").$type<InterviewMode>().notNull(),
+  feedbackWhen: text("feedback_when").$type<InterviewFeedbackWhen>().notNull().default("each"),
+  /** the 2-minute answer timer (IV-14): off until the person turns it on */
+  timer: boolean("timer").notNull().default(false),
+  /** English notes on each answer (IV-12): on until the person turns them off */
+  englishNotes: boolean("english_notes").notNull().default(true),
+  /** the questions, made at Start; each tied to a CV line that exists */
+  pack: jsonb("pack").$type<InterviewPack>().notNull(),
+  status: text("status").$type<InterviewStatus>().notNull().default("live"),
+  /** the round the session is in (IV-4: rounds of at most 7 minutes) */
+  round: integer("round").notNull().default(1),
+  /** how long the session was open, counted against the limit */
+  secondsUsed: integer("seconds_used").notNull().default(0),
+  /** "Practice these again" made this session from that one (IV-16) */
+  fromSessionId: text("from_session_id"),
+  /** the answer to "Do you feel more prepared?", if given */
+  prepared: text("prepared").$type<InterviewPrepared>(),
+  createdAt: createdAt(),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [
+  index("interview_sessions_by_owner").on(t.ownerId, t.createdAt),
+  index("interview_sessions_by_application").on(t.applicationId),
+  check("interview_sessions_kind", sql`${t.kind} IN ('recruiter', 'technical', 'manager')`),
+  check("interview_sessions_style", sql`${t.style} IN ('friendly', 'neutral', 'tough')`),
+  check("interview_sessions_minutes", sql`${t.minutes} IN (10, 20)`),
+  check("interview_sessions_mode", sql`${t.mode} IN ('voice', 'typing')`),
+]);
+
+/**
+ * One question and its answer, in order. Written once, when the answer is in: the question, the
+ * answer and what it measured never change. The feedback and the stronger answer are added once,
+ * when they are ready (after each answer, or at the end), and never rewritten. Only deleted.
+ */
+export const interviewTurns = pgTable("interview_turns", {
+  id: id(),
+  sessionId: text("session_id").notNull(),
+  ownerId: text("owner_id").notNull(),
+  /** the order in the session, from 1 */
+  position: integer("position").notNull(),
+  round: integer("round").notNull(),
+  /** a question of the pack, or a follow-up on what the person said */
+  kind: text("kind").$type<"question" | "follow_up">().notNull(),
+  /** the pack question this turn belongs to (a follow-up keeps its question's id) */
+  questionId: text("question_id").notNull(),
+  question: text("question").notNull(),
+  requirement: text("requirement"),
+  bullet: jsonb("bullet").$type<CvBulletRef>(),
+  /** what the interviewer heard, or what was typed; null: the question was skipped */
+  answer: text("answer"),
+  answeredBy: text("answered_by").$type<InterviewMode>(),
+  measures: jsonb("measures").$type<InterviewMeasures>(),
+  feedback: jsonb("feedback").$type<InterviewFeedback>(),
+  /** a stronger answer, made only from what the person said and their CV (IV-7) */
+  better: text("better"),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("interview_turns_by_session").on(t.sessionId, t.position),
+  index("interview_turns_by_owner").on(t.ownerId),
+  check("interview_turns_kind", sql`${t.kind} IN ('question', 'follow_up')`),
+]);
+
 /* ── relations (app-level; Ep5-7 pattern; NO hard FK to Clerk identity) ── */
 export const usersRelations = relations(users, ({ many }) => ({
   cvs: many(cvs),
@@ -250,3 +332,5 @@ export type Application = InferSelectModel<typeof applications>;
 export type ApplicationEvent = InferSelectModel<typeof applicationEvents>;
 export type JobSearch = InferSelectModel<typeof jobSearches>;
 export type QueueItem = InferSelectModel<typeof applyQueue>;
+export type InterviewSession = InferSelectModel<typeof interviewSessions>;
+export type InterviewTurn = InferSelectModel<typeof interviewTurns>;

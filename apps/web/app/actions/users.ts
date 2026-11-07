@@ -2,6 +2,7 @@
 import { db } from "@/db";
 import { users, cvs, scans, aiUsage, applications, applicationEvents, jobSearches, applyQueue, applySettings } from "@/db/schema";
 import { dropOwnerForms } from "@/lib/apply/sessions";
+import { removeInterviewData } from "@/lib/interview/store";
 import { eq } from "drizzle-orm";
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { withLog } from "@/lib/log";
@@ -41,6 +42,8 @@ export async function deleteAccount() {
     // and decide the retention policy for subscriptionEvents (delete vs anonymize). Tracked for
     // the Ⓑ billing-activation milestone — do not implement against an unprovisioned account.
     await db.transaction(async (tx) => {
+      // interview practice: every session and its transcript (ANTRENOR-INTERVIU-VOCE.md §6)
+      await removeInterviewData(tx, userId);
       await tx.delete(applyQueue).where(eq(applyQueue.ownerId, userId));
       await tx.delete(applySettings).where(eq(applySettings.ownerId, userId));
       await tx.delete(jobSearches).where(eq(jobSearches.ownerId, userId));
