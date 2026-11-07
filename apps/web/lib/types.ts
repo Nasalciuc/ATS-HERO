@@ -138,6 +138,10 @@ export type InterviewMeasures = {
   /** pauses longer than 3 s inside the answer (voice only; 0 when typed) */
   longPauses: number;
   fillers: { word: string; count: number }[];
+  /** the question's requirement skills the answer named, as Job Fit names them */
+  named?: string[];
+  /** the facts of the question's CV line (numbers, tools) the answer used, and those it didn't */
+  cvFacts?: { used: string[]; unused: string[] };
 };
 /** One criterion of an answer (IV-6): met or not, with the person's words that show it. */
 export type InterviewCriterion = {
