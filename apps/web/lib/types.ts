@@ -122,7 +122,7 @@ export type InterviewStatus = "live" | "paused" | "done";
 export type InterviewFeedbackWhen = "each" | "end";
 /** "Do you feel more prepared?" at the end of a report (B7): an answer, never text. */
 export type InterviewPrepared = "yes" | "a_bit" | "no";
-/** A CV line a question is tied to: where it is in the CV ("work.0.highlights.2") and its words then. */
+/** A CV line a question is tied to: where it is in the CV ("work.0.2": the first job's third line) and its words then. */
 export type CvBulletRef = { ref: string; text: string };
 /**
  * One question of a session's pack. Every question is tied to a CV line that exists (APPLY-COPILOT-DESIGN.md
