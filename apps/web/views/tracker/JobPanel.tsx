@@ -36,6 +36,8 @@ export interface JobPanelProps {
   onArchive: () => void;
   onUnarchive: () => void;
   onDelete: () => void;
+  /** the Interview Trainer, while its switch is on: where to practise this job, and how many times it was */
+  practice?: { href: string; times: number };
 }
 
 function eventText(e: PanelEvent): string {
@@ -164,6 +166,18 @@ export default function JobPanel(p: JobPanelProps) {
           <p className="trk-panel__cv">
             {p.cvSentTitle ? <strong>{p.cvSentTitle}</strong> : <span className="trk-muted">Not marked yet</span>}
             <button type="button" className="trk-link" onClick={p.onAskCv}>{p.cvSentTitle ? "Change" : "What did you send?"}</button>
+          </p>
+        </section>
+      )}
+
+      {p.practice && (
+        <section className="trk-panel__section" aria-label="Interview practice">
+          <h3 className="trk-label">Interview practice</h3>
+          <p className="trk-panel__practice">
+            <a href={p.practice.href} className="trk-pill trk-panel__practice-btn">Practice this interview</a>
+            {p.practice.times > 0 && (
+              <span className="trk-muted">Practiced {p.practice.times === 1 ? "once" : p.practice.times === 2 ? "twice" : `${p.practice.times} times`}</span>
+            )}
           </p>
         </section>
       )}

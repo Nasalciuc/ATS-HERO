@@ -11,7 +11,7 @@
  * - deleting a session takes its turns; deleting the job or the account takes the job's sessions;
  * - every session goes on its own INTERVIEW_RETENTION_DAYS after it started (purgeOldSessions).
  */
-import { and, asc, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   applications, cvs, interviewSessions, interviewTurns, type InterviewSession, type InterviewTurn,
@@ -23,6 +23,18 @@ import type {
 } from "@/lib/types";
 
 export class InterviewError extends Error {}
+
+/** Sessions a person can start in a calendar month (IV-9: the paid plan's; the beta gets the paid limits, AG-18). */
+export const INTERVIEW_SESSIONS_PER_MONTH = 20;
+/** The first moment of the month (UTC) the limit counts from. */
+export const monthStart = (now: Date) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+/** Sessions the owner started this month, for "18 of 20 sessions left this month". */
+export async function countThisMonth(ownerId: string, now = new Date()): Promise<number> {
+  const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(interviewSessions)
+    .where(and(eq(interviewSessions.ownerId, ownerId), gte(interviewSessions.createdAt, monthStart(now))));
+  return Number(row?.n ?? 0);
+}
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -54,12 +66,22 @@ export type NewTurn = {
   measures?: InterviewMeasures | null;
 };
 
-/** Starts a session for one of the owner's jobs, with one of their CVs and a pack whose questions all have a CV line. */
-export async function createSession(ownerId: string, input: NewSession): Promise<InterviewSession> {
+/**
+ * Starts a session for one of the owner's jobs, with one of their CVs and a pack whose questions all
+ * have a CV line. With `limit`, the month's count is checked in the same transaction, under a lock on
+ * the owner, so two starts at once can't both pass it.
+ */
+export async function createSession(ownerId: string, input: NewSession, limit?: { max: number; now?: Date }): Promise<InterviewSession> {
   if (!input.pack.questions.length) throw new InterviewError("No questions");
   if (input.pack.questions.some((q) => !q.bullet?.ref || !q.bullet.text.trim()))
     throw new InterviewError("A question without a CV line");
   return db.transaction(async (tx) => {
+    if (limit) {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${"interview:" + ownerId}))`);
+      const [row] = await tx.select({ n: sql<number>`count(*)::int` }).from(interviewSessions)
+        .where(and(eq(interviewSessions.ownerId, ownerId), gte(interviewSessions.createdAt, monthStart(limit.now ?? new Date()))));
+      if (Number(row?.n ?? 0) >= limit.max) throw new InterviewError("limit");
+    }
     // ids come from the client: the job, the CV and the earlier session must be the owner's
     const [job] = await tx.select({ id: applications.id }).from(applications)
       .where(and(eq(applications.id, input.applicationId), eq(applications.ownerId, ownerId)));

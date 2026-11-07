@@ -4,7 +4,7 @@
  * job). A link that is already in the tracker is caught while it is typed (the same key the server
  * dedupes on, lib/job-url.ts), and the dialog offers the job that exists instead of a second one.
  */
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Modal from "@/components/ui/Modal";
 import { jobUrlKey } from "@/lib/job-url";
 import { MAX_DESCRIPTION_CHARS, STATUS_LABEL, shortDate, type TrackedJob } from "@/lib/tracker";
@@ -25,6 +25,12 @@ export interface AddJobDialogProps {
   onAdd: (job: NewJob) => Promise<unknown>;
   /** the link is already in the tracker: open that job instead */
   onOpenJob: (id: string) => void;
+  /**
+   * The Interview Trainer's "Add and practice" (IV-19): the job goes in as Saved, so the dialog
+   * doesn't ask where it is, and it starts from what was pasted.
+   */
+  practice?: boolean;
+  initial?: { url?: string; description?: string };
 }
 
 function existingLine(j: TrackedJob): string {
@@ -35,7 +41,7 @@ function existingLine(j: TrackedJob): string {
   return [STATUS_LABEL[j.status].toLowerCase(), sent].filter(Boolean).join(", ");
 }
 
-export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob }: AddJobDialogProps) {
+export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob, practice = false, initial }: AddJobDialogProps) {
   const [url, setUrl] = useState("");
   const [company, setCompany] = useState("");
   const [role, setRole] = useState("");
@@ -43,6 +49,15 @@ export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob }: 
   const [status, setStatus] = useState<"saved" | "applied">("saved");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // what was pasted, each time the dialog opens
+  const initialUrl = initial?.url ?? "";
+  const initialDescription = initial?.description ?? "";
+  useEffect(() => {
+    if (!open || (!initialUrl && !initialDescription)) return;
+    setUrl(initialUrl);
+    setDescription(initialDescription);
+  }, [open, initialUrl, initialDescription]);
 
   const existing = useMemo(() => {
     const key = jobUrlKey(url.trim());
@@ -60,7 +75,7 @@ export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob }: 
     setBusy(true);
     setError(null);
     try {
-      await onAdd({ url: url.trim(), company: company.trim(), role: role.trim(), description, status });
+      await onAdd({ url: url.trim(), company: company.trim(), role: role.trim(), description, status: practice ? "saved" : status });
       reset();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add the job. Try again.");
@@ -72,7 +87,7 @@ export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob }: 
   return (
     <Modal open={open} onClose={close} overlayClassName="trk-modal" panelClassName="trk-dialog">
       <form className="trk-dialog__form" onSubmit={submit}>
-        <h2 className="trk-dialog__title">Add a job</h2>
+        <h2 className="trk-dialog__title">{practice ? "Add a job to practice for" : "Add a job"}</h2>
 
         <label className="trk-field">
           <span>Job link</span>
@@ -84,7 +99,7 @@ export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob }: 
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01" /><path d="M11 12h1v4h1" /></svg>
             <span>
               This job is already in your tracker: <strong>{existing.role} at {existing.company}</strong>, {existingLine(existing)}.{" "}
-              <button type="button" className="trk-link trk-link--inline" onClick={() => { reset(); onOpenJob(existing.id); }}>Open it</button>
+              <button type="button" className="trk-link trk-link--inline" onClick={() => { reset(); onOpenJob(existing.id); }}>{practice ? "Practice for it" : "Open it"}</button>
             </span>
           </p>
         )}
@@ -103,21 +118,25 @@ export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob }: 
             </div>
 
             <label className="trk-field">
-              <span>The post’s text <em>optional · we check what it asks for against your CV</em></span>
+              <span>The post’s text <em>{practice ? "optional · the questions ask about what it asks for" : "optional · we check what it asks for against your CV"}</em></span>
               <textarea rows={5} maxLength={MAX_DESCRIPTION_CHARS} placeholder="Paste the job description" value={description} onChange={(e) => setDescription(e.target.value)} />
             </label>
 
-            <fieldset className="trk-choice">
-              <legend>Where is it?</legend>
-              <div className="trk-choice__row">
-                <label className={`trk-radio${status === "saved" ? " is-on" : ""}`}>
-                  <input type="radio" name="trk-where" checked={status === "saved"} onChange={() => setStatus("saved")} /> Saved, not sent yet
-                </label>
-                <label className={`trk-radio${status === "applied" ? " is-on" : ""}`}>
-                  <input type="radio" name="trk-where" checked={status === "applied"} onChange={() => setStatus("applied")} /> I already applied
-                </label>
-              </div>
-            </fieldset>
+            {practice ? (
+              <p className="trk-panel__note">We add it to your Tracker as Saved.</p>
+            ) : (
+              <fieldset className="trk-choice">
+                <legend>Where is it?</legend>
+                <div className="trk-choice__row">
+                  <label className={`trk-radio${status === "saved" ? " is-on" : ""}`}>
+                    <input type="radio" name="trk-where" checked={status === "saved"} onChange={() => setStatus("saved")} /> Saved, not sent yet
+                  </label>
+                  <label className={`trk-radio${status === "applied" ? " is-on" : ""}`}>
+                    <input type="radio" name="trk-where" checked={status === "applied"} onChange={() => setStatus("applied")} /> I already applied
+                  </label>
+                </div>
+              </fieldset>
+            )}
           </>
         )}
 
@@ -126,7 +145,7 @@ export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob }: 
         <div className="trk-dialog__buttons">
           <button type="button" className="trk-btn trk-btn--ghost" onClick={close}>Cancel</button>
           <button type="submit" className="trk-btn" disabled={busy}>
-            {existing ? "Open the job" : busy ? "Adding…" : "Add job"}
+            {existing ? (practice ? "Practice for it" : "Open the job") : busy ? "Adding…" : practice ? "Add and practice" : "Add job"}
           </button>
         </div>
       </form>

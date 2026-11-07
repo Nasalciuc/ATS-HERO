@@ -8,8 +8,9 @@ import { MenuIcon } from "../icons";
 import { ChevronUp, UserOutline } from "../figma-icons";
 import SignInModal from "../modals/SignInModal";
 import { FeedbackLink } from "./FeedbackLink";
+import { interviewTrainerEnabled } from "@/lib/features";
 
-type NavKey = "cvs" | "create" | "improve" | "jobfit" | "tracker";
+type NavKey = "cvs" | "create" | "improve" | "jobfit" | "tracker" | "interview";
 
 type NavItem = { key: NavKey; label: string; to: string; count?: number };
 
@@ -19,13 +20,15 @@ const SECTION: Record<NavKey, string> = {
   improve: "Improve CV",
   jobfit: "Job Fit",
   tracker: "Tracker",
+  interview: "Interview Trainer",
   cvs: "My Resumes",
 };
 
 /**
  * Figma "Menu": Create / Improve / Check Job Fit, then "My Resumes (n)" once there is a CV to go
  * back to (the Figma variant with a count). Tracker is ours (not in Figma) and needs an account,
- * so a guest never sees it. The only other addition is the small Feedback link at the bottom.
+ * so a guest never sees it; so does the Interview Trainer after it (canvas "ATS Hero Tracker v2",
+ * IV-18), while its switch is on. The only other addition is the small Feedback link at the bottom.
  */
 function navItems(cvCount: number, signedIn: boolean, active: NavKey): NavItem[] {
   const items: NavItem[] = [
@@ -35,6 +38,8 @@ function navItems(cvCount: number, signedIn: boolean, active: NavKey): NavItem[]
   ];
   if (cvCount > 0 || active === "cvs") items.push({ key: "cvs", label: "My Resumes", to: "/app", count: cvCount });
   if (signedIn || active === "tracker") items.push({ key: "tracker", label: "Tracker", to: "/app/tracker" });
+  if (interviewTrainerEnabled() && (signedIn || active === "interview"))
+    items.push({ key: "interview", label: "Interview Trainer", to: "/app/interview" });
   return items;
 }
 
