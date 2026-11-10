@@ -29,7 +29,7 @@ beforeEach(async () => {
   aiCalls = 0;
   aiCalledAt = [];
   vi.stubEnv("NEXT_PUBLIC_JOB_SEARCH_ENABLED", "true");
-  vi.stubEnv("CRON_SECRET", "s3cret");
+  vi.stubEnv("CRON_SECRET", "test-secret");
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubGlobal("fetch", async () => {
@@ -167,20 +167,20 @@ describe("/api/cron/job-search", () => {
     await saveJobSearch(input);
     holder.owner = "u3";
     await saveJobSearch({ ...input, enabled: false });
-    const res = await call("Bearer s3cret");
+    const res = await call("Bearer test-secret");
     expect(await res.json()).toEqual({ searches: 2, added: 2, failed: 0 });
     const owners = (await db.select().from(applications)).map((a) => a.ownerId).sort();
     expect(owners).toEqual(["u1", "u2"]);
     // no faster than apps/ai takes them from one address
     expect(aiCalledAt[1] - aiCalledAt[0]).toBeGreaterThanOrEqual(290);
     // a second call the same day finds nothing due
-    expect(await (await call("Bearer s3cret")).json()).toEqual({ searches: 0, added: 0, failed: 0 });
+    expect(await (await call("Bearer test-secret")).json()).toEqual({ searches: 0, added: 0, failed: 0 });
   });
 
   it("does nothing when switched off", async () => {
     await saveJobSearch(input);
     vi.stubEnv("NEXT_PUBLIC_JOB_SEARCH_ENABLED", "false");
-    expect(await (await call("Bearer s3cret")).json()).toEqual({ disabled: true });
+    expect(await (await call("Bearer test-secret")).json()).toEqual({ disabled: true });
     expect(aiCalls).toBe(0);
   });
 });
