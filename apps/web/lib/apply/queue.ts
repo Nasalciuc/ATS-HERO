@@ -99,7 +99,7 @@ async function settle(ownerId: string, now: Date): Promise<void> {
   for (const row of ready) {
     if (await getForm(row.id, ownerId, now.getTime())) continue;
     await db.update(applyQueue).set({ status: "waiting", reason: "expired", readyUntil: null })
-      .where(and(eq(applyQueue.id, row.id), eq(applyQueue.status, "ready")));
+      .where(and(mine, eq(applyQueue.id, row.id), eq(applyQueue.status, "ready")));
   }
 }
 
@@ -227,7 +227,7 @@ export async function prepare(ownerId: string, id: string, deps: QueueDeps = {})
   });
   // What this prepare may still change: the row as it claimed it. Remove, or the reset of a row left
   // "preparing" too long, changes it, and then the form this prepare filled closes instead.
-  const mine = and(eq(applyQueue.id, id), eq(applyQueue.status, "preparing"), eq(applyQueue.updatedAt, claimed.updatedAt));
+  const mine = and(eq(applyQueue.id, id), eq(applyQueue.ownerId, ownerId), eq(applyQueue.status, "preparing"), eq(applyQueue.updatedAt, claimed.updatedAt));
   const fail = async (status: QueueStatus, reason: string) => {
     await db.update(applyQueue).set({ status, reason, readyUntil: null }).where(mine);
     return status;
@@ -297,7 +297,7 @@ export async function review(ownerId: string, id: string, deps: QueueDeps = {}):
   const form = await getForm(id, ownerId, now.getTime());
   if (!form) {
     await db.update(applyQueue).set({ status: "waiting", reason: "expired", readyUntil: null })
-      .where(and(eq(applyQueue.id, id), eq(applyQueue.status, "ready")));
+      .where(and(eq(applyQueue.id, id), eq(applyQueue.ownerId, ownerId), eq(applyQueue.status, "ready")));
     return null;
   }
   const job = await db.query.applications.findFirst({ where: and(eq(applications.id, row.applicationId), eq(applications.ownerId, ownerId)) });
@@ -339,7 +339,7 @@ export async function send(ownerId: string, id: string, approval: { digest: stri
   const form = await getForm(id, ownerId, now.getTime());
   if (!form) {
     await db.update(applyQueue).set({ status: "waiting", reason: "expired", readyUntil: null })
-      .where(and(eq(applyQueue.id, id), eq(applyQueue.status, "ready")));
+      .where(and(eq(applyQueue.id, id), eq(applyQueue.ownerId, ownerId), eq(applyQueue.status, "ready")));
     return { status: "closed" };
   }
 
@@ -348,7 +348,7 @@ export async function send(ownerId: string, id: string, approval: { digest: stri
     const n = countOn(settings, now);
     if (n >= settings.dailyLimit) return { ok: false as const, sent: n, limit: settings.dailyLimit };
     const [mine] = await tx.update(applyQueue).set({ status: "sending", sendingAt: now })
-      .where(and(eq(applyQueue.id, id), eq(applyQueue.status, "ready"))).returning({ id: applyQueue.id });
+      .where(and(eq(applyQueue.id, id), eq(applyQueue.ownerId, ownerId), eq(applyQueue.status, "ready"))).returning({ id: applyQueue.id });
     if (!mine) return { ok: false as const, sent: n, limit: settings.dailyLimit, gone: true };
     await tx.update(applySettings).set({ countedDay: dayStart(now), sentCount: n + 1 }).where(eq(applySettings.ownerId, ownerId));
     return { ok: true as const };
@@ -356,7 +356,7 @@ export async function send(ownerId: string, id: string, approval: { digest: stri
   if (!claim.ok) return "gone" in claim ? { status: "closed" } : { status: "limit", sent: claim.sent, limit: claim.limit };
 
   const back = (status: QueueStatus, extra: Partial<typeof applyQueue.$inferInsert> = {}) =>
-    db.update(applyQueue).set({ status, ...extra }).where(eq(applyQueue.id, id));
+    db.update(applyQueue).set({ status, ...extra }).where(and(eq(applyQueue.id, id), eq(applyQueue.ownerId, ownerId)));
   /** Send was never pressed after all: the day's count gets this one back. */
   const uncount = () => db.update(applySettings)
     .set({ sentCount: sql`greatest(${applySettings.sentCount} - 1, 0)` })
@@ -400,13 +400,13 @@ export async function send(ownerId: string, id: string, approval: { digest: stri
     }
     await db.transaction(async (tx) => {
       await tx.update(applyQueue).set({ status: "sent", sentAt: now, confirmation: r.confirmation.slice(0, 120), readyUntil: null })
-        .where(eq(applyQueue.id, id));
+        .where(and(eq(applyQueue.id, id), eq(applyQueue.ownerId, ownerId)));
       const job = await tx.query.applications.findFirst({ where: and(eq(applications.id, row.applicationId), eq(applications.ownerId, ownerId)) });
       if (!job) return;
       await tx.update(applications).set({
         status: job.status === "saved" ? "applied" : job.status,
         submittedAt: job.submittedAt ?? now, appliedVia: "agent", cvId: row.cvId,
-      }).where(eq(applications.id, job.id));
+      }).where(and(eq(applications.id, job.id), eq(applications.ownerId, ownerId)));
       const events: (typeof applicationEvents.$inferInsert)[] = [];
       if (job.status === "saved") events.push({ applicationId: job.id, ownerId, kind: "status_changed", fromStatus: "saved", toStatus: "applied", at: now });
       events.push({ applicationId: job.id, ownerId, kind: "cv_sent", at: now });

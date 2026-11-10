@@ -125,6 +125,18 @@ describe("runJobSearch", () => {
   });
 });
 
+describe("runJobSearch, whose search it writes", () => {
+  it("records the run only on its owner's search", async () => {
+    const search = await makeSearch();
+    const { f } = fakeAi({ count: 0, by_site: { indeed: 0 }, errors: {}, jobs: [] });
+    // the same id under another owner's name: u1's search is not this run's to write
+    expect(await runJobSearch({ ...search, ownerId: "u2" }, { fetch: f, aiUrl: "http://ai", now: NOW }))
+      .toEqual({ found: 0, added: 0, repeats: 0, failed: [] });
+    const [row] = await db.select().from(jobSearches).where(eq(jobSearches.id, search.id));
+    expect([row.ownerId, row.lastRunAt, row.lastFound]).toEqual(["u1", null, null]);
+  });
+});
+
 describe("up to N a day", () => {
   it("adds no more than the search's number a day, over every run that day", async () => {
     await db.insert(cvs).values({ ownerId: "u1", title: "Base", data: cvData() });
@@ -157,5 +169,16 @@ describe("dueSearches", () => {
     await makeSearch({ ownerId: "off", enabled: false });
     const due = await dueSearches(NOW, 10);
     expect(due.map((s) => s.ownerId).sort()).toEqual(["never", "yesterday"]);
+  });
+
+  it("is logged like every other query, without what the searches say", async () => {
+    await makeSearch({ ownerId: "never", searchTerm: "Paediatric Nurse" });
+    const log = vi.mocked(console.log);
+    log.mockClear();
+    await dueSearches(NOW, 8);
+    const lines = log.mock.calls.map(([line]) => String(line));
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0])).toMatchObject({ level: "info", action: "jobSearch.due", limit: 8 });
+    expect(lines[0]).not.toContain("Paediatric");
   });
 });

@@ -89,6 +89,8 @@ export async function addedToday(ownerId: string, now: Date): Promise<number> {
 export async function runJobSearch(search: JobSearch, deps: RunDeps = {}): Promise<RunSummary> {
   const now = deps.now ?? new Date();
   const ownerId = search.ownerId;
+  // where the run records how it went: this search, and only as its owner's
+  const mine = and(eq(jobSearches.id, search.id), eq(jobSearches.ownerId, ownerId));
   return withLog("jobSearch.run", { ownerId, searchId: search.id }, async () => {
     // today's jobs are already in Saved: the boards aren't asked
     const room = Math.max(0, search.perDay - await addedToday(ownerId, now));
@@ -96,7 +98,7 @@ export async function runJobSearch(search: JobSearch, deps: RunDeps = {}): Promi
 
     if (boardsFor(search).length === 0) {
       await db.update(jobSearches).set({ lastRunAt: now, lastFound: 0, lastAdded: 0, lastError: "No board can search this country." })
-        .where(eq(jobSearches.id, search.id));
+        .where(mine);
       throw new SearchFailed("No board can search this country. Choose LinkedIn, or another country.");
     }
 
@@ -106,7 +108,7 @@ export async function runJobSearch(search: JobSearch, deps: RunDeps = {}): Promi
     } catch (e) {
       const message = e instanceof SearchFailed ? e.message : "The search failed.";
       await db.update(jobSearches).set({ lastRunAt: now, lastFound: 0, lastAdded: 0, lastError: message })
-        .where(eq(jobSearches.id, search.id));
+        .where(mine);
       throw e instanceof SearchFailed ? e : new SearchFailed(message);
     }
 
@@ -151,17 +153,21 @@ export async function runJobSearch(search: JobSearch, deps: RunDeps = {}): Promi
       .map((b) => BOARD_LABEL[b]);
     const lastError = failed.length && found === 0 ? `${failed.join(" and ")} didn’t answer.` : null;
     await db.update(jobSearches).set({ lastRunAt: now, lastFound: found, lastAdded: added, lastError })
-      .where(eq(jobSearches.id, search.id));
+      .where(mine);
     return { found, added, repeats, failed };
   });
 }
 
-/** Searches due today: on, and not run since this UTC day began. The oldest run first. */
+/**
+ * Searches due today: on, and not run since this UTC day began. The oldest run first.
+ * The one query here that reads across owners: it is the morning run's list (/api/cron/job-search,
+ * behind the cron secret), and each search on it then runs for its own owner only (runJobSearch).
+ */
 export async function dueSearches(now: Date, limit: number): Promise<JobSearch[]> {
   const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  return db.select().from(jobSearches)
+  return withLog("jobSearch.due", { limit }, async () => db.select().from(jobSearches)
     .where(and(eq(jobSearches.enabled, true), or(isNull(jobSearches.lastRunAt), lt(jobSearches.lastRunAt, dayStart))))
     // never run first: Postgres puts nulls last in an ascending order
     .orderBy(sql`${jobSearches.lastRunAt} asc nulls first`)
-    .limit(limit);
+    .limit(limit));
 }

@@ -29,7 +29,7 @@ beforeEach(async () => {
   aiCalls = 0;
   aiCalledAt = [];
   vi.stubEnv("NEXT_PUBLIC_JOB_SEARCH_ENABLED", "true");
-  vi.stubEnv("CRON_SECRET", "s3cret");
+  vi.stubEnv("CRON_SECRET", "test-secret");
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubGlobal("fetch", async () => {
@@ -74,6 +74,7 @@ describe("saveJobSearch / getMyJobSearch", () => {
   it("checks against one of the person's CVs only", async () => {
     const [theirs] = await db.insert(cvs).values({ ownerId: "u2", title: "Not mine", data: emptyCvData() }).returning();
     expect(await saveJobSearch({ ...input, cvId: theirs.id })).toEqual({ ok: false, message: "Choose one of your CVs." });
+    expect(await db.select().from(jobSearches)).toEqual([]);
     const [mine] = await db.insert(cvs).values({ ownerId: "u1", title: "Mine", data: emptyCvData() }).returning();
     expect(await saveJobSearch({ ...input, cvId: mine.id })).toMatchObject({ ok: true, search: { cvId: mine.id } });
   });
@@ -125,6 +126,31 @@ describe("runMyJobSearchNow", () => {
     expect(aiCalls).toBe(1);
     expect(await db.select().from(applications).where(eq(applications.ownerId, "u1"))).toHaveLength(1);
   });
+
+  it("claims, runs and reads back only the person's own search", async () => {
+    await saveJobSearch(input);
+    holder.owner = "u2";
+    await saveJobSearch({ ...input, searchTerm: "Nurse" });
+    expect(await runMyJobSearchNow()).toMatchObject({ ok: true, search: { searchTerm: "Nurse", lastAdded: 1 } });
+    const rows = await db.select().from(jobSearches);
+    expect(rows.find((s) => s.ownerId === "u1")).toMatchObject({ lastRunAt: null, lastAdded: null });
+    expect(rows.find((s) => s.ownerId === "u2")?.lastRunAt).toBeInstanceOf(Date);
+    expect((await db.select().from(applications)).map((a) => a.ownerId)).toEqual(["u2"]);
+  });
+
+  it("logs every step under the person's id: the claim, the run, the read", async () => {
+    await saveJobSearch(input);
+    const log = vi.mocked(console.log);
+    log.mockClear();
+    await runMyJobSearchNow();
+    const lines = log.mock.calls.map(([line]) => JSON.parse(String(line)) as { action: string; ownerId: string });
+    expect(lines.map((l) => l.action)).toEqual(["jobSearch.claim", "jobSearch.run", "jobSearch.get"]);
+    expect(lines.map((l) => l.ownerId)).toEqual(["u1", "u1", "u1"]);
+    // a press refused by the gap is one logged step, and no run
+    log.mockClear();
+    await runMyJobSearchNow();
+    expect(log.mock.calls.map(([line]) => JSON.parse(String(line)).action)).toEqual(["jobSearch.claim"]);
+  });
 });
 
 describe("/api/cron/job-search", () => {
@@ -141,20 +167,20 @@ describe("/api/cron/job-search", () => {
     await saveJobSearch(input);
     holder.owner = "u3";
     await saveJobSearch({ ...input, enabled: false });
-    const res = await call("Bearer s3cret");
+    const res = await call("Bearer test-secret");
     expect(await res.json()).toEqual({ searches: 2, added: 2, failed: 0 });
     const owners = (await db.select().from(applications)).map((a) => a.ownerId).sort();
     expect(owners).toEqual(["u1", "u2"]);
     // no faster than apps/ai takes them from one address
     expect(aiCalledAt[1] - aiCalledAt[0]).toBeGreaterThanOrEqual(290);
     // a second call the same day finds nothing due
-    expect(await (await call("Bearer s3cret")).json()).toEqual({ searches: 0, added: 0, failed: 0 });
+    expect(await (await call("Bearer test-secret")).json()).toEqual({ searches: 0, added: 0, failed: 0 });
   });
 
   it("does nothing when switched off", async () => {
     await saveJobSearch(input);
     vi.stubEnv("NEXT_PUBLIC_JOB_SEARCH_ENABLED", "false");
-    expect(await (await call("Bearer s3cret")).json()).toEqual({ disabled: true });
+    expect(await (await call("Bearer test-secret")).json()).toEqual({ disabled: true });
     expect(aiCalls).toBe(0);
   });
 });
