@@ -232,5 +232,8 @@ describe("deleting interview practice", () => {
     expect(await res.json()).toEqual({ purgedSessions: 1, purgedTurns: 1 });
     expect((await db.select().from(interviewSessions)).map((s) => s.id)).toEqual([recent.id]);
     expect((await db.select().from(interviewTurns)).map((t) => t.sessionId)).toEqual([recent.id]);
+    // logged like every other query: the action and the days, nothing of what was said
+    const lines = vi.mocked(console.log).mock.calls.map(([line]) => String(line)).filter((line) => line.includes("interview.purge"));
+    expect(lines.map((line) => JSON.parse(line))).toEqual([expect.objectContaining({ level: "info", action: "interview.purge", days: INTERVIEW_RETENTION_DAYS })]);
   });
 });

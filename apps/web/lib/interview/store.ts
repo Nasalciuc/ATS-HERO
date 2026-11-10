@@ -1,6 +1,7 @@
 /**
  * Interview Trainer, the data (ANTRENOR-INTERVIU-VOCE.md §12.7). Server code: the actions resolve the
- * owner with getOwnerId() and pass it in; every query here filters by it (AGENTS.md rule 4).
+ * owner with getOwnerId() and pass it in; every query here filters by it (AGENTS.md rule 4), but the
+ * cron's purge, which goes by age.
  *
  * The rules:
  * - a session belongs to one owner, one of their jobs and one of their CVs; its questions are fixed
@@ -20,6 +21,7 @@ import { db } from "@/db";
 import {
   applications, cvs, interviewSessions, interviewTurns, type InterviewSession, type InterviewTurn,
 } from "@/db/schema";
+import { withLog } from "@/lib/log";
 import { INTERVIEW_RETENTION_DAYS } from "@/lib/retention";
 import type {
   CvBulletRef, InterviewFeedback, InterviewFeedbackWhen, InterviewKind, InterviewMeasures, InterviewMode,
@@ -141,7 +143,7 @@ export async function addTurn(ownerId: string, sessionId: string, turn: NewTurn)
     const waiting = session.pending;
     if (turn.kind === "follow_up" && waiting?.questionId !== turn.questionId) throw new InterviewError("No follow-up is waiting for an answer");
     const [{ last }] = await tx.select({ last: sql<number>`coalesce(max(${interviewTurns.position}), 0)` })
-      .from(interviewTurns).where(eq(interviewTurns.sessionId, sessionId));
+      .from(interviewTurns).where(and(eq(interviewTurns.sessionId, sessionId), eq(interviewTurns.ownerId, ownerId)));
     const [row] = await tx.insert(interviewTurns).values({
       sessionId, ownerId, position: Number(last) + 1, round: turn.round, kind: turn.kind,
       questionId: turn.questionId, question: turn.kind === "follow_up" && waiting ? waiting.text : turn.question,
@@ -149,7 +151,10 @@ export async function addTurn(ownerId: string, sessionId: string, turn: NewTurn)
       bullet: turn.bullet ?? null, answer: turn.answer, answeredBy: turn.answeredBy ?? null,
       measures: turn.measures ?? null,
     }).returning();
-    if (waiting) await tx.update(interviewSessions).set({ pending: null }).where(eq(interviewSessions.id, sessionId));
+    if (waiting) {
+      await tx.update(interviewSessions).set({ pending: null })
+        .where(and(eq(interviewSessions.id, sessionId), eq(interviewSessions.ownerId, ownerId)));
+    }
     return row;
   });
 }
@@ -246,14 +251,17 @@ export async function deleteSession(ownerId: string, id: string): Promise<boolea
   return sessions === 1;
 }
 
-/** The cron: every session older than the retention goes, with its turns, whoever owns it. */
+/**
+ * The cron (/api/cron/purge-interviews, behind the cron secret): every session older than the
+ * retention goes, with its turns, whoever owns it. The one place here that reads across owners.
+ */
 export async function purgeOldSessions(days = INTERVIEW_RETENTION_DAYS): Promise<{ sessions: number; turns: number }> {
   // the days go in as a bound parameter, like any other value: no raw SQL
   const cutoff = sql`now() - make_interval(days => ${days})`;
-  return db.transaction(async (tx) => {
+  return withLog("interview.purge", { days }, () => db.transaction(async (tx) => {
     const old = tx.select({ id: interviewSessions.id }).from(interviewSessions).where(lt(interviewSessions.createdAt, cutoff));
     const turns = await tx.delete(interviewTurns).where(inArray(interviewTurns.sessionId, old)).returning({ id: interviewTurns.id });
     const sessions = await tx.delete(interviewSessions).where(lt(interviewSessions.createdAt, cutoff)).returning({ id: interviewSessions.id });
     return { sessions: sessions.length, turns: turns.length };
-  });
+  }));
 }
