@@ -7851,7 +7851,8 @@ select.field__input {
 /* ---------------- Interview Trainer (app/app/interview, views/interview/) ----------------
    Claude Design canvas "ATS Hero Tracker v2", page "Interview trainer" (Trainer home, Setup, Live,
    Feedback, Report, Can't start; Phone live and report). Behind NEXT_PUBLIC_INTERVIEW_TRAINER_ENABLED.
-   Typed answers without AI for now (ANTRENOR-INTERVIU-CONSTRUCTIE.md, step 4). */
+   Typed answers; with the model, the interviewer's style, follow-ups and its feedback
+   (ANTRENOR-INTERVIU-CONSTRUCTIE.md, steps 4 and 5). */
 .trn {
   display: flex;
   flex-direction: column;
@@ -9010,6 +9011,206 @@ select.field__input {
   line-height: 1.45;
 }
 
+/* with the model (step 5): the agreement in Setup, follow-ups, and the model's part of the feedback.
+   The canvas's colours: a vague phrase on #fff3e0, an English note underlined in #725bfe, what the AI
+   made in a #d9d2ff frame with the "Made with AI" chip. A mark is never the only sign: each marked
+   phrase is also written out under the answer. */
+.trn-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.trn-consent input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+}
+.trn-live__status--thinking {
+  color: #4a36c4;
+}
+.trn-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.trn-panel__head .trn-h2 {
+  flex: 1 1 auto;
+}
+.trn-h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.trn-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #555555;
+}
+.trn-key__mark {
+  display: inline-block;
+  width: 14px;
+}
+.trn-key__mark--vague {
+  height: 10px;
+  border: 1px solid #f0c27a;
+  border-radius: 3px;
+  background: #fff3e0;
+}
+.trn-key__mark--english {
+  height: 0;
+  border-bottom: 2px solid #725bfe;
+}
+.trn-mark {
+  background: transparent;
+  color: inherit;
+}
+.trn-mark--vague {
+  border-radius: 3px;
+  background: #fff3e0;
+  /* the line keeps it visible on the report's grey answer */
+  box-shadow: inset 0 -1px 0 #f0c27a;
+}
+.trn-mark--english {
+  border-bottom: 2px solid #725bfe;
+}
+.trn-fb__follow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+.trn-fb__follow-q,
+.trn-q__follow-q {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #444444;
+}
+.trn-fb__follow-who {
+  margin-right: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4a36c4;
+}
+.trn-fb__wait {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #efeaff;
+  color: #4a36c4;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.trn-vague {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #444444;
+}
+.trn-vague .trn-mark {
+  color: var(--ink);
+}
+.trn-panel--ai {
+  border: 1px solid #d9d2ff;
+}
+.trn-ai-chip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #efeaff;
+  color: #4a36c4;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.trn-fb__stronger {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.trn-notes {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.trn-notes__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 0;
+  border-top: 1px solid #f0f0f0;
+}
+.trn-notes__fix {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.trn-notes__fix del {
+  color: #6b6b6b;
+}
+.trn-notes__foot {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b6b6b;
+}
+.trn-q__follow,
+.trn-q__more {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trn-q__body .trn-panel--ai {
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+.trn-q__body .trn-fb__stronger {
+  font-size: 15px;
+  line-height: 1.55;
+}
+.trn-patterns {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
+  line-height: 1.45;
+}
+/* two boxes side by side that also print (the report's .trn-pair doesn't) */
+.trn-duo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 16px;
+}
+.trn-duo > * {
+  flex: 1 1 380px;
+}
+
 /* the job's card in the Tracker: "Practice this interview" */
 .trk-panel__practice {
   display: flex;
@@ -9127,6 +9328,12 @@ select.field__input {
   .trn-panel {
     padding: 16px;
   }
+  /* a finger's target (B8) */
+  .trn-notes .trn-chip-btn {
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 22px;
+  }
   /* no wide tables on a phone (B8): each requirement is a block, each session a line */
   .trn-progress :is(table, tbody, tr, th, td) {
     display: block;
@@ -9169,7 +9376,8 @@ select.field__input {
   .appshell__back,
   .trn-back,
   .trn-box__action,
-  .trn-pair {
+  .trn-pair,
+  .trn-notes .trn-chip-btn {
     display: none !important;
   }
   .trn-q {

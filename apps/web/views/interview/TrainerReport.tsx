@@ -5,15 +5,18 @@
  * practise with "Practice these again", the required items with no proof yet, the job's progress
  * from its second session, then the questions one by one.
  *
- * Counted from the answers, the CV and the post, without AI (ANTRENOR-INTERVIU-CONSTRUCTIE.md, step 4):
- * no English patterns and no stronger answers until the model (step 5), and the note at the bottom
- * says so (rule 10). Print is the browser's (B7: no PDF of ours; rule 7 is the CV's).
+ * Counted from the answers, the CV and the post. When the interviewer was the model
+ * (ANTRENOR-INTERVIU-CONSTRUCTIE.md, step 5), each question also has its follow-ups and the model's
+ * feedback as on the card after an answer: the parts of the answer with the person's words, vague
+ * phrases, English notes with "I said it right", a stronger answer; and the session has the kinds of
+ * English note that came up more than once. The note at the bottom says which of the two the report
+ * is (rule 10). Print is the browser's (B7: no PDF of ours; rule 7 is the CV's).
  */
 import type { ReportView } from "@/app/actions/interview";
-import { KIND_LABEL, type QuestionReport, type ReqState } from "@/lib/interview/report";
-import type { InterviewPrepared } from "@/lib/types";
+import { KIND_LABEL, STYLE_LABEL, type QuestionReport, type ReqState } from "@/lib/interview/report";
+import type { InterviewCriterion, InterviewPrepared } from "@/lib/types";
 import { BackLink } from "./TrainerBlocked";
-import { quoted } from "./TrainerLive";
+import { EnglishNotes, MarkedAnswer, measuredForShow, quoted, StrongerAnswer } from "./TrainerLive";
 import { dayLabel, duration, longDate, whenLabel } from "./format";
 
 const STATE: Record<ReqState, { label: string; tone: string }> = {
@@ -26,17 +29,40 @@ const PREPARED: { value: InterviewPrepared; label: string }[] = [
   { value: "a_bit", label: "A bit" },
   { value: "no", label: "No" },
 ];
+const PART: Record<"situation" | "task" | "action" | "result", string> = { situation: "Situation", task: "Task", action: "Action", result: "Result" };
+const PARTS = ["situation", "task", "action", "result"] as const;
 
 function tagOf(q: QuestionReport): { label: string; tone: string } {
   if (q.state === "not_reached") return { label: "Not asked", tone: "" };
   if (q.state === "skipped") return { label: "Skipped", tone: "trk-chip--partial" };
+  // with the model's feedback, the answer's result; without, whether it used a fact of the CV line
+  const result = q.ai?.criteria.find((c) => c.key === "result");
+  if (result) return result.met ? { label: "Result given", tone: "trk-chip--met" } : { label: "Result missing", tone: "trk-chip--partial" };
   return q.used.length ? { label: "Fact from your CV", tone: "trk-chip--met" } : { label: "No fact from your CV", tone: "trk-chip--partial" };
 }
 
-function QuestionBlock({ q, open }: { q: QuestionReport; open: boolean }) {
+/** Where the model's feedback on a question is, when it isn't in the report yet. */
+export type ReportWait = "loading" | "unavailable";
+
+interface QuestionBlockProps {
+  q: QuestionReport;
+  open: boolean;
+  /** the session's interviewer was the model, and the person left English notes on */
+  ai: boolean;
+  englishNotes: boolean;
+  wait?: ReportWait;
+  busy: boolean;
+  onDismissNote: (turnId: string, index: number) => void;
+}
+
+function QuestionBlock({ q, open, ai, englishNotes, wait, busy, onDismissNote }: QuestionBlockProps) {
   const tag = tagOf(q);
-  const req = q.criteria.find((c) => c.key === "requirement");
-  const proof = q.criteria.find((c) => c.key === "proof");
+  const measured = measuredForShow(q.criteria);
+  const req = measured.find((c) => c.key === "requirement");
+  const proof = measured.find((c) => c.key === "proof");
+  /** an answer the model read and had no English note on: one line says so, without the notes' own block */
+  const noNotes = !!q.ai && englishNotes && q.ai.english.length === 0 && q.ai.dismissed === 0;
+  const parts = PARTS.flatMap((k) => q.ai?.criteria.filter((c) => c.key === k) ?? []) as (InterviewCriterion & { key: (typeof PARTS)[number] })[];
   return (
     <details className="trn-q" open={open}>
       <summary className="trn-q__summary">
@@ -46,17 +72,48 @@ function QuestionBlock({ q, open }: { q: QuestionReport; open: boolean }) {
       <div className="trn-q__body">
         {q.state === "answered" && (
           <>
-            <p className="trn-q__answer">{quoted(q.answer ?? "")}</p>
+            <p className="trn-q__answer">“<MarkedAnswer text={q.answer ?? ""} ai={q.ai} />”</p>
+            {q.follow.map((f, i) => (
+              <div key={i} className="trn-q__follow">
+                <p className="trn-q__follow-q"><span className="trn-fb__follow-who">Follow-up</span> {quoted(f.question)}</p>
+                {f.answer != null
+                  ? <p className="trn-q__answer">“<MarkedAnswer text={f.answer} ai={q.ai} />”</p>
+                  : <p className="trn-note">You skipped it.</p>}
+              </div>
+            ))}
             <ul className="trn-q__facts">
+              {parts.map((c) => (
+                <li key={c.key}><strong>{PART[c.key]}:</strong> {c.met && c.quote ? quoted(c.quote) : "missing"}</li>
+              ))}
               {req && (
-                <li><strong>{q.requirement}:</strong> {req.met ? <>named · {quoted(req.quote ?? "")}</> : "not named in the answer"}</li>
+                <li><strong>{q.requirement}:</strong> {req.met ? <>named{req.quote && <> · {quoted(req.quote)}</>}</> : "not named in the answer"}</li>
               )}
               {proof && (
-                <li><strong>Proof from your CV:</strong> {proof.met ? <>{q.used.join(", ")} · {quoted(proof.quote ?? "")}</> : "no number or tool from the CV line"}</li>
+                <li><strong>Proof from your CV:</strong> {proof.met ? <>{q.used.join(", ")}{proof.quote && <> · {quoted(proof.quote)}</>}</> : "no number or tool from the CV line"}</li>
               )}
               {q.unused.length > 0 && <li><strong>Still in your CV, not said:</strong> {q.unused.join(", ")}</li>}
+              {noNotes && <li><strong>English:</strong> no notes on this answer</li>}
               {q.measures && <li className="trn-muted">{duration(q.measures.seconds)} · {q.measures.words} words{q.tries > 1 ? ` · answered ${q.tries} times; this is the last answer` : ""}</li>}
             </ul>
+            {q.ai && q.ai.vague.length > 0 && (
+              <div className="trn-q__more">
+                <h3 className="trn-h3">Make it concrete</h3>
+                <ul className="trn-vague">
+                  {q.ai.vague.map((v) => (
+                    <li key={v.phrase}><mark className="trn-mark trn-mark--vague">{quoted(v.phrase)}</mark> <span>{v.ask}</span></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {q.ai && englishNotes && !noNotes && (
+              <div className="trn-q__more">
+                <h3 className="trn-h3">English{q.ai.english.length > 0 && ` · ${q.ai.english.length} ${q.ai.english.length === 1 ? "note" : "notes"}`}</h3>
+                <EnglishNotes ai={q.ai} busy={busy} onDismiss={(index) => q.turnId && onDismissNote(q.turnId, index)} />
+              </div>
+            )}
+            {q.ai && <StrongerAnswer ai={q.ai} id={`trn-stronger-${q.id}`} sub />}
+            {ai && !q.ai && wait === "loading" && <p className="trn-fb__wait" role="status">The interviewer is reading this answer…</p>}
+            {ai && !q.ai && wait === "unavailable" && <p className="trn-note">The AI feedback on this answer isn’t available right now. The counts above are from your answer.</p>}
           </>
         )}
         {q.state === "skipped" && <p className="trn-note">You skipped this question.</p>}
@@ -70,9 +127,11 @@ function QuestionBlock({ q, open }: { q: QuestionReport; open: boolean }) {
 export interface TrainerReportProps {
   report: ReportView;
   now: number;
-  busy: "again" | "delete" | "prepared" | null;
+  busy: "again" | "delete" | "prepared" | "note" | null;
   confirmDelete: boolean;
   message: string | null;
+  /** with the model: the answers whose feedback isn't here yet (by their turn), asked for or not to be had */
+  waiting?: Record<string, ReportWait>;
   onPracticeThese: () => void;
   onAskDelete: () => void;
   onCancelDelete: () => void;
@@ -80,14 +139,21 @@ export interface TrainerReportProps {
   onPrepared: (value: InterviewPrepared) => void;
   /** opens the session's CV in the builder */
   onOpenCv: () => void;
+  onDismissNote?: (turnId: string, index: number) => void;
+  /** asks for the model's feedback again, after it couldn't be had */
+  onAskAgain?: () => void;
 }
 
 export default function TrainerReport(p: TrainerReportProps) {
   const r = p.report;
   const s = r.summary;
   const done = r.status === "done";
-  const meta = [whenLabel(r.at, p.now), KIND_LABEL[r.kind], `${r.minutes} min`, `${s.total} questions`, r.mode === "typing" ? "typed" : ""].filter(Boolean);
+  const meta = [
+    whenLabel(r.at, p.now), KIND_LABEL[r.kind], r.ai ? STYLE_LABEL[r.style] : "", `${r.minutes} min`, `${s.total} questions`, r.mode === "typing" ? "typed" : "",
+  ].filter(Boolean);
   const practise = s.toPractice.length;
+  const waits = Object.values(p.waiting ?? {});
+  const read = s.questions.filter((q) => q.ai).length;
   return (
     <div className="trn trn-report">
       <BackLink />
@@ -96,6 +162,17 @@ export default function TrainerReport(p: TrainerReportProps) {
       {!done && (
         <p className="trn-warn" role="status">
           This interview isn’t finished. <a className="trk-a" href={`/app/interview/${encodeURIComponent(r.id)}`}>Continue it</a>; the report counts what you’ve said so far.
+        </p>
+      )}
+      {waits.includes("loading") && (
+        <p className="trn-fb__wait" role="status">
+          The interviewer is reading your answers: {read} of {s.answered} done. The report fills in as it goes.
+        </p>
+      )}
+      {!waits.includes("loading") && waits.includes("unavailable") && (
+        <p className="trn-warn" role="status">
+          The AI feedback isn’t available right now for {waits.length === 1 ? "one answer" : `${waits.length} answers`}. The rest of the report is counted from your answers.
+          {p.onAskAgain && <> <button type="button" className="trk-link trk-link--inline" onClick={p.onAskAgain}>Try again</button></>}
         </p>
       )}
       {p.message && <p className="trk-error" role="alert">{p.message}</p>}
@@ -187,23 +264,52 @@ export default function TrainerReport(p: TrainerReportProps) {
         )}
       </section>
 
-      {s.measured && (
-        <section className="trn-box trn-box--plain trn-measured" aria-labelledby="trn-measured">
-          <h2 id="trn-measured" className="trn-h2">Measured</h2>
-          <p className="trn-measured__row">
-            <span><strong>{duration(s.measured.averageSeconds)}</strong> <span className="trn-muted">average answer</span></span>
-            <span><strong>{s.measured.averageWords}</strong> <span className="trn-muted">words on average</span></span>
-            {s.measured.wordsPerMinute != null && <span><strong>{s.measured.wordsPerMinute}</strong> <span className="trn-muted">words per minute</span></span>}
-            <span><strong>{s.measured.fillers}</strong> <span className="trn-muted">filler words in all</span></span>
-          </p>
-          <p className="trn-note">Counts from your answers, not grades.</p>
-        </section>
+      {(s.measured || (r.englishNotes && s.english)) && (
+        <div className="trn-duo">
+          {r.englishNotes && s.english && (
+            <section className="trn-box trn-box--plain" aria-labelledby="trn-english">
+              <h2 id="trn-english" className="trn-h2">English · what came up more than once</h2>
+              {s.english.patterns.length > 0 ? (
+                <ul className="trn-patterns">
+                  {s.english.patterns.map((x) => (
+                    <li key={x.kind}>
+                      <strong>{x.label}</strong> · {x.count} times · <span className="trn-muted">{quoted(x.example.quote)} → {quoted(x.example.better)}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>{s.english.notes ? "No kind of note came up twice in this session." : "No notes in this session."}</p>
+              )}
+              {s.english.dismissed > 0 && (
+                <p className="trn-note">
+                  You marked {s.english.dismissed} {s.english.dismissed === 1 ? "note" : "notes"} as “I said it right”; {s.english.dismissed === 1 ? "it isn’t" : "they aren’t"} counted.
+                </p>
+              )}
+            </section>
+          )}
+          {s.measured && (
+            <section className="trn-box trn-box--plain trn-measured" aria-labelledby="trn-measured">
+              <h2 id="trn-measured" className="trn-h2">Measured</h2>
+              <p className="trn-measured__row">
+                <span><strong>{duration(s.measured.averageSeconds)}</strong> <span className="trn-muted">average answer</span></span>
+                <span><strong>{s.measured.averageWords}</strong> <span className="trn-muted">words on average</span></span>
+                {s.measured.wordsPerMinute != null && <span><strong>{s.measured.wordsPerMinute}</strong> <span className="trn-muted">words per minute</span></span>}
+                <span><strong>{s.measured.fillers}</strong> <span className="trn-muted">filler words in all</span></span>
+              </p>
+              <p className="trn-note">Counts from your answers, not grades.</p>
+            </section>
+          )}
+        </div>
       )}
 
       <section className="trn-section" aria-labelledby="trn-questions">
         <h2 id="trn-questions" className="trk-label">The questions</h2>
         <div className="trn-qs">
-          {s.questions.map((q, i) => <QuestionBlock key={q.id} q={q} open={i === 0} />)}
+          {s.questions.map((q, i) => (
+            <QuestionBlock key={q.id} q={q} open={i === 0} ai={r.ai} englishNotes={r.englishNotes}
+              wait={q.turnId ? p.waiting?.[q.turnId] : undefined} busy={p.busy !== null}
+              onDismissNote={(turnId, index) => p.onDismissNote?.(turnId, index)} />
+          ))}
         </div>
       </section>
 
@@ -238,7 +344,11 @@ export default function TrainerReport(p: TrainerReportProps) {
         </section>
       </div>
 
-      <p className="trn-foot">This report is counted from your answers, your CV and the job post, without AI.</p>
+      <p className="trn-foot">
+        {r.ai
+          ? "The interviewer was an AI. Its feedback and the stronger answers are made with AI from your answers and your CV: check them before you use them. The counts are from your answers, your CV and the job post."
+          : "This report is counted from your answers, your CV and the job post, without AI."}
+      </p>
     </div>
   );
 }

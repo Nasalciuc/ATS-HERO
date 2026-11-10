@@ -1,8 +1,9 @@
 "use client";
 import useSWR, { useSWRConfig } from "swr";
 import {
-  answerPrepared, answerQuestion, deleteInterview, endInterview, getInterview, getPracticeCounts, getReport, getSetup,
-  getTrainerHome, pauseInterview, practiceAgain, skipQuestion, startInterview,
+  answerFollowUp, answerPrepared, answerQuestion, askForFollowUp, deleteInterview, dismissEnglishNote, endInterview, getFeedback,
+  getInterview, getPracticeCounts, getReport, getSetup, getTrainerHome, pauseInterview, practiceAgain, skipFollowUp, skipQuestion,
+  startInterview,
 } from "@/app/actions/interview";
 import { interviewTrainerEnabled } from "@/lib/features";
 import { K } from "@/lib/swr-keys";
@@ -74,6 +75,12 @@ export function useInterviewMutations() {
     },
     answer: answerQuestion,
     skip: skipQuestion,
+    // with the model: the interviewer's follow-up, its answer or its skip, the feedback, and "I said it right"
+    askFollowUp: askForFollowUp,
+    followUpAnswer: answerFollowUp,
+    followUpSkip: skipFollowUp,
+    feedback: getFeedback,
+    dismissNote: dismissEnglishNote,
     pause: pauseInterview,
     end: after(endInterview),
     prepared: after(answerPrepared),

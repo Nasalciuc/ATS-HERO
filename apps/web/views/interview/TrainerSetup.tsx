@@ -4,19 +4,37 @@
  * Desktop · Set up the practice). The job and the CV the questions come from, what the post asks
  * for, the kind of interview, the length and the options.
  *
- * Only what works today is offered (rule 10, ANTRENOR-INTERVIU-CONSTRUCTIE.md step 4): answers are
- * typed (speaking says it isn't available yet), and the interviewer's style and the English notes,
- * which are the model's, come with it.
+ * Only what works today is offered (rule 10): answers are typed (speaking says it isn't available
+ * yet). The interviewer's style and the English notes are the model's, so they show only when the
+ * interviewer can be the model (ANTRENOR-INTERVIU-CONSTRUCTIE.md, step 5). The first time, the person
+ * is told what goes where and ticks that they understand; without the tick the same practice starts
+ * without AI, and the button says so.
  */
 import { useState } from "react";
 import type { SetupView } from "@/app/actions/interview";
-import { KIND_LABEL, listWords } from "@/lib/interview/report";
-import type { InterviewKind } from "@/lib/types";
+import { KIND_LABEL, listWords, STYLE_LABEL } from "@/lib/interview/report";
+import type { InterviewKind, InterviewStyle } from "@/lib/types";
 import { BackLink } from "./TrainerBlocked";
 
-export type SetupChoices = { kind: InterviewKind; minutes: 10 | 20; feedbackWhen: "each" | "end"; timer: boolean };
+export type SetupChoices = {
+  kind: InterviewKind;
+  minutes: 10 | 20;
+  feedbackWhen: "each" | "end";
+  timer: boolean;
+  /** with the model only: how the interviewer asks, English notes, and the tick under "Before your first session" */
+  style?: InterviewStyle;
+  englishNotes?: boolean;
+  consent?: boolean;
+};
 
 const KINDS: InterviewKind[] = ["recruiter", "technical", "manager"];
+const STYLES: InterviewStyle[] = ["friendly", "neutral", "tough"];
+/** B1: each style says what it does, not just its name. */
+const STYLE_NOTE: Record<InterviewStyle, string> = {
+  friendly: "Warm, one follow-up question. Good for a first run.",
+  neutral: "Polite and brief, like most real interviews.",
+  tough: "Asks for numbers and pushes on vague answers. Never rude.",
+};
 const WHY: Record<"chosen" | "sent" | "latest", string> = {
   chosen: "with the CV you chose",
   sent: "with the CV you sent",
@@ -39,8 +57,13 @@ export default function TrainerSetup({ setup, initial, busy, error, onChangeCv, 
   const [minutes, setMinutes] = useState<10 | 20>(initial?.minutes ?? 10);
   const [feedbackWhen, setFeedbackWhen] = useState<"each" | "end">(initial?.feedbackWhen ?? "each");
   const [timer, setTimer] = useState(initial?.timer ?? false);
+  const [style, setStyle] = useState<InterviewStyle>(initial?.style ?? setup.lastStyle ?? "friendly");
+  const [englishNotes, setEnglishNotes] = useState(initial?.englishNotes ?? true);
+  const [consent, setConsent] = useState(initial?.consent ?? false);
   const [picking, setPicking] = useState(false);
-  const { job, cv } = setup;
+  const { job, cv, ai } = setup;
+  /** the interviewer will be the model: it can be, and the person agreed (before, or with the tick) */
+  const withAi = Boolean(ai) && (ai?.agreed || consent);
   const left = Math.max(0, setup.limit - setup.used);
   const skills = setup.items.filter((i) => i.required).slice(0, 3).map((i) => i.label);
   const note: Record<InterviewKind, string> = {
@@ -84,6 +107,22 @@ export default function TrainerSetup({ setup, initial, busy, error, onChangeCv, 
             </div>
           </fieldset>
 
+          {ai && (
+            <fieldset className="trn-fieldset">
+              <legend className="trk-label">The interviewer</legend>
+              <div className="trn-tiles">
+                {STYLES.map((s) => (
+                  <label key={s} className={`trn-tile${style === s ? " is-on" : ""}`}>
+                    <span className="trn-tile__name">
+                      <input type="radio" name="trn-style" checked={style === s} onChange={() => setStyle(s)} /> {STYLE_LABEL[s]}
+                    </span>
+                    <span className="trn-tile__note">{STYLE_NOTE[s]}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
           <div className="trn-setup__pair">
             <fieldset className="trn-fieldset">
               <legend className="trk-label">Length</legend>
@@ -123,6 +162,12 @@ export default function TrainerSetup({ setup, initial, busy, error, onChangeCv, 
               <input type="checkbox" checked={timer} onChange={(e) => setTimer(e.target.checked)} />
               <span><strong>2-minute answer timer</strong> <span className="trn-muted">· a reminder to wrap up; nothing is cut off</span></span>
             </label>
+            {ai && (
+              <label className="trn-option">
+                <input type="checkbox" checked={englishNotes} onChange={(e) => setEnglishNotes(e.target.checked)} />
+                <span><strong>English notes</strong> <span className="trn-muted">· up to 3 per answer, grammar and phrasing only</span></span>
+              </label>
+            )}
           </fieldset>
         </div>
 
@@ -148,7 +193,25 @@ export default function TrainerSetup({ setup, initial, busy, error, onChangeCv, 
             <p className="trn-note">Questions come only from this job and your CV.</p>
           </section>
 
-          {setup.sessions === 0 && (
+          {ai && !ai.agreed ? (
+            <section className="trn-before" aria-labelledby="trn-before">
+              <h2 id="trn-before" className="trn-h2">Before your first session</h2>
+              {/* what lib/interview/prompt.ts puts in a prompt, and nothing it doesn't: keep the two in step */}
+              <p>
+                The interviewer is an AI, not a person. Your answers go to {ai.provider}, with the question, the line of your CV it
+                is about (with that job’s title and employer) and the job you’re practicing for, so the interviewer can ask
+                follow-up questions and give you feedback. Your name, your contact details and the rest of your CV aren’t sent. We
+                keep your answers and the feedback for 180 days, and you can delete a session any time.
+              </p>
+              <label className="trn-consent">
+                <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+                <span>I understand the interviewer is an AI and my answers go to {ai.name}.</span>
+              </label>
+              <p className="trn-note">
+                Without this you can still practice: the same questions, no follow-ups, and feedback from what your answers measured.
+              </p>
+            </section>
+          ) : !ai && setup.sessions === 0 ? (
             <section className="trn-before" aria-labelledby="trn-before">
               <h2 id="trn-before" className="trn-h2">Before your first session</h2>
               <p>
@@ -156,7 +219,7 @@ export default function TrainerSetup({ setup, initial, busy, error, onChangeCv, 
                 for 180 days. You can delete a session any time.
               </p>
             </section>
-          )}
+          ) : null}
 
           {!setup.hasLines ? (
             <p className="trn-warn" role="status">
@@ -164,12 +227,14 @@ export default function TrainerSetup({ setup, initial, busy, error, onChangeCv, 
             </p>
           ) : (
             <div className="trn-start">
-              <button type="button" className="trk-btn" disabled={busy || !cv} onClick={() => onStart({ kind, minutes, feedbackWhen, timer })}>
-                {busy ? "Starting…" : "Start interview"}
+              <button type="button" className="trk-btn" disabled={busy || !cv}
+                onClick={() => onStart(withAi ? { kind, minutes, feedbackWhen, timer, style, englishNotes, consent } : { kind, minutes, feedbackWhen, timer })}>
+                {busy ? "Starting…" : ai && !withAi ? "Start without AI" : "Start interview"}
               </button>
               <span className="trn-note">About {minutes} minutes · {left} {left === 1 ? "session" : "sessions"} left this month</span>
             </div>
           )}
+          {ai?.agreed && setup.hasLines && <p className="trn-note">The interviewer is an AI. Your answers go to {ai.provider}.</p>}
           {error && <p className="trk-error" role="alert">{error}</p>}
         </aside>
       </div>

@@ -62,3 +62,33 @@ export function clockWords(seconds: number): string {
   const parts = [m ? `${m} minute${m === 1 ? "" : "s"}` : "", `${s % 60} second${s % 60 === 1 ? "" : "s"}`];
   return parts.filter(Boolean).join(" ");
 }
+
+/** A piece of an answer, and what marks it: a vague phrase, an English note, or nothing. */
+export type Segment = { text: string; mark: "vague" | "english" | null };
+
+/**
+ * An answer cut where its marked phrases stand, to show them in place. Each phrase is marked once,
+ * where it first stands; one that overlaps an earlier mark, or isn't in this text, is left unmarked
+ * (the list under the answer still has it). A phrase shown cut short ("…") is found by its start.
+ */
+export function segments(text: string, marks: { text: string; mark: "vague" | "english" }[]): Segment[] {
+  const found: { start: number; end: number; mark: "vague" | "english" }[] = [];
+  for (const m of marks) {
+    const needle = m.text.replace(/…$/, "");
+    const start = needle ? text.indexOf(needle) : -1;
+    if (start < 0) continue;
+    const end = start + needle.length;
+    if (found.some((f) => start < f.end && end > f.start)) continue;
+    found.push({ start, end, mark: m.mark });
+  }
+  found.sort((a, b) => a.start - b.start);
+  const out: Segment[] = [];
+  let at = 0;
+  for (const f of found) {
+    if (f.start > at) out.push({ text: text.slice(at, f.start), mark: null });
+    out.push({ text: text.slice(f.start, f.end), mark: f.mark });
+    at = f.end;
+  }
+  if (at < text.length || !out.length) out.push({ text: text.slice(at), mark: null });
+  return out;
+}

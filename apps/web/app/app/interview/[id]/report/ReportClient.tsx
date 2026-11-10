@@ -1,13 +1,20 @@
 "use client";
-/** The practice report: the data and the handlers; views/interview/TrainerReport.tsx draws it. */
-import { useState } from "react";
+/**
+ * The practice report: the data and the handlers; views/interview/TrainerReport.tsx draws it.
+ *
+ * When the interviewer was the model and the session has ended, the answers that have no feedback yet
+ * get it here, one request at a time ("Feedback at the end", an interview ended mid-answer, or a
+ * moment the model couldn't be asked): the report fills in as each comes back. An answer is asked
+ * for once; if the model can't be had, the page stops and says so, and "Try again" starts over.
+ */
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AppShell from "@/components/app/AppShell";
 import SignInModal from "@/components/modals/SignInModal";
 import { useApp } from "@/store/AppContext";
 import { useInterviewMutations, useInterviewReport } from "@/hooks/use-interview";
 import type { InterviewPrepared } from "@/lib/types";
-import TrainerReport from "@/views/interview/TrainerReport";
+import TrainerReport, { type ReportWait } from "@/views/interview/TrainerReport";
 import TrainerBlocked from "@/views/interview/TrainerBlocked";
 import { sessionHref, setupHref } from "@/views/interview/TrainerHome";
 
@@ -17,14 +24,51 @@ export default function ReportClient() {
   const router = useRouter();
   const { result, error, refresh } = useInterviewReport(id ?? null);
   const m = useInterviewMutations();
-  const [busy, setBusy] = useState<"again" | "delete" | "prepared" | null>(null);
+  const [busy, setBusy] = useState<"again" | "delete" | "prepared" | "note" | null>(null);
+  const [waiting, setWaiting] = useState<Record<string, ReportWait>>({});
+  /** the answers already asked for, so none is asked twice on its own */
+  const asked = useRef(new Set<string>());
+  const asking = useRef(false);
+  /** goes up when a request ends or "Try again" is chosen: the next answer is looked for again */
+  const [round, setRound] = useState(0);
+  const feedbackRef = useRef(m.feedback);
+  feedbackRef.current = m.feedback;
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [signIn, setSignIn] = useState(false);
   const [now] = useState(() => Date.now());
   const report = result?.ok ? result.report : null;
 
-  async function run(kind: "again" | "delete" | "prepared", fn: () => Promise<boolean>) {
+  // the model's feedback on the answers that don't have it yet, one at a time
+  useEffect(() => {
+    if (!report || !report.ai || report.status !== "done" || asking.current) return;
+    const missing = report.summary.questions.flatMap((q) => (q.state === "answered" && !q.ai && q.turnId ? [q.turnId] : []));
+    const next = missing.find((t) => !asked.current.has(t));
+    if (!next) return;
+    asking.current = true;
+    asked.current.add(next);
+    setWaiting((w) => ({ ...w, [next]: "loading" }));
+    void feedbackRef.current(report.id, next).then((r) => r, () => null).then(async (r) => {
+      if (r?.ok && r.ai === "ready") {
+        await refreshRef.current();
+        setWaiting((w) => {
+          const rest = { ...w };
+          delete rest[next];
+          return rest;
+        });
+      } else {
+        // not to be had now: the same would come back for the rest, so none of them is asked
+        for (const t of missing) asked.current.add(t);
+        setWaiting(Object.fromEntries(missing.map((t) => [t, "unavailable" as const])));
+      }
+      asking.current = false;
+      setRound((x) => x + 1);
+    });
+  }, [report, round]);
+
+  async function run(kind: "again" | "delete" | "prepared" | "note", fn: () => Promise<boolean>) {
     setBusy(kind);
     setMessage(null);
     try {
@@ -55,6 +99,18 @@ export default function ReportClient() {
         busy={busy}
         confirmDelete={confirmDelete}
         message={message}
+        waiting={waiting}
+        onDismissNote={(turnId, index) => run("note", async () => {
+          const r = await m.dismissNote(report.id, { turnId, index });
+          if (!r.ok) setMessage(r.message);
+          await refresh();
+          return false;
+        })}
+        onAskAgain={() => {
+          asked.current.clear();
+          setWaiting({});
+          setRound((x) => x + 1);
+        }}
         onPracticeThese={() => run("again", async () => {
           const r = await m.again(report.id);
           if (r.ok) {

@@ -4,8 +4,8 @@
  * Desktop · Interview Trainer home). The jobs in Interview first, then the others, a pasted post, and
  * the past sessions. The data and the handlers are the page's (app/app/interview).
  *
- * Typing only for now, without AI (ANTRENOR-INTERVIU-CONSTRUCTIE.md, step 4): the lead says what the
- * trainer does today (rule 10), not the canvas's "AI interviewer" yet.
+ * The lead says what the trainer does today (rule 10): answers are typed, and the interviewer is "an
+ * AI" only when the model can be reached right now (ANTRENOR-INTERVIU-CONSTRUCTIE.md, step 5).
  */
 import type { HomeJob, TrainerHome as Home } from "@/app/actions/interview";
 import { STATUS_LABEL } from "@/lib/tracker";
@@ -76,8 +76,9 @@ export default function TrainerHome({ home, now, paste, onPaste, onAddAndPractic
   return (
     <div className="trn trn-home">
       <p className="trn-lead">
-        Practice for a job’s interview with questions from its post and your CV. You type your answers, and after each
-        one you see what it showed and what your CV could add.
+        {home.ai
+          ? "Practice with an AI interviewer that knows the job and your CV. You type your answers; it asks follow-up questions and gives you feedback on every answer."
+          : "Practice for a job’s interview with questions from its post and your CV. You type your answers, and after each one you see what it showed and what your CV could add."}
       </p>
 
       {home.interviews.length > 0 ? (

@@ -1,16 +1,18 @@
-// Interview Trainer, step 4: the screens as they render (react-dom/server, no DOM). What the buttons
-// do is in tests/db/interview-actions.test.ts. Typing only and without AI for now, so no screen says
-// "AI interviewer", offers a style or English notes, or promises speaking (rule 10).
+// Interview Trainer: the screens as they render (react-dom/server, no DOM). What the buttons do is in
+// tests/db/interview-actions.test.ts and interview-ai-actions.test.ts. Typing only, so no screen
+// promises speaking; and a screen says "AI interviewer", offers a style or English notes, or shows
+// the model's feedback only in a session whose interviewer is the model (rule 10; steps 4 and 5).
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { LiveTurn, ReportView, SetupView, TrainerHome as Home } from "@/app/actions/interview";
 import TrainerHome, { LimitChip } from "@/views/interview/TrainerHome";
 import TrainerSetup from "@/views/interview/TrainerSetup";
 import TrainerBlocked from "@/views/interview/TrainerBlocked";
-import TrainerLive, { TrainerFeedback, quoted } from "@/views/interview/TrainerLive";
+import TrainerLive, { criterionNote, measuredForShow, TrainerFeedback, quoted } from "@/views/interview/TrainerLive";
+import { segments } from "@/views/interview/format";
 import TrainerReport from "@/views/interview/TrainerReport";
 import JobPanel from "@/views/tracker/JobPanel";
-import type { SessionSummary } from "@/lib/interview/report";
+import type { AiFeedback, SessionSummary } from "@/lib/interview/report";
 import type { TrackedJob } from "@/lib/tracker";
 
 const DAY = 864e5;
@@ -113,7 +115,7 @@ describe("setting up", () => {
 
 describe("the session", () => {
   const props = {
-    session: { role: "Data Analyst", company: "Altamira Tech", kind: "manager" as const, timer: false }, n: 2, total: 4,
+    session: { role: "Data Analyst", company: "Altamira Tech", kind: "manager" as const, timer: false, ai: false, style: "friendly" as const }, n: 2, total: 4,
     question: { text: "Your CV says “Cut the report”. How?", requirement: "SQL" }, timeLeft: 372, answerSeconds: 10, retrying: false,
     draft: "", onDraft: noop, transcript: [], showTranscript: true, onToggleTranscript: noop, busy: false, error: null,
     onSend: noop, onPause: noop, onResume: noop, onSkip: noop, onEnd: noop, onReport: noop,
@@ -149,9 +151,11 @@ describe("the session", () => {
   });
 });
 
+const plain = { role: "Data Analyst", company: "Altamira Tech", kind: "manager" as const, ai: false, style: "friendly" as const, englishNotes: false };
+
 describe("the feedback after an answer", () => {
   const html = renderToStaticMarkup(
-    <TrainerFeedback session={{ role: "Data Analyst", company: "Altamira Tech", kind: "manager" }} n={2} total={4}
+    <TrainerFeedback session={plain} n={2} total={4}
       question={{ text: "Tell me about the weekly report.", requirement: "SQL" }} turn={turn} ahead={["Python"]} last={false}
       canRetry timeLeft={372} busy={false} error={null} onNext={noop} onRetry={noop} onEnd={noop} />,
   );
@@ -174,7 +178,7 @@ describe("the feedback after an answer", () => {
 
   it("the last answer leads to the report; no more tries leaves no retry", () => {
     const last = text(renderToStaticMarkup(
-      <TrainerFeedback session={{ role: "R", company: "C", kind: "manager" }} n={4} total={4} question={{ text: "Q", requirement: null }}
+      <TrainerFeedback session={plain} n={4} total={4} question={{ text: "Q", requirement: null }}
         turn={turn} ahead={[]} last canRetry={false} timeLeft={10} busy={false} error={null} onNext={noop} onRetry={noop} onEnd={noop} />,
     ));
     expect(last).toContain("See your report");
@@ -282,5 +286,333 @@ describe("the Tracker's job card", () => {
     expect(on).toContain("Practice this interview");
     expect(on).toContain("Practiced twice");
     expect(text(renderToStaticMarkup(<JobPanel {...base} />))).not.toContain("Practice this interview");
+  });
+});
+
+// ── with the model (step 5) ──────────────────────────────────────────────────────────────────────
+
+const ANSWER = "So the report took me a lot of time every week. Then I make the Power BI file refresh by itself. Basically I helped the team a lot with this.";
+const MORE = "It went from 6 hours to 1, I was responsible of the whole process.";
+const ai: AiFeedback = {
+  criteria: [
+    { key: "situation", met: true, quote: "the report took me a lot of time every week" },
+    { key: "action", met: true, quote: "Then I make the Power BI file refresh by itself." },
+    { key: "result", met: true, quote: "It went from 6 hours to 1" },
+    { key: "task", met: false, quote: null },
+  ],
+  vague: [{ phrase: "I helped the team a lot with this", ask: "Who got the report, and how much sooner?" }],
+  english: [
+    { index: 0, quote: "Then I make", better: "Then I made", why: "Past tense: the story happened at Brightline.", kind: "tense" },
+    { index: 2, quote: "responsible of", better: "responsible for", why: null, kind: "preposition" },
+  ],
+  dismissed: 1,
+  stronger: "At Brightline, the weekly sales report took me a lot of time. I automated it in Power BI, and it went from 6 hours to 1.",
+  strongerRefused: false,
+};
+const aiTurn: LiveTurn = {
+  ...turn, answer: ANSWER, follow: [{ question: "And what changed for the team?", answer: MORE }, { question: "Who used it?", answer: null }],
+  criteria: [{ key: "requirement", met: true, quote: null }, { key: "proof", met: true, quote: "It went from 6 hours to 1, I was responsible of the whole process." }],
+  used: ["6", "1", "SQL"], unused: [], numbers: null, named: ["SQL"], ai,
+};
+const withModel = { ...plain, ai: true, style: "tough" as const, englishNotes: true };
+
+describe("setting up, when the interviewer can be the model", () => {
+  const withAi: SetupView = { ...setup, ai: { agreed: false, provider: "Amazon Bedrock (in the US)", name: "Amazon Bedrock" }, lastStyle: null };
+  const render = (s: SetupView, initial = {}) => renderToStaticMarkup(<TrainerSetup setup={s} initial={initial} busy={false} error={null} onChangeCv={noop} onStart={noop} onOpenCv={noop} />);
+
+  it("offers the interviewer's style, each with what it does, and English notes", () => {
+    const t = text(render(withAi));
+    expect(t).toContain("The interviewer");
+    expect(t).toContain("Warm, one follow-up question. Good for a first run.");
+    expect(t).toContain("Polite and brief, like most real interviews.");
+    expect(t).toContain("Asks for numbers and pushes on vague answers. Never rude.");
+    expect(t).toContain("English notes · up to 3 per answer, grammar and phrasing only");
+    // Friendly the first time; the last style after that
+    expect(render(withAi)).toMatch(/name="trn-style" checked=""\/> Friendly/);
+    expect(render({ ...withAi, lastStyle: "tough" })).toMatch(/name="trn-style" checked=""\/> Tough/);
+  });
+
+  it("says before the first session that the interviewer is an AI and where the answers go, and asks for a tick", () => {
+    const t = text(render(withAi));
+    // what a prompt holds (lib/interview/prompt.ts), said in full
+    expect(t).toContain("The interviewer is an AI, not a person. Your answers go to Amazon Bedrock (in the US), with the question, the line of your CV it is about (with that job’s title and employer) and the job you’re practicing for");
+    expect(t).toContain("Your name, your contact details and the rest of your CV aren’t sent.");
+    expect(t).toContain("We keep your answers and the feedback for 180 days, and you can delete a session any time.");
+    expect(t).toContain("I understand the interviewer is an AI and my answers go to Amazon Bedrock.");
+    // not ticked: the same practice, without AI, and the button says so
+    expect(t).toContain("Start without AI");
+    expect(t).toContain("Without this you can still practice");
+    expect(text(render(withAi, { consent: true }))).toContain("Start interview");
+    expect(text(render(withAi, { consent: true }))).not.toContain("Start without AI");
+  });
+
+  it("doesn't ask again once the person agreed, and still says who the interviewer is", () => {
+    const t = text(render({ ...withAi, ai: { ...withAi.ai!, agreed: true }, sessions: 3 }));
+    expect(t).not.toContain("Before your first session");
+    expect(t).not.toContain("I understand the interviewer is an AI");
+    expect(t).toContain("Start interview");
+    expect(t).toContain("The interviewer is an AI. Your answers go to Amazon Bedrock (in the US).");
+  });
+
+  it("names a development provider as one", () => {
+    const dev = text(render({ ...withAi, ai: { agreed: false, provider: "Anthropic (development only)", name: "Anthropic" } }));
+    expect(dev).toContain("Your answers go to Anthropic (development only)");
+    expect(dev).not.toContain("Bedrock");
+  });
+});
+
+describe("the home page, when the interviewer can be the model", () => {
+  it("says so; and never promises speaking", () => {
+    const t = text(renderToStaticMarkup(<TrainerHome home={{ ...home, ai: true }} now={NOW} paste="" onPaste={noop} onAddAndPractice={noop} />));
+    expect(t).toContain("Practice with an AI interviewer that knows the job and your CV. You type your answers");
+    expect(t).not.toMatch(/voice|speak|recording/i);
+  });
+});
+
+describe("the session with the model", () => {
+  const props = {
+    session: { ...withModel, timer: false }, n: 2, total: 4,
+    question: { text: "And what changed for the team?", requirement: "SQL" }, timeLeft: 372, answerSeconds: 10, retrying: false,
+    draft: "", onDraft: noop, showTranscript: true, onToggleTranscript: noop, busy: false, error: null,
+    onSend: noop, onPause: noop, onResume: noop, onSkip: noop, onEnd: noop, onReport: noop,
+    transcript: [
+      { who: "interviewer" as const, text: "Hi Ana, I’m an AI interviewer, not a person. I’ll ask you about the Data Analyst role at Altamira Tech. Ready when you are." },
+      { who: "interviewer" as const, text: "Tell me about the weekly report." }, { who: "you" as const, text: ANSWER },
+      { who: "interviewer" as const, text: "And what changed for the team?" },
+    ],
+  };
+
+  it("keeps “AI interviewer” at the top, with the style, and opens by saying it is an AI", () => {
+    const t = text(renderToStaticMarkup(<TrainerLive {...props} phase="answering" followUp />));
+    expect(t).toContain("AI interviewer");
+    expect(t).not.toContain("Practice interview");
+    expect(t).toContain("Data Analyst · Altamira Tech · Hiring manager · Tough");
+    expect(t).toContain("Hi Ana, I’m an AI interviewer, not a person.");
+    expect(t).toContain("Typing mode · the interviewer reads your answer");
+    // the follow-up is marked as one
+    expect(t).toContain("Follow-up · question 2 of 4 · about: SQL");
+    expect(t).toContain("“And what changed for the team?”");
+  });
+
+  it("stops the clock and takes no answer while the interviewer reads; a follow-up can be skipped from a pause", () => {
+    const thinking = renderToStaticMarkup(<TrainerLive {...props} phase="thinking" question={null} />);
+    expect(text(thinking)).toContain("Thinking…");
+    expect(text(thinking)).toContain("Your answer is saved. The clock is stopped while the interviewer reads it.");
+    expect(thinking).not.toContain("<textarea");
+    expect(text(thinking)).not.toContain("Send answer");
+    expect(text(renderToStaticMarkup(<TrainerLive {...props} phase="paused" retrying followUp />))).toContain("Skip this question");
+  });
+});
+
+describe("the feedback with the model", () => {
+  const card = (o: Partial<Parameters<typeof TrainerFeedback>[0]> = {}) => renderToStaticMarkup(
+    <TrainerFeedback session={withModel} n={2} total={4} question={{ text: "Tell me about the weekly report.", requirement: "SQL" }} turn={aiTurn}
+      aiState="ready" ahead={[]} last={false} canRetry timeLeft={372} busy={false} error={null} onNext={noop} onRetry={noop} onEnd={noop}
+      onDismissNote={noop} onAskAgain={noop} {...o} />,
+  );
+  const html = card();
+  const t = text(html);
+
+  it("shows the answer and its follow-ups, with the vague phrase and the notes marked in place", () => {
+    expect(t).toContain("Follow-up “And what changed for the team?”");
+    expect(t).toContain("Follow-up “Who used it?”You skipped it.");
+    expect(html).toContain('<mark class="trn-mark trn-mark--vague">I helped the team a lot with this</mark>');
+    expect(html).toContain('<mark class="trn-mark trn-mark--english">Then I make</mark>');
+    expect(html).toContain('<mark class="trn-mark trn-mark--english">responsible of</mark>');
+    // the marks have words too: a key, and each phrase written out below
+    expect(t).toContain("vague");
+    expect(t).toContain("English note");
+  });
+
+  it("gives the four parts of the answer with the person's words, then what the answer measured; no score", () => {
+    expect(t).toContain("What a hiring manager listens for");
+    const order = ["Situation: shown", "Task: missing", "Action: shown", "Result: shown", "The requirement: shown", "Proof from your CV: shown"].map((x) => t.indexOf(x));
+    expect(order.every((i) => i >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(t).toContain("“the report took me a lot of time every week”");
+    expect(t).toContain("Missing: what was yours to do.");
+    // the requirement was named in words the CV writes another way: no sentence to show
+    expect(t).toContain("Named in your answer.");
+    expect(criterionNote({ key: "proof", met: true, quote: null }, null, ["12", "Python"])).toBe("You used: 12, Python.");
+    expect(t).not.toMatch(/\bscore|\/10|out of 10|grade[^s]|confiden|\bATS\b/i);
+  });
+
+  it("keeps the four parts in a row of their own, and what the answer measured under it", () => {
+    const grids = html.split('<div class="trn-crit">').slice(1).map((g) => (g.match(/trn-crit__box/g) ?? []).length);
+    expect(grids).toEqual([4, 2]);
+    // the model's reading isn't here: only what the answer measured
+    expect(card({ aiState: "loading", turn: { ...aiTurn, ai: null } }).split('<div class="trn-crit">').length - 1).toBe(1);
+  });
+
+  it("shows a sentence once when it both names the requirement and holds the proof", () => {
+    const same = "I wrote the SQL that cut it from 6 hours to 1.";
+    const shown = measuredForShow([{ key: "requirement", met: true, quote: same }, { key: "proof", met: true, quote: same }]);
+    expect(shown).toEqual([{ key: "requirement", met: true, quote: same }, { key: "proof", met: true, quote: null }]);
+    const both = text(card({ turn: { ...aiTurn, criteria: [{ key: "requirement", met: true, quote: same }, { key: "proof", met: true, quote: same }] } }));
+    expect(both.split(`“${same}”`).length - 1).toBe(1);
+    expect(both).toContain("Proof from your CV: shownYou used: 6, 1, SQL.");
+    // two sentences, or a proof that is missing: as they are
+    const apart = [{ key: "requirement" as const, met: true, quote: "I used SQL." }, { key: "proof" as const, met: true, quote: "It went from 6 hours to 1." }];
+    expect(measuredForShow(apart)).toEqual(apart);
+    const none = [{ key: "requirement" as const, met: true, quote: same }, { key: "proof" as const, met: false, quote: null }];
+    expect(measuredForShow(none)).toEqual(none);
+  });
+
+  it("asks for the CV's numbers in words that fit what the answer already said", () => {
+    const unsaid = { ...aiTurn, used: ["SQL"], unused: ["6", "1"], numbers: "6 hours to 1", cvLine: "Cut the report from 6 hours to 1 with SQL" };
+    // a result in words, the numbers unsaid: the Result box is ticked, so only the numbers are asked for
+    const ticked = text(card({ turn: unsaid }));
+    expect(ticked).toContain("Say it in numbers. They’re already in your CV:“Cut the report from 6 hours to 1 with SQL”");
+    expect(ticked).not.toContain("Say the result. It’s already in your CV:");
+    const missing = { ...ai, criteria: ai.criteria.map((c) => (c.key === "result" ? { ...c, met: false, quote: null } : c)) };
+    expect(text(card({ turn: { ...unsaid, ai: missing } }))).toContain("Say the result. It’s already in your CV:");
+    expect(card({ turn: unsaid })).toContain("<strong>6 hours to 1</strong>");
+  });
+
+  it("shows each vague phrase with the question that makes it concrete, and no verdict", () => {
+    expect(t).toContain("Make it concrete“I helped the team a lot with this” Who got the report, and how much sooner?");
+  });
+
+  it("shows the English notes that stand, each with “I said it right”, and counts the ones marked right", () => {
+    expect(t).toContain("English · 2 notes");
+    expect(html).toContain("<del>Then I make</del>");
+    expect(html).toContain("<strong>Then I made</strong>");
+    expect(t).toContain("Past tense: the story happened at Brightline.");
+    expect((html.match(/I said it right<\/button>/g) ?? []).length).toBe(2);
+    expect(t).toContain("Grammar and wording only, from what you typed. If a note is wrong, choose “I said it right”: it goes, and it isn’t counted.");
+    expect(t).toContain("You marked 1 note as “I said it right”.");
+    // English notes off: no panel, no marks in the answer
+    const off = card({ session: { ...withModel, englishNotes: false }, turn: { ...aiTurn, ai: { ...ai, english: [], dismissed: 0 } } });
+    expect(text(off)).not.toMatch(/English ·|I said it right/);
+    expect(off).not.toContain("trn-mark--english");
+    // on, and nothing to note: no word about a button that isn't there
+    const clean = text(card({ turn: { ...aiTurn, ai: { ...ai, english: [], dismissed: 0 } } }));
+    expect(clean).toContain("No notes on this answer.Grammar and wording only, from what you typed.");
+    expect(clean).not.toContain("If a note is wrong");
+    // every note marked right
+    const all = text(card({ turn: { ...aiTurn, ai: { ...ai, english: [], dismissed: 2 } } }));
+    expect(all).toContain("No notes left on this answer.");
+    expect(all).toContain("You marked 2 notes as “I said it right”.");
+  });
+
+  it("marks the stronger answer as made with AI, and says when one was refused", () => {
+    expect(t).toContain("A stronger answerMade with AI. Check it.“At Brightline, the weekly sales report took me a lot of time.");
+    expect(t).toContain("Built only from what you said and your CV. Say it in your own words; don’t learn it by heart.");
+    const refused = text(card({ turn: { ...aiTurn, ai: { ...ai, stronger: null, strongerRefused: true } } }));
+    expect(refused).toContain("None this time. The AI’s version said something that is in neither your answer nor your CV, so we didn’t show it.");
+    expect(refused).not.toContain("Made with AI. Check it.");
+    expect(text(card({ turn: { ...aiTurn, ai: { ...ai, stronger: null } } }))).not.toContain("A stronger answer");
+  });
+
+  it("says when the interviewer is still reading, and when its feedback can't be had: what the answer measured stays", () => {
+    const loading = text(card({ aiState: "loading", turn: { ...aiTurn, ai: null } }));
+    expect(loading).toContain("The interviewer is reading your answer…");
+    expect(loading).toContain("Proof from your CV: shown");
+    expect(loading).not.toMatch(/Situation|A stronger answer|Make it concrete/);
+    const down = text(card({ aiState: "unavailable", turn: { ...aiTurn, ai: null } }));
+    expect(down).toContain("The AI feedback isn’t available right now. This is what your answer measured. Try again");
+    expect(down).toContain("Next question");
+  });
+});
+
+describe("marking an answer", () => {
+  it("cuts it where the phrases stand, once each, and leaves what overlaps or isn't there unmarked", () => {
+    expect(segments("I helped a lot. Then I make it.", [{ text: "helped a lot", mark: "vague" }, { text: "I make", mark: "english" }])).toEqual([
+      { text: "I ", mark: null }, { text: "helped a lot", mark: "vague" }, { text: ". Then ", mark: null }, { text: "I make", mark: "english" }, { text: " it.", mark: null },
+    ]);
+    expect(segments("a lot of help", [{ text: "a lot of help", mark: "vague" }, { text: "lot", mark: "english" }, { text: "missing", mark: "english" }]))
+      .toEqual([{ text: "a lot of help", mark: "vague" }]);
+    // a phrase shown cut short is found by its start
+    expect(segments("We did many things together.", [{ text: "many things…", mark: "vague" }])[1]).toEqual({ text: "many things", mark: "vague" });
+    expect(segments("", [])).toEqual([{ text: "", mark: null }]);
+    expect(segments("plain", [])).toEqual([{ text: "plain", mark: null }]);
+  });
+});
+
+describe("the report of a session with the model", () => {
+  const base: SessionSummary = {
+    total: 2, answered: 2, skipped: 0, wentWell: ["You said what came of it in 1 of 2 answers."],
+    toPractice: [{ n: null, text: "Keep to the past tense when you tell what happened.", detail: "2 times." }],
+    focus: [], noProof: [], measured: { averageSeconds: 95, averageWords: 84, wordsPerMinute: null, fillers: 2 }, fillerWords: [], named: ["SQL"],
+    english: { notes: 3, dismissed: 1, patterns: [{ kind: "tense", label: "Verb tense", count: 2, example: { quote: "Then I make", better: "Then I made" } }] },
+    questions: [
+      { n: 1, id: "q1", text: "Tell me about the weekly report.", requirement: "SQL", bullet: { ref: "work.0.0", text: "Cut the report from 6 hours to 1 with SQL" },
+        state: "answered", turnId: "t1", answer: ANSWER, follow: [{ question: "And what changed for the team?", answer: MORE }], tries: 1,
+        criteria: aiTurn.criteria, named: ["SQL"], used: ["6", "1", "SQL"], unused: [],
+        measures: { seconds: 120, words: 40, wordsPerMinute: 0, longPauses: 0, fillers: [] }, ai },
+      { n: 2, id: "q2", text: "Who used it?", requirement: null, bullet: { ref: "work.0.1", text: "Built dashboards for 40 staff" },
+        state: "answered", turnId: "t2", answer: "The finance team.", follow: [], tries: 1, criteria: [{ key: "proof", met: false, quote: null }],
+        named: [], used: [], unused: ["40"], measures: { seconds: 20, words: 3, wordsPerMinute: 0, longPauses: 0, fillers: [] }, ai: null },
+    ],
+  };
+  const report: ReportView = {
+    id: "s9", applicationId: "j1", role: "Data Analyst", company: "Altamira Tech", at: NOW - 60e3, kind: "manager", minutes: 10, mode: "typing",
+    status: "done", ai: true, style: "tough", englishNotes: true, prepared: null, keptUntil: Date.UTC(2027, 4, 6, 12), summary: base, progress: null,
+    sessionsForJob: 1, required: 1, cvId: "c1", used: 3, limit: 20, resetsOn: Date.UTC(2026, 11, 1),
+  };
+  const props = { now: NOW, busy: null, confirmDelete: false, message: null, onPracticeThese: noop, onAskDelete: noop, onCancelDelete: noop, onDelete: noop, onPrepared: noop, onOpenCv: noop, onDismissNote: noop, onAskAgain: noop };
+  const html = renderToStaticMarkup(<TrainerReport report={report} {...props} />);
+  const t = text(html);
+
+  it("names the interviewer's style, and says at the bottom what was made with AI", () => {
+    expect(t).toContain("Hiring manager · Tough · 10 min · 2 questions · typed");
+    expect(t).toContain("The interviewer was an AI. Its feedback and the stronger answers are made with AI from your answers and your CV: check them before you use them.");
+    expect(t).not.toContain("without AI");
+  });
+
+  it("gives each question its follow-ups and the model's feedback, as on the card", () => {
+    expect(t).toContain("Follow-up “And what changed for the team?”");
+    expect(t).toContain("Situation: “the report took me a lot of time every week”");
+    expect(t).toContain("Task: missing");
+    expect(t).toContain("Make it concrete“I helped the team a lot with this” Who got the report, and how much sooner?");
+    expect(t).toContain("English · 2 notes");
+    expect((html.match(/I said it right<\/button>/g) ?? []).length).toBe(2);
+    expect(t).toContain("Made with AI. Check it.");
+    expect(html).toContain('<mark class="trn-mark trn-mark--english">responsible of</mark>');
+    // the tag is the answer's result when the model read it, the CV fact otherwise
+    expect(t).toMatch(/1\. “Tell me about the weekly report\.”Result given/);
+    expect(t).toMatch(/2\. “Who used it\?”No fact from your CV/);
+    // one heading per stronger answer
+    expect(html).toContain('id="trn-stronger-q1"');
+  });
+
+  it("says in one line when an answer the model read has no English note", () => {
+    const clean = { ...ai, english: [], dismissed: 0 };
+    const quiet = text(renderToStaticMarkup(<TrainerReport report={{ ...report, summary: { ...base, questions: [{ ...base.questions[0], ai: clean }, base.questions[1]] } }} {...props} />));
+    expect(quiet).toContain("English: no notes on this answer");
+    expect(quiet).not.toMatch(/English · \d|I said it right<|Grammar and wording only/);
+    // the answer the model hasn't read says nothing about its English
+    expect(quiet.split("English: no notes on this answer").length - 1).toBe(1);
+    // English notes off: not a word
+    const off = text(renderToStaticMarkup(<TrainerReport report={{ ...report, englishNotes: false, summary: { ...base, questions: [{ ...base.questions[0], ai: clean }, base.questions[1]] } }} {...props} />));
+    expect(off).not.toContain("English: no notes");
+  });
+
+  it("shows once a sentence that both names the requirement and holds the proof", () => {
+    const same = "I wrote the SQL that cut it from 6 hours to 1.";
+    const q = { ...base.questions[0], criteria: [{ key: "requirement" as const, met: true, quote: same }, { key: "proof" as const, met: true, quote: same }] };
+    const once = text(renderToStaticMarkup(<TrainerReport report={{ ...report, summary: { ...base, questions: [q, base.questions[1]] } }} {...props} />));
+    expect(once).toContain(`SQL: named · “${same}”`);
+    expect(once).toContain("Proof from your CV: 6, 1, SQL");
+    expect(once.split(`“${same}”`).length - 1).toBe(1);
+  });
+
+  it("lists the kinds of English note that came up more than once, without the ones marked right", () => {
+    expect(t).toContain("English · what came up more than once");
+    expect(t).toContain("Verb tense · 2 times · “Then I make” → “Then I made”");
+    expect(t).toContain("You marked 1 note as “I said it right”; it isn’t counted.");
+    const none = text(renderToStaticMarkup(<TrainerReport report={{ ...report, summary: { ...base, english: { notes: 1, dismissed: 0, patterns: [] } } }} {...props} />));
+    expect(none).toContain("No kind of note came up twice in this session.");
+    // English notes off: the section isn't there
+    expect(text(renderToStaticMarkup(<TrainerReport report={{ ...report, englishNotes: false }} {...props} />))).not.toMatch(/English ·|I said it right/);
+  });
+
+  it("fills in as the interviewer reads the answers, and says when it can't", () => {
+    const reading = text(renderToStaticMarkup(<TrainerReport report={report} {...props} waiting={{ t2: "loading" }} />));
+    expect(reading).toContain("The interviewer is reading your answers: 1 of 2 done. The report fills in as it goes.");
+    expect(reading).toContain("The interviewer is reading this answer…");
+    const down = text(renderToStaticMarkup(<TrainerReport report={report} {...props} waiting={{ t2: "unavailable" }} />));
+    expect(down).toContain("The AI feedback isn’t available right now for one answer. The rest of the report is counted from your answers. Try again");
+    expect(down).toContain("The AI feedback on this answer isn’t available right now.");
   });
 });
