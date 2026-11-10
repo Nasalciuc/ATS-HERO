@@ -1,8 +1,10 @@
 "use client";
 /**
  * Daily search (canvas "ATS Hero Tracker v2", page "Search & agent": Desktop · Daily search, Phone ·
- * Daily search): the strip over the tracker and the settings panel. Presentational: the page passes
- * the search, the CVs and the handlers.
+ * Daily search): the strip under the tracker's numbers and the settings panel. Presentational: the
+ * page passes the search, the CVs and the handlers. Drawn as the tracker page and the job's card
+ * are: the Pro Tips card's lilac for the strip, the builder's grey card for the panel's fields, the
+ * way on at the right (PROVISIONAL, AGENTS.md rule 6).
  */
 import { useState } from "react";
 import type { JobSearchInput, MyJobSearch } from "@/app/actions/job-search";
@@ -32,7 +34,9 @@ export interface SearchStripProps {
 export function SearchStrip({ search, today, onEdit }: SearchStripProps) {
   return (
     <section className="trk-strip" aria-label="Daily search">
-      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5b45e0" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
+      <span className="trk-strip__icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
+      </span>
       <p className="trk-strip__text">
         {!search ? (
           <><strong>Find new jobs every morning.</strong> A daily search puts the ones that fit your CV best in Saved.</>
@@ -45,7 +49,7 @@ export function SearchStrip({ search, today, onEdit }: SearchStripProps) {
           </>
         )}
       </p>
-      <button type="button" className="trk-link" onClick={onEdit}>{search ? "Edit" : "Set it up"}</button>
+      <button type="button" className="trk-pill" onClick={onEdit}>{search ? "Edit" : "Set it up"}</button>
     </section>
   );
 }
@@ -121,6 +125,7 @@ export default function SearchPanel({ search, cvs, now, onClose, onSave, onRunNo
         </button>
       </div>
 
+      <div className="trk-fcard trk-search__form">
       <label className="trk-field">
         <span>Job title</span>
         <input type="text" value={title} maxLength={100} placeholder="Data Analyst" onChange={(e) => setTitle(e.target.value)} />
@@ -177,6 +182,7 @@ export default function SearchPanel({ search, cvs, now, onClose, onSave, onRunNo
         })}
         <p className="trk-search__note">The job title and the place go to these sites when we search. Your CV doesn’t.</p>
       </fieldset>
+      </div>
 
       {search?.lastRunAt != null && !ran && (
         <div className="trk-search__last">
@@ -194,12 +200,13 @@ export default function SearchPanel({ search, cvs, now, onClose, onSave, onRunNo
 
       {said && <p className={said.error ? "trk-error" : "trk-search__said"} role={said.error ? "alert" : "status"}>{said.text}</p>}
 
+      {/* the way on at the right, as on the builder's pages; turning it off stays apart, at the left */}
       <div className="trk-search__buttons">
-        <button type="button" className="trk-btn" disabled={busy !== null} onClick={() => act("save")}>{busy === "save" ? "Saving…" : "Save"}</button>
-        <button type="button" className="trk-btn trk-btn--ghost" disabled={busy !== null} onClick={() => act("run")}>{busy === "run" ? "Searching…" : "Search now"}</button>
         {search?.enabled && (
           <button type="button" className="trk-text-btn trk-text-btn--danger" disabled={busy !== null} onClick={() => act("off")}>Turn off</button>
         )}
+        <button type="button" className="topbtn topbtn--ghost" disabled={busy !== null} onClick={() => act("run")}>{busy === "run" ? "Searching…" : "Search now"}</button>
+        <button type="button" className="topbtn topbtn--dark" disabled={busy !== null} onClick={() => act("save")}>{busy === "save" ? "Saving…" : "Save"}</button>
       </div>
     </aside>
   );

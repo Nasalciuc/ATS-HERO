@@ -96,6 +96,10 @@ describe("Ready to send", () => {
     expect(html).toMatch(/<button type="button" class="trk-pill trk-q__btn">Prepare<\/button>/);
     expect(html).toContain('href="/app/tracker/send/r"');
     expect(html).toContain("The form stays open 12 more minutes.");
+    // today's count sits in the circle, and each row wears its state: the person's turn, or still waiting
+    expect(html).toContain('<p class="trk-count" aria-label="Sent today: 0 of 5">');
+    expect(html).toMatch(/trk-q__row trk-q__row--wait"><span class="trk-q__icon" aria-hidden="true">⏳/);
+    expect(html).toMatch(/trk-q__row trk-q__row--you"><span class="trk-q__icon" aria-hidden="true">📝/);
   });
 
   it("stops at the person's limit: no Prepare, and says when the count starts again", () => {
@@ -146,12 +150,14 @@ describe("Check before sending", () => {
 
   it("keeps Send off until every item is gone through", () => {
     const open = reviewHtml([salary, work, privacy], { q1: "4000" });
-    expect(open).toMatch(/<button type="button" class="trk-btn" disabled="">Send application/);
+    expect(open).toMatch(/<button type="button" class="topbtn topbtn--dark" disabled="">Send application/);
     expect(open).toContain("Go through 2 more items to send.");
     expect(open).toContain("sensitive, not saved");
     expect(open).not.toContain("Leave it empty");
     const done = reviewHtml([salary, work, privacy], { q1: "4000", q2: "Yes", q3: true });
-    expect(done).toMatch(/<button type="button" class="trk-btn">Send application/);
+    expect(done).toMatch(/<button type="button" class="topbtn topbtn--dark">Send application/);
+    expect(done).toContain('<span class="trk-state is-good">all gone through</span>');
+    expect(open).toContain('<span class="trk-state is-fair">2 left</span>');
   });
 
   it("names each radio question for screen readers", () => {

@@ -2,7 +2,8 @@
 /**
  * "Which CV gets answers" (canvas "ATS Hero Tracker v2", page "Search & agent", Desktop · Which CV
  * gets answers). Counts from resultsByCv(): applications sent 21 or more days ago, per CV; "x of y",
- * no percentages; a comparison only from MIN_SENT_TO_COMPARE sent.
+ * no percentages; a comparison only from MIN_SENT_TO_COMPARE sent. Drawn as the score page's rows
+ * (a circle, a bold name, the counts under one line each); it stays a table for screen readers.
  */
 import { ANSWER_WAIT_DAYS, MIN_SENT_TO_COMPARE, type CvResults as Results } from "@/lib/tracker";
 
@@ -41,9 +42,14 @@ export default function CvResults({ results, cvLabel, onMark }: CvResultsProps) 
                 return (
                   <tr key={r.cvId}>
                     <th scope="row">
-                      {cv.title}
-                      <span className="trk-bycv__kind">{cv.kind}</span>
-                      {r.tooFew && <span className="trk-bycv__few">Too few to compare</span>}
+                      <span className="trk-bycv__cv">
+                        <span className="trk-bycv__icon" aria-hidden="true">📄</span>
+                        <span className="trk-bycv__name">
+                          {cv.title}
+                          <span className="trk-bycv__kind">{cv.kind}</span>
+                          {r.tooFew && <span className="trk-bycv__few">Too few to compare</span>}
+                        </span>
+                      </span>
                     </th>
                     <td>{r.sent}</td>
                     <td><strong>{r.answered}</strong> <span className="trk-muted">of {r.sent}</span></td>
@@ -65,7 +71,7 @@ export default function CvResults({ results, cvLabel, onMark }: CvResultsProps) 
             <strong>{results.unmarked === 1 ? "1 application has" : `${results.unmarked} applications have`} no CV marked.</strong>{" "}
             Mark what you sent, so {results.unmarked === 1 ? "it counts" : "they count"} here.
           </span>
-          <button type="button" className="trk-link trk-link--inline" onClick={onMark}>Mark {results.unmarked === 1 ? "it" : "them"}</button>
+          <button type="button" className="trk-pill" onClick={onMark}>Mark {results.unmarked === 1 ? "it" : "them"}</button>
         </div>
       )}
 

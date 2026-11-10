@@ -1,9 +1,12 @@
 "use client";
 /**
  * Tracker v2: the board (desktop), the list (phone), "Did you hear back?", the numbers and the first
- * day. Design: the Claude Design canvas "ATS Hero Tracker v2" (Desktop · Tracker board, Phone ·
- * Tracker list, Desktop · First day), approved by Scaler on 3 Nov 2026. Presentational only: the
- * page (app/app/tracker/page.tsx) and the dev preview pass the data and the handlers.
+ * day. What is on the page: the Claude Design canvas "ATS Hero Tracker v2" (Desktop · Tracker board,
+ * Phone · Tracker list, Desktop · First day), approved by Scaler on 3 Nov 2026. How it looks: the
+ * score page's and the builder's own pieces (a circle beside one sentence, the step circles, the
+ * cards), since Scaler asked for the pages to look like Liubovi's (10 Nov); PROVISIONAL until she
+ * draws or checks the frames (AGENTS.md rule 6). Presentational only: the page
+ * (app/app/tracker/page.tsx) passes the data and the handlers.
  */
 import { useState, type ReactNode } from "react";
 import type { ApplicationStatus } from "@/lib/types";
@@ -31,11 +34,16 @@ export interface TrackerBoardProps {
   onAdd: () => void;
   onStatus: (id: string, status: ApplicationStatus) => void;
   onFollowUp: (id: string, answer: FollowUpAnswer) => void;
-  /** under the numbers: "Which CV gets answers" */
-  afterStats?: ReactNode;
+  /** under the numbers: what the daily search does */
+  notices?: ReactNode;
+  /** under the jobs: "Which CV gets answers" */
+  afterBoard?: ReactNode;
   /** the first day's "Find jobs every morning", when the daily search is on */
   onSearch?: () => void;
 }
+
+/** Each stage's picture, as the builder's steps have theirs. */
+const STAGE_EMOJI: Record<ApplicationStatus, string> = { saved: "📌", applied: "📨", interview: "🎤", offer: "🎉", rejected: "📕" };
 
 /** Added by today's daily search. */
 const newToday = (j: TrackedJob, now: number) => j.source === "job_search" && j.status === "saved" && daysSince(j.appliedAt, now) === 0;
@@ -43,6 +51,22 @@ const newToday = (j: TrackedJob, now: number) => j.source === "job_search" && j.
 function metaLine(j: TrackedJob): string {
   if (j.status === "saved") return `${j.source === "job_search" ? "Daily search" : "Saved"} · ${shortDate(j.appliedAt)}`;
   return j.submittedAt != null ? `Sent ${shortDate(j.submittedAt)}` : `Added ${shortDate(j.appliedAt)}`;
+}
+
+const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * The numbers in one sentence, as the score page says its result in one. Counts only: sent, answered
+ * (a rejection is an answer too), reached an interview, saved and not sent.
+ */
+export function numbersLead(s: { sent: number; answered: number; interviews: number }, saved: number): string {
+  const savedJobs = `${count(saved, "saved job")} ${saved === 1 ? "is" : "are"}`;
+  if (s.sent === 0) return saved > 0 ? `Nothing sent yet. ${savedJobs} waiting.` : "Nothing sent yet.";
+  const waiting = saved > 0 ? `${savedJobs} not sent yet.` : "";
+  const answers = s.answered === 0
+    ? "No answer yet."
+    : `${s.answered} got an answer${s.interviews > 0 ? `, ${s.interviews} reached an interview` : ""}.`;
+  return [`You sent ${count(s.sent, "application")}.`, answers, waiting].filter(Boolean).join(" ");
 }
 
 function FitChip({ fit }: { fit: Fit | undefined }) {
@@ -63,11 +87,8 @@ function JobTile({ j, fit, now, onOpen }: { j: TrackedJob; fit: Fit | undefined;
         {newToday(j, now) && <span className="trk-chip trk-chip--new">New today</span>}
       </span>
       <span className="trk-tile__company">{j.company}{j.location ? ` · ${j.location}` : ""}</span>
-      <span className="trk-tile__chips">
-        <span className="trk-chip">{PLATFORM_LABEL[platformOf(j.url)]}</span>
-        <FitChip fit={fit} />
-      </span>
-      <span className="trk-tile__meta">{metaLine(j)}</span>
+      <FitChip fit={fit} />
+      <span className="trk-tile__meta"><span>{PLATFORM_LABEL[platformOf(j.url)]}</span><span>{metaLine(j)}</span></span>
     </button>
   );
 }
@@ -79,7 +100,7 @@ const FOLLOW_UP_BUTTONS: [FollowUpAnswer, string][] = [
   ["no_reply", "No reply"],
 ];
 
-export default function TrackerBoard({ jobs, now, fit, onOpen, onAdd, onStatus, onFollowUp, afterStats, onSearch }: TrackerBoardProps) {
+export default function TrackerBoard({ jobs, now, fit, onOpen, onAdd, onStatus, onFollowUp, notices, afterBoard, onSearch }: TrackerBoardProps) {
   const [query, setQuery] = useState("");
   const [showArchive, setShowArchive] = useState(false);
   const [phoneFilter, setPhoneFilter] = useState<ApplicationStatus | "all">("all");
@@ -98,6 +119,26 @@ export default function TrackerBoard({ jobs, now, fit, onOpen, onAdd, onStatus, 
 
   return (
     <div className="trk">
+      {/* the score page's head: a circle with the count, and the numbers in one sentence */}
+      {!showArchive && (
+        <section className="trk-head" aria-label="Your numbers">
+          <p className="trk-count">
+            {stats.sent > 0 ? (
+              <>
+                <span className="trk-count__value">{stats.answered}<span className="trk-count__of"> / {stats.sent}</span></span>
+                <span className="trk-count__label">answered</span>
+              </>
+            ) : (
+              <>
+                <span className="trk-count__value">{saved}</span>
+                <span className="trk-count__label">saved</span>
+              </>
+            )}
+          </p>
+          <p className="trk-head__lead">{numbersLead(stats, saved)}</p>
+        </section>
+      )}
+
       {due && !showArchive && (
         <section className="trk-ask" aria-label="Did you hear back?">
           <p className="trk-ask__text">
@@ -114,41 +155,30 @@ export default function TrackerBoard({ jobs, now, fit, onOpen, onAdd, onStatus, 
           </div>
         </section>
       )}
-
-      {!showArchive && (
-        <section className="trk-stats" aria-label="Your numbers">
-          <div className="trk-stat"><span className="trk-stat__label">Sent</span><span className="trk-stat__value">{stats.sent}</span></div>
-          <div className="trk-stat">
-            <span className="trk-stat__label">Answered</span>
-            <span className="trk-stat__value">{stats.answered} <span className="trk-stat__of">of {stats.sent}</span></span>
-          </div>
-          <div className="trk-stat"><span className="trk-stat__label">Interviews</span><span className="trk-stat__value">{stats.interviews}</span></div>
-          <div className="trk-stat"><span className="trk-stat__label">Saved, not sent</span><span className="trk-stat__value">{saved}</span></div>
-        </section>
-      )}
-      {!showArchive && afterStats}
+      {!showArchive && notices}
 
       <div className={`trk-tools${showArchive ? " trk-tools--archive" : ""}`}>
-        <label className="trk-field trk-tools__search">
-          <span>Search</span>
-          <input type="search" placeholder="Company or role" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <label className="trk-searchbox">
+          <span className="trk-sr">Search</span>
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
+          <input type="search" placeholder="Search by company or role" value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
         {showArchive ? (
-          <button type="button" className="trk-link" onClick={() => setShowArchive(false)}>Back to the board</button>
+          <button type="button" className="trk-pill" onClick={() => setShowArchive(false)}>Back to the board</button>
         ) : (
-          archived > 0 && <button type="button" className="trk-link" onClick={() => setShowArchive(true)}>Archive ({archived})</button>
+          archived > 0 && <button type="button" className="trk-pill" onClick={() => setShowArchive(true)}>Archive ({archived})</button>
         )}
       </div>
       {showArchive && <h2 className="trk-archive-title">Archive</h2>}
 
-      {/* desktop: the board */}
+      {/* desktop: the board, each stage under its circle, as the builder's steps */}
       <div className="trk-board-wrap">
         <div className="trk-board">
           {BOARD_STATUSES.map((s) => (
             <section key={s} className="trk-col" aria-label={STATUS_LABEL[s]}>
               <h2 className="trk-col__head">
-                <span className={`trk-dot trk-dot--${s}`} aria-hidden="true" />
-                {STATUS_LABEL[s]}
+                <span className={`trk-col__icon trk-col__icon--${s}`} aria-hidden="true">{STAGE_EMOJI[s]}</span>
+                <span className="trk-col__name">{STATUS_LABEL[s]}</span>
                 <span className="trk-col__count">{cols[s].length}</span>
               </h2>
               {cols[s].map((j) => <JobTile key={j.id} j={j} fit={fit[j.id]} now={now} onOpen={onOpen} />)}
@@ -171,7 +201,10 @@ export default function TrackerBoard({ jobs, now, fit, onOpen, onAdd, onStatus, 
         </div>
         {BOARD_STATUSES.filter((s) => cols[s].length > 0 && (shown === "all" || shown === s)).map((s) => (
           <section key={s} className="trk-group" aria-label={STATUS_LABEL[s]}>
-            <h2 className="trk-group__head">{STATUS_LABEL[s]} · {cols[s].length}</h2>
+            <h2 className="trk-group__head">
+              <span className={`trk-col__icon trk-col__icon--${s}`} aria-hidden="true">{STAGE_EMOJI[s]}</span>
+              {STATUS_LABEL[s]} · {cols[s].length}
+            </h2>
             {cols[s].map((j) => (
               <div key={j.id} className="trk-row">
                 <button type="button" className="trk-row__main" onClick={() => onOpen(j.id)}>
@@ -190,6 +223,8 @@ export default function TrackerBoard({ jobs, now, fit, onOpen, onAdd, onStatus, 
           </section>
         ))}
       </div>
+
+      {!showArchive && afterBoard}
     </div>
   );
 }

@@ -4,12 +4,15 @@
  * filled form as the employer's page shows it, what the agent typed from the CV, and every item that
  * is the person's to answer. Nothing is sent until each one is gone through and they press Send;
  * their answers go to the form and are never saved (AGENTS.md rule 11). Presentational:
- * app/app/tracker/send/[id]/page.tsx passes the form and the handlers.
+ * app/app/tracker/send/[id]/page.tsx passes the form and the handlers. Drawn as the tracker page is:
+ * what the agent typed as rows under a line, the person's items on the builder's grey card, Send at
+ * the right (PROVISIONAL, AGENTS.md rule 6: Liubovi draws or checks the frame).
  */
 import type { Review } from "@/lib/apply/queue";
 import type { Answers, PersonItem } from "@/lib/apply/plan";
 import { PLATFORM_LABEL } from "@/lib/tracker";
 import type { ApplyPlatform } from "@/lib/types";
+import { ArrowUp } from "@/components/figma-icons";
 
 /** Has the person gone through this item, in a way the form can take? (lib/apply/plan.ts missingAnswers, for the screen.) */
 export function goneThrough(item: PersonItem, a: string | boolean | undefined): boolean {
@@ -135,7 +138,7 @@ export default function ReviewView({ review, now, answers, sending, message, onA
 
         <div className="trk-rv__side">
           <section aria-label="Filled by the agent" className="trk-rv__filled">
-            <h2 className="trk-label">Filled by the agent</h2>
+            <h2 className="trk-panel__h">Filled by the agent</h2>
             <div className="trk-rv__table">
               {review.filled.map((f, i) => (
                 <div key={`f${i}`} className="trk-rv__line"><span>{f.label}</span><strong>{f.value}</strong><span className="trk-muted">from your CV</span></div>
@@ -154,20 +157,29 @@ export default function ReviewView({ review, now, answers, sending, message, onA
           </section>
 
           <section aria-label="Your answers" className="trk-rv__answers">
-            <h2 className="trk-label">Your answers{review.items.length ? ` · ${left} left` : ""}</h2>
-            {review.items.length === 0 && <p className="trk-muted">The form asks nothing else.</p>}
-            {review.items.map((item) => (
-              <Item key={item.id} item={item} value={answers[item.id]} onAnswer={(v) => onAnswer(item.id, v)} />
-            ))}
+            <h2 className="trk-panel__h">
+              Your answers
+              {review.items.length > 0 && <span className={`trk-state ${left > 0 ? "is-fair" : "is-good"}`}>{left > 0 ? `${left} left` : "all gone through"}</span>}
+            </h2>
+            {review.items.length === 0 ? (
+              <p className="trk-muted">The form asks nothing else.</p>
+            ) : (
+              <div className="trk-fcard trk-rv__items">
+                {review.items.map((item) => (
+                  <Item key={item.id} item={item} value={answers[item.id]} onAnswer={(v) => onAnswer(item.id, v)} />
+                ))}
+              </div>
+            )}
           </section>
 
           {message && <p className={message.error ? "trk-error" : "trk-q__said"} role={message.error ? "alert" : "status"}>{message.text}</p>}
 
+          {/* the way on at the right, as on the builder's pages */}
           <div className="trk-rv__send">
-            <button type="button" className="trk-btn" disabled={left > 0 || sending || minutes === 0} onClick={onSend}>
-              {sending ? "Sending…" : "Send application"}
-            </button>
             {left > 0 && <span className="trk-muted">Go through {left} more item{left === 1 ? "" : "s"} to send.</span>}
+            <button type="button" className="topbtn topbtn--dark" disabled={left > 0 || sending || minutes === 0} onClick={onSend}>
+              {sending ? "Sending…" : "Send application"} <ArrowUp className="topbtn__arrow--right" />
+            </button>
           </div>
           <div className="trk-rv__links">
             {review.url && <a href={review.url} target="_blank" rel="noreferrer noopener" className="trk-a">Continue on the site instead</a>}

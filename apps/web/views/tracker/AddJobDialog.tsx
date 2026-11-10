@@ -3,9 +3,12 @@
  * Tracker v2: "Add a job" (Claude Design canvas "ATS Hero Tracker v2", Desktop · First day and Add
  * job). A link that is already in the tracker is caught while it is typed (the same key the server
  * dedupes on, lib/job-url.ts), and the dialog offers the job that exists instead of a second one.
+ * Drawn as the pop-ups are (a centred title, the ring that closes), with the builder's grey card
+ * for the fields and the way on at the right (PROVISIONAL, AGENTS.md rule 6).
  */
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Modal from "@/components/ui/Modal";
+import { ArrowUp } from "@/components/figma-icons";
 import { jobUrlKey } from "@/lib/job-url";
 import { MAX_DESCRIPTION_CHARS, STATUS_LABEL, shortDate, type TrackedJob } from "@/lib/tracker";
 
@@ -89,6 +92,7 @@ export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob, pr
       <form className="trk-dialog__form" onSubmit={submit}>
         <h2 className="trk-dialog__title">{practice ? "Add a job to practice for" : "Add a job"}</h2>
 
+        <div className="trk-fcard">
         <label className="trk-field">
           <span>Job link</span>
           <input type="url" inputMode="url" placeholder="https://" maxLength={500} value={url} onChange={(e) => setUrl(e.target.value)} />
@@ -139,13 +143,15 @@ export default function AddJobDialog({ open, jobs, onClose, onAdd, onOpenJob, pr
             )}
           </>
         )}
+        </div>
 
         {error && <p className="trk-error" role="alert">{error}</p>}
 
         <div className="trk-dialog__buttons">
-          <button type="button" className="trk-btn trk-btn--ghost" onClick={close}>Cancel</button>
-          <button type="submit" className="trk-btn" disabled={busy}>
+          <button type="button" className="topbtn topbtn--ghost" onClick={close}>Cancel</button>
+          <button type="submit" className="topbtn topbtn--dark" disabled={busy}>
             {existing ? (practice ? "Practice for it" : "Open the job") : busy ? "Adding…" : practice ? "Add and practice" : "Add job"}
+            <ArrowUp className="topbtn__arrow--right" />
           </button>
         </div>
       </form>
