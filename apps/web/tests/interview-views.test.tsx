@@ -350,6 +350,18 @@ describe("setting up, when the interviewer can be the model", () => {
     expect(text(render(withAi, { consent: true }))).not.toContain("Start without AI");
   });
 
+  it("stands on the builder's page: the flow's steps, the requirements in a tips card, the tick right over the button it changes", () => {
+    const html = render(withAi);
+    expect(html).toContain('<span class="analyze-step__label is-current">Set up</span>');
+    expect(text(html)).toContain("🎯Set up🎤Interview📋Report");
+    expect(text(html)).toContain("From the job postWhat the interviewer will ask about");
+    expect(html).toContain('class="trn-mint trn-before"');
+    const at = (x: string) => html.indexOf(x);
+    expect(at("trn-setup__form")).toBeGreaterThan(-1);
+    expect(at("trn-setup__form")).toBeLessThan(at("I understand the interviewer is an AI"));
+    expect(at("I understand the interviewer is an AI")).toBeLessThan(at("Start without AI"));
+  });
+
   it("doesn't ask again once the person agreed, and still says who the interviewer is", () => {
     const t = text(render({ ...withAi, ai: { ...withAi.ai!, agreed: true }, sessions: 3 }));
     expect(t).not.toContain("Before your first session");

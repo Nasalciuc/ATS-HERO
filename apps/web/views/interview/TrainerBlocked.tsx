@@ -17,6 +17,33 @@ export function BackLink() {
   );
 }
 
+const FLOW = [
+  { label: "Set up", emoji: "🎯" },
+  { label: "Interview", emoji: "🎤" },
+  { label: "Report", emoji: "📋" },
+];
+
+/**
+ * Where a practice is: set up, the interview, the report. The Improve and Job Fit flow's progress
+ * bar (components/app/AnalyzeSteps.tsx), with the trainer's three steps; `current` is 0, 1 or 2.
+ */
+export function TrainerSteps({ current }: { current: number }) {
+  return (
+    <ol className="analyze-steps trn-flow" aria-label="Progress">
+      {FLOW.map((s, i) => {
+        const state = i === current ? " is-current" : i < current ? " is-done" : "";
+        return [
+          i > 0 && <li key={`${s.label}-line`} className={`analyze-step__line${i <= current ? " is-filled" : ""}`} aria-hidden="true" />,
+          <li key={s.label} className="analyze-step" aria-current={i === current ? "step" : undefined}>
+            <span className={`analyze-step__node${state}`}><span className="analyze-step__emoji" aria-hidden="true">{s.emoji}</span></span>
+            <span className={`analyze-step__label${state}`}>{s.label}</span>
+          </li>,
+        ];
+      })}
+    </ol>
+  );
+}
+
 export type BlockedKind = "limit" | "signed_out" | "no_cv";
 
 export interface TrainerBlockedProps {
