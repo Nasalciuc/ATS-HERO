@@ -2,7 +2,8 @@
 /**
  * Tracker v2: "What did you send?" (Claude Design canvas "ATS Hero Tracker v2", Phone · Job card).
  * A sheet from the bottom on a phone, a dialog on a computer. Asked when a job moves to Applied;
- * "Skip for now" leaves it unmarked, and the job's card asks again.
+ * "Skip for now" leaves it unmarked, and the job's card asks again. Drawn as the pop-ups are (a
+ * centred title), the CVs as white tiles on the builder's grey card (PROVISIONAL, AGENTS.md rule 6).
  */
 import { useState } from "react";
 import Modal from "@/components/ui/Modal";
@@ -68,7 +69,7 @@ export default function SentDialog({ open, job, justApplied, cvs, onClose, onSav
         </label>
       </fieldset>
       {failed && <p className="trk-error" role="alert">That didn’t save. Try again.</p>}
-      <button type="button" className="trk-btn trk-btn--wide" disabled={!picked || busy} onClick={save}>
+      <button type="button" className="topbtn topbtn--dark trk-dialog__wide" disabled={!picked || busy} onClick={save}>
         {busy ? "Saving…" : "Save"}
       </button>
       <button type="button" className="trk-text-btn trk-text-btn--center" onClick={close}>Skip for now</button>

@@ -7176,46 +7176,43 @@ select.field__input {
   }
 }
 
-/* dialogs: "Add a job" and "What did you send?" */
+/* dialogs: "Add a job" and "What did you send?". PROVISIONAL, as the tracker page: drawn as the
+   pop-ups are (a centred title under the ring that closes, radius 10), with the builder's grey card
+   for the fields and the pill buttons. The board stays in sight behind them. */
 .modal.trk-modal {
   --modal-overlay: rgba(32, 32, 32, 0.45);
 }
 .modal--center .modal__panel.trk-dialog {
-  width: 520px;
+  width: 600px;
   max-width: 100%;
-  padding: 28px;
-  border-radius: 24px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  padding: 48px 44px 40px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   font-family: var(--font-helvetica);
-  color: var(--ink);
-}
-.trk-dialog > .modal__close {
-  top: 28px;
-  right: 28px;
-  box-shadow: inset 0 0 0 1px var(--line);
   color: var(--ink);
 }
 .trk-dialog__form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 .trk-dialog__title {
   margin: 0;
-  min-height: 44px;
-  padding-right: 56px;
-  display: flex;
-  align-items: center;
-  font-size: 24px;
-  font-weight: 700;
+  padding: 0 40px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 34px;
+  line-height: 40px;
+  letter-spacing: -0.34px;
+  text-align: center;
 }
 .trk-dialog__lead {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.4;
+  margin: -6px 0 0;
+  font-size: 16px;
+  line-height: 22px;
+  text-align: center;
   color: #444444;
 }
 .trk-dialog__pair {
@@ -7223,28 +7220,31 @@ select.field__input {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
+/* the way on at the right, as on the builder's pages */
 .trk-dialog__buttons {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 4px;
+}
+.trk-dialog__wide {
+  width: 100%;
 }
 .trk-note {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   margin: 0;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(114, 91, 254, 0.07);
-  border: 1px solid var(--violet-200);
-  font-size: 14px;
+  padding: 14px 16px;
+  border: 1px solid #dad4ff;
+  border-radius: 10px;
+  background: var(--bg-page);
+  font-size: 15px;
   line-height: 1.4;
 }
 .trk-note svg {
   flex: none;
   margin-top: 1px;
-  color: #5b45e0;
+  color: #4a36c4;
 }
 .trk-choice {
   margin: 0;
@@ -7281,40 +7281,113 @@ select.field__input {
 .trk-radio.is-on {
   box-shadow: inset 0 0 0 2px var(--ink);
 }
+/* on the grey card a choice is a white pill or tile, and the one chosen wears the steps' green ring */
+.trk-fcard :is(.trk-radio, .trk-seg) {
+  background: var(--white);
+  box-shadow: none;
+  border: none;
+}
+.trk-fcard :is(.trk-radio, .trk-seg).is-on {
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+:is(.trk-fcard, .trk-cvs) input:is([type="radio"], [type="checkbox"]) {
+  accent-color: #00a040;
+}
 .trk-cvs {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin: 0;
-  padding: 0;
-  border: none;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #f8f8f8;
   min-width: 0;
 }
 .trk-cv {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 56px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  box-shadow: inset 0 0 0 1px var(--line);
+  min-height: 60px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--white);
   font-size: 15px;
   cursor: pointer;
 }
 .trk-cv.is-on {
-  box-shadow: inset 0 0 0 2px var(--ink);
+  box-shadow: inset 0 0 0 2px var(--green);
 }
 .trk-cv__text {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
+.trk-cv__text strong {
+  font-family: var(--font-inter);
+  font-size: 16px;
+  letter-spacing: -0.32px;
+}
 .trk-cv__text span {
-  font-size: 13px;
+  font-size: 14px;
   color: #555555;
 }
 .trk-sheet__grip {
   display: none;
+}
+
+@media (max-width: 720px) {
+  /* dialogs become sheets from the bottom */
+  .modal--center.trk-modal--sheet {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal--center .modal__panel.trk-sheet {
+    width: 100%;
+    max-height: 92vh;
+    padding: 12px 18px 28px;
+    gap: 16px;
+    border-radius: 24px 24px 0 0;
+  }
+  .trk-sheet > .modal__close {
+    display: none; /* "Skip for now" closes it */
+  }
+  .trk-sheet__grip {
+    display: block;
+    align-self: center;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: #d6d6d6;
+  }
+  .trk-dialog__title {
+    font-size: 26px;
+    line-height: 31px;
+    letter-spacing: -0.26px;
+  }
+  .trk-sheet .trk-dialog__title {
+    padding: 0;
+  }
+  .trk-dialog__lead {
+    font-size: 15px;
+    line-height: 21px;
+  }
+  .modal--center .modal__panel.trk-dialog:not(.trk-sheet) {
+    padding: 56px 18px 24px;
+  }
+  .trk-dialog:not(.trk-sheet) .trk-dialog__title {
+    padding: 0;
+  }
+  .trk-dialog__pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .trk-dialog__buttons .topbtn {
+    flex: 1 1 0;
+  }
+  .trk-cvs {
+    padding: 12px;
+    border-radius: 16px;
+  }
 }
 
 /* a job's card: a panel on the right, the board dimmed behind it. PROVISIONAL, as the tracker page:
@@ -7639,49 +7712,6 @@ select.field__input {
   }
 }
 
-@media (max-width: 720px) {
-  /* dialogs become sheets from the bottom */
-  .modal--center.trk-modal--sheet {
-    align-items: flex-end;
-    padding: 0;
-  }
-  .modal--center .modal__panel.trk-sheet {
-    width: 100%;
-    max-height: 92vh;
-    padding: 12px 18px 28px;
-    gap: 14px;
-    border-radius: 24px 24px 0 0;
-    box-shadow: none;
-  }
-  .trk-sheet > .modal__close {
-    display: none; /* "Skip for now" closes it */
-  }
-  .trk-sheet__grip {
-    display: block;
-    align-self: center;
-    width: 40px;
-    height: 4px;
-    border-radius: 2px;
-    background: #d6d6d6;
-  }
-  .trk-sheet .trk-dialog__title {
-    min-height: 0;
-    padding-right: 0;
-    font-size: 22px;
-  }
-  .modal--center .modal__panel.trk-dialog:not(.trk-sheet) {
-    padding: 20px 18px;
-  }
-  .trk-dialog > .modal__close {
-    top: 20px;
-    right: 18px;
-  }
-  .trk-dialog__pair {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-}
-
 /* ---------------- daily search, "Which CV gets answers", "Ready to send", "Check before sending" --------
    Claude Design canvas "ATS Hero Tracker v2", page "Search & agent" (Ready to send, Daily search, Which CV
    gets answers, the two phone frames), approved by Scaler on 4 Nov 2026; "Check before sending" is the
@@ -7719,12 +7749,15 @@ select.field__input {
   justify-content: center;
 }
 
-/* the daily search's panel (in the job card's drawer) */
+/* the daily search's panel (in the job card's drawer): its fields on the builder's grey card */
 .trk-search__lead {
   margin: 4px 0 0;
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 16px;
+  line-height: 22px;
   color: #444444;
+}
+.trk-search__form {
+  gap: 18px;
 }
 .trk-search__pair {
   display: grid;
@@ -7775,32 +7808,52 @@ select.field__input {
   line-height: 1.45;
   color: #555555;
 }
+/* what the last search brought: the Pro Tips card's lilac */
 .trk-search__last {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #f7f7f7;
-  font-size: 14px;
+  padding: 14px 18px;
+  border: 1px solid #dad4ff;
+  border-radius: 10px;
+  background: var(--bg-page);
+  font-size: 15px;
   line-height: 1.45;
 }
 .trk-search__said,
 .trk-q__said {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.45;
-  color: #0a6b35;
+  color: #00843a;
 }
 .trk-search__buttons {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
   margin-top: auto;
 }
+.trk-search__buttons .trk-text-btn {
+  margin-right: auto;
+}
 .trk-text-btn--danger:disabled {
   opacity: 0.5;
+}
+
+@media (max-width: 720px) {
+  .trk-search__pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .trk-search__buttons .topbtn {
+    flex: 1 1 0;
+  }
+  .trk-search__buttons .trk-text-btn {
+    flex: 1 1 100%;
+    margin-right: 0;
+    text-align: left;
+  }
 }
 
 /* "Ready to send" */
@@ -8174,9 +8227,6 @@ select.field__input {
     min-width: 18px;
     height: 18px;
     font-size: 11px;
-  }
-  .trk-search__pair {
-    grid-template-columns: minmax(0, 1fr);
   }
   .trk-q__top,
   .trk-q__limit {
