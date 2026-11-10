@@ -91,6 +91,10 @@ async function guarded<T extends object>(action: string, fn: (ownerId: string) =
 const Id = z.string().min(1).max(64);
 const QuestionId = z.string().regex(/^q\d{1,2}$/);
 const Seconds = z.number().int().min(0).max(4 * 3600);
+/** What was typed, as an answer: some text, and no more than MAX_ANSWER of it. */
+const AnswerText = z.string().trim()
+  .min(1, "Type your answer first, or skip the question.")
+  .max(MAX_ANSWER, "Keep your answer under 6,000 characters.");
 
 type CvRow = { id: string; title: string; data: CvData; updatedAt: Date };
 
@@ -526,12 +530,10 @@ export async function getInterview(id: string): Promise<Result<{ session: LiveSe
   });
 }
 
-/** What was typed, as an answer; or why it isn't one. */
+/** What was typed, as an answer; or why it isn't one. Anything that isn't text is no answer. */
 function answerText(input: { answer?: unknown } | null | undefined): { text: string } | { message: string } {
-  const text = typeof input?.answer === "string" ? input.answer.trim() : "";
-  if (!text) return { message: "Type your answer first, or skip the question." };
-  if (text.length > MAX_ANSWER) return { message: "Keep your answer under 6,000 characters." };
-  return { text };
+  const p = AnswerText.safeParse(typeof input?.answer === "string" ? input.answer : "");
+  return p.success ? { text: p.data } : { message: p.error.issues[0].message };
 }
 
 /** The try a session is on: its last one, as it stands now. */
@@ -760,12 +762,13 @@ export async function dismissEnglishNote(id: string, input: { turnId: string; in
 
 /** "Pause" and "Resume": the clock stops on the page, and the time used so far is kept. */
 export async function pauseInterview(id: string, paused: boolean, secondsUsed: number): Promise<Result> {
-  if (!Id.safeParse(id).success || !Seconds.safeParse(secondsUsed).success) return { ok: false, message: GONE };
+  const p = z.object({ paused: z.boolean(), secondsUsed: Seconds }).safeParse({ paused, secondsUsed });
+  if (!Id.safeParse(id).success || !p.success) return { ok: false, message: GONE };
   return guarded("pause", async (ownerId) => {
     const found = await getSession(ownerId, id);
     if (!found) throw new InterviewError(GONE);
     if (found.session.status === "done") throw new InterviewError(ENDED);
-    await updateSession(ownerId, id, { status: paused ? "paused" : "live", secondsUsed: elapsed(found.session, secondsUsed) });
+    await updateSession(ownerId, id, { status: p.data.paused ? "paused" : "live", secondsUsed: elapsed(found.session, p.data.secondsUsed) });
     return {};
   });
 }

@@ -140,6 +140,28 @@ describe("a typed session", () => {
       .toEqual({ ok: false, message: "That question isn’t in this interview." });
   });
 
+  it("takes text only as an answer, without the spaces around it, up to 6,000 characters", async () => {
+    const { id } = await started();
+    for (const notText of [42, null, undefined, { text: "Yes" }]) {
+      expect(await answerQuestion(id, { questionId: "q1", answer: notText as never, seconds: 1, secondsUsed: 1 }))
+        .toEqual({ ok: false, message: "Type your answer first, or skip the question." });
+    }
+    expect(await answerQuestion(id, { questionId: "q1", answer: "  I cut the report from 6 hours to 1.  ", seconds: 5, secondsUsed: 5 }))
+      .toMatchObject({ ok: true, turn: { answer: "I cut the report from 6 hours to 1." } });
+    expect(await answerQuestion(id, { questionId: "q1", answer: "x".repeat(6000), seconds: 5, secondsUsed: 5 })).toMatchObject({ ok: true });
+  });
+
+  it("pauses and resumes only on a yes or a no", async () => {
+    const { id } = await started();
+    const status = async () => (await db.select().from(interviewSessions).where(eq(interviewSessions.id, id)))[0].status;
+    const before = await status();
+    for (const notYesOrNo of ["false", 1, null, undefined]) {
+      expect(await pauseInterview(id, notYesOrNo as never, 2))
+        .toEqual({ ok: false, message: "We couldn’t find this interview. It may have been deleted." });
+    }
+    expect(await status()).toBe(before);
+  });
+
   it("takes an answer three times at most; a skipped question takes none", async () => {
     const { id } = await started();
     for (const n of [1, 2, 3]) expect(await answerQuestion(id, { questionId: "q1", answer: `Try ${n}`, seconds: 5, secondsUsed: 5 })).toMatchObject({ ok: true });
