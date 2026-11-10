@@ -428,6 +428,9 @@ describe("the session with the model", () => {
     // said once to a screen reader (the status), and shown under the loading circle
     expect(thinking).toMatch(/class="trn-live__status trn-live__status--thinking trk-sr" role="status"/);
     expect(thinking).toContain('<p class="trn-reading__msg" aria-hidden="true">Thinking…</p>');
+    // the circle holds a line drawing (a thought bubble), as the score page's loading circle does, not an emoji face
+    expect(thinking).toMatch(/<div class="trn-reading__badge" aria-hidden="true">.*<svg class="trn-reading__icon"/);
+    expect(thinking).not.toContain("🤔");
     expect(text(thinking)).toContain("Your answer is saved. The clock is stopped while the interviewer reads it.");
     expect(thinking).not.toContain("<textarea");
     expect(text(thinking)).not.toContain("Send answer");

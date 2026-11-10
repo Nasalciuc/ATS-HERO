@@ -8630,10 +8630,14 @@ select.field__input {
     animation: none;
   }
 }
-.trn-reading__emoji {
-  font-family: var(--font-emoji);
-  font-size: 96px;
-  line-height: 1;
+/* the thought bubble: a line drawing, white inside, as the score page's circle holds a line drawing */
+.trn-reading__icon {
+  width: 120px;
+  height: 120px;
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 5;
+  stroke-linejoin: round;
 }
 .trn-reading__msg {
   margin: 0;
@@ -9833,8 +9837,9 @@ select.field__input {
     height: 160px;
     margin-bottom: 28px;
   }
-  .trn-reading__emoji {
-    font-size: 64px;
+  .trn-reading__icon {
+    width: 82px;
+    height: 82px;
   }
   .trn-fb__page {
     gap: 28px;

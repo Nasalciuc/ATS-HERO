@@ -52,6 +52,22 @@ function LiveHeader({ session, status, timeLeft, busy, onEnd }: { session: Meta;
 }
 
 /**
+ * The picture in the circle while the interviewer reads an answer: a thought bubble drawn in line, as
+ * the score page's loading circle has its CV drawn in line (Scaler, 10 Nov: a drawing, not an emoji
+ * face). Our own drawing, not from Figma (PROVISIONAL, AGENTS.md rule 6). The circle it sits in is
+ * hidden from screen readers; the status line says what is going on.
+ */
+function ThoughtBubble() {
+  return (
+    <svg className="trn-reading__icon" viewBox="0 0 120 120" focusable="false">
+      <path d="M20 35.8A20 20 0 0 1 44.3 15.5A22 22 0 0 1 82.8 17.5A19 19 0 0 1 105.7 39.3A18 18 0 0 1 103 72A19 19 0 0 1 76.4 89.4A19 19 0 0 1 46.6 88.1A18 18 0 0 1 23 71.3A19 19 0 0 1 20 35.8Z" />
+      <circle cx="22" cy="99" r="7.5" />
+      <circle cx="8.5" cy="112" r="5" />
+    </svg>
+  );
+}
+
+/**
  * Where the interview is, as the builder and the score flow show their steps: a circle a question,
  * the one being asked in the ring, and the report at the end. Wide screens only: on a phone the
  * line over the question says "Question 2 of 4".
@@ -178,7 +194,7 @@ export default function TrainerLive(p: TrainerLiveProps) {
                 <svg className="trn-reading__ring" viewBox="0 0 236 236" focusable="false">
                   <circle cx="118" cy="118" r="117" pathLength={360} strokeDasharray="334 26" transform="rotate(27 118 118)" />
                 </svg>
-                <span className="trn-reading__emoji">🤔</span>
+                <ThoughtBubble />
               </div>
               <p className="trn-reading__msg" aria-hidden="true">Thinking…</p>
               <p className="trn-reading__note">Your answer is saved. The clock is stopped while the interviewer reads it.</p>
