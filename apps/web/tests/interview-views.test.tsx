@@ -15,6 +15,10 @@ import JobPanel from "@/views/tracker/JobPanel";
 import type { AiFeedback, SessionSummary } from "@/lib/interview/report";
 import type { TrackedJob } from "@/lib/tracker";
 
+// The day a report is kept until, as the page says it: in the reader's own zone (longDate). A local
+// date, so "6 May 2027" holds wherever the tests run.
+const KEPT_UNTIL = new Date(2027, 4, 6, 12).getTime();
+
 const DAY = 864e5;
 const NOW = Date.parse("2026-11-07T18:45:00Z");
 const noop = () => {};
@@ -226,7 +230,7 @@ describe("the report", () => {
   };
   const report: ReportView = {
     id: "s2", applicationId: "j1", role: "Data Analyst", company: "Altamira Tech", at: NOW - 60e3, kind: "manager", minutes: 10, mode: "typing",
-    status: "done", ai: false, style: "friendly", englishNotes: false, prepared: "a_bit", keptUntil: Date.UTC(2027, 4, 6, 12), summary,
+    status: "done", ai: false, style: "friendly", englishNotes: false, prepared: "a_bit", keptUntil: KEPT_UNTIL, summary,
     progress: {
       columns: [{ id: "s1", at: NOW - 5 * DAY, kind: "recruiter" }, { id: "s2", at: NOW - 60e3, kind: "manager" }],
       rows: [{ label: "SQL", required: true, states: ["proof", "asked"] }],
@@ -643,7 +647,7 @@ describe("the report of a session with the model", () => {
   };
   const report: ReportView = {
     id: "s9", applicationId: "j1", role: "Data Analyst", company: "Altamira Tech", at: NOW - 60e3, kind: "manager", minutes: 10, mode: "typing",
-    status: "done", ai: true, style: "tough", englishNotes: true, prepared: null, keptUntil: Date.UTC(2027, 4, 6, 12), summary: base, progress: null,
+    status: "done", ai: true, style: "tough", englishNotes: true, prepared: null, keptUntil: KEPT_UNTIL, summary: base, progress: null,
     sessionsForJob: 1, required: 1, cvId: "c1", used: 3, limit: 20, resetsOn: Date.UTC(2026, 11, 1),
   };
   const props = { now: NOW, busy: null, confirmDelete: false, message: null, onPracticeThese: noop, onAskDelete: noop, onCancelDelete: noop, onDelete: noop, onPrepared: noop, onOpenCv: noop, onDismissNote: noop, onAskAgain: noop };
