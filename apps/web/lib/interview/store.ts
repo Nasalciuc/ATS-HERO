@@ -21,6 +21,7 @@ import { db } from "@/db";
 import {
   applications, cvs, interviewSessions, interviewTurns, type InterviewSession, type InterviewTurn,
 } from "@/db/schema";
+import { giveAiConsent } from "@/lib/ai/consent";
 import { withLog } from "@/lib/log";
 import { INTERVIEW_RETENTION_DAYS } from "@/lib/retention";
 import type {
@@ -77,19 +78,25 @@ export type NewTurn = {
 
 /**
  * Starts a session for one of the owner's jobs, with one of their CVs and a pack whose questions all
- * have a CV line. With `limit`, the month's count is checked in the same transaction, under a lock on
- * the owner, so two starts at once can't both pass it.
+ * have a CV line. In the same transaction:
+ * - with `opts.max`, the month's count is checked under a lock on the owner, so two starts at once
+ *   can't both pass it;
+ * - with `opts.consent`, the person's agreement to that version of the AI text (lib/ai/consent.ts) is
+ *   kept. A session whose interviewer is the model and the agreement it started under are both
+ *   there, or neither is.
  */
-export async function createSession(ownerId: string, input: NewSession, limit?: { max: number; now?: Date }): Promise<InterviewSession> {
+export async function createSession(
+  ownerId: string, input: NewSession, opts?: { max?: number; now?: Date; consent?: string },
+): Promise<InterviewSession> {
   if (!input.pack.questions.length) throw new InterviewError("No questions");
   if (input.pack.questions.some((q) => !q.bullet?.ref || !q.bullet.text.trim()))
     throw new InterviewError("A question without a CV line");
   return db.transaction(async (tx) => {
-    if (limit) {
+    if (opts?.max != null) {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${"interview:" + ownerId}))`);
       const [row] = await tx.select({ n: sql<number>`count(*)::int` }).from(interviewSessions)
-        .where(and(eq(interviewSessions.ownerId, ownerId), gte(interviewSessions.createdAt, monthStart(limit.now ?? new Date()))));
-      if (Number(row?.n ?? 0) >= limit.max) throw new InterviewError("limit");
+        .where(and(eq(interviewSessions.ownerId, ownerId), gte(interviewSessions.createdAt, monthStart(opts.now ?? new Date()))));
+      if (Number(row?.n ?? 0) >= opts.max) throw new InterviewError("limit");
     }
     // ids come from the client: the job, the CV and the earlier session must be the owner's
     const [job] = await tx.select({ id: applications.id }).from(applications)
@@ -104,6 +111,7 @@ export async function createSession(ownerId: string, input: NewSession, limit?: 
       if (!from) throw new InterviewError("Session not found");
     }
     const [row] = await tx.insert(interviewSessions).values({ ownerId, ...input }).returning();
+    if (opts?.consent) await giveAiConsent(ownerId, opts.consent, tx);
     return row;
   });
 }

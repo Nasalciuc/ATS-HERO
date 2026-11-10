@@ -5,7 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { makeTestDb } from "./setup";
 import { aiConsents, aiUsage, applications, cvs, interviewSessions, interviewTurns } from "@/db/schema";
 import { AiError, type ModelRequest, type TextModel } from "@/lib/interview/model";
@@ -156,6 +156,22 @@ describe("a session has the model only when it is on and the person agreed", () 
     expect(ok(await getFeedback(id, r.turn.id))).toMatchObject({ ai: "none", turn: { ai: null } });
     expect(fake.requests).toHaveLength(0);
     expect(ok(await getInterview(id)).session).toMatchObject({ ai: false, opening: null, pending: null });
+  });
+
+  it("keeps the agreement and the session together: if the agreement can't be written, no session starts", async () => {
+    const c = await cv();
+    const j = await job();
+    // the agreement's table takes no new row: the start must leave nothing behind
+    await db.execute(sql`alter table ai_consents add constraint takes_no_new_row check (false) not valid`);
+    const r = await startInterview({ applicationId: j.id, cvId: c.id, kind: "technical", minutes: 10, feedbackWhen: "each", timer: false, consent: true });
+    expect(r).toEqual({ ok: false, message: "Something went wrong. Try again." });
+    // no session with the model stands without its agreement, and the month's sessions are untouched
+    expect(await db.select().from(interviewSessions)).toHaveLength(0);
+    expect(await db.select().from(aiConsents)).toHaveLength(0);
+    expect(ok(await getTrainerHome()).home.used).toBe(0);
+    // without the tick there is no agreement to write: the same start goes through, without the model
+    const plain = ok(await startInterview({ applicationId: j.id, cvId: c.id, kind: "technical", minutes: 10, feedbackWhen: "each", timer: false }));
+    expect(await sessionRow(plain.id)).toMatchObject({ ai: false });
   });
 
   it("starts without it when it is off, and keeps no agreement for nothing", async () => {

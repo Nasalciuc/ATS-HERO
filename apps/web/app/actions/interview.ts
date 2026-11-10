@@ -33,7 +33,7 @@ import { interviewTrainerEnabled } from "@/lib/features";
 import { withLog } from "@/lib/log";
 import { jobFit } from "@/lib/job-fit";
 import { INTERVIEW_RETENTION_DAYS } from "@/lib/retention";
-import { giveAiConsent, hasAiConsent, INTERVIEW_CONSENT } from "@/lib/ai/consent";
+import { hasAiConsent, INTERVIEW_CONSENT } from "@/lib/ai/consent";
 import { spendRun } from "@/lib/interview/budget";
 import { giveFeedback } from "@/lib/interview/feedback";
 import { askFollowUp, FOLLOW_UPS } from "@/lib/interview/follow-up";
@@ -392,9 +392,13 @@ export async function startInterview(input: StartInput): Promise<Result<{ id: st
       // the style and the English notes are the model's: without it, IV-11's default and no notes
       style: ai ? p.data.style ?? "friendly" : "friendly",
       englishNotes: ai && (p.data.englishNotes ?? true),
-    }, { max: INTERVIEW_SESSIONS_PER_MONTH });
-    // kept once the session exists: an agreement with nothing started under it would be a record of nothing
-    if (ai && p.data.consent === true) await giveAiConsent(ownerId, INTERVIEW_CONSENT);
+    }, {
+      max: INTERVIEW_SESSIONS_PER_MONTH,
+      // The agreement the person ticked just now is kept with the session it starts, in one
+      // transaction: an agreement with nothing started under it would be a record of nothing, and a
+      // session with the model must never stand without it.
+      consent: ai && p.data.consent === true ? INTERVIEW_CONSENT : undefined,
+    });
     return { id: session.id };
   });
 }

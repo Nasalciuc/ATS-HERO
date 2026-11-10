@@ -28,9 +28,13 @@ export async function hasAiConsent(ownerId: string, version: string): Promise<bo
   return Boolean(row);
 }
 
-/** The owner agrees to this version. Agreeing twice keeps the first date. */
-export async function giveAiConsent(ownerId: string, version: string): Promise<void> {
-  await db.insert(aiConsents).values({ ownerId, version }).onConflictDoNothing();
+/**
+ * The owner agrees to this version. Agreeing twice keeps the first date. Given a transaction, the
+ * agreement is written in it: kept if what it was given for is kept (the session it starts), and
+ * gone with it otherwise.
+ */
+export async function giveAiConsent(ownerId: string, version: string, on: Pick<Tx, "insert"> = db): Promise<void> {
+  await on.insert(aiConsents).values({ ownerId, version }).onConflictDoNothing();
 }
 
 /** Every agreement of the owner goes, inside the caller's transaction (deleteAccount). */
