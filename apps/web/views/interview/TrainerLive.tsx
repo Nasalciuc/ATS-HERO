@@ -51,6 +51,35 @@ function LiveHeader({ session, status, timeLeft, busy, onEnd }: { session: Meta;
   );
 }
 
+/**
+ * Where the interview is, as the builder and the score flow show their steps: a circle a question,
+ * the one being asked in the ring, and the report at the end. Wide screens only: on a phone the
+ * line over the question says "Question 2 of 4".
+ */
+export function QuestionSteps({ n, total, done = false }: { n: number; total: number; done?: boolean }) {
+  const state = (i: number) => (done || i < n ? " is-done" : i === n ? " is-current" : "");
+  return (
+    <ol className="trn-steps" aria-label="Questions">
+      {Array.from({ length: total }, (_, k) => k + 1).map((i) => (
+        <li key={i} className="trn-steps__item" aria-current={!done && i === n ? "step" : undefined}>
+          {i > 1 && <span className={`trn-steps__line${done || i <= n ? " is-filled" : ""}`} aria-hidden="true" />}
+          <span className="trn-steps__step">
+            <span className={`trn-steps__node${state(i)}`}>{i}</span>
+            <span className={`trn-steps__label${state(i)}`}>Question {i}</span>
+          </span>
+        </li>
+      ))}
+      <li className="trn-steps__item" aria-current={done ? "step" : undefined}>
+        <span className={`trn-steps__line${done ? " is-filled" : ""}`} aria-hidden="true" />
+        <span className="trn-steps__step">
+          <span className={`trn-steps__node trn-steps__node--emoji${done ? " is-current" : ""}`}><span aria-hidden="true">📋</span></span>
+          <span className={`trn-steps__label${done ? " is-current" : ""}`}>Report</span>
+        </span>
+      </li>
+    </ol>
+  );
+}
+
 /** thinking: the answer is in, and the interviewer decides whether to ask more */
 export type LivePhase = "answering" | "thinking" | "paused" | "finished";
 export type TranscriptLine = { who: "interviewer" | "you"; text: string; skipped?: boolean };
@@ -99,9 +128,11 @@ export default function TrainerLive(p: TrainerLiveProps) {
       {/* the way out stays open while the interviewer reads an answer: the answer is already saved */}
       <LiveHeader session={p.session} status={p.phase === "finished" ? `${p.total} of ${p.total} answered` : `Question ${p.n} of ${p.total}`}
         timeLeft={p.timeLeft} busy={p.busy && p.phase !== "thinking"} onEnd={p.onEnd} />
+      <QuestionSteps n={p.n} total={p.total} done={p.phase === "finished"} />
       <div className="trn-live__body">
         <main className="trn-live__main">
-          <p className={`trn-live__status trn-live__status--${p.phase}`} role="status" aria-live="polite">{status}</p>
+          {/* while the interviewer reads, the circle under it says so to the eye; this line says it to a screen reader */}
+          <p className={`trn-live__status trn-live__status--${p.phase}${p.phase === "thinking" ? " trk-sr" : ""}`} role="status" aria-live="polite">{status}</p>
 
           {p.question && p.phase !== "finished" && (
             <div className="trn-live__q">
@@ -114,32 +145,45 @@ export default function TrainerLive(p: TrainerLiveProps) {
           )}
 
           {p.phase === "answering" && (
-            <label className="trn-live__answer">
-              Your answer
-              <textarea
-                rows={7}
-                maxLength={6000}
-                value={p.draft}
-                onChange={(e) => p.onDraft(e.target.value)}
-                placeholder={p.session.timer ? "Type your answer. A reminder comes at two minutes." : "Type your answer. Take your time; there is no timer."}
-              />
-            </label>
-          )}
-
-          {p.phase === "answering" && p.session.timer && (
-            <div className="trn-timer">
-              <div className="trn-timer__row">
-                <span>{wrapUp ? "Two minutes: finish your sentence and send it" : "Answer timer"}</span>
-                <span><strong>{clock(Math.min(p.answerSeconds, ANSWER_TIMER_S))}</strong> of {clock(ANSWER_TIMER_S)}</span>
-              </div>
-              <div className="trn-timer__bar" role="progressbar" aria-label="Answer time used" aria-valuemin={0} aria-valuemax={ANSWER_TIMER_S}
-                aria-valuenow={Math.min(ANSWER_TIMER_S, Math.round(p.answerSeconds))}>
-                <span style={{ width: `${Math.min(100, (p.answerSeconds / ANSWER_TIMER_S) * 100)}%` }} />
-              </div>
+            <div className="trn-card trn-live__card">
+              <label className="trn-live__answer">
+                <span className="trn-label">Your answer</span>
+                <textarea
+                  rows={7}
+                  maxLength={6000}
+                  value={p.draft}
+                  onChange={(e) => p.onDraft(e.target.value)}
+                  placeholder={p.session.timer ? "Type your answer. A reminder comes at two minutes." : "Type your answer. Take your time; there is no timer."}
+                />
+              </label>
+              {p.session.timer && (
+                <div className="trn-timer">
+                  <div className="trn-timer__row">
+                    <span>{wrapUp ? "Two minutes: finish your sentence and send it" : "Answer timer"}</span>
+                    <span><strong>{clock(Math.min(p.answerSeconds, ANSWER_TIMER_S))}</strong> of {clock(ANSWER_TIMER_S)}</span>
+                  </div>
+                  <div className="trn-timer__bar" role="progressbar" aria-label="Answer time used" aria-valuemin={0} aria-valuemax={ANSWER_TIMER_S}
+                    aria-valuenow={Math.min(ANSWER_TIMER_S, Math.round(p.answerSeconds))}>
+                    <span style={{ width: `${Math.min(100, (p.answerSeconds / ANSWER_TIMER_S) * 100)}%` }} />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {p.phase === "thinking" && <p className="trn-live__note">Your answer is saved. The clock is stopped while the interviewer reads it.</p>}
+          {/* the score page's loading circle: the lilac disc, the green ring turning, and what is going on under it */}
+          {p.phase === "thinking" && (
+            <div className="trn-reading">
+              <div className="trn-reading__badge" aria-hidden="true">
+                <svg className="trn-reading__ring" viewBox="0 0 236 236" focusable="false">
+                  <circle cx="118" cy="118" r="117" pathLength={360} strokeDasharray="334 26" transform="rotate(27 118 118)" />
+                </svg>
+                <span className="trn-reading__emoji">🤔</span>
+              </div>
+              <p className="trn-reading__msg" aria-hidden="true">Thinking…</p>
+              <p className="trn-reading__note">Your answer is saved. The clock is stopped while the interviewer reads it.</p>
+            </div>
+          )}
           {p.phase === "paused" && <p className="trn-live__note">Your answers so far are saved. Resume when you’re ready{p.retrying ? "" : ", or skip this question"}.</p>}
           {p.phase === "finished" && <p className="trn-live__note">Your answers are saved. See what they showed in your report.</p>}
           {p.error && <p className="trk-error" role="alert">{p.error}</p>}
@@ -147,19 +191,21 @@ export default function TrainerLive(p: TrainerLiveProps) {
           <div className="trn-live__controls">
             {p.phase === "answering" && (
               <>
-                <button type="button" className="trk-btn" disabled={p.busy || !p.draft.trim()} onClick={p.onSend}>
-                  {p.busy ? "Sending…" : timeUp && !p.retrying ? "Send and finish" : "Send answer"}
+                <button type="button" className="topbtn topbtn--ghost" disabled={p.busy} onClick={p.onPause}>Pause</button>
+                <button type="button" className="topbtn topbtn--dark" disabled={p.busy || !p.draft.trim()} onClick={p.onSend}>
+                  {p.busy ? "Sending…" : timeUp && !p.retrying ? "Send and finish" : "Send answer"} <ArrowUp className="topbtn__arrow--right" />
                 </button>
-                <button type="button" className="trk-btn trk-btn--ghost trn-btn--soft" disabled={p.busy} onClick={p.onPause}>Pause</button>
               </>
             )}
             {p.phase === "paused" && (
               <>
-                <button type="button" className="trk-btn" disabled={p.busy} onClick={p.onResume}>Resume</button>
-                {(!p.retrying || p.followUp) && <button type="button" className="trk-btn trk-btn--ghost trn-btn--soft" disabled={p.busy} onClick={p.onSkip}>Skip this question</button>}
+                {(!p.retrying || p.followUp) && <button type="button" className="topbtn topbtn--ghost" disabled={p.busy} onClick={p.onSkip}>Skip this question</button>}
+                <button type="button" className="topbtn topbtn--dark" disabled={p.busy} onClick={p.onResume}>Resume</button>
               </>
             )}
-            {p.phase === "finished" && <button type="button" className="trk-btn" disabled={p.busy} onClick={p.onReport}>See your report</button>}
+            {p.phase === "finished" && (
+              <button type="button" className="topbtn topbtn--dark" disabled={p.busy} onClick={p.onReport}>See your report <ArrowUp className="topbtn__arrow--right" /></button>
+            )}
           </div>
         </main>
 
@@ -410,6 +456,7 @@ export function TrainerFeedback(p: TrainerFeedbackProps) {
   return (
     <div className="trn trn-live trn-fb">
       <LiveHeader session={p.session} status={`Question ${p.n} of ${p.total} · the clock is stopped`} timeLeft={p.timeLeft} busy={p.busy} onEnd={p.onEnd} />
+      <QuestionSteps n={p.n} total={p.total} />
       <main className="trn-fb__page">
         <div className="trn-fb__title">
           <p className="trn-fb__kicker">Feedback · question {p.n} of {p.total}</p>

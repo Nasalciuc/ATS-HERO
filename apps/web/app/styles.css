@@ -8409,7 +8409,7 @@ select.field__input {
   gap: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  background: #f7f7f7;
+  background: var(--white);
 }
 .trn-live__top {
   display: flex;
@@ -8467,18 +8467,19 @@ select.field__input {
   flex-direction: column;
   align-items: center;
   gap: 24px;
-  padding: 36px 40px;
-  border-radius: 16px;
-  background: var(--white);
+  padding: 12px 8px 0;
 }
+/* what the session is doing: a field label's type (12px Inter, capitals), not a headline */
 .trn-live__status {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-family: var(--font-inter);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 15px;
+  letter-spacing: -0.24px;
   text-transform: uppercase;
   text-align: center;
-  color: #444444;
+  color: #6b6b6b;
 }
 .trn-live__status--finished {
   color: #0a6b35;
@@ -8502,28 +8503,177 @@ select.field__input {
 .trn-live__qtext {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+/* the answer: a white field on the form card's grey, as in the builder */
+.trn-live__card {
+  width: 100%;
+  max-width: 760px;
+  gap: 18px;
 }
 .trn-live__answer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  max-width: 680px;
-  font-size: 14px;
-  font-weight: 700;
+  gap: 6px;
 }
 .trn-live__answer textarea {
   padding: 14px 16px;
-  border: 1px solid #c9c9c9;
-  border-radius: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--white);
   font-family: inherit;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.5;
+  color: var(--ink);
   resize: vertical;
+}
+.trn-live__answer textarea::placeholder {
+  color: #767676;
+  opacity: 1;
+}
+.trn .trn-live__answer textarea:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--violet-600);
+}
+/* while the interviewer reads: the score page's loading circle (234px, lilac, the green ring turning) */
+.trn-reading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 36px;
+  text-align: center;
+}
+.trn-reading__badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 234px;
+  height: 234px;
+  margin-bottom: 43px;
+  border-radius: 50%;
+  background: #f5f3ff;
+}
+.trn-reading__ring {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  animation: ats-spin 1.6s linear infinite;
+}
+.trn-reading__ring circle {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trn-reading__ring {
+    animation: none;
+  }
+}
+.trn-reading__emoji {
+  font-family: var(--font-emoji);
+  font-size: 96px;
+  line-height: 1;
+}
+.trn-reading__msg {
+  margin: 0;
+  font-size: 20px;
+  line-height: 24px;
+  color: #000;
+}
+.trn-reading__note {
+  margin: 12px 0 0;
+  max-width: 420px;
+  font-size: 16px;
+  line-height: 22px;
+  color: #6b6b6b;
+}
+/* the questions as steps: the progress bar's 64px circles and 12px labels, a number in each */
+.trn-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin: 0;
+  padding: 28px 32px 0;
+  list-style: none;
+}
+.trn-steps__item {
+  display: flex;
+  align-items: flex-start;
+}
+.trn-steps__line {
+  position: relative;
+  width: 46px;
+  height: 62px;
+}
+.trn-steps__line::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30px;
+  height: 1px;
+  background: #c0c0c0;
+}
+.trn-steps__line.is-filled::before {
+  top: 29px;
+  height: 2px;
+  background: var(--green);
+}
+.trn-steps__step {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 64px;
+}
+.trn-steps__node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  color: #757575;
+}
+.trn-steps__node--emoji {
+  font-family: var(--font-emoji);
+  font-size: 30px;
+}
+.trn-steps__node.is-current {
+  background: var(--bg-mint);
+  box-shadow: inset 0 0 0 2px var(--green);
+  color: var(--ink);
+}
+.trn-steps__node.is-done {
+  box-shadow: inset 0 0 0 2px var(--green);
+  color: var(--ink);
+}
+.trn-steps__label {
+  width: max-content;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  color: #757575;
+  white-space: nowrap;
+}
+.trn-steps__label.is-current {
+  font-weight: 600;
+  color: #00843a; /* the progress bar's green is 2.3:1 on white; 12px text needs 4.5:1 */
 }
 .trn-timer {
   display: flex;
@@ -8561,12 +8711,17 @@ select.field__input {
   color: #444444;
   text-align: center;
 }
+/* under the card, across its width: the way back on the left, the way on at the right, as Back and Next step */
 .trn-live__controls {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-between;
   gap: 12px;
-  margin-top: auto;
+  width: 100%;
+  max-width: 760px;
+}
+.trn-live__controls .topbtn--dark {
+  margin-left: auto;
 }
 .trn-live__side {
   flex: 1 1 340px;
@@ -8574,9 +8729,10 @@ select.field__input {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 20px 22px;
-  border-radius: 16px;
-  background: var(--white);
+  padding: 24px 26px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #f8f8f8;
 }
 .trn-live__side-head {
   display: flex;
@@ -9417,20 +9573,44 @@ select.field__input {
     gap: 16px;
   }
   .trn-live__main {
-    padding: 24px 16px;
+    padding: 8px 0 0;
     gap: 18px;
   }
   .trn-live__qtext {
-    font-size: 22px;
+    font-size: 24px;
+  }
+  .trn-live__side {
+    padding: 18px 16px;
+    border-radius: 16px;
   }
   .trn-live__controls {
     width: 100%;
   }
-  .trn-live__controls .trk-btn {
+  .trn-live__controls .topbtn {
     flex: 1 1 auto;
+    height: 48px;
   }
-  .trn-live__controls .trk-btn:first-child {
+  /* the way on first, and as wide as the screen */
+  .trn-live__controls .topbtn--dark {
+    order: -1;
     flex-basis: 100%;
+  }
+  .trn-steps {
+    display: none;
+  }
+  .trn-live__card {
+    padding: 16px;
+  }
+  .trn-reading {
+    margin-top: 12px;
+  }
+  .trn-reading__badge {
+    width: 160px;
+    height: 160px;
+    margin-bottom: 28px;
+  }
+  .trn-reading__emoji {
+    font-size: 64px;
   }
   .trn-fb__page {
     gap: 28px;

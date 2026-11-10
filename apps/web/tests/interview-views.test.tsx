@@ -8,7 +8,7 @@ import type { LiveTurn, ReportView, SetupView, TrainerHome as Home } from "@/app
 import TrainerHome, { LimitChip } from "@/views/interview/TrainerHome";
 import TrainerSetup from "@/views/interview/TrainerSetup";
 import TrainerBlocked from "@/views/interview/TrainerBlocked";
-import TrainerLive, { criterionNote, measuredForShow, summaryOf, TrainerFeedback, quoted } from "@/views/interview/TrainerLive";
+import TrainerLive, { criterionNote, measuredForShow, QuestionSteps, summaryOf, TrainerFeedback, quoted } from "@/views/interview/TrainerLive";
 import { segments } from "@/views/interview/format";
 import TrainerReport from "@/views/interview/TrainerReport";
 import JobPanel from "@/views/tracker/JobPanel";
@@ -401,10 +401,50 @@ describe("the session with the model", () => {
   it("stops the clock and takes no answer while the interviewer reads; a follow-up can be skipped from a pause", () => {
     const thinking = renderToStaticMarkup(<TrainerLive {...props} phase="thinking" question={null} />);
     expect(text(thinking)).toContain("Thinking…");
+    // said once to a screen reader (the status), and shown under the loading circle
+    expect(thinking).toMatch(/class="trn-live__status trn-live__status--thinking trk-sr" role="status"/);
+    expect(thinking).toContain('<p class="trn-reading__msg" aria-hidden="true">Thinking…</p>');
     expect(text(thinking)).toContain("Your answer is saved. The clock is stopped while the interviewer reads it.");
     expect(thinking).not.toContain("<textarea");
     expect(text(thinking)).not.toContain("Send answer");
     expect(text(renderToStaticMarkup(<TrainerLive {...props} phase="paused" retrying followUp />))).toContain("Skip this question");
+  });
+});
+
+describe("the questions as steps", () => {
+  const done = (h: string) => (h.match(/class="trn-steps__node is-done"/g) ?? []).length;
+
+  it("shows a circle a question, the one being asked in the ring, and the report at the end", () => {
+    const h = renderToStaticMarkup(<QuestionSteps n={2} total={4} />);
+    expect((h.match(/class="trn-steps__label[^"]*">Question \d</g) ?? []).length).toBe(4);
+    expect(done(h)).toBe(1);
+    expect(h).toContain('<span class="trn-steps__label is-current">Question 2</span>');
+    expect(h).toMatch(/aria-current="step"><span class="trn-steps__line is-filled"/);
+    expect(h).toContain('<span class="trn-steps__label">Report</span>');
+    // the current step is told apart by its word and aria-current, not only its colour
+    expect((h.match(/aria-current="step"/g) ?? []).length).toBe(1);
+  });
+
+  it("ends on the report once every question has its answer", () => {
+    const h = renderToStaticMarkup(<QuestionSteps n={4} total={4} done />);
+    expect(done(h)).toBe(4);
+    expect(h).toContain('<span class="trn-steps__label is-current">Report</span>');
+    expect((h.match(/aria-current="step"/g) ?? []).length).toBe(1);
+  });
+
+  it("stands on the session and on the feedback after an answer", () => {
+    const session = { ...plain, timer: false };
+    const live = renderToStaticMarkup(
+      <TrainerLive session={session} phase="answering" n={3} total={4} question={{ text: "Q", requirement: null }} timeLeft={60} answerSeconds={0}
+        retrying={false} draft="" onDraft={noop} transcript={[]} showTranscript onToggleTranscript={noop} busy={false} error={null}
+        onSend={noop} onPause={noop} onResume={noop} onSkip={noop} onEnd={noop} onReport={noop} />,
+    );
+    expect(live).toContain('<span class="trn-steps__label is-current">Question 3</span>');
+    const card = renderToStaticMarkup(
+      <TrainerFeedback session={plain} n={2} total={4} question={{ text: "Q", requirement: null }} turn={turn} ahead={[]} last={false}
+        canRetry timeLeft={372} busy={false} error={null} onNext={noop} onRetry={noop} onEnd={noop} />,
+    );
+    expect(card).toContain('<span class="trn-steps__label is-current">Question 2</span>');
   });
 });
 
