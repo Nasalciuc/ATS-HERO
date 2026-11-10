@@ -8230,9 +8230,9 @@ select.field__input {
   align-items: flex-start;
   gap: 16px;
 }
+/* 280 beside the form (which takes the room that is left); the whole row once it wraps under it */
 .trn-setup__side {
   flex: 1 1 280px;
-  max-width: 340px;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -9814,9 +9814,6 @@ select.field__input {
   }
   .trn-steps {
     display: none;
-  }
-  .trn-setup__side {
-    max-width: none;
   }
   .trn-setup__form {
     padding: 18px 16px;
