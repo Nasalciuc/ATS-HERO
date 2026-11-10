@@ -74,6 +74,7 @@ describe("saveJobSearch / getMyJobSearch", () => {
   it("checks against one of the person's CVs only", async () => {
     const [theirs] = await db.insert(cvs).values({ ownerId: "u2", title: "Not mine", data: emptyCvData() }).returning();
     expect(await saveJobSearch({ ...input, cvId: theirs.id })).toEqual({ ok: false, message: "Choose one of your CVs." });
+    expect(await db.select().from(jobSearches)).toEqual([]);
     const [mine] = await db.insert(cvs).values({ ownerId: "u1", title: "Mine", data: emptyCvData() }).returning();
     expect(await saveJobSearch({ ...input, cvId: mine.id })).toMatchObject({ ok: true, search: { cvId: mine.id } });
   });
@@ -124,6 +125,31 @@ describe("runMyJobSearchNow", () => {
     expect(await runMyJobSearchNow()).toMatchObject({ ok: false, message: expect.stringMatching(/a moment ago/) });
     expect(aiCalls).toBe(1);
     expect(await db.select().from(applications).where(eq(applications.ownerId, "u1"))).toHaveLength(1);
+  });
+
+  it("claims, runs and reads back only the person's own search", async () => {
+    await saveJobSearch(input);
+    holder.owner = "u2";
+    await saveJobSearch({ ...input, searchTerm: "Nurse" });
+    expect(await runMyJobSearchNow()).toMatchObject({ ok: true, search: { searchTerm: "Nurse", lastAdded: 1 } });
+    const rows = await db.select().from(jobSearches);
+    expect(rows.find((s) => s.ownerId === "u1")).toMatchObject({ lastRunAt: null, lastAdded: null });
+    expect(rows.find((s) => s.ownerId === "u2")?.lastRunAt).toBeInstanceOf(Date);
+    expect((await db.select().from(applications)).map((a) => a.ownerId)).toEqual(["u2"]);
+  });
+
+  it("logs every step under the person's id: the claim, the run, the read", async () => {
+    await saveJobSearch(input);
+    const log = vi.mocked(console.log);
+    log.mockClear();
+    await runMyJobSearchNow();
+    const lines = log.mock.calls.map(([line]) => JSON.parse(String(line)) as { action: string; ownerId: string });
+    expect(lines.map((l) => l.action)).toEqual(["jobSearch.claim", "jobSearch.run", "jobSearch.get"]);
+    expect(lines.map((l) => l.ownerId)).toEqual(["u1", "u1", "u1"]);
+    // a press refused by the gap is one logged step, and no run
+    log.mockClear();
+    await runMyJobSearchNow();
+    expect(log.mock.calls.map(([line]) => JSON.parse(String(line)).action)).toEqual(["jobSearch.claim"]);
   });
 });
 

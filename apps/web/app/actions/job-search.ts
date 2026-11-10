@@ -7,9 +7,10 @@
 import { z } from "zod";
 import { and, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "@/db";
-import { cvs, jobSearches, type JobSearch } from "@/db/schema";
+import { jobSearches, type JobSearch } from "@/db/schema";
 import { getOwnerId } from "./_shared";
 import { withLog } from "@/lib/log";
+import { cvOwnershipPredicate } from "@/lib/ownership";
 import { jobSearchEnabled } from "@/lib/features";
 import { JOB_BOARDS, JOB_COUNTRIES, MAX_PER_DAY, SEARCH_NOW_GAP_MS } from "@/lib/job-search";
 import { addedToday, runJobSearch, SearchFailed, type RunSummary } from "@/lib/job-search-run";
@@ -68,10 +69,6 @@ export async function saveJobSearch(input: JobSearchInput): Promise<Result<{ sea
   const parsed = SearchInput.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Check the job title (2–100 characters), the country and at least one place to look." };
   const v = parsed.data;
-  if (v.cvId) {
-    const cv = await db.query.cvs.findFirst({ where: and(eq(cvs.id, v.cvId), eq(cvs.ownerId, ownerId)) });
-    if (!cv) return { ok: false, message: "Choose one of your CVs." };
-  }
   const values = {
     searchTerm: v.searchTerm,
     country: v.country,
@@ -83,11 +80,14 @@ export async function saveJobSearch(input: JobSearchInput): Promise<Result<{ sea
     enabled: v.enabled,
   };
   const row = await withLog("jobSearch.save", { ownerId }, async () => {
+    // a CV that isn't theirs: nothing is saved
+    if (v.cvId && !(await db.query.cvs.findFirst({ where: cvOwnershipPredicate(v.cvId, ownerId) }))) return null;
     const [saved] = await db.insert(jobSearches).values({ ownerId, ...values })
       .onConflictDoUpdate({ target: jobSearches.ownerId, set: values })
       .returning();
     return saved;
   });
+  if (!row) return { ok: false, message: "Choose one of your CVs." };
   return { ok: true, search: serialize(row) };
 }
 
@@ -96,22 +96,27 @@ export async function runMyJobSearchNow(): Promise<Result<{ summary: RunSummary;
   if (!jobSearchEnabled()) return OFF;
   const ownerId = await getOwnerId();
   if (!ownerId) return SIGNED_OUT;
-  const search = await db.query.jobSearches.findFirst({ where: eq(jobSearches.ownerId, ownerId) });
-  if (!search) return { ok: false, message: "Save the search first." };
+  // one search per person (job_searches_by_owner): the owner names the row
+  const mine = eq(jobSearches.ownerId, ownerId);
   const now = new Date();
-  if (await addedToday(ownerId, now) >= search.perDay) {
-    const n = search.perDay;
-    return { ok: false, message: `Saved already has today’s ${n} new ${n === 1 ? "job" : "jobs"} from the search. The next search runs tomorrow morning.` };
-  }
-  // the claim: one "Search now" passes in the gap, even when pressed twice at once
-  const [claimed] = await db.update(jobSearches).set({ lastRunAt: now })
-    .where(and(eq(jobSearches.id, search.id), or(isNull(jobSearches.lastRunAt), lt(jobSearches.lastRunAt, new Date(now.getTime() - SEARCH_NOW_GAP_MS)))))
-    .returning();
-  if (!claimed) return { ok: false, message: "You searched a moment ago. Try again in a few minutes." };
+  const claim = await withLog("jobSearch.claim", { ownerId }, async (): Promise<{ search: JobSearch } | { message: string }> => {
+    const search = await db.query.jobSearches.findFirst({ where: mine });
+    if (!search) return { message: "Save the search first." };
+    if (await addedToday(ownerId, now) >= search.perDay) {
+      const n = search.perDay;
+      return { message: `Saved already has today’s ${n} new ${n === 1 ? "job" : "jobs"} from the search. The next search runs tomorrow morning.` };
+    }
+    // the claim: one "Search now" passes in the gap, even when pressed twice at once
+    const [claimed] = await db.update(jobSearches).set({ lastRunAt: now })
+      .where(and(mine, or(isNull(jobSearches.lastRunAt), lt(jobSearches.lastRunAt, new Date(now.getTime() - SEARCH_NOW_GAP_MS)))))
+      .returning();
+    return claimed ? { search: claimed } : { message: "You searched a moment ago. Try again in a few minutes." };
+  });
+  if ("message" in claim) return { ok: false, message: claim.message };
   try {
-    const summary = await runJobSearch(claimed, { now });
-    const after = await db.query.jobSearches.findFirst({ where: eq(jobSearches.id, search.id) });
-    return { ok: true, summary, search: serialize(after ?? search) };
+    const summary = await runJobSearch(claim.search, { now });
+    const after = await withLog("jobSearch.get", { ownerId }, () => db.query.jobSearches.findFirst({ where: mine }));
+    return { ok: true, summary, search: serialize(after ?? claim.search) };
   } catch (e) {
     if (e instanceof SearchFailed) return { ok: false, message: e.message };
     return { ok: false, message: "The search failed. Try again later." };
