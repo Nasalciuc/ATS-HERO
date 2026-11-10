@@ -2,12 +2,15 @@
 /**
  * "Ready to send" (canvas "ATS Hero Tracker v2", page "Search & agent": Desktop · Ready to send, with
  * the daily limit; Phone · Ready to send). Presentational: app/app/tracker/send/page.tsx passes the
- * queue and the handlers.
+ * queue and the handlers. Drawn as the tracker page is: today's count in a circle beside what the
+ * agent does, each job a row under a line with its state in words, the Saved jobs on the builder's
+ * grey card (PROVISIONAL, AGENTS.md rule 6: Liubovi draws or checks the frame).
  */
 import { useState } from "react";
 import type { QueueRow, QueueView as View } from "@/lib/apply/queue";
 import { PLATFORM_LABEL, shortDate } from "@/lib/tracker";
 import type { ApplyPlatform } from "@/lib/types";
+import { ArrowUp } from "@/components/figma-icons";
 
 export const LIMIT_CHOICES = [1, 2, 3, 5, 8, 10];
 
@@ -51,6 +54,12 @@ export interface QueueViewProps {
   onAdd: (applicationIds: string[], cvId: string | null) => void;
 }
 
+/** Each state's picture and the colour of its ring: violet for the person's turn, amber for the site's, green once sent. */
+const STATE: Record<string, [emoji: string, tone: "wait" | "you" | "site" | "done"]> = {
+  waiting: ["⏳", "wait"], preparing: ["✍️", "you"], ready: ["📝", "you"], sending: ["📨", "you"], sent: ["✅", "done"],
+  handoff: ["🙋", "site"], refused: ["🌐", "site"], failed: ["⚠️", "site"], unconfirmed: ["❓", "site"],
+};
+
 function Status({ r, now, preparing }: { r: QueueRow; now: number; preparing: boolean }) {
   if (preparing || r.status === "preparing") return <><strong>Filling the form…</strong> Stay on this page or come back in a minute.</>;
   switch (r.status) {
@@ -93,11 +102,15 @@ export default function QueueView({ view, now, cvs, preparingId, message, onLimi
         Tracker
       </a>
 
+      {/* the score page's head: a circle with today's count, beside what the agent does */}
       <div className="trk-q__top">
-        <p className="trk-q__lead">The agent fills one form at a time, from your CV. You check each one and press Send. Nothing goes out on its own.</p>
-        <div className="trk-q__limit">
-          <div className="trk-q__count"><strong>Sent today: {view.sentToday}</strong> <span className="trk-muted">of {view.dailyLimit}</span></div>
-          <label className="trk-field">
+        <p className="trk-count" aria-label={`Sent today: ${view.sentToday} of ${view.dailyLimit}`}>
+          <span className="trk-count__value">{view.sentToday}<span className="trk-count__of"> / {view.dailyLimit}</span></span>
+          <span className="trk-count__label">sent today</span>
+        </p>
+        <div className="trk-q__intro">
+          <p className="trk-q__lead">The agent fills one form at a time, from your CV. You check each one and press Send. Nothing goes out on its own.</p>
+          <label className="trk-field trk-q__limit">
             <span>Daily limit</span>
             <select value={view.dailyLimit} onChange={(e) => onLimit(Number(e.target.value))}>
               {choices.map((n) => <option key={n} value={n}>{n} a day</option>)}
@@ -116,20 +129,22 @@ export default function QueueView({ view, now, cvs, preparingId, message, onLimi
 
       {view.rows.length > 0 ? (
         <section className="trk-q__list" aria-label="Queue">
-          <h2 className="trk-label">In the queue · {view.rows.length}</h2>
+          <h2 className="trk-panel__h">In the queue <span className="trk-state is-none">{view.rows.length}</span></h2>
           {view.rows.map((r) => {
             const preparing = preparingId === r.id;
             const canPrepare = ["waiting", "handoff", "failed"].includes(r.status) && !preparing;
+            const [emoji, tone] = STATE[preparing ? "preparing" : r.status] ?? STATE.waiting;
             return (
-              <div key={r.id} className="trk-q__row">
+              <div key={r.id} className={`trk-q__row trk-q__row--${tone}`}>
+                <span className="trk-q__icon" aria-hidden="true">{emoji}</span>
                 <div className="trk-q__job">
-                  <div className="trk-q__role">{r.role} <span className="trk-muted">· {r.company}{r.location ? ` · ${r.location}` : ""}</span></div>
-                  <div className="trk-tile__chips"><span className="trk-chip">{platform(r.platform)}</span></div>
+                  <div className="trk-q__role">{r.role}</div>
+                  <div className="trk-q__place">{r.company}{r.location ? ` · ${r.location}` : ""} · {platform(r.platform)}</div>
                 </div>
                 <div className="trk-q__status"><Status r={r} now={now} preparing={preparing} /></div>
                 <div className="trk-q__actions">
                   {r.status === "ready" && !preparing && (
-                    <a href={`/app/tracker/send/${r.id}`} className="trk-btn trk-q__btn">Check and send</a>
+                    <a href={`/app/tracker/send/${r.id}`} className="topbtn topbtn--dark trk-q__btn">Check and send <ArrowUp className="topbtn__arrow--right" /></a>
                   )}
                   {canPrepare && (
                     atLimit
@@ -154,19 +169,14 @@ export default function QueueView({ view, now, cvs, preparingId, message, onLimi
         </section>
       )}
 
-      <section className="trk-q__add" aria-label="Add from Saved">
-        <div className="trk-q__add-head">
-          <h2>From Saved, the agent can prepare</h2>
-          <button type="button" className="trk-btn trk-q__btn" disabled={picked.length === 0} onClick={() => { onAdd(picked, cvId || null); setPicked([]); }}>
-            {picked.length === 0 ? "Add to the queue" : `Add ${picked.length} to the queue`}
-          </button>
-        </div>
+      <section className="trk-fcard trk-q__add" aria-label="Add from Saved">
+        <h2 className="trk-panel__h">From Saved, the agent can prepare</h2>
         {view.candidates.length === 0 ? (
           <p className="trk-muted">No Saved job on Greenhouse, Lever or Ashby yet. The daily search and Add job put them there.</p>
         ) : (
           <>
             {view.candidates.map((c) => (
-              <label key={c.applicationId} className="trk-check">
+              <label key={c.applicationId} className={`trk-check trk-q__pick${picked.includes(c.applicationId) ? " is-on" : ""}`}>
                 <input type="checkbox" checked={picked.includes(c.applicationId)} onChange={() => toggle(c.applicationId)} />
                 <span><strong>{c.role}</strong> · {c.company} <span className="trk-muted">· {platform(c.platform)}</span></span>
               </label>
@@ -182,11 +192,19 @@ export default function QueueView({ view, now, cvs, preparingId, message, onLimi
             )}
           </>
         )}
-        {view.notForAgent > 0 && (
-          <p className="trk-q__note">
-            Not here: {view.notForAgent === 1 ? "1 saved job" : `${view.notForAgent} saved jobs`} on Workday, Indeed Apply, LinkedIn or another site. You apply to those on the site.
-          </p>
-        )}
+        {/* the way on at the right, as on the builder's pages */}
+        <div className="trk-q__add-foot">
+          {view.notForAgent > 0 && (
+            <p className="trk-q__note">
+              Not here: {view.notForAgent === 1 ? "1 saved job" : `${view.notForAgent} saved jobs`} on Workday, Indeed Apply, LinkedIn or another site. You apply to those on the site.
+            </p>
+          )}
+          {view.candidates.length > 0 && (
+            <button type="button" className="topbtn topbtn--dark trk-q__btn" disabled={picked.length === 0} onClick={() => { onAdd(picked, cvId || null); setPicked([]); }}>
+              {picked.length === 0 ? "Add to the queue" : `Add ${picked.length} to the queue`} <ArrowUp className="topbtn__arrow--right" />
+            </button>
+          )}
+        </div>
       </section>
     </div>
   );

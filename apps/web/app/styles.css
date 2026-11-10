@@ -6306,9 +6306,6 @@ select.field__input {
   color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--ink);
 }
-.trk-btn--wide {
-  width: 100%;
-}
 .trk-pill {
   height: 40px;
   padding: 0 16px;
@@ -6693,13 +6690,6 @@ select.field__input {
 }
 .trk-tile .trk-chip--partial {
   color: #a35a00;
-}
-/* the queue's rows still set their chips in this */
-.trk-tile__chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
 }
 /* the site and the date: each stays whole when the two don't fit on one line */
 .trk-tile__meta {
@@ -7856,15 +7846,16 @@ select.field__input {
   }
 }
 
-/* "Ready to send" */
+/* "Ready to send". PROVISIONAL, as the tracker page: today's count in the score page's circle beside
+   what the agent does, each job a row under a line with its state in words, the Saved jobs on the
+   builder's grey card, the way on at the right. */
 .trk-q {
-  gap: 22px;
-  max-width: 1126px;
+  gap: 28px;
 }
 .trk-q__back {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   align-self: flex-start;
   min-height: 44px;
   font-size: 15px;
@@ -7874,277 +7865,307 @@ select.field__input {
 }
 .trk-q__top {
   display: flex;
+  align-items: center;
+  gap: 49px;
+}
+.trk-q__intro {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 16px 24px;
+  justify-content: space-between;
+  gap: 16px 32px;
 }
 .trk-q__lead {
-  flex: 1 1 420px;
+  flex: 1 1 360px;
   margin: 0;
-  font-size: 16px;
-  line-height: 1.45;
-  color: #444444;
-  max-width: 680px;
+  max-width: 620px;
+  font-size: 20px;
+  line-height: 26px;
+  color: #000;
 }
-.trk-q__limit {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px;
-}
-.trk-q__limit .trk-field select {
+.trk-q__limit select {
   min-width: 150px;
+  background: #f8f8f8;
 }
-.trk-q__count {
-  height: 44px;
-  padding: 0 16px;
-  border-radius: 22px;
-  background: #f7f7f7;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+/* the person's own limit is reached: said on the suggestions' amber */
 .trk-q__banner {
   padding: 16px 20px;
   border-radius: 16px;
   background: #fff3e0;
-  font-size: 15px;
-  line-height: 1.4;
+  font-size: 16px;
+  line-height: 22px;
   color: #5c3200;
 }
 .trk-q__list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  border-bottom: 1px solid var(--line);
 }
-.trk-q__list .trk-label {
-  margin: 0;
+.trk-q__list .trk-panel__h {
+  margin-bottom: 16px;
 }
 .trk-q__row {
-  display: flex;
-  flex-wrap: wrap;
+  --tone: var(--line);
+  display: grid;
+  grid-template-columns: 64px minmax(180px, 1fr) minmax(0, 1.2fr) auto;
   align-items: center;
-  gap: 12px 20px;
-  padding: 16px 20px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  column-gap: 20px;
+  min-height: 96px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.trk-q__row--you {
+  --tone: var(--violet-300);
+}
+.trk-q__row--site {
+  --tone: #ffc107;
+}
+.trk-q__row--done {
+  --tone: var(--green);
+}
+.trk-q__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 2px var(--tone);
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 1;
 }
 .trk-q__job {
-  flex: 1 1 300px;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
+  min-width: 0;
 }
 .trk-q__role {
-  font-size: 16px;
+  font-family: var(--font-inter);
   font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
 }
-.trk-q__role .trk-muted {
-  font-weight: 400;
+.trk-q__place {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #555555;
 }
 .trk-q__status {
-  flex: 1 1 260px;
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 15px;
+  line-height: 1.45;
   color: #444444;
 }
 .trk-q__ready {
-  color: #5b45e0;
   font-weight: 700;
+  color: #4a36c4;
 }
 .trk-q__warn {
-  color: #8a4b00;
   font-weight: 700;
+  color: #a35a00;
 }
 .trk-q__sent {
-  color: #0a6b35;
   font-weight: 700;
+  color: #00843a;
 }
 .trk-q__actions {
-  flex: 0 0 auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 8px 12px;
 }
 .trk-q__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.trk-pill.trk-q__btn {
   height: 44px;
-  padding: 0 22px;
+  padding: 0 20px;
   border-radius: 22px;
   font-size: 15px;
-  text-decoration: none;
 }
 .trk-pill.trk-q__btn:disabled {
   border-color: #c9c9c9;
-  color: #6b6b6b;
+  color: #767676;
   cursor: default;
 }
-.trk-q__site {
-  display: inline-flex;
-  align-items: center;
-}
 .trk-q__remove {
-  padding: 0 6px;
-  background: none;
-  font-family: inherit;
   font-size: 14px;
-  font-weight: 700;
-  color: #555555;
+  color: #6b6b6b;
 }
 .trk-q__empty {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 32px;
-  border: 1px dashed #c9c9c9;
-  border-radius: 16px;
+  gap: 6px;
+  padding: 22px 24px;
+  border: 1px solid #dad4ff;
+  border-radius: 10px;
+  background: var(--bg-page);
 }
 .trk-q__empty h2 {
   margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
   font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
 }
 .trk-q__empty p {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 16px;
+  line-height: 22px;
   color: #444444;
 }
+/* from Saved: what to hand the agent, on the builder's grey card */
 .trk-q__add {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 18px 20px;
-  border-radius: 16px;
-  background: #f7f7f7;
+  gap: 12px;
+  padding: 26px 28px;
 }
-.trk-q__add-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 16px;
+.trk-q__pick {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--white);
+  cursor: pointer;
 }
-.trk-q__add-head h2 {
-  flex-grow: 1;
-  margin: 0;
-  font-size: 16px;
+.trk-q__pick.is-on {
+  box-shadow: inset 0 0 0 2px var(--green);
 }
 .trk-q__cv {
   max-width: 360px;
-  margin-top: 8px;
+  margin-top: 6px;
+}
+.trk-q__add-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px 20px;
+  margin-top: 6px;
 }
 .trk-q__note {
-  margin: 4px 0 0;
-  font-size: 13px;
+  flex: 1 1 320px;
+  margin: 0;
+  font-size: 14px;
   line-height: 1.45;
   color: #555555;
 }
 
-/* "Check before sending" */
+/* "Check before sending". PROVISIONAL, as the tracker page: the form as the employer's page shows it,
+   what the agent typed as rows under a line, the person's items on the builder's grey card. */
 .trk-rv {
-  gap: 22px;
-  max-width: 1126px;
+  gap: 24px;
 }
 .trk-rv__top {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 20px;
+  gap: 14px 28px;
 }
+/* how long the form stays open: the suggestions badge */
 .trk-rv__timer {
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 20px;
-  background: #fff3e0;
-  color: #8a4b00;
-  font-size: 14px;
-  font-weight: 700;
+  flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 100px;
+  background: #fff3e0;
+  color: #8a4b00;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 16px;
 }
 .trk-rv__cols {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
 }
 .trk-rv__shot {
-  flex: 1 1 360px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .trk-rv__shot img {
+  display: block;
   width: 100%;
-  max-height: 720px;
-  object-fit: cover;
-  object-position: top;
-  border-radius: 16px;
+  height: auto;
   border: 1px solid var(--line);
-  background: #f7f7f7;
+  border-radius: 20px;
+  background: #f8f8f8;
 }
 .trk-rv__side {
-  flex: 1 1 420px;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 28px;
+  min-width: 0;
 }
 .trk-rv__filled,
 .trk-rv__answers {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-.trk-rv__filled .trk-label,
-.trk-rv__answers .trk-label {
-  margin: 0;
+  gap: 14px;
 }
 .trk-rv__table {
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--line);
 }
 .trk-rv__line {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
-  padding: 11px 16px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 15px;
-}
-.trk-rv__line:last-child {
-  border-bottom: none;
+  align-items: baseline;
+  gap: 2px 14px;
+  min-height: 52px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  font-size: 16px;
+  line-height: 22px;
 }
 .trk-rv__line > span:first-child {
   flex: 0 0 150px;
   color: #555555;
 }
 .trk-rv__line > strong {
-  flex: 1 1 140px;
+  flex: 1 1 160px;
+  min-width: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  letter-spacing: -0.32px;
   overflow-wrap: anywhere;
 }
 .trk-rv__line > .trk-muted {
-  align-self: center;
-  font-size: 12px;
+  font-size: 14px;
 }
+.trk-rv__items {
+  gap: 10px;
+  padding: 16px;
+}
+/* each thing the form asks the person: a white card; the ones still to go through wear a lilac ring */
 .trk-rv__item {
-  margin: 0;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--white);
 }
 .trk-rv__item.is-open {
-  border: 2px solid var(--violet-600);
+  box-shadow: inset 0 0 0 2px var(--violet-300);
 }
 .trk-rv__item :is(select, textarea) {
+  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -8155,68 +8176,95 @@ select.field__input {
 }
 .trk-rv__item select {
   height: 44px;
-  padding: 0 12px;
 }
 .trk-rv__item textarea {
-  resize: vertical;
   line-height: 1.4;
+  resize: vertical;
 }
 .trk-rv__q {
-  padding: 0;
-  font-size: 15px;
+  font-family: var(--font-inter);
   font-weight: 700;
-  line-height: 1.35;
+  font-size: 16px;
+  line-height: 21px;
+  letter-spacing: -0.32px;
 }
 .trk-rv__tag {
+  font-family: var(--font-helvetica);
   font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0;
   color: #6b6b6b;
 }
 .trk-rv__options {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 20px;
+  gap: 0 24px;
 }
 .trk-rv__box {
   align-items: flex-start;
 }
 .trk-rv__box input {
-  margin-top: 1px;
+  margin-top: 2px;
 }
 .trk-rv__send {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
-  font-size: 14px;
+  justify-content: flex-end;
+  gap: 12px 20px;
+  font-size: 15px;
 }
 .trk-rv__links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 18px;
-  font-size: 14px;
+  justify-content: flex-end;
+  gap: 8px 24px;
+  font-size: 15px;
 }
 .trk-rv__cancel {
   color: var(--ink);
 }
+/* after Send: what happened, on the Activities card's mint when it went, on the Pro Tips lilac when it stopped */
 .trk-rv__done {
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 22px 24px;
-  border-radius: 16px;
-  border: 1px solid var(--line);
+  border: 1px solid #dad4ff;
+  border-radius: 10px;
+  background: var(--bg-page);
   font-family: var(--font-helvetica);
-  font-size: 16px;
-  line-height: 1.45;
+  font-size: 18px;
+  line-height: 25px;
+  color: var(--ink);
 }
 .trk-rv__done.is-sent {
-  border-color: transparent;
-  background: var(--green-tint);
-  color: #0a5c2e;
+  border-color: var(--green);
+  background: var(--bg-mint);
 }
 .trk-rv__done p {
   margin: 0;
+}
+.trk-rv__done .trk-rv__links {
+  justify-content: flex-start;
+}
+
+@media (max-width: 1100px) {
+  .trk-q__row {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    row-gap: 8px;
+  }
+  .trk-q__status {
+    grid-column: 2 / -1;
+    grid-row: 2;
+  }
+  .trk-rv__cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .trk-rv__shot {
+    max-width: 560px;
+  }
 }
 
 @media (max-width: 720px) {
@@ -8228,37 +8276,78 @@ select.field__input {
     height: 18px;
     font-size: 11px;
   }
-  .trk-q__top,
-  .trk-q__limit {
-    align-items: stretch;
+  .trk-q {
+    gap: 22px;
+  }
+  .trk-q__top {
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .trk-q__top .trk-count {
+    width: 96px;
+    height: 96px;
+  }
+  .trk-q__top .trk-count__value {
+    font-size: 28px;
+    line-height: 32px;
+  }
+  .trk-q__top .trk-count__of {
+    font-size: 18px;
+  }
+  .trk-q__top .trk-count__label {
+    font-size: 12px;
+    line-height: 14px;
+  }
+  .trk-q__lead {
+    flex-basis: 100%;
+    font-size: 16px;
+    line-height: 22px;
   }
   .trk-q__limit {
-    width: 100%;
-  }
-  .trk-q__count {
-    flex-grow: 1;
+    flex: 1 1 100%;
   }
   .trk-q__row {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 14px;
-    border: none;
-    background: #f7f7f7;
-    border-radius: 14px;
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 14px;
+    align-items: start;
   }
-  .trk-q__job,
+  .trk-q__icon {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+  .trk-q__role {
+    font-size: 18px;
+    line-height: 22px;
+  }
   .trk-q__status {
-    flex: none;
+    grid-column: 2;
+    grid-row: auto;
+  }
+  .trk-q__actions {
+    grid-column: 2;
+    justify-content: flex-start;
   }
   .trk-q__actions > :is(a, button):not(.trk-q__remove) {
     flex: 1 1 auto;
-    justify-content: center;
   }
-  .trk-q__empty {
-    padding: 20px;
+  .trk-q__add {
+    padding: 18px 16px;
+  }
+  .trk-q__add-foot .topbtn {
+    flex: 1 1 100%;
   }
   .trk-rv__line > span:first-child {
     flex-basis: 100%;
+  }
+  .trk-rv__send .topbtn {
+    flex: 1 1 100%;
+  }
+  .trk-rv__links {
+    justify-content: flex-start;
+  }
+  .trk-rv__items {
+    padding: 12px;
   }
 }
 
