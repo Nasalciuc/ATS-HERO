@@ -116,7 +116,8 @@ function shortLine(text: string): string {
 /** "when you led the migration…" or "this line of your CV: “…”". */
 const story = (l: CvLine) => (startsWithDeed(l.text) ? `when you ${lowerFirst(shortLine(l.text))}` : `this line of your CV: “${shortLine(l.text)}”`);
 const where = (l: CvLine) => (l.org ? ` at ${l.org}` : l.role ? ` as ${l.role}` : "");
-const theRole = (role: string, company: string) =>
+/** "the Data Analyst role at Altamira Tech", with whatever of the two the Tracker has. */
+export const theRole = (role: string, company: string) =>
   role && company ? `the ${role} role at ${company}` : role ? `the ${role} role` : company ? `this role at ${company}` : "this role";
 
 type Ctx = { role: string; company: string };

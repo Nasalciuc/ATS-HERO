@@ -144,21 +144,53 @@ export function cvFactsIn(answer: string, line: string): { used: string[]; unuse
 }
 
 /**
- * The two criteria the measures decide, with the answer's words as the quote: the requirement (when
- * the question asks about one) and the proof from the CV line.
+ * What a question's answers measured together: the question's own answer and its follow-ups' (step
+ * 5). The times, the words and the pauses add up; a filler word's uses add up; a requirement named or
+ * a fact of the CV line used in any of the answers counts. Null when there is nothing to add up.
  */
-export function measuredCriteria(answer: string, m: InterviewMeasures, requirement: string | null): InterviewCriterion[] {
+export function mergeMeasures(list: InterviewMeasures[]): InterviewMeasures | null {
+  if (!list.length) return null;
+  if (list.length === 1) return list[0];
+  const sum = (f: (m: InterviewMeasures) => number) => list.reduce((a, m) => a + f(m), 0);
+  // words per minute over the answers that were spoken (a typed answer has no rate)
+  const spoken = list.filter((m) => m.wordsPerMinute > 0);
+  const spokenSeconds = spoken.reduce((a, m) => a + m.seconds, 0);
+  const fillers = new Map<string, number>();
+  for (const m of list) for (const f of m.fillers) fillers.set(f.word, (fillers.get(f.word) ?? 0) + f.count);
+  const uniq = (xs: string[]) => [...new Set(xs)];
+  const used = uniq(list.flatMap((m) => m.cvFacts?.used ?? []));
+  return {
+    seconds: sum((m) => m.seconds),
+    words: sum((m) => m.words),
+    wordsPerMinute: spokenSeconds > 0 ? Math.round(spoken.reduce((a, m) => a + m.words, 0) / (spokenSeconds / 60)) : 0,
+    longPauses: sum((m) => m.longPauses),
+    fillers: [...fillers].map(([word, count]) => ({ word, count })).sort((a, b) => b.count - a.count || a.word.localeCompare(b.word)),
+    named: uniq(list.flatMap((m) => m.named ?? [])),
+    cvFacts: { used, unused: uniq(list.flatMap((m) => m.cvFacts?.unused ?? [])).filter((f) => !used.includes(f)) },
+  };
+}
+
+/**
+ * The two criteria the measures decide, with the answer's words as the quote: the requirement (when
+ * the question asks about one) and the proof from the CV line. With follow-ups, the answers in the
+ * order they were given: the quote is a sentence of the first one that has it.
+ */
+export function measuredCriteria(answer: string | string[], m: InterviewMeasures, requirement: string | null): InterviewCriterion[] {
+  const answers = typeof answer === "string" ? [answer] : answer;
   const quoteOf = (needles: string[]) => {
-    const lower = answer.toLowerCase();
     for (const n of needles) {
-      const i = lower.indexOf(n.toLowerCase());
-      if (i >= 0) return sentenceAt(answer, i);
+      for (const a of answers) {
+        const i = a.toLowerCase().indexOf(n.toLowerCase());
+        if (i >= 0) return sentenceAt(a, i);
+      }
     }
     return null;
   };
   const out: InterviewCriterion[] = [];
   if (requirement) out.push({ key: "requirement", met: (m.named ?? []).length > 0, quote: quoteOf(m.named ?? []) });
   const used = m.cvFacts?.used ?? [];
-  out.push({ key: "proof", met: used.length > 0, quote: quoteOf(used) });
+  // the sentence with the line's number, when one was said: it is the stronger proof
+  const numbersFirst = [...used.filter((f) => /\d/.test(f)), ...used.filter((f) => !/\d/.test(f))];
+  out.push({ key: "proof", met: used.length > 0, quote: quoteOf(numbersFirst) });
   return out;
 }

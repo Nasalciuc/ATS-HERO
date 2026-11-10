@@ -19,7 +19,7 @@ const noop = () => {};
 const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
 
 const home: Home = {
-  used: 2, limit: 20, resetsOn: Date.UTC(2026, 11, 1), hasCv: true,
+  used: 2, limit: 20, resetsOn: Date.UTC(2026, 11, 1), hasCv: true, ai: false,
   interviews: [
     { id: "j1", role: "Data Analyst", company: "Altamira Tech", location: "Bucharest", status: "interview", since: NOW - 5 * DAY, required: { met: 4, total: 5 },
       practised: 2, lastAt: NOW - 2 * DAY, lastReportId: "s2", proven: ["SQL", "Power BI"], notYet: ["Python"] },
@@ -42,11 +42,11 @@ const setup: SetupView = {
     { label: "Snowflake", required: true, inCv: false },
     { label: "Tableau", required: false, inCv: true },
   ],
-  used: 2, limit: 20, resetsOn: Date.UTC(2026, 11, 1), sessions: 0, lastReportId: null,
+  used: 2, limit: 20, resetsOn: Date.UTC(2026, 11, 1), sessions: 0, lastReportId: null, ai: null, lastStyle: null,
 };
 
 const turn: LiveTurn = {
-  id: "t1", questionId: "q2", answer: "I helped the team a lot with the report.", seconds: 108, words: 9,
+  id: "t1", questionId: "q2", answer: "I helped the team a lot with the report.", follow: [], ai: null, seconds: 108, words: 9,
   fillers: [{ word: "basically", count: 2 }],
   criteria: [{ key: "requirement", met: false, quote: null }, { key: "proof", met: false, quote: null }],
   named: [], cvLine: "Cut the weekly sales report from 6 hours to 1 with SQL", used: [], unused: ["6", "1", "SQL"], numbers: "6 hours to 1",
@@ -195,17 +195,18 @@ describe("the report", () => {
     measured: { averageSeconds: 95, averageWords: 84, wordsPerMinute: null, fillers: 2 },
     fillerWords: [{ word: "basically", count: 2 }],
     named: ["Power BI"],
+    english: null,
     questions: [
       { n: 1, id: "q1", text: "Q one", requirement: null, bullet: { ref: "work.0.1", text: "Built dashboards for 40 staff" }, state: "answered",
-        answer: "I built them for 40 people.", tries: 2, criteria: [{ key: "proof", met: true, quote: "I built them for 40 people." }],
-        named: [], used: ["40"], unused: [], measures: { seconds: 60, words: 6, wordsPerMinute: 0, longPauses: 0, fillers: [] } },
+        turnId: "t1", answer: "I built them for 40 people.", follow: [], tries: 2, criteria: [{ key: "proof", met: true, quote: "I built them for 40 people." }],
+        named: [], used: ["40"], unused: [], measures: { seconds: 60, words: 6, wordsPerMinute: 0, longPauses: 0, fillers: [] }, ai: null },
       { n: 2, id: "q2", text: "Q two", requirement: "SQL", bullet: { ref: "work.0.0", text: "Cut the report from 6 hours to 1 with SQL" }, state: "skipped",
-        answer: null, tries: 0, criteria: [], named: [], used: [], unused: [], measures: null },
+        turnId: "t2", answer: null, follow: [], tries: 0, criteria: [], named: [], used: [], unused: [], measures: null, ai: null },
     ],
   };
   const report: ReportView = {
     id: "s2", applicationId: "j1", role: "Data Analyst", company: "Altamira Tech", at: NOW - 60e3, kind: "manager", minutes: 10, mode: "typing",
-    status: "done", prepared: "a_bit", keptUntil: Date.UTC(2027, 4, 6, 12), summary,
+    status: "done", ai: false, style: "friendly", englishNotes: false, prepared: "a_bit", keptUntil: Date.UTC(2027, 4, 6, 12), summary,
     progress: {
       columns: [{ id: "s1", at: NOW - 5 * DAY, kind: "recruiter" }, { id: "s2", at: NOW - 60e3, kind: "manager" }],
       rows: [{ label: "SQL", required: true, states: ["proof", "asked"] }],

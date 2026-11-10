@@ -2,10 +2,20 @@
 /**
  * Interview Trainer (canvas "ATS Hero Tracker v2", page "Interview trainer"; ANTRENOR-INTERVIU-VOCE.md §12).
  *
- * Typing only, for now (ANTRENOR-INTERVIU-CONSTRUCTIE.md, step 4): the questions come from the pack
- * (lib/interview/pack.ts) and an answer's feedback is what it measured (lib/interview/measure.ts and
- * report.ts), without AI. The interviewer's style, follow-ups and English notes come with the model
- * (step 5); speaking with step 6.
+ * Typing only, for now; speaking comes with step 6 (ANTRENOR-INTERVIU-CONSTRUCTIE.md). The questions
+ * come from the pack (lib/interview/pack.ts), and an answer's feedback starts with what it measured
+ * (lib/interview/measure.ts and report.ts), without AI.
+ *
+ * With the model (step 5) a session's interviewer is an AI: it asks follow-ups on what the person
+ * said (follow-up.ts) and gives feedback on each answer (feedback.ts), both checked in code before
+ * anyone sees them. A session has the model only when all of these hold at Start: the switch is on
+ * and a model is named (provider.ts), and the person agreed to their answers going to it
+ * (lib/ai/consent.ts). Otherwise, and whenever the model can't be reached or the day's runs are used
+ * up (budget.ts), the session goes on as it does without AI: nothing here fails because of a model.
+ * - An answer is stored first, by an action that never waits for a model. Asking for a follow-up or
+ *   for the feedback is another action, so a slow or failed model costs no answer.
+ * - A follow-up waits on the session, in the server's words, until it is answered or skipped.
+ * - The feedback is made once per try and kept; asking again returns what was kept.
  *
  * Each action resolves the owner and filters by them (rule 4): a job, a CV or a session id from the
  * client is used only when it is the owner's. Expected failures come back as { ok: false, message }:
@@ -23,19 +33,25 @@ import { interviewTrainerEnabled } from "@/lib/features";
 import { withLog } from "@/lib/log";
 import { jobFit } from "@/lib/job-fit";
 import { INTERVIEW_RETENTION_DAYS } from "@/lib/retention";
-import { askAbout, buildPack, cvLines, PackError, type AskItem, type PackInput } from "@/lib/interview/pack";
+import { giveAiConsent, hasAiConsent, INTERVIEW_CONSENT } from "@/lib/ai/consent";
+import { spendRun } from "@/lib/interview/budget";
+import { giveFeedback } from "@/lib/interview/feedback";
+import { askFollowUp, FOLLOW_UPS } from "@/lib/interview/follow-up";
+import { AiError } from "@/lib/interview/model";
+import { askAbout, buildPack, cvLines, lineAt, PackError, theRole, type AskItem, type PackInput } from "@/lib/interview/pack";
+import { interviewAi, interviewModel, PROVIDER_LABEL, PROVIDER_NAME } from "@/lib/interview/provider";
 import { measureAnswer, measuredCriteria } from "@/lib/interview/measure";
 import {
-  numberSpan, progress, PROGRESS_COLUMNS, proofSoFar, requirementsNamed, summarize,
-  type Progress, type SessionSummary, type TurnLike,
+  aiFeedbackOf, answersOf, exchangesOf, measuresOf, numberSpan, progress, PROGRESS_COLUMNS, proofSoFar, requirementsNamed, summarize,
+  type AiFeedback, type Exchange, type Progress, type SessionSummary, type TurnLike,
 } from "@/lib/interview/report";
 import {
-  addTurn, countThisMonth, createSession, deleteSession, getSession, INTERVIEW_SESSIONS_PER_MONTH, InterviewError,
-  listSessions, setPrepared, updateSession,
+  addFeedback, addTurn, countThisMonth, createSession, deleteSession, dismissNote, getSession, INTERVIEW_SESSIONS_PER_MONTH,
+  InterviewError, listSessions, setPending, setPrepared, updateSession,
 } from "@/lib/interview/store";
 import {
   cvToText, emptyCvData, type ApplicationStatus, type CvData, type InterviewCriterion, type InterviewFeedbackWhen,
-  type InterviewKind, type InterviewMode, type InterviewPrepared, type InterviewStatus,
+  type InterviewKind, type InterviewMode, type InterviewPending, type InterviewPrepared, type InterviewStatus, type InterviewStyle,
 } from "@/lib/types";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; message: string };
@@ -48,6 +64,8 @@ const GONE = "We couldn’t find this interview. It may have been deleted.";
 const NO_JOB = "This job isn’t in your Tracker.";
 const NO_CV = "Make a CV in ATS Hero first: the questions come from its lines.";
 const NO_LINES = "Your CV has no lines to ask about yet. Add your work experience, then practice.";
+const ENDED = "This interview has ended.";
+const NO_FOLLOW_UP = "There’s no follow-up question to answer. Go on to the next question.";
 /** An answer longer than this is a pasted document, not an answer. */
 const MAX_ANSWER = 6000;
 /** A question takes an answer this many times: the first, then "Try this answer again" twice. */
@@ -122,13 +140,13 @@ function packOrRefuse(input: PackInput) {
   }
 }
 
-/** The session's job and what its post asks for, read against the session's CV. */
+/** The session's job, its CV as it is now, and what the post asks for, read against that CV. */
 async function contextOf(ownerId: string, session: InterviewSession) {
   const [job, [cv]] = await Promise.all([
     ownedJob(ownerId, session.applicationId),
     db.select({ data: cvs.data }).from(cvs).where(and(eq(cvs.id, session.cvId), eq(cvs.ownerId, ownerId))),
   ]);
-  return { job, items: itemsOf(cv?.data ?? null, job?.description ?? null) };
+  return { job, cv: cv?.data ?? null, items: itemsOf(cv?.data ?? null, job?.description ?? null) };
 }
 
 /** The turns of some of the owner's sessions, as the report reads them. */
@@ -136,9 +154,20 @@ async function turnsOf(ownerId: string, sessionIds: string[]): Promise<(TurnLike
   if (!sessionIds.length) return [];
   return db.select({
     sessionId: interviewTurns.sessionId, questionId: interviewTurns.questionId, position: interviewTurns.position,
-    answer: interviewTurns.answer, measures: interviewTurns.measures,
+    kind: interviewTurns.kind, answer: interviewTurns.answer, measures: interviewTurns.measures,
   }).from(interviewTurns).where(and(eq(interviewTurns.ownerId, ownerId), inArray(interviewTurns.sessionId, sessionIds)));
 }
+
+/** Is the trainer's model there right now (the switch, a model named, allowed here)? */
+const aiOn = () => interviewAi().ready;
+
+/** May this owner's sessions have the model: it is there, and they agreed to their answers going to it. */
+async function aiFor(ownerId: string, agreesNow = false): Promise<boolean> {
+  return aiOn() && (agreesNow || (await hasAiConsent(ownerId, INTERVIEW_CONSENT)));
+}
+
+/** The time a session has left, by what the server kept of it. */
+const timeIsUp = (s: InterviewSession) => s.secondsUsed >= s.minutes * 60;
 
 /* ── Trainer home ─────────────────────────────────────────────────────── */
 
@@ -176,6 +205,8 @@ export type TrainerHome = {
   limit: number;
   resetsOn: number;
   hasCv: boolean;
+  /** the interviewer can be the model right now: the page says "AI interviewer" only then (rule 10) */
+  ai: boolean;
   /** the jobs in Interview, from the Tracker */
   interviews: HomeJob[];
   /** Applied and Saved, the latest first */
@@ -237,7 +268,7 @@ export async function getTrainerHome(): Promise<Result<{ home: TrainerHome }>> {
     const byId = new Map(jobs.map((j) => [j.id, j]));
     return {
       home: {
-        used, limit: INTERVIEW_SESSIONS_PER_MONTH, resetsOn: nextMonth(), hasCv: cvList.length > 0,
+        used, limit: INTERVIEW_SESSIONS_PER_MONTH, resetsOn: nextMonth(), hasCv: cvList.length > 0, ai: aiOn(),
         interviews,
         others: live.filter((j) => j.status === "applied" || j.status === "saved")
           .map((j) => ({ id: j.id, role: j.role, company: j.company, status: j.status })),
@@ -281,6 +312,14 @@ export type SetupView = {
   /** sessions for this job so far, and the last finished one */
   sessions: number;
   lastReportId: string | null;
+  /**
+   * The model, when the interviewer can be one right now; null: the trainer works without AI. `agreed`:
+   * the person already agreed to their answers going to it, so Setup doesn't ask again. `provider`
+   * is who gets the answers, as the agreement names them.
+   */
+  ai: { agreed: boolean; provider: string; name: string } | null;
+  /** the style of the person's last session with the model for this job: Setup starts from it; null on the first */
+  lastStyle: InterviewStyle | null;
 };
 
 export async function getSetup(applicationId: string, cvId?: string | null): Promise<Result<{ setup: SetupView }>> {
@@ -290,6 +329,7 @@ export async function getSetup(applicationId: string, cvId?: string | null): Pro
     if (!job) throw new InterviewError(NO_JOB);
     const [cvList, used, sessions] = await Promise.all([ownedCvs(ownerId), countThisMonth(ownerId), listSessions(ownerId, { applicationId })]);
     const pick = cvFor(job, cvList, cvId);
+    const ai = interviewAi();
     return {
       setup: {
         job: { id: job.id, role: job.role, company: job.company, status: job.status },
@@ -301,6 +341,10 @@ export async function getSetup(applicationId: string, cvId?: string | null): Pro
         used, limit: INTERVIEW_SESSIONS_PER_MONTH, resetsOn: nextMonth(),
         sessions: sessions.length,
         lastReportId: sessions.find((s) => s.status === "done")?.id ?? null,
+        ai: ai.ready
+          ? { agreed: await hasAiConsent(ownerId, INTERVIEW_CONSENT), provider: PROVIDER_LABEL[ai.provider], name: PROVIDER_NAME[ai.provider] }
+          : null,
+        lastStyle: sessions.find((s) => s.ai)?.style ?? null,
       },
     };
   });
@@ -313,10 +357,19 @@ const StartInput = z.object({
   minutes: z.union([z.literal(10), z.literal(20)]),
   feedbackWhen: z.enum(["each", "end"]),
   timer: z.boolean(),
+  /** with the model: how the interviewer asks (IV-11), and English notes on each answer (IV-12) */
+  style: z.enum(["friendly", "neutral", "tough"]).optional(),
+  englishNotes: z.boolean().optional(),
+  /** the person ticked "I understand the interviewer is an AI and my answers go to …" just now */
+  consent: z.boolean().optional(),
 });
 export type StartInput = z.input<typeof StartInput>;
 
-/** "Start interview": the pack is made here, from the owner's job and CV, and the month's limit is checked. */
+/**
+ * "Start interview": the pack is made here, from the owner's job and CV, and the month's limit is
+ * checked. The session has the model when it is there and the person agreed, now or before; else it
+ * is a session without AI, whatever style was sent.
+ */
 export async function startInterview(input: StartInput): Promise<Result<{ id: string }>> {
   const p = StartInput.safeParse(input);
   if (!p.success) return { ok: false, message: "Choose the interview again." };
@@ -331,38 +384,50 @@ export async function startInterview(input: StartInput): Promise<Result<{ id: st
       // each new session for the job asks in other words
       variant: await sessionsFor(ownerId, job.id),
     });
+    const ai = await aiFor(ownerId, p.data.consent === true);
     const session = await createSession(ownerId, {
       applicationId: job.id, cvId: cv.id, kind, minutes, feedbackWhen, timer, pack,
-      // IV-11's default; choosing a style comes with the model, which is what a style changes (step 5)
-      style: "friendly",
       mode: "typing",
-      // the English notes are the model's (step 5)
-      englishNotes: false,
+      ai,
+      // the style and the English notes are the model's: without it, IV-11's default and no notes
+      style: ai ? p.data.style ?? "friendly" : "friendly",
+      englishNotes: ai && (p.data.englishNotes ?? true),
     }, { max: INTERVIEW_SESSIONS_PER_MONTH });
+    // kept once the session exists: an agreement with nothing started under it would be a record of nothing
+    if (ai && p.data.consent === true) await giveAiConsent(ownerId, INTERVIEW_CONSENT);
     return { id: session.id };
   });
 }
 
 /* ── The session ──────────────────────────────────────────────────────── */
 
+/**
+ * One try at a question: its answer, the follow-ups the interviewer asked on it with their answers,
+ * what all of it measured, and the model's feedback once it is made.
+ */
 export type LiveTurn = {
+  /** the question's own turn: the feedback is kept on it */
   id: string;
   questionId: string;
   /** null: skipped */
   answer: string | null;
+  /** the follow-ups, in order; an answer of null: skipped */
+  follow: { question: string; answer: string | null }[];
   seconds: number;
   words: number;
   fillers: { word: string; count: number }[];
   /** the requirement (when the question asks about one) and the proof from the CV, with the answer's words */
   criteria: InterviewCriterion[];
-  /** the post's requirements the answer named */
+  /** the post's requirements the answers named */
   named: string[];
-  /** the question's CV line, and its facts the answer used and didn't */
+  /** the question's CV line, and its facts the answers used and didn't */
   cvLine: string;
   used: string[];
   unused: string[];
-  /** the line's words around the numbers the answer didn't say ("6 hours to 1"), when it said none */
+  /** the line's words around the numbers the answers didn't say ("6 hours to 1"), when they said none */
   numbers: string | null;
+  /** the model's feedback on this try; null: a session without it, a skipped question, or not made yet */
+  ai: AiFeedback | null;
 };
 export type LiveSession = {
   id: string;
@@ -376,15 +441,27 @@ export type LiveSession = {
   timer: boolean;
   status: InterviewStatus;
   secondsUsed: number;
+  /** the interviewer is the model: follow-ups, and its feedback on each answer */
+  ai: boolean;
+  style: InterviewStyle;
+  englishNotes: boolean;
+  /** what the interviewer says first, when it is the model: that it is an AI (AI Act, article 50(1)) */
+  opening: string | null;
   questions: { id: string; text: string; requirement: string | null }[];
+  /** the tries so far, in the order they were given */
   turns: LiveTurn[];
+  /** the follow-up that waits for an answer */
+  pending: InterviewPending | null;
   maxTries: number;
 };
 
-type TurnRow = Pick<InterviewTurn, "id" | "questionId" | "answer" | "measures" | "requirement" | "bullet">;
+type TurnRow = Pick<InterviewTurn,
+  "id" | "position" | "kind" | "questionId" | "question" | "answer" | "measures" | "requirement" | "bullet" | "feedback" | "better" | "dismissed">;
 
-function liveTurn(t: TurnRow, items: AskItem[]): LiveTurn {
-  const m = t.measures;
+function liveTurn(x: Exchange<TurnRow>, items: AskItem[]): LiveTurn {
+  const t = x.turn;
+  const answers = answersOf(x);
+  const m = measuresOf(x);
   const used = m?.cvFacts?.used ?? [];
   const unused = m?.cvFacts?.unused ?? [];
   const numbers = unused.filter((f) => /\d/.test(f));
@@ -392,24 +469,32 @@ function liveTurn(t: TurnRow, items: AskItem[]): LiveTurn {
     id: t.id,
     questionId: t.questionId,
     answer: t.answer,
+    follow: x.follow.map((f) => ({ question: f.question, answer: f.answer })),
     seconds: m?.seconds ?? 0,
     words: m?.words ?? 0,
     fillers: m?.fillers ?? [],
-    criteria: t.answer != null && m ? measuredCriteria(t.answer, m, t.requirement) : [],
-    named: t.answer != null ? requirementsNamed(t.answer, items) : [],
+    criteria: t.answer != null && m ? measuredCriteria(answers, m, t.requirement) : [],
+    named: t.answer != null ? requirementsNamed(answers.join("\n"), items) : [],
     cvLine: t.bullet?.text ?? "",
     used,
     unused,
     numbers: numbers.length && !used.some((f) => /\d/.test(f)) ? numberSpan(t.bullet?.text ?? "", numbers) : null,
+    ai: t.answer != null ? aiFeedbackOf(t) : null,
   };
 }
 
-function liveView(session: InterviewSession, turns: TurnRow[], job: Application | null, items: AskItem[]): LiveSession {
+/** "Hi Ana, I’m an AI interviewer, not a person. …": the first name is the CV's, and stays on the person's screen. */
+function openingLine(cv: CvData | null, job: Application | null): string {
+  const first = (cv?.personalInfo.name ?? "").trim().split(/\s+/)[0] ?? "";
+  return `Hi${first ? ` ${first}` : ""}, I’m an AI interviewer, not a person. I’ll ask you about ${theRole(job?.role ?? "", job?.company ?? "")}. Ready when you are.`;
+}
+
+function liveView(session: InterviewSession, turns: TurnRow[], ctx: { job: Application | null; cv: CvData | null; items: AskItem[] }): LiveSession {
   return {
     id: session.id,
     applicationId: session.applicationId,
-    role: job?.role ?? "",
-    company: job?.company ?? "",
+    role: ctx.job?.role ?? "",
+    company: ctx.job?.company ?? "",
     kind: session.kind,
     minutes: session.minutes,
     mode: session.mode,
@@ -417,8 +502,13 @@ function liveView(session: InterviewSession, turns: TurnRow[], job: Application 
     timer: session.timer,
     status: session.status,
     secondsUsed: session.secondsUsed,
+    ai: session.ai,
+    style: session.style,
+    englishNotes: session.englishNotes,
+    opening: session.ai ? openingLine(ctx.cv, ctx.job) : null,
     questions: session.pack.questions.map(({ id, text, requirement }) => ({ id, text, requirement })),
-    turns: turns.map((t) => liveTurn(t, items)),
+    turns: exchangesOf(turns).map((x) => liveTurn(x, ctx.items)),
+    pending: session.pending ?? null,
     maxTries: MAX_TRIES,
   };
 }
@@ -428,39 +518,63 @@ export async function getInterview(id: string): Promise<Result<{ session: LiveSe
   return guarded("view", async (ownerId) => {
     const found = await getSession(ownerId, id);
     if (!found) throw new InterviewError(GONE);
-    const { job, items } = await contextOf(ownerId, found.session);
-    return { session: liveView(found.session, found.turns, job, items) };
+    return { session: liveView(found.session, found.turns, await contextOf(ownerId, found.session)) };
   });
 }
 
-/** An answer, typed: measured here, never on the page, and written once. */
+/** What was typed, as an answer; or why it isn't one. */
+function answerText(input: { answer?: unknown } | null | undefined): { text: string } | { message: string } {
+  const text = typeof input?.answer === "string" ? input.answer.trim() : "";
+  if (!text) return { message: "Type your answer first, or skip the question." };
+  if (text.length > MAX_ANSWER) return { message: "Keep your answer under 6,000 characters." };
+  return { text };
+}
+
+/** The try a session is on: its last one, as it stands now. */
+async function lastTry(ownerId: string, id: string): Promise<{ session: InterviewSession; x: Exchange<TurnRow> }> {
+  const found = await getSession(ownerId, id);
+  const x = found ? exchangesOf<TurnRow>(found.turns).at(-1) : undefined;
+  if (!found || !x) throw new InterviewError(GONE);
+  return { session: found.session, x };
+}
+
+/** May the interviewer ask (another) follow-up on this try: it is the model, the style has one left, there is time. */
+const mayFollowUp = (session: InterviewSession, x: Exchange<TurnRow>) =>
+  session.ai && session.status !== "done" && !x.turn.feedback && [x.turn, ...x.follow].at(-1)?.answer != null
+  && x.follow.length < FOLLOW_UPS[session.style] && !timeIsUp(session);
+
+/**
+ * An answer, typed: measured here, never on the page, and written once. No model is asked here.
+ * `mayFollowUp` tells the page whether to ask for a follow-up next (askForFollowUp).
+ */
 export async function answerQuestion(
   id: string,
   input: { questionId: string; answer: string; seconds: number; secondsUsed: number },
-): Promise<Result<{ turn: LiveTurn }>> {
-  const text = typeof input?.answer === "string" ? input.answer.trim() : "";
-  if (!text) return { ok: false, message: "Type your answer first, or skip the question." };
-  if (text.length > MAX_ANSWER) return { ok: false, message: "Keep your answer under 6,000 characters." };
+): Promise<Result<{ turn: LiveTurn; mayFollowUp: boolean }>> {
+  const a = answerText(input);
+  if ("message" in a) return { ok: false, message: a.message };
   const p = z.object({ questionId: QuestionId, seconds: Seconds, secondsUsed: Seconds }).safeParse(input);
   if (!Id.safeParse(id).success || !p.success) return { ok: false, message: GONE };
   return guarded("answer", async (ownerId) => {
     const found = await getSession(ownerId, id);
     if (!found) throw new InterviewError(GONE);
     const { session, turns } = found;
-    if (session.status === "done") throw new InterviewError("This interview has ended.");
+    if (session.status === "done") throw new InterviewError(ENDED);
     const q = session.pack.questions.find((x) => x.id === p.data.questionId);
     if (!q) throw new InterviewError("That question isn’t in this interview.");
-    const before = turns.filter((t) => t.questionId === q.id);
+    // the tries at this question; its follow-ups aren't tries
+    const before = turns.filter((t) => t.kind === "question" && t.questionId === q.id);
     if (before.some((t) => t.answer == null)) throw new InterviewError("You skipped this question.");
     if (before.length >= MAX_TRIES) throw new InterviewError(`You’ve answered this one ${MAX_TRIES} times. Go on to the next question.`);
-    const measures = measureAnswer({ text, seconds: p.data.seconds, mode: "typing", requirement: q.requirement, bullet: q.bullet });
+    const measures = measureAnswer({ text: a.text, seconds: p.data.seconds, mode: "typing", requirement: q.requirement, bullet: q.bullet });
     const turn = await addTurn(ownerId, id, {
       round: session.round, kind: "question", questionId: q.id, question: q.text, requirement: q.requirement,
-      bullet: q.bullet, answer: text, answeredBy: "typing", measures,
+      bullet: q.bullet, answer: a.text, answeredBy: "typing", measures,
     });
-    await updateSession(ownerId, id, { status: "live", secondsUsed: elapsed(session, p.data.secondsUsed) });
+    const now = await updateSession(ownerId, id, { status: "live", secondsUsed: elapsed(session, p.data.secondsUsed) });
     const { items } = await contextOf(ownerId, session);
-    return { turn: liveTurn(turn, items) };
+    const x = { turn, follow: [] };
+    return { turn: liveTurn(x, items), mayFollowUp: mayFollowUp(now, x) };
   });
 }
 
@@ -472,7 +586,7 @@ export async function skipQuestion(id: string, input: { questionId: string; seco
     const found = await getSession(ownerId, id);
     if (!found) throw new InterviewError(GONE);
     const { session, turns } = found;
-    if (session.status === "done") throw new InterviewError("This interview has ended.");
+    if (session.status === "done") throw new InterviewError(ENDED);
     const q = session.pack.questions.find((x) => x.id === p.data.questionId);
     if (!q) throw new InterviewError("That question isn’t in this interview.");
     if (turns.some((t) => t.questionId === q.id)) throw new InterviewError("This question already has an answer.");
@@ -481,7 +595,162 @@ export async function skipQuestion(id: string, input: { questionId: string; seco
       bullet: q.bullet, answer: null,
     });
     await updateSession(ownerId, id, { status: "live", secondsUsed: elapsed(session, p.data.secondsUsed) });
-    return { turn: liveTurn(turn, []) };
+    return { turn: liveTurn({ turn, follow: [] }, []) };
+  });
+}
+
+/**
+ * The interviewer's follow-up on the last answer, when it has one: the model proposes it, the code
+ * checks it (follow-up.ts), and it waits on the session until it is answered or skipped. Null: the
+ * interview moves on, which is also what happens when the model can't be asked. Asking twice returns
+ * the follow-up that waits, without another run.
+ */
+export async function askForFollowUp(id: string): Promise<Result<{ followUp: InterviewPending | null }>> {
+  if (!Id.safeParse(id).success) return { ok: false, message: GONE };
+  return guarded("followUp", async (ownerId) => {
+    const found = await getSession(ownerId, id);
+    if (!found) throw new InterviewError(GONE);
+    const { session, turns } = found;
+    if (session.pending) return { followUp: session.pending };
+    const x = exchangesOf<TurnRow>(turns).at(-1);
+    if (!x || !mayFollowUp(session, x)) return { followUp: null };
+    const model = interviewModel();
+    if (!model || !(await spendRun(ownerId))) return { followUp: null };
+    const { job } = await contextOf(ownerId, session);
+    let text: string | null;
+    try {
+      text = await askFollowUp(model, {
+        kind: session.kind, style: session.style, role: job?.role ?? "", company: job?.company ?? "",
+        requirement: x.turn.requirement, cvLine: x.turn.bullet?.text ?? "",
+        exchange: [x.turn, ...x.follow].map((t) => ({ question: t.question, answer: t.answer })),
+      });
+    } catch (e) {
+      // no model, no follow-up: the interview goes on (the run is in the log, by its code)
+      if (!(e instanceof AiError)) throw e;
+      text = null;
+    }
+    if (!text) return { followUp: null };
+    const pending: InterviewPending = { questionId: x.turn.questionId, n: x.follow.length + 1, text };
+    if (await setPending(ownerId, id, pending)) return { followUp: pending };
+    // something else got there first (another tab, the end of the session): what the session holds is the answer
+    return { followUp: (await getSession(ownerId, id))?.session.pending ?? null };
+  });
+}
+
+/** The answer to the follow-up that waits: measured against the same requirement and CV line as its question. */
+export async function answerFollowUp(
+  id: string,
+  input: { answer: string; seconds: number; secondsUsed: number },
+): Promise<Result<{ turn: LiveTurn; mayFollowUp: boolean }>> {
+  const a = answerText(input);
+  if ("message" in a) return { ok: false, message: a.message };
+  const p = z.object({ seconds: Seconds, secondsUsed: Seconds }).safeParse(input);
+  if (!Id.safeParse(id).success || !p.success) return { ok: false, message: GONE };
+  return guarded("followUpAnswer", async (ownerId) => {
+    const found = await getSession(ownerId, id);
+    if (!found) throw new InterviewError(GONE);
+    const { session } = found;
+    if (session.status === "done") throw new InterviewError(ENDED);
+    const waiting = session.pending;
+    const q = waiting && session.pack.questions.find((x) => x.id === waiting.questionId);
+    if (!waiting || !q) throw new InterviewError(NO_FOLLOW_UP);
+    const measures = measureAnswer({ text: a.text, seconds: p.data.seconds, mode: "typing", requirement: q.requirement, bullet: q.bullet });
+    try {
+      await addTurn(ownerId, id, {
+        round: session.round, kind: "follow_up", questionId: q.id, question: waiting.text, requirement: q.requirement,
+        bullet: q.bullet, answer: a.text, answeredBy: "typing", measures,
+      });
+    } catch (e) {
+      // answered a moment ago, from another tab
+      if (e instanceof InterviewError && /follow-up/.test(e.message)) throw new InterviewError(NO_FOLLOW_UP);
+      throw e;
+    }
+    await updateSession(ownerId, id, { status: "live", secondsUsed: elapsed(session, p.data.secondsUsed) });
+    const { items } = await contextOf(ownerId, session);
+    const now = await lastTry(ownerId, id);
+    return { turn: liveTurn(now.x, items), mayFollowUp: mayFollowUp(now.session, now.x) };
+  });
+}
+
+/** "Skip this question" on a follow-up: it becomes a turn with no answer, and the interviewer asks no more on this question. */
+export async function skipFollowUp(id: string, input: { secondsUsed: number }): Promise<Result<{ turn: LiveTurn }>> {
+  const p = z.object({ secondsUsed: Seconds }).safeParse(input);
+  if (!Id.safeParse(id).success || !p.success) return { ok: false, message: GONE };
+  return guarded("followUpSkip", async (ownerId) => {
+    const found = await getSession(ownerId, id);
+    if (!found) throw new InterviewError(GONE);
+    const { session } = found;
+    if (session.status === "done") throw new InterviewError(ENDED);
+    const waiting = session.pending;
+    const q = waiting && session.pack.questions.find((x) => x.id === waiting.questionId);
+    if (!waiting || !q) throw new InterviewError(NO_FOLLOW_UP);
+    await addTurn(ownerId, id, {
+      round: session.round, kind: "follow_up", questionId: q.id, question: waiting.text, requirement: q.requirement,
+      bullet: q.bullet, answer: null,
+    });
+    await updateSession(ownerId, id, { status: "live", secondsUsed: elapsed(session, p.data.secondsUsed) });
+    const { items } = await contextOf(ownerId, session);
+    return { turn: liveTurn((await lastTry(ownerId, id)).x, items) };
+  });
+}
+
+/**
+ * The model's feedback on one try, made once and kept (feedback.ts). `ai` says what the page has:
+ * - "ready": the try has its feedback (just made, or kept from before);
+ * - "none": this try gets none (a session without the model, a skipped question);
+ * - "unavailable": the model couldn't be asked now (switched off, the day's runs used up, an error).
+ *   The page shows what the answer measured, and may ask again later.
+ */
+export async function getFeedback(id: string, turnId: string): Promise<Result<{ turn: LiveTurn; ai: "ready" | "none" | "unavailable" }>> {
+  if (!Id.safeParse(id).success || !Id.safeParse(turnId).success) return { ok: false, message: GONE };
+  return guarded("feedback", async (ownerId) => {
+    const found = await getSession(ownerId, id);
+    if (!found) throw new InterviewError(GONE);
+    const { session, turns } = found;
+    const all = exchangesOf<TurnRow>(turns);
+    const x = all.find((e) => e.turn.id === turnId);
+    if (!x) throw new InterviewError("That answer isn’t in this interview.");
+    const ctx = await contextOf(ownerId, session);
+    const view = (e: Exchange<TurnRow>) => liveTurn(e, ctx.items);
+    if (!session.ai || x.turn.answer == null) return { turn: view(x), ai: "none" as const };
+    if (x.turn.feedback) return { turn: view(x), ai: "ready" as const };
+    // a try is read when it is whole: while its follow-up waits, the answer isn't finished
+    if (session.pending && x === all.at(-1)) throw new InterviewError("Answer the follow-up question first, or skip it.");
+    const model = interviewModel();
+    if (!model || !(await spendRun(ownerId))) return { turn: view(x), ai: "unavailable" as const };
+    // the job the CV line comes from, when the CV still has that line in those words
+    const line = x.turn.bullet && ctx.cv ? lineAt(ctx.cv, x.turn.bullet.ref) : null;
+    const from = line && line.text === x.turn.bullet?.text ? line : null;
+    try {
+      const made = await giveFeedback(model, {
+        kind: session.kind, role: ctx.job?.role ?? "", company: ctx.job?.company ?? "",
+        requirement: x.turn.requirement, cvLine: x.turn.bullet?.text ?? "", cvRole: from?.role, cvOrg: from?.org,
+        exchange: [x.turn, ...x.follow].map((t) => ({ question: t.question, answer: t.answer })),
+        english: session.englishNotes,
+      });
+      await addFeedback(ownerId, x.turn.id, made.feedback, made.better);
+    } catch (e) {
+      if (!(e instanceof AiError)) throw e;
+      return { turn: view(x), ai: "unavailable" as const };
+    }
+    // what was kept: ours, or the one another request wrote first
+    const kept = exchangesOf<TurnRow>((await getSession(ownerId, id))?.turns ?? []).find((e) => e.turn.id === turnId);
+    return { turn: view(kept ?? x), ai: kept?.turn.feedback ? ("ready" as const) : ("unavailable" as const) };
+  });
+}
+
+/** "I said it right" on an English note (B2): the note goes from the screen and from the session's counts. */
+export async function dismissEnglishNote(id: string, input: { turnId: string; index: number }): Promise<Result<{ turn: LiveTurn }>> {
+  const p = z.object({ turnId: Id, index: z.number().int().min(0).max(9) }).safeParse(input);
+  if (!Id.safeParse(id).success || !p.success) return { ok: false, message: GONE };
+  return guarded("dismissNote", async (ownerId) => {
+    const found = await getSession(ownerId, id);
+    const x = found ? exchangesOf<TurnRow>(found.turns).find((e) => e.turn.id === p.data.turnId) : undefined;
+    if (!found || !x) throw new InterviewError(GONE);
+    if (!(await dismissNote(ownerId, x.turn.id, p.data.index))) throw new InterviewError("We couldn’t find that note.");
+    const { items } = await contextOf(ownerId, found.session);
+    const kept = exchangesOf<TurnRow>((await getSession(ownerId, id))?.turns ?? []).find((e) => e.turn.id === p.data.turnId);
+    return { turn: liveTurn(kept ?? x, items) };
   });
 }
 
@@ -491,7 +760,7 @@ export async function pauseInterview(id: string, paused: boolean, secondsUsed: n
   return guarded("pause", async (ownerId) => {
     const found = await getSession(ownerId, id);
     if (!found) throw new InterviewError(GONE);
-    if (found.session.status === "done") throw new InterviewError("This interview has ended.");
+    if (found.session.status === "done") throw new InterviewError(ENDED);
     await updateSession(ownerId, id, { status: paused ? "paused" : "live", secondsUsed: elapsed(found.session, secondsUsed) });
     return {};
   });
@@ -520,6 +789,10 @@ export type ReportView = {
   minutes: number;
   mode: InterviewMode;
   status: InterviewStatus;
+  /** the interviewer was the model: the questions may have its feedback, and the page asks for what is missing (getFeedback) */
+  ai: boolean;
+  style: InterviewStyle;
+  englishNotes: boolean;
   prepared: InterviewPrepared | null;
   /** the session goes on its own after this (INTERVIEW_RETENTION_DAYS) */
   keptUntil: number;
@@ -560,6 +833,9 @@ export async function getReport(id: string): Promise<Result<{ report: ReportView
         minutes: session.minutes,
         mode: session.mode,
         status: session.status,
+        ai: session.ai,
+        style: session.style,
+        englishNotes: session.englishNotes,
         prepared: session.prepared ?? null,
         keptUntil: session.createdAt.getTime() + INTERVIEW_RETENTION_DAYS * 864e5,
         summary: summarize({ pack: session.pack, turns, items }),
@@ -615,9 +891,12 @@ export async function practiceAgain(id: string): Promise<Result<{ id: string }>>
       cv: cv.data, post: job.description ?? "", role: job.role, company: job.company, kind: session.kind, minutes: 10,
       variant: await sessionsFor(ownerId, job.id), focus,
     });
+    // with the model again when the first one had it, it is still there and the person's agreement still stands
+    const ai = session.ai && (await aiFor(ownerId));
     const next = await createSession(ownerId, {
-      applicationId: job.id, cvId: cv.id, kind: session.kind, style: session.style, minutes: 10, mode: "typing",
-      feedbackWhen: session.feedbackWhen, timer: session.timer, englishNotes: false, pack, fromSessionId: session.id,
+      applicationId: job.id, cvId: cv.id, kind: session.kind, minutes: 10, mode: "typing",
+      feedbackWhen: session.feedbackWhen, timer: session.timer, pack, fromSessionId: session.id,
+      ai, style: ai ? session.style : "friendly", englishNotes: ai && session.englishNotes,
     }, { max: INTERVIEW_SESSIONS_PER_MONTH });
     return { id: next.id };
   });
