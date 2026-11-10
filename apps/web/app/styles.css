@@ -7317,7 +7317,9 @@ select.field__input {
   display: none;
 }
 
-/* a job's card: a panel on the right, the board dimmed behind it */
+/* a job's card: a panel on the right, the board dimmed behind it. PROVISIONAL, as the tracker page:
+   the builder's grey card for what the person sets or types, the score page's rows for what the
+   post asks for, the pill buttons with the way on at the right. */
 .modal.trk-drawer {
   --modal-overlay: rgba(242, 242, 242, 0.8);
 }
@@ -7327,10 +7329,10 @@ select.field__input {
   }
 }
 .modal--side .modal__panel.trk-drawer__panel {
-  width: 560px;
+  width: 600px;
   max-width: 100%;
   min-width: 0;
-  padding: 32px 32px 40px;
+  padding: 36px 36px 40px;
   box-shadow: -8px 0 32px rgba(32, 32, 32, 0.12);
 }
 .trk-drawer__panel > .modal__close {
@@ -7339,7 +7341,7 @@ select.field__input {
 .trk-panel {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 28px;
   min-height: 100%;
   font-family: var(--font-helvetica);
   color: var(--ink);
@@ -7362,31 +7364,50 @@ select.field__input {
 .trk-panel__role {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 600;
   line-height: 1.15;
 }
 .trk-panel__company {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
+  line-height: 22px;
   color: #555555;
 }
 .trk-panel__links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 8px 14px;
   margin: 4px 0 0;
+  font-size: 15px;
+}
+.trk-panel__site {
   font-size: 14px;
+  font-weight: 700;
+  color: #6b6b6b;
+}
+/* the builder's grey card: what the person sets or types, in white fields without a border */
+.trk-fcard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #f8f8f8;
+}
+.trk-fcard .trk-field :is(input, select, textarea) {
+  border: none;
 }
 .trk-panel__status {
-  display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 12px 20px;
 }
 .trk-panel__dates {
-  margin: 0;
+  margin: 0 0 12px;
   font-size: 14px;
   line-height: 1.5;
   color: #555555;
@@ -7395,11 +7416,36 @@ select.field__input {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
 }
-.trk-panel__section > .trk-link {
-  min-height: 0;
-  font-size: 14px;
+.trk-panel__h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: -0.36px;
+}
+/* a state in a word, coloured as the score page's */
+.trk-state {
+  font-family: var(--font-helvetica);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 20px;
+  letter-spacing: -0.3px;
+}
+.trk-state.is-good {
+  color: #00843a;
+}
+.trk-state.is-fair {
+  color: #a35a00;
+}
+.trk-state.is-none {
+  color: #6b6b6b;
 }
 .trk-label {
   margin: 0;
@@ -7410,59 +7456,89 @@ select.field__input {
   color: #6b6b6b;
 }
 .trk-panel__against {
-  margin: -4px 0 0;
-  font-size: 13px;
+  margin: -6px 0 0;
+  font-size: 14px;
   color: #555555;
 }
 .trk-panel__note {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.4;
+  font-size: 16px;
+  line-height: 22px;
   color: #444444;
 }
 .trk-panel__post {
   align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 .trk-panel__actions {
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
 }
 .trk-reqs {
+  align-self: stretch;
   margin: 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  border-bottom: 1px solid var(--line);
 }
 .trk-req {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 15px;
+  --tone: var(--green);
+  --tone-text: #00843a;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 14px;
+  min-height: 68px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 16px;
   line-height: 1.35;
 }
+.trk-req--open {
+  --tone: #ffc107;
+  --tone-text: #a35a00;
+}
 .trk-req__icon {
-  flex: none;
-  margin-top: 1px;
-}
-.trk-req__icon--met {
-  color: #0a7f3f;
-}
-.trk-req__icon--missing {
-  color: var(--red-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 2px var(--tone);
+  color: var(--tone-text);
 }
 .trk-req__text {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+}
+.trk-req__label strong {
+  font-family: var(--font-inter);
+  font-weight: 700;
+  letter-spacing: -0.32px;
+}
+.trk-req__label .trk-muted {
+  font-size: 14px;
 }
 .trk-req__quote {
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 19px;
   color: #555555;
+  overflow-wrap: anywhere;
+}
+.trk-req__state {
+  max-width: 120px;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 19px;
+  letter-spacing: -0.3px;
+  text-align: right;
+  color: var(--tone-text);
 }
 .trk-panel__cv {
   display: flex;
@@ -7470,13 +7546,14 @@ select.field__input {
   align-items: center;
   gap: 8px 14px;
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
 }
 .trk-panel__cv .trk-link {
   min-height: 0;
-  font-size: 14px;
+  font-size: 15px;
 }
 .trk-history {
+  align-self: stretch;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -7486,20 +7563,80 @@ select.field__input {
 }
 .trk-history li {
   display: flex;
-  gap: 12px;
-  font-size: 14px;
-  line-height: 1.35;
+  gap: 14px;
+  font-size: 15px;
+  line-height: 1.4;
 }
 .trk-history__when {
-  flex: 0 0 64px;
+  flex: 0 0 68px;
   color: #6b6b6b;
 }
 .trk-panel__foot {
   display: flex;
-  gap: 20px;
+  gap: 24px;
   margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid #ececec;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 720px) {
+  /* a job's card: the whole screen */
+  .modal--side .modal__panel.trk-drawer__panel {
+    width: 100%;
+    padding: 14px 18px 28px;
+    box-shadow: none;
+  }
+  .trk-panel {
+    gap: 24px;
+  }
+  .trk-panel__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    align-self: flex-start;
+    height: 44px;
+    margin-left: -10px;
+    padding: 0 8px;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    color: #5b45e0;
+    cursor: pointer;
+  }
+  .trk-panel__close {
+    display: none;
+  }
+  .trk-panel__role {
+    font-size: 26px;
+  }
+  .trk-fcard {
+    padding: 16px;
+    border-radius: 16px;
+  }
+  .trk-panel__dates {
+    margin-bottom: 0;
+  }
+  .trk-req {
+    grid-template-columns: 36px minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: start;
+  }
+  .trk-req__icon {
+    width: 36px;
+    height: 36px;
+  }
+  .trk-req__state {
+    grid-column: 2;
+    max-width: none;
+    margin-top: 2px;
+    font-size: 14px;
+    text-align: left;
+  }
+  .trk-panel__actions .topbtn {
+    flex: 1 1 0;
+  }
 }
 
 @media (max-width: 720px) {
@@ -7543,37 +7680,6 @@ select.field__input {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* a job's card: the whole screen */
-  .modal--side .modal__panel.trk-drawer__panel {
-    width: 100%;
-    padding: 14px 18px 28px;
-    box-shadow: none;
-  }
-  .trk-panel {
-    gap: 22px;
-  }
-  .trk-panel__back {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    align-self: flex-start;
-    height: 44px;
-    margin-left: -10px;
-    padding: 0 8px;
-    border: none;
-    background: none;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 700;
-    color: #5b45e0;
-    cursor: pointer;
-  }
-  .trk-panel__close {
-    display: none;
-  }
-  .trk-panel__role {
-    font-size: 26px;
-  }
 }
 
 /* ---------------- daily search, "Which CV gets answers", "Ready to send", "Check before sending" --------

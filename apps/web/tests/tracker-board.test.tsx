@@ -3,6 +3,8 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import TrackerBoard, { numbersLead } from "@/views/tracker/TrackerBoard";
+import JobPanel from "@/views/tracker/JobPanel";
+import type { JobFitReport } from "@/lib/job-fit";
 import type { TrackedJob } from "@/lib/tracker";
 
 const DAY = 864e5;
@@ -82,5 +84,32 @@ describe("TrackerBoard", () => {
     expect(at('class="trk-head"')).toBeLessThan(at('id="notice"'));
     expect(at('id="notice"')).toBeLessThan(at('class="trk-board"'));
     expect(at('class="trk-phone"')).toBeLessThan(at('id="after"'));
+  });
+});
+
+describe("JobPanel", () => {
+  it("says what the post asks for in rows, each with its state in a word", () => {
+    const req = (label: string, status: "met" | "not_met" | "unknown", required = true) =>
+      ({ label, kind: "skill" as const, required, status, where: "", quote: label });
+    const fit: JobFitReport = {
+      kind: "requirements", version: 1, summary: "most_required", label: "Meets most required", message: "",
+      required: { met: 1, total: 2 }, preferred: { met: 0, total: 1 },
+      requirements: [req("SQL", "met"), req("Tableau", "not_met"), req("dbt", "unknown", false)],
+    };
+    const html = renderToStaticMarkup(
+      <JobPanel job={job({ role: "Data Analyst", company: "Brightwave", status: "applied", description: "the post" })} fit={fit}
+        fitAgainst="your latest CV, CV 1" cvSentTitle={null} hasCv events={[]} onClose={noop} onStatus={noop}
+        onSaveDetails={async () => true} onAskCv={noop} onArchive={noop} onUnarchive={noop} onDelete={noop} />,
+    );
+    expect(html).toContain('<span class="trk-state is-fair">1 of 2 required met</span>');
+    expect(html).toMatch(/trk-req--met.*?<strong>SQL<\/strong>.*?<span class="trk-req__state">Met<\/span>/);
+    expect(html).toMatch(/trk-req--open.*?<strong>Tableau<\/strong>.*?<span class="trk-req__state">Missing<\/span>/);
+    expect(html).toContain('<span class="trk-req__state">Not shown in your CV</span>');
+    // all the required ones met: the count is green
+    expect(renderToStaticMarkup(
+      <JobPanel job={job({ status: "applied", description: "the post" })} fit={{ ...fit, required: { met: 2, total: 2 } }}
+        fitAgainst={null} cvSentTitle={null} hasCv events={[]} onClose={noop} onStatus={noop}
+        onSaveDetails={async () => true} onAskCv={noop} onArchive={noop} onUnarchive={noop} onDelete={noop} />,
+    )).toContain('<span class="trk-state is-good">2 of 2 required met</span>');
   });
 });
