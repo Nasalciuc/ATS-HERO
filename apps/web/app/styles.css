@@ -9157,9 +9157,12 @@ select.field__input {
   flex-basis: 100%;
 }
 
-/* the report */
+/* the report, built from the score page's pieces (PROVISIONAL, AGENTS.md rule 6: no Figma frame;
+   Liubovi draws or checks it): the flow's steps, a circle beside one sentence and the way on,
+   badges over numbered lists, the job's requirements and the questions as rows under 1px lines
+   (the questions open, with the lilac toggle). */
 .trn-report {
-  gap: 26px;
+  gap: 20px;
 }
 .trn-report__meta {
   margin: 0;
@@ -9170,185 +9173,282 @@ select.field__input {
 .trn-report__meta strong {
   color: var(--ink);
 }
-.trn-top3 {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  align-items: stretch;
+.trn-report__head {
+  margin: 16px 0 12px;
 }
-.trn-box {
+/* the score circle's size and type; lilac, because it counts answers and grades nothing */
+.trn-count {
+  flex: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-  padding: 18px 20px;
-  border-radius: 16px;
-}
-.trn-box > p {
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 157px;
+  height: 157px;
   margin: 0;
-  font-size: 15px;
-  line-height: 1.45;
+  border-radius: 50%;
+  background: #f5f3ff;
+  box-shadow: inset 0 0 0 2px var(--violet-200);
+  color: #4a36c4;
+  text-align: center;
 }
-.trn-box--good {
-  background: rgba(0, 196, 80, 0.07);
+.trn-count__value {
+  font-weight: 700;
+  font-size: 45px;
+  line-height: 54px;
+  letter-spacing: -1px;
 }
-.trn-box--good .trn-h2 {
-  color: #0a6b35;
+.trn-count__of {
+  font-size: 26px;
+  letter-spacing: 0;
 }
-.trn-box--practise {
-  background: #fff3e0;
+.trn-count__label {
+  font-size: 16px;
+  line-height: 19px;
 }
-.trn-box--practise .trn-h2 {
-  color: #8a4b00;
-}
-.trn-box--plain {
-  border: 1px solid var(--line);
-}
-.trn-box--grey {
-  background: #f7f7f7;
-}
-.trn-box__list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding-left: 20px;
-  font-size: 15px;
-  line-height: 1.45;
-}
-.trn-box__action {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  margin-top: auto;
-}
-.trn-box__buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.trn-noproof {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.trn-noproof__label {
-  display: block;
-  font-size: 15px;
-}
-.trn-noproof__why {
-  display: block;
-  font-size: 14px;
-  line-height: 1.45;
-  color: #444444;
-}
-.trn-noproof__why .trk-link {
-  font-size: 14px;
-}
-.trn-progress {
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
-}
-.trn-progress table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 15px;
-}
-.trn-progress thead tr {
-  background: #f7f7f7;
-  text-align: left;
-}
-.trn-progress thead th {
-  padding: 12px 16px;
-  font-size: 13px;
-  color: #555555;
-}
-.trn-progress tbody :is(th, td) {
-  padding: 11px 16px;
-  border-top: 1px solid #f0f0f0;
-  text-align: left;
-}
-.trn-progress__note {
-  padding: 10px 16px;
-  border-top: 1px solid #f0f0f0;
-}
-.trn-first {
-  margin: 0;
-  padding: 16px 18px;
-  border-radius: 14px;
-  background: #f7f7f7;
-  font-size: 15px;
-  line-height: 1.45;
-  color: #444444;
-}
-.trn-measured__row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 22px;
-}
-.trn-qs {
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
-}
-.trn-q {
-  border-bottom: 1px solid #f0f0f0;
-}
-.trn-q:last-child {
-  border-bottom: none;
-}
-.trn-q__summary {
+.trn-report__again {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 12px;
-  padding: 14px 18px;
+  gap: 8px 14px;
+}
+.trn-report__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 12px;
+}
+.trn-report .score-group__list li {
+  line-height: 22px;
+}
+.trn-report__none {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: #444444;
+}
+.trn-report .trn-section,
+.trn-report > .score-group {
+  margin-top: 12px;
+}
+.trn-report .trn-section {
+  gap: 0;
+}
+/* a state in a word: the colour says it again, never alone */
+.trn-state {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.32px;
+  white-space: nowrap;
+}
+.trn-state.is-good {
+  color: #00843a;
+}
+.trn-state.is-fair {
+  color: #a35a00;
+}
+.trn-state.is-none {
+  color: #6b6b6b;
+}
+/* the job's requirements from one session to the next: rows under 1px lines, as the score page's */
+.trn-progress table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.trn-progress thead th {
+  padding: 0 16px 10px 0;
+  text-align: left;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+.trn-progress tbody :is(th, td) {
+  padding: 16px 16px 16px 0;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+.trn-progress tbody tr:last-child :is(th, td) {
+  border-bottom: 1px solid var(--line);
+}
+.trn-progress tbody th {
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: -0.36px;
+}
+.trn-progress__note {
+  padding-top: 10px;
+}
+.trn-first {
+  margin: 0;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f1efff;
   font-size: 15px;
+  line-height: 21px;
+  color: var(--ink);
+}
+/* the questions: the score page's rows that open */
+.trn-qs {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--line);
+}
+.trn-q {
+  border-top: 1px solid var(--line);
+}
+.trn-q__summary {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto 44px;
+  align-items: center;
+  column-gap: 20px;
+  min-height: 81px;
+  padding: 8px 0;
+  list-style: none;
   cursor: pointer;
 }
-.trn-q__text {
-  flex: 1 1 420px;
+.trn-q__summary::-webkit-details-marker {
+  display: none;
 }
+.trn-q__num {
+  --tone: var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 2px var(--tone);
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+}
+.trn-q__num.is-good {
+  --tone: var(--green);
+}
+.trn-q__num.is-fair {
+  --tone: #ffc107;
+}
+.trn-q__text {
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 24px;
+  letter-spacing: -0.36px;
+}
+.trn-q__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--violet-300);
+  color: var(--violet-300);
+}
+.trn-q__summary:hover .trn-q__toggle {
+  box-shadow: inset 0 0 0 2px var(--violet-600);
+  color: var(--violet-600);
+}
+.trn-q__minus,
+.trn-q[open] .trn-q__plus {
+  display: none;
+}
+.trn-q[open] .trn-q__minus {
+  display: block;
+}
+/* the open question: 84 in, under its words (the score rows' 83) */
 .trn-q__body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 0 18px 16px;
+  gap: 20px;
+  padding: 4px 0 28px 84px;
 }
-.trn-q__answer {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #f7f7f7;
+.trn-q__card {
+  padding: 22px 26px;
+}
+.trn-q__body .score-group--wide {
+  width: auto;
+}
+/* the parts under a question: the rows, a size down */
+.trn-rows--compact .trn-row {
+  grid-template-columns: 58px 190px 112px minmax(0, 1fr);
+  min-height: 60px;
+  padding: 7px 0;
+}
+.trn-rows--compact .trn-row__icon {
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+}
+.trn-rows--compact .trn-row__label {
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.32px;
+}
+.trn-rows--compact .trn-row__state {
   font-size: 15px;
-  line-height: 1.55;
-  color: #444444;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  line-height: 20px;
+  letter-spacing: -0.3px;
 }
-.trn-q__facts {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.trn-rows--compact .trn-row__note {
+  font-size: 15px;
+  line-height: 20px;
+}
+.trn-measured {
+  margin-top: 14px;
   font-size: 14px;
-  line-height: 1.5;
+}
+.trn-measured .trn-label {
+  margin-right: 6px;
+}
+.trn-measured strong {
+  color: var(--ink);
 }
 .trn-pair {
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
   gap: 16px;
+  margin-top: 12px;
 }
 .trn-pair > * {
   flex: 1 1 420px;
+}
+.trn-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 24px 26px;
+  border-radius: 20px;
+}
+.trn-box > p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.trn-box--plain {
+  border: 1px solid var(--line);
+}
+/* the form card's grey */
+.trn-box--grey {
+  background: #f8f8f8;
+  border: 1px solid var(--line);
+}
+.trn-box__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .trn-prepared {
   display: flex;
@@ -9364,7 +9464,6 @@ select.field__input {
   font-size: 14px;
   line-height: 1.45;
 }
-
 /* with the model (step 5): the agreement in Setup, follow-ups, and the model's part of the feedback.
    The canvas's colours: a vague phrase on #fff3e0, an English note underlined in #725bfe, what the AI
    made in a #d9d2ff frame with the "Made with AI" chip. A mark is never the only sign: each marked
@@ -9383,12 +9482,6 @@ select.field__input {
 }
 .trn-live__status--thinking {
   color: #4a36c4;
-}
-.trn-h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.3;
 }
 .trn-key {
   display: inline-flex;
@@ -9431,8 +9524,7 @@ select.field__input {
   padding-top: 14px;
   border-top: 1px solid var(--line);
 }
-.trn-fb__follow-q,
-.trn-q__follow-q {
+.trn-fb__follow-q {
   margin: 0;
   font-size: 15px;
   line-height: 1.5;
@@ -9454,20 +9546,6 @@ select.field__input {
   color: #4a36c4;
   font-size: 14px;
   line-height: 1.45;
-}
-.trn-vague {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 15px;
-  line-height: 1.5;
-  color: #444444;
-}
-.trn-vague .trn-mark {
-  color: var(--ink);
 }
 /* the English notes: a numbered list like the score page's, each with its way out on the right */
 .trn-notes {
@@ -9502,32 +9580,6 @@ select.field__input {
   font-size: 13px;
   line-height: 1.45;
   color: #6b6b6b;
-}
-.trn-q__follow,
-.trn-q__more {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.trn-patterns {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 15px;
-  line-height: 1.45;
-}
-/* two boxes side by side that also print (the report's .trn-pair doesn't) */
-.trn-duo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: 16px;
-}
-.trn-duo > * {
-  flex: 1 1 380px;
 }
 
 /* the job's card in the Tracker: "Practice this interview" */
@@ -9574,9 +9626,72 @@ select.field__input {
     display: inline;
   }
   .trn-cards,
-  .trn-tiles,
-  .trn-top3 {
+  .trn-tiles {
     grid-template-columns: minmax(0, 1fr);
+  }
+  /* the report on a phone: the score page's phone head, and rows that stack */
+  .trn-count {
+    width: 96px;
+    height: 96px;
+  }
+  .trn-count__value {
+    font-size: 28px;
+    line-height: 32px;
+  }
+  .trn-count__of {
+    font-size: 18px;
+  }
+  .trn-count__label {
+    font-size: 12px;
+    line-height: 14px;
+  }
+  .trn-report__again .topbtn {
+    flex: 1 1 100%;
+  }
+  .trn-q__summary {
+    grid-template-columns: 44px minmax(0, 1fr) 36px;
+    grid-template-areas:
+      "num text toggle"
+      "num state toggle";
+    column-gap: 12px;
+    row-gap: 2px;
+    min-height: 0;
+    padding: 12px 0;
+  }
+  .trn-q__num {
+    grid-area: num;
+    align-self: start;
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+  .trn-q__text {
+    grid-area: text;
+    font-size: 16px;
+    line-height: 20px;
+    letter-spacing: -0.32px;
+  }
+  .trn-q__summary .trn-state {
+    grid-area: state;
+    font-size: 14px;
+    white-space: normal;
+  }
+  .trn-q__toggle {
+    grid-area: toggle;
+    width: 36px;
+    height: 36px;
+  }
+  .trn-q__toggle svg {
+    width: 28px;
+    height: 28px;
+  }
+  .trn-q__body {
+    gap: 16px;
+    padding: 0 0 20px;
+  }
+  .trn-box {
+    padding: 18px 16px;
+    border-radius: 16px;
   }
   .trn-past__when {
     flex-basis: 100%;
@@ -9682,7 +9797,8 @@ select.field__input {
     border-radius: 16px;
   }
   /* a row: the picture, the name and the state on a line; the words under them */
-  .trn-row {
+  .trn-row,
+  .trn-rows--compact .trn-row {
     grid-template-columns: 44px minmax(0, 1fr) auto;
     grid-template-areas:
       "icon label state"
@@ -9699,21 +9815,24 @@ select.field__input {
     height: 44px;
     font-size: 22px;
   }
-  .trn-row__label {
+  .trn-row__label,
+  .trn-rows--compact .trn-row__label {
     grid-area: label;
     padding-right: 0;
     font-size: 16px;
     line-height: 19px;
     letter-spacing: -0.32px;
   }
-  .trn-row__state {
+  .trn-row__state,
+  .trn-rows--compact .trn-row__state {
     grid-area: state;
     padding-right: 0;
     font-size: 14px;
     line-height: 19px;
     letter-spacing: -0.28px;
   }
-  .trn-row__note {
+  .trn-row__note,
+  .trn-rows--compact .trn-row__note {
     grid-area: note;
     font-size: 14px;
     line-height: 19px;
@@ -9804,7 +9923,9 @@ select.field__input {
   .appshell__actions,
   .appshell__back,
   .trn-back,
-  .trn-box__action,
+  .trn-flow,
+  .trn-report__again,
+  .trn-q__toggle,
   .trn-pair,
   .trn-notes .trn-chip-btn {
     display: none !important;

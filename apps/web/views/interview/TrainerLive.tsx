@@ -341,13 +341,16 @@ export function MarkedAnswer({ text, ai }: { text: string; ai: LiveTurn["ai"] })
   );
 }
 
-/** One part, as a row: its picture in a ring, its name, whether it is there, and the person's words or what to say. */
-function PartRow({ c, requirement, used }: { c: InterviewCriterion; requirement: string | null; used: string[] }) {
+/**
+ * One part, as a row: its picture in a ring, its name, whether it is there, and the person's words
+ * or what to say. `label`: another name for the row (the report names the requirement itself).
+ */
+export function PartRow({ c, requirement, used, label }: { c: InterviewCriterion; requirement: string | null; used: string[]; label?: string }) {
   const [there, not] = STATE[c.key];
   return (
     <li className={`trn-row ${c.met ? "is-there" : "is-missing"}`}>
       <span className="trn-row__icon" aria-hidden="true">{EMOJI[c.key]}</span>
-      <span className="trn-row__label">{CRITERION[c.key]}</span>
+      <span className="trn-row__label">{label ?? CRITERION[c.key]}</span>
       <span className="trn-row__state">{c.met ? there : not}</span>
       <span className="trn-row__note">{criterionNote(c, requirement, used)}</span>
     </li>
@@ -380,6 +383,44 @@ export function EnglishNotes({ ai, busy, onDismiss }: { ai: NonNullable<LiveTurn
         {ai.dismissed > 0 && ` You marked ${ai.dismissed} ${ai.dismissed === 1 ? "note" : "notes"} as “I said it right”.`}
       </p>
     </>
+  );
+}
+
+/**
+ * "Make it concrete": the vague phrases, each with the question that asks for the concrete thing
+ * (B3), under the score page's "Suggestions" badge. Null when there is none. `sub`: under a
+ * question's own heading, in a report.
+ */
+export function ConcreteGroup({ ai, id, sub = false }: { ai: NonNullable<LiveTurn["ai"]>; id: string; sub?: boolean }) {
+  if (!ai.vague.length) return null;
+  const Heading = sub ? "h3" : "h2";
+  return (
+    <section className="score-group score-group--wide" aria-labelledby={id}>
+      <Heading id={id} className="trn-badge-h"><span className="score-badge score-badge--suggestion"><AlertLine size={18} /> Make it concrete</span></Heading>
+      <ol className="score-group__list">
+        {ai.vague.map((v, i) => (
+          <li key={v.phrase}>
+            <span className="score-group__num" aria-hidden="true">({i + 1})</span>
+            <span><mark className="trn-mark trn-mark--vague">{quoted(v.phrase)}</mark> {v.ask}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+/** The English notes on one answer, under their badge (IV-12). */
+export function EnglishGroup({ ai, id, sub = false, busy, onDismiss }: {
+  ai: NonNullable<LiveTurn["ai"]>; id: string; sub?: boolean; busy: boolean; onDismiss: (index: number) => void;
+}) {
+  const Heading = sub ? "h3" : "h2";
+  return (
+    <section className="score-group score-group--wide" aria-labelledby={id}>
+      <Heading id={id} className="trn-badge-h">
+        <span className="score-badge score-badge--read">English{ai.english.length > 0 && ` · ${ai.english.length} ${ai.english.length === 1 ? "note" : "notes"}`}</span>
+      </Heading>
+      <EnglishNotes ai={ai} busy={busy} onDismiss={onDismiss} />
+    </section>
   );
 }
 
@@ -526,28 +567,8 @@ export function TrainerFeedback(p: TrainerFeedbackProps) {
           ) : null}
         </section>
 
-        {ai && ai.vague.length > 0 && (
-          <section className="score-group score-group--wide" aria-labelledby="trn-fb-concrete">
-            <h2 id="trn-fb-concrete" className="trn-badge-h"><span className="score-badge score-badge--suggestion"><AlertLine size={18} /> Make it concrete</span></h2>
-            <ol className="score-group__list">
-              {ai.vague.map((v, i) => (
-                <li key={v.phrase}>
-                  <span className="score-group__num" aria-hidden="true">({i + 1})</span>
-                  <span><mark className="trn-mark trn-mark--vague">{quoted(v.phrase)}</mark> {v.ask}</span>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-
-        {ai && p.session.englishNotes && (
-          <section className="score-group score-group--wide" aria-labelledby="trn-fb-english">
-            <h2 id="trn-fb-english" className="trn-badge-h">
-              <span className="score-badge score-badge--read">English{ai.english.length > 0 && ` · ${ai.english.length} ${ai.english.length === 1 ? "note" : "notes"}`}</span>
-            </h2>
-            <EnglishNotes ai={ai} busy={p.busy} onDismiss={(i) => p.onDismissNote?.(i)} />
-          </section>
-        )}
+        {ai && <ConcreteGroup ai={ai} id="trn-fb-concrete" />}
+        {ai && p.session.englishNotes && <EnglishGroup ai={ai} id="trn-fb-english" busy={p.busy} onDismiss={(i) => p.onDismissNote?.(i)} />}
 
         {ai && <StrongerAnswer ai={ai} />}
 

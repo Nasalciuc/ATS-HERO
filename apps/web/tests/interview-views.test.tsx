@@ -10,7 +10,7 @@ import TrainerSetup from "@/views/interview/TrainerSetup";
 import TrainerBlocked from "@/views/interview/TrainerBlocked";
 import TrainerLive, { criterionNote, measuredForShow, QuestionSteps, summaryOf, TrainerFeedback, quoted } from "@/views/interview/TrainerLive";
 import { segments } from "@/views/interview/format";
-import TrainerReport from "@/views/interview/TrainerReport";
+import TrainerReport, { reportLead } from "@/views/interview/TrainerReport";
 import JobPanel from "@/views/tracker/JobPanel";
 import type { AiFeedback, SessionSummary } from "@/lib/interview/report";
 import type { TrackedJob } from "@/lib/tracker";
@@ -643,9 +643,12 @@ describe("the report of a session with the model", () => {
 
   it("gives each question its follow-ups and the model's feedback, as on the card", () => {
     expect(t).toContain("Follow-up “And what changed for the team?”");
-    expect(t).toContain("Situation: “the report took me a lot of time every week”");
-    expect(t).toContain("Task: missing");
-    expect(t).toContain("Make it concrete“I helped the team a lot with this” Who got the report, and how much sooner?");
+    // the parts as the card's rows, a size down; the requirement's row goes by its own name
+    expect(t).toContain("SituationSaid“the report took me a lot of time every week”");
+    expect(t).toContain("TaskMissingSay what was yours to do.");
+    expect(t).toContain("SQLNamedNamed in your answer.");
+    expect(html).toContain('<ul class="trn-rows trn-rows--compact">');
+    expect(t).toContain("Make it concrete(1)“I helped the team a lot with this” Who got the report, and how much sooner?");
     expect(t).toContain("English · 2 notes");
     expect((html.match(/I said it right<\/button>/g) ?? []).length).toBe(2);
     expect(t).toContain("Made with AI. Check it.");
@@ -673,14 +676,47 @@ describe("the report of a session with the model", () => {
     const same = "I wrote the SQL that cut it from 6 hours to 1.";
     const q = { ...base.questions[0], criteria: [{ key: "requirement" as const, met: true, quote: same }, { key: "proof" as const, met: true, quote: same }] };
     const once = text(renderToStaticMarkup(<TrainerReport report={{ ...report, summary: { ...base, questions: [q, base.questions[1]] } }} {...props} />));
-    expect(once).toContain(`SQL: named · “${same}”`);
-    expect(once).toContain("Proof from your CV: 6, 1, SQL");
+    expect(once).toContain(`SQLNamed“${same}”`);
+    expect(once).toContain("Proof from your CVUsedYou used: 6, 1, SQL.");
     expect(once.split(`“${same}”`).length - 1).toBe(1);
+  });
+
+  it("opens like the results page: the flow's steps, the answers counted in a circle, one sentence and the way on", () => {
+    expect(html).toContain('<span class="analyze-step__label is-current">Report</span>');
+    expect((html.match(/analyze-step__node is-done/g) ?? []).length).toBe(2);
+    // a count of answers, in words too; never a score
+    expect(t).toContain("2 / 2answered");
+    expect(t).not.toMatch(/\bscore\b|\/100|out of 10|\bgrade\b/i);
+    expect(t).toContain("You said what came of it in 1 of 2 answers. Next: keep to the past tense when you tell what happened.");
+    // the lists under it have the same, numbered, under the score page's badges
+    expect(t).toContain("What went well(1)You said what came of it in 1 of 2 answers.");
+    expect(t).toContain("1 thing to practice(1)Keep to the past tense when you tell what happened. 2 times.");
+    expect(html).toContain('class="score-badge score-badge--good"');
+    expect(html).toContain('class="score-badge score-badge--suggestion"');
+  });
+
+  it("puts the first thing that went well and the first thing to practise into one sentence", () => {
+    const well = ["You used facts from your CV in 2 of 3 answers."];
+    const next = [{ n: 2, text: "Say the result in numbers.", detail: "Question 2." }];
+    expect(reportLead({ answered: 3, wentWell: well, toPractice: next })).toBe("You used facts from your CV in 2 of 3 answers. Next: say the result in numbers.");
+    expect(reportLead({ answered: 3, wentWell: well, toPractice: [] })).toBe("You used facts from your CV in 2 of 3 answers.");
+    expect(reportLead({ answered: 3, wentWell: [], toPractice: next })).toBe("Next time: say the result in numbers.");
+    expect(reportLead({ answered: 3, wentWell: [], toPractice: [] })).toBe("Your answers are counted below.");
+    expect(reportLead({ answered: 0, wentWell: [], toPractice: [] })).toBe("No answer was sent in this session.");
+  });
+
+  it("shows each question as a row that opens: its number in a ring, its state in a word, the question's number for a screen reader", () => {
+    expect(html).toContain('<span class="trn-q__num is-good" aria-hidden="true">1</span>');
+    expect(html).toContain('<span class="trn-q__num is-fair" aria-hidden="true">2</span>');
+    expect(html).toContain('<span class="trk-sr">1. </span>“Tell me about the weekly report.”');
+    expect(html).toContain('<span class="trn-state is-good">Result given</span>');
+    expect(html).toContain('<span class="trn-state is-fair">No fact from your CV</span>');
+    expect((html.match(/<details class="trn-q"/g) ?? []).length).toBe(2);
   });
 
   it("lists the kinds of English note that came up more than once, without the ones marked right", () => {
     expect(t).toContain("English · what came up more than once");
-    expect(t).toContain("Verb tense · 2 times · “Then I make” → “Then I made”");
+    expect(t).toContain("(1)Verb tense · 2 times · “Then I make” → “Then I made”");
     expect(t).toContain("You marked 1 note as “I said it right”; it isn’t counted.");
     const none = text(renderToStaticMarkup(<TrainerReport report={{ ...report, summary: { ...base, english: { notes: 1, dismissed: 0, patterns: [] } } }} {...props} />));
     expect(none).toContain("No kind of note came up twice in this session.");
