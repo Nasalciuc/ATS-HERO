@@ -6574,9 +6574,10 @@ select.field__input {
 }
 .trk-board {
   display: grid;
-  grid-template-columns: repeat(5, minmax(188px, 1fr));
-  gap: 20px;
-  min-width: 1020px;
+  /* five columns fit a 1366px laptop (978px of content); narrower windows scroll the board sideways */
+  grid-template-columns: repeat(5, minmax(176px, 1fr));
+  gap: 16px;
+  min-width: 944px;
 }
 .trk-col {
   display: flex;
@@ -6599,7 +6600,7 @@ select.field__input {
   content: "";
   flex: 1 1 0;
   height: 1px;
-  margin-right: -20px; /* across the gap, to the next stage's circle */
+  margin-right: -16px; /* across the gap, to the next stage's circle */
   background: var(--line);
 }
 .trk-col:last-child .trk-col__head::after {
