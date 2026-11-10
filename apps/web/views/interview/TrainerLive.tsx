@@ -17,6 +17,7 @@
 import type { LiveSession, LiveTurn } from "@/app/actions/interview";
 import { KIND_LABEL, listWords, STYLE_LABEL } from "@/lib/interview/report";
 import type { InterviewCriterion, InterviewKind } from "@/lib/types";
+import { AlertLine, ArrowUp } from "@/components/figma-icons";
 import { clock, clockWords, duration, segments } from "./format";
 
 /** The answer timer's reminder (IV-14): two minutes, and nothing is cut off. */
@@ -195,12 +196,37 @@ const CRITERION: Record<InterviewCriterion["key"], string> = {
   action: "Action",
   result: "Result",
 };
-/** What a missing part of an answer would say. Ours, the same for everyone: the model only finds the part or doesn't. */
-const MISSING: Record<"situation" | "task" | "action" | "result", string> = {
-  situation: "Missing: where this was, and what the problem was.",
-  task: "Missing: what was yours to do.",
-  action: "Missing: what you did yourself, step by step.",
-  result: "Missing: what changed, in numbers if you have them.",
+/** The picture each part goes by, in a ring: as the builder's steps and the score page's rows have theirs. */
+const EMOJI: Record<InterviewCriterion["key"], string> = {
+  situation: "📍",
+  task: "🎯",
+  action: "🛠️",
+  result: "📈",
+  requirement: "🧩",
+  proof: "📋",
+};
+/** Whether a part is there, in a word. A fact about the answer, never a grade (IV-6). */
+const STATE: Record<InterviewCriterion["key"], [there: string, not: string]> = {
+  situation: ["Said", "Missing"],
+  task: ["Said", "Missing"],
+  action: ["Said", "Missing"],
+  result: ["Said", "Missing"],
+  requirement: ["Named", "Not named"],
+  proof: ["Used", "Not used"],
+};
+/** What to say for a part that isn't there. Ours, the same for everyone: the model only finds the part or doesn't. */
+const TO_SAY: Record<"situation" | "task" | "action" | "result", string> = {
+  situation: "Say where this was, and what the problem was.",
+  task: "Say what was yours to do.",
+  action: "Say what you did yourself, step by step.",
+  result: "Say what changed, in numbers if you have them.",
+};
+/** The four parts, as a sentence names them. */
+const IN_WORDS: Record<"situation" | "task" | "action" | "result", string> = {
+  situation: "the situation",
+  task: "your task",
+  action: "what you did",
+  result: "the result",
 };
 export const LISTENS_FOR: Record<InterviewKind, string> = {
   recruiter: "What a recruiter listens for",
@@ -208,12 +234,13 @@ export const LISTENS_FOR: Record<InterviewKind, string> = {
   manager: "What a hiring manager listens for",
 };
 
+/** Beside a part's state: the person's own words when it is there, what to say when it isn't. */
 export function criterionNote(c: InterviewCriterion, requirement: string | null, used: string[] = []): string {
   if (c.met && c.quote) return quoted(c.quote);
-  if (c.key === "requirement") return c.met ? "Named in your answer." : `Missing: say where you used ${requirement ?? "it"}.`;
+  if (c.key === "requirement") return c.met ? "Named in your answer." : `Say where you used ${requirement ?? "it"}.`;
   // a fact said another way than the CV writes it ("twelve hours") has no sentence to show
-  if (c.key === "proof") return c.met ? `You used: ${used.join(", ")}.` : "Missing: a number or a tool from your CV line.";
-  return MISSING[c.key];
+  if (c.key === "proof") return c.met ? `You used: ${used.join(", ")}.` : "Add a number or a tool from your CV line.";
+  return TO_SAY[c.key];
 }
 
 /**
@@ -223,6 +250,27 @@ export function criterionNote(c: InterviewCriterion, requirement: string | null,
 export function measuredForShow(criteria: InterviewCriterion[]): InterviewCriterion[] {
   const named = criteria.find((c) => c.key === "requirement" && c.met)?.quote;
   return criteria.map((c) => (c.key === "proof" && c.met && c.quote && c.quote === named ? { ...c, quote: null } : c));
+}
+
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/**
+ * The card's first sentence: what the rows under it say, in plain words. With the model's reading,
+ * the parts of the answer; without it, what the answer measured. The same facts, never a verdict.
+ */
+export function summaryOf(parts: InterviewCriterion[], measured: InterviewCriterion[]): string {
+  const star = parts.filter((c): c is InterviewCriterion & { key: keyof typeof IN_WORDS } => c.key in IN_WORDS);
+  if (star.length) {
+    const there = star.filter((c) => c.met).map((c) => IN_WORDS[c.key]);
+    const missing = star.filter((c) => !c.met).map((c) => IN_WORDS[c.key]);
+    if (!missing.length) return there.length === 4 ? `Your answer has all four parts: ${listWords(there)}.` : `Your answer has ${listWords(there)}.`;
+    if (!there.length) return `Your answer doesn’t show these parts yet: ${listWords(missing)}.`;
+    return `Your answer has ${listWords(there)}. ${sentence(listWords(missing))} ${missing.length === 1 ? "is" : "are"} missing.`;
+  }
+  const named = measured.find((c) => c.key === "requirement");
+  const proof = measured.find((c) => c.key === "proof");
+  if (proof?.met) return named?.met ? "You named what the job asks for, and used a fact from your CV." : named ? "You used a fact from your CV. Name what the job asks for too." : "You used a fact from your CV.";
+  return named?.met ? "You named what the job asks for. Add a number or a tool from your CV." : "Your answer didn’t use your CV yet. Add a number or a tool from it.";
 }
 
 /** The CV line, with the part to say in bold. */
@@ -247,36 +295,36 @@ export function MarkedAnswer({ text, ai }: { text: string; ai: LiveTurn["ai"] })
   );
 }
 
-/** One criterion's box: found, with the person's words; or missing, with what to say. */
-function CriterionBox({ c, requirement, used }: { c: InterviewCriterion; requirement: string | null; used: string[] }) {
+/** One part, as a row: its picture in a ring, its name, whether it is there, and the person's words or what to say. */
+function PartRow({ c, requirement, used }: { c: InterviewCriterion; requirement: string | null; used: string[] }) {
+  const [there, not] = STATE[c.key];
   return (
-    <div className={`trn-crit__box ${c.met ? "is-met" : "is-missing"}`}>
-      <span className="trn-crit__name">
-        {c.met
-          ? <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>
-          : <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 7v6" /><path d="M12 17h.01" /></svg>}
-        {CRITERION[c.key]}
-        <span className="trk-sr">{c.met ? ": shown" : ": missing"}</span>
-      </span>
-      <span className="trn-crit__note">{criterionNote(c, requirement, used)}</span>
-    </div>
+    <li className={`trn-row ${c.met ? "is-there" : "is-missing"}`}>
+      <span className="trn-row__icon" aria-hidden="true">{EMOJI[c.key]}</span>
+      <span className="trn-row__label">{CRITERION[c.key]}</span>
+      <span className="trn-row__state">{c.met ? there : not}</span>
+      <span className="trn-row__note">{criterionNote(c, requirement, used)}</span>
+    </li>
   );
 }
 
-/** The English notes that still stand on one answer, each with "I said it right" (B2). */
+/** The English notes that still stand on one answer, numbered, each with "I said it right" (B2). */
 export function EnglishNotes({ ai, busy, onDismiss }: { ai: NonNullable<LiveTurn["ai"]>; busy: boolean; onDismiss: (index: number) => void }) {
   return (
     <>
       {ai.english.length > 0 ? (
-        <ul className="trn-notes">
-          {ai.english.map((n) => (
+        <ol className="score-group__list trn-notes">
+          {ai.english.map((n, i) => (
             <li key={n.index} className="trn-notes__item">
-              <p className="trn-notes__fix"><del>{n.quote}</del> <span aria-hidden="true">→</span><span className="trk-sr"> better: </span> <strong>{n.better}</strong></p>
-              {n.why && <p className="trn-note">{n.why}</p>}
+              <span className="score-group__num" aria-hidden="true">({i + 1})</span>
+              <span className="trn-notes__body">
+                <span className="trn-notes__fix"><del>{n.quote}</del> <span aria-hidden="true">→</span><span className="trk-sr"> better: </span> <strong>{n.better}</strong></span>
+                {n.why && <span className="trn-notes__why">{n.why}</span>}
+              </span>
               <button type="button" className="trn-chip-btn" disabled={busy} onClick={() => onDismiss(n.index)}>I said it right</button>
             </li>
           ))}
-        </ul>
+        </ol>
       ) : (
         <p className="trn-note">{ai.dismissed ? "No notes left on this answer." : "No notes on this answer."}</p>
       )}
@@ -290,25 +338,24 @@ export function EnglishNotes({ ai, busy, onDismiss }: { ai: NonNullable<LiveTurn
 }
 
 /**
- * "A stronger answer", or why there is none to show. Null when the model gave none. `id` names its
- * heading (a report has one per question); `sub`: under a question's own heading, in a report.
+ * "A stronger answer", or why there is none to show, in the Pro Tips card's shape. Null when the
+ * model gave none. `id` names its heading (a report has one per question); `sub`: under a question's
+ * own heading, in a report.
  */
 export function StrongerAnswer({ ai, id = "trn-fb-stronger", sub = false }: { ai: NonNullable<LiveTurn["ai"]>; id?: string; sub?: boolean }) {
   if (!ai.stronger && !ai.strongerRefused) return null;
   const Heading = sub ? "h3" : "h2";
   return (
-    <section className="trn-panel trn-panel--ai" aria-labelledby={id}>
-      <div className="trn-panel__head">
-        <Heading id={id} className="trn-h2">A stronger answer</Heading>
-        {ai.stronger && <span className="trn-ai-chip">Made with AI. Check it.</span>}
-      </div>
+    <section className={`trn-tips${sub ? " trn-tips--sub" : ""}`} aria-labelledby={id}>
+      {ai.stronger && <span className="trn-tips__badge">Made with AI. Check it.</span>}
+      <Heading id={id} className="trn-tips__title">A stronger answer</Heading>
       {ai.stronger ? (
         <>
-          <p className="trn-fb__stronger">{quoted(ai.stronger)}</p>
-          <p className="trn-note">Built only from what you said and your CV. Say it in your own words; don’t learn it by heart.</p>
+          <p className="trn-tips__text">{quoted(ai.stronger)}</p>
+          <p className="trn-tips__note">Built only from what you said and your CV. Say it in your own words; don’t learn it by heart.</p>
         </>
       ) : (
-        <p className="trn-note">
+        <p className="trn-tips__note">
           None this time. The AI’s version said something that is in neither your answer nor your CV, so we didn’t show it.
         </p>
       )}
@@ -342,126 +389,132 @@ export interface TrainerFeedbackProps {
   onAskAgain?: () => void;
 }
 
+/**
+ * The feedback after an answer, built from the score page's pieces (PROVISIONAL, AGENTS.md rule 6:
+ * no Figma frame; Liubovi draws or checks it): one plain sentence beside a circle, the parts as rows
+ * with a picture in a ring, badges over numbered lists, and the stronger answer as a tips card.
+ */
 export function TrainerFeedback(p: TrainerFeedbackProps) {
   const t = p.turn;
   const ai = t.ai;
-  const fillers = t.fillers.reduce((a, f) => a + f.count, 0);
   const tools = t.unused.filter((f) => !/\d/.test(f));
   const star = (["situation", "task", "action", "result"] as const).flatMap((k) => ai?.criteria.filter((c) => c.key === k) ?? []);
   const measured = measuredForShow(t.criteria);
   const marked = ai ? marksOf(ai) : [];
+  const reading = p.aiState === "loading";
+  const counts = [
+    duration(t.seconds),
+    `${t.words} ${t.words === 1 ? "word" : "words"}`,
+    t.fillers.length > 0 ? `filler words: ${t.fillers.map((f) => `“${f.word}” ×${f.count}`).join(", ")}` : "",
+  ].filter(Boolean);
   return (
     <div className="trn trn-live trn-fb">
       <LiveHeader session={p.session} status={`Question ${p.n} of ${p.total} · the clock is stopped`} timeLeft={p.timeLeft} busy={p.busy} onEnd={p.onEnd} />
-      <div className="trn-fb__title">
-        <p className="trn-fb__kicker">Feedback · question {p.n} of {p.total}</p>
-        <h1 className="trn-fb__q">{quoted(p.question.text)}</h1>
-      </div>
-      <div className="trn-fb__body">
-        <main className="trn-fb__main">
-          <section className="trn-panel" aria-labelledby="trn-fb-answer">
-            <div className="trn-panel__head">
-              <h2 id="trn-fb-answer" className="trn-h2">Your answer</h2>
-              {marked.some((m) => m.mark === "vague") && <span className="trn-key"><span aria-hidden="true" className="trn-key__mark trn-key__mark--vague" />vague</span>}
-              {marked.some((m) => m.mark === "english") && <span className="trn-key"><span aria-hidden="true" className="trn-key__mark trn-key__mark--english" />English note</span>}
-            </div>
-            <p className="trn-fb__answer"><MarkedAnswer text={t.answer ?? ""} ai={ai} /></p>
-            {t.follow.map((f, i) => (
-              <div key={i} className="trn-fb__follow">
-                <p className="trn-fb__follow-q"><span className="trn-fb__follow-who">Follow-up</span> {quoted(f.question)}</p>
-                {f.answer != null
-                  ? <p className="trn-fb__answer"><MarkedAnswer text={f.answer} ai={ai} /></p>
-                  : <p className="trn-note">You skipped it.</p>}
-              </div>
-            ))}
-          </section>
+      <main className="trn-fb__page">
+        <div className="trn-fb__title">
+          <p className="trn-fb__kicker">Feedback · question {p.n} of {p.total}</p>
+          <h1 className="trn-fb__q">{quoted(p.question.text)}</h1>
+        </div>
 
-          <section className="trn-panel" aria-labelledby="trn-fb-showed">
-            <h2 id="trn-fb-showed" className="trn-h2">{p.session.ai ? LISTENS_FOR[p.session.kind] : "What this answer showed"}</h2>
-            {p.aiState === "loading" && <p className="trn-fb__wait" role="status">The interviewer is reading your answer…</p>}
+        <div className="trn-fb__head">
+          <span className={`trn-fb__circle${reading ? " is-reading" : ""}`} aria-hidden="true">
+            {reading && (
+              <svg className="trn-fb__ring" viewBox="0 0 159 159" focusable="false">
+                <circle cx="79.5" cy="79.5" r="78.5" pathLength={360} strokeDasharray="334 26" />
+              </svg>
+            )}
+            <span className="trn-fb__emoji">📝</span>
+          </span>
+          <div className="trn-fb__msg">
+            <p className="trn-fb__lead">{summaryOf(star, measured)}</p>
+            {reading && <p className="trn-fb__wait" role="status">The interviewer is reading your answer…</p>}
             {p.aiState === "unavailable" && (
               <p className="trn-warn" role="status">
                 The AI feedback isn’t available right now. This is what your answer measured.
                 {p.onAskAgain && <> <button type="button" className="trk-link trk-link--inline" disabled={p.busy} onClick={p.onAskAgain}>Try again</button></>}
               </p>
             )}
-            {/* the four parts in a row of their own; what the answer measured under it, in wider boxes: its quotes are whole sentences */}
-            {star.length > 0 && (
-              <div className="trn-crit">
-                {star.map((c) => <CriterionBox key={c.key} c={c} requirement={p.question.requirement} used={t.used} />)}
-              </div>
-            )}
-            {measured.length > 0 && (
-              <div className="trn-crit">
-                {measured.map((c) => <CriterionBox key={c.key} c={c} requirement={p.question.requirement} used={t.used} />)}
-              </div>
-            )}
-            {t.numbers ? (
-              <div className="trn-callout">
-                {/* a result said in words, the CV's numbers still unsaid: the box above is ticked, so this asks for the numbers only */}
-                <p className="trn-callout__title">
-                  {star.some((c) => c.key === "result" && c.met) ? "Say it in numbers. They’re already in your CV:" : "Say the result. It’s already in your CV:"}
-                </p>
-                <p className="trn-callout__line">“<Highlighted line={t.cvLine} part={t.numbers} />”</p>
-              </div>
-            ) : tools.length > 0 && !t.used.length ? (
-              <div className="trn-callout">
-                <p className="trn-callout__title">Name what you used. It’s already in your CV:</p>
-                <p className="trn-callout__line">“<Highlighted line={t.cvLine} part={tools[0]} />”</p>
-              </div>
-            ) : null}
-          </section>
+          </div>
+        </div>
 
-          {ai && ai.vague.length > 0 && (
-            <section className="trn-panel" aria-labelledby="trn-fb-concrete">
-              <h2 id="trn-fb-concrete" className="trn-h2">Make it concrete</h2>
-              <ul className="trn-vague">
-                {ai.vague.map((v) => (
-                  <li key={v.phrase}><mark className="trn-mark trn-mark--vague">{quoted(v.phrase)}</mark> <span>{v.ask}</span></li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {ai && <StrongerAnswer ai={ai} />}
-        </main>
-
-        <aside className="trn-fb__side">
-          <section className="trn-panel" aria-labelledby="trn-fb-measured">
-            <h2 id="trn-fb-measured" className="trn-h2">Measured</h2>
-            <div className="trn-stats">
-              <div className="trn-stat"><span className="trn-stat__value">{duration(t.seconds)}</span><span className="trn-stat__label">answer length</span></div>
-              <div className="trn-stat"><span className="trn-stat__value">{t.words}</span><span className="trn-stat__label">words</span></div>
-              <div className="trn-stat"><span className="trn-stat__value">{fillers}</span><span className="trn-stat__label">filler words used twice or more</span></div>
+        <section className="trn-card" aria-labelledby="trn-fb-answer">
+          <div className="trn-card__head">
+            <h2 id="trn-fb-answer" className="trn-label">Your answer</h2>
+            {marked.some((m) => m.mark === "vague") && <span className="trn-key"><span aria-hidden="true" className="trn-key__mark trn-key__mark--vague" />vague</span>}
+            {marked.some((m) => m.mark === "english") && <span className="trn-key"><span aria-hidden="true" className="trn-key__mark trn-key__mark--english" />English note</span>}
+          </div>
+          <p className="trn-fb__answer"><MarkedAnswer text={t.answer ?? ""} ai={ai} /></p>
+          {t.follow.map((f, i) => (
+            <div key={i} className="trn-fb__follow">
+              <p className="trn-fb__follow-q"><span className="trn-fb__follow-who">Follow-up</span> {quoted(f.question)}</p>
+              {f.answer != null
+                ? <p className="trn-fb__answer"><MarkedAnswer text={f.answer} ai={ai} /></p>
+                : <p className="trn-note">You skipped it.</p>}
             </div>
-            <p className="trn-note">
-              Counts from your answer, not grades.
-              {t.fillers.length > 0 && ` Filler words: ${t.fillers.map((f) => `“${f.word}” ×${f.count}`).join(", ")}.`}
-            </p>
-          </section>
+          ))}
+          <p className="trn-fb__counts">{counts.join(" · ")}</p>
+        </section>
 
-          {ai && p.session.englishNotes && (
-            <section className="trn-panel" aria-labelledby="trn-fb-english">
-              <h2 id="trn-fb-english" className="trn-h2">
-                English{ai.english.length > 0 && ` · ${ai.english.length} ${ai.english.length === 1 ? "note" : "notes"}`}
-              </h2>
-              <EnglishNotes ai={ai} busy={p.busy} onDismiss={(i) => p.onDismissNote?.(i)} />
-            </section>
-          )}
+        <section className="trn-fb__section" aria-labelledby="trn-fb-showed">
+          <h2 id="trn-fb-showed" className="trn-fb__h">{p.session.ai ? LISTENS_FOR[p.session.kind] : "What this answer showed"}</h2>
+          {/* the four parts first, then what the answer measured: the requirement and the proof from the CV */}
+          <ul className="trn-rows">
+            {star.map((c) => <PartRow key={c.key} c={c} requirement={p.question.requirement} used={t.used} />)}
+            {measured.map((c) => <PartRow key={c.key} c={c} requirement={p.question.requirement} used={t.used} />)}
+          </ul>
+          {t.numbers ? (
+            <div className="trn-callout">
+              {/* a result said in words, the CV's numbers still unsaid: the row above says "Said", so this asks for the numbers only */}
+              <p className="trn-callout__title">
+                <span aria-hidden="true">💡 </span>
+                {star.some((c) => c.key === "result" && c.met) ? "Say it in numbers. They’re already in your CV:" : "Say the result. It’s already in your CV:"}
+              </p>
+              <p className="trn-callout__line">“<Highlighted line={t.cvLine} part={t.numbers} />”</p>
+            </div>
+          ) : tools.length > 0 && !t.used.length ? (
+            <div className="trn-callout">
+              <p className="trn-callout__title"><span aria-hidden="true">💡 </span>Name what you used. It’s already in your CV:</p>
+              <p className="trn-callout__line">“<Highlighted line={t.cvLine} part={tools[0]} />”</p>
+            </div>
+          ) : null}
+        </section>
 
-          <section className="trn-panel" aria-labelledby="trn-fb-named">
-            <h2 id="trn-fb-named" className="trn-h2">What the job asks that you named</h2>
-            {t.named.length > 0
-              ? <p className="trn-chips">{t.named.map((l) => <span key={l} className="trk-chip trk-chip--met">{l}</span>)}</p>
-              : <p className="trn-note">None of the post’s requirements, by name.</p>}
-            {p.ahead.length > 0 && <p className="trn-note">Still to come in this session: {listWords(p.ahead)}.</p>}
+        {ai && ai.vague.length > 0 && (
+          <section className="score-group score-group--wide" aria-labelledby="trn-fb-concrete">
+            <h2 id="trn-fb-concrete" className="trn-badge-h"><span className="score-badge score-badge--suggestion"><AlertLine size={18} /> Make it concrete</span></h2>
+            <ol className="score-group__list">
+              {ai.vague.map((v, i) => (
+                <li key={v.phrase}>
+                  <span className="score-group__num" aria-hidden="true">({i + 1})</span>
+                  <span><mark className="trn-mark trn-mark--vague">{quoted(v.phrase)}</mark> {v.ask}</span>
+                </li>
+              ))}
+            </ol>
           </section>
-        </aside>
-      </div>
+        )}
+
+        {ai && p.session.englishNotes && (
+          <section className="score-group score-group--wide" aria-labelledby="trn-fb-english">
+            <h2 id="trn-fb-english" className="trn-badge-h">
+              <span className="score-badge score-badge--read">English{ai.english.length > 0 && ` · ${ai.english.length} ${ai.english.length === 1 ? "note" : "notes"}`}</span>
+            </h2>
+            <EnglishNotes ai={ai} busy={p.busy} onDismiss={(i) => p.onDismissNote?.(i)} />
+          </section>
+        )}
+
+        {ai && <StrongerAnswer ai={ai} />}
+
+        <p className="trn-note trn-fb__named">
+          {t.named.length > 0 ? `What the job asks that you named: ${listWords(t.named)}.` : "None of the post’s requirements, by name."}
+          {p.ahead.length > 0 && ` Still to come in this session: ${listWords(p.ahead)}.`}
+        </p>
+      </main>
       <footer className="trn-fb__foot">
-        <button type="button" className="trk-btn" disabled={p.busy} onClick={p.onNext}>{p.last ? "See your report" : "Next question"}</button>
-        {p.canRetry && <button type="button" className="trk-btn trk-btn--ghost trn-btn--soft" disabled={p.busy} onClick={p.onRetry}><span>Try <span className="trn-wide">this answer </span>again</span></button>}
-        {p.canRetry && <span className="trn-note">Trying again doesn’t use time from the interview.</span>}
+        {p.canRetry && <button type="button" className="topbtn topbtn--ghost" disabled={p.busy} onClick={p.onRetry}><span>Try <span className="trn-wide">this answer </span>again</span></button>}
+        {p.canRetry && <span className="trn-note trn-fb__foot-note">Trying again doesn’t use time from the interview.</span>}
+        <button type="button" className="topbtn topbtn--dark trn-fb__next" disabled={p.busy} onClick={p.onNext}>
+          {p.last ? "See your report" : "Next question"} <ArrowUp className="topbtn__arrow--right" />
+        </button>
         {p.error && <p className="trk-error" role="alert">{p.error}</p>}
       </footer>
     </div>

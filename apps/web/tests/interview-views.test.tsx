@@ -8,7 +8,7 @@ import type { LiveTurn, ReportView, SetupView, TrainerHome as Home } from "@/app
 import TrainerHome, { LimitChip } from "@/views/interview/TrainerHome";
 import TrainerSetup from "@/views/interview/TrainerSetup";
 import TrainerBlocked from "@/views/interview/TrainerBlocked";
-import TrainerLive, { criterionNote, measuredForShow, TrainerFeedback, quoted } from "@/views/interview/TrainerLive";
+import TrainerLive, { criterionNote, measuredForShow, summaryOf, TrainerFeedback, quoted } from "@/views/interview/TrainerLive";
 import { segments } from "@/views/interview/format";
 import TrainerReport from "@/views/interview/TrainerReport";
 import JobPanel from "@/views/tracker/JobPanel";
@@ -161,17 +161,21 @@ describe("the feedback after an answer", () => {
   );
   const t = text(html);
 
-  it("shows what's missing, and the CV's own numbers to say", () => {
-    expect(t).toContain("Missing: say where you used SQL.");
-    expect(t).toContain("Missing: a number or a tool from your CV line.");
+  it("says in one plain sentence what the answer showed, then each thing as a row: its name, whether it is there, what to say", () => {
+    expect(t).toContain("Your answer didn’t use your CV yet. Add a number or a tool from it.");
+    expect(t).toContain("What this answer showed");
+    expect(t).toContain("The requirementNot namedSay where you used SQL.");
+    expect(t).toContain("Proof from your CVNot usedAdd a number or a tool from your CV line.");
+    expect((html.match(/<li class="trn-row is-missing"/g) ?? []).length).toBe(2);
+    // the CV's own numbers to say
     expect(t).toContain("Say the result. It’s already in your CV:");
     expect(html).toContain("<strong>6 hours to 1</strong>");
   });
 
-  it("counts, not grades; and what's still to come", () => {
-    expect(t).toContain("1 min 48 s");
-    expect(t).toContain("Counts from your answer, not grades. Filler words: “basically” ×2.");
-    expect(t).toContain("Still to come in this session: Python.");
+  it("gives the counts in one quiet line, without a grade; and what's still to come", () => {
+    expect(t).toContain("1 min 48 s · 9 words · filler words: “basically” ×2");
+    expect(t).not.toMatch(/\bscore|grade|\/10|out of 10/i);
+    expect(t).toContain("None of the post’s requirements, by name. Still to come in this session: Python.");
     expect(t).toContain("Next question");
     expect(t).toContain("Try this answer again");
   });
@@ -426,22 +430,46 @@ describe("the feedback with the model", () => {
 
   it("gives the four parts of the answer with the person's words, then what the answer measured; no score", () => {
     expect(t).toContain("What a hiring manager listens for");
-    const order = ["Situation: shown", "Task: missing", "Action: shown", "Result: shown", "The requirement: shown", "Proof from your CV: shown"].map((x) => t.indexOf(x));
+    const order = ["SituationSaid", "TaskMissing", "ActionSaid", "ResultSaid", "The requirementNamed", "Proof from your CVUsed"].map((x) => t.indexOf(x));
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(t).toContain("“the report took me a lot of time every week”");
-    expect(t).toContain("Missing: what was yours to do.");
+    expect(t).toContain("TaskMissingSay what was yours to do.");
+    // the first sentence says the same as the rows, in plain words
+    expect(t).toContain("Your answer has the situation, what you did and the result. Your task is missing.");
     // the requirement was named in words the CV writes another way: no sentence to show
     expect(t).toContain("Named in your answer.");
     expect(criterionNote({ key: "proof", met: true, quote: null }, null, ["12", "Python"])).toBe("You used: 12, Python.");
     expect(t).not.toMatch(/\bscore|\/10|out of 10|grade[^s]|confiden|\bATS\b/i);
   });
 
-  it("keeps the four parts in a row of their own, and what the answer measured under it", () => {
-    const grids = html.split('<div class="trn-crit">').slice(1).map((g) => (g.match(/trn-crit__box/g) ?? []).length);
-    expect(grids).toEqual([4, 2]);
+  it("gives every part a row with a picture; a part that isn't there is told apart by its word, not only its colour", () => {
+    expect((html.match(/<li class="trn-row /g) ?? []).length).toBe(6);
+    expect((html.match(/<li class="trn-row is-missing"/g) ?? []).length).toBe(1);
+    expect((html.match(/class="trn-row__icon" aria-hidden="true"/g) ?? []).length).toBe(6);
     // the model's reading isn't here: only what the answer measured
-    expect(card({ aiState: "loading", turn: { ...aiTurn, ai: null } }).split('<div class="trn-crit">').length - 1).toBe(1);
+    expect((card({ aiState: "loading", turn: { ...aiTurn, ai: null } }).match(/<li class="trn-row /g) ?? []).length).toBe(2);
+  });
+
+  it("puts the answer's parts into one plain sentence, from the same facts as the rows", () => {
+    const part = (key: "situation" | "task" | "action" | "result", met: boolean) => ({ key, met, quote: met ? "some words" : null });
+    expect(summaryOf([part("situation", true), part("task", true), part("action", true), part("result", true)], []))
+      .toBe("Your answer has all four parts: the situation, your task, what you did and the result.");
+    expect(summaryOf([part("situation", true), part("task", true), part("action", true), part("result", false)], []))
+      .toBe("Your answer has the situation, your task and what you did. The result is missing.");
+    expect(summaryOf([part("situation", true), part("task", false), part("action", true), part("result", false)], []))
+      .toBe("Your answer has the situation and what you did. Your task and the result are missing.");
+    expect(summaryOf([part("situation", false), part("result", false)], [])).toBe("Your answer doesn’t show these parts yet: the situation and the result.");
+    // a part the model couldn't show with the person's words is left out, not called missing
+    expect(summaryOf([part("situation", true), part("action", true)], [])).toBe("Your answer has the situation and what you did.");
+    // without the model's reading: what the answer measured
+    const named = (met: boolean) => ({ key: "requirement" as const, met, quote: null });
+    const proof = (met: boolean) => ({ key: "proof" as const, met, quote: null });
+    expect(summaryOf([], [named(true), proof(true)])).toBe("You named what the job asks for, and used a fact from your CV.");
+    expect(summaryOf([], [named(false), proof(true)])).toBe("You used a fact from your CV. Name what the job asks for too.");
+    expect(summaryOf([], [proof(true)])).toBe("You used a fact from your CV.");
+    expect(summaryOf([], [named(true), proof(false)])).toBe("You named what the job asks for. Add a number or a tool from your CV.");
+    expect(summaryOf([], [named(false), proof(false)])).toBe("Your answer didn’t use your CV yet. Add a number or a tool from it.");
   });
 
   it("shows a sentence once when it both names the requirement and holds the proof", () => {
@@ -450,7 +478,7 @@ describe("the feedback with the model", () => {
     expect(shown).toEqual([{ key: "requirement", met: true, quote: same }, { key: "proof", met: true, quote: null }]);
     const both = text(card({ turn: { ...aiTurn, criteria: [{ key: "requirement", met: true, quote: same }, { key: "proof", met: true, quote: same }] } }));
     expect(both.split(`“${same}”`).length - 1).toBe(1);
-    expect(both).toContain("Proof from your CV: shownYou used: 6, 1, SQL.");
+    expect(both).toContain("Proof from your CVUsedYou used: 6, 1, SQL.");
     // two sentences, or a proof that is missing: as they are
     const apart = [{ key: "requirement" as const, met: true, quote: "I used SQL." }, { key: "proof" as const, met: true, quote: "It went from 6 hours to 1." }];
     expect(measuredForShow(apart)).toEqual(apart);
@@ -470,7 +498,7 @@ describe("the feedback with the model", () => {
   });
 
   it("shows each vague phrase with the question that makes it concrete, and no verdict", () => {
-    expect(t).toContain("Make it concrete“I helped the team a lot with this” Who got the report, and how much sooner?");
+    expect(t).toContain("Make it concrete(1)“I helped the team a lot with this” Who got the report, and how much sooner?");
   });
 
   it("shows the English notes that stand, each with “I said it right”, and counts the ones marked right", () => {
@@ -496,7 +524,8 @@ describe("the feedback with the model", () => {
   });
 
   it("marks the stronger answer as made with AI, and says when one was refused", () => {
-    expect(t).toContain("A stronger answerMade with AI. Check it.“At Brightline, the weekly sales report took me a lot of time.");
+    // the label first, as the Pro Tips card has its badge: nobody reads the answer before knowing who made it
+    expect(t).toContain("Made with AI. Check it.A stronger answer“At Brightline, the weekly sales report took me a lot of time.");
     expect(t).toContain("Built only from what you said and your CV. Say it in your own words; don’t learn it by heart.");
     const refused = text(card({ turn: { ...aiTurn, ai: { ...ai, stronger: null, strongerRefused: true } } }));
     expect(refused).toContain("None this time. The AI’s version said something that is in neither your answer nor your CV, so we didn’t show it.");
@@ -507,7 +536,7 @@ describe("the feedback with the model", () => {
   it("says when the interviewer is still reading, and when its feedback can't be had: what the answer measured stays", () => {
     const loading = text(card({ aiState: "loading", turn: { ...aiTurn, ai: null } }));
     expect(loading).toContain("The interviewer is reading your answer…");
-    expect(loading).toContain("Proof from your CV: shown");
+    expect(loading).toContain("Proof from your CVUsed");
     expect(loading).not.toMatch(/Situation|A stronger answer|Make it concrete/);
     const down = text(card({ aiState: "unavailable", turn: { ...aiTurn, ai: null } }));
     expect(down).toContain("The AI feedback isn’t available right now. This is what your answer measured. Try again");

@@ -8636,55 +8636,131 @@ select.field__input {
   color: #6b6b6b;
 }
 
-/* the feedback after an answer */
+/* the feedback after an answer: built from the score page's pieces (PROVISIONAL, AGENTS.md rule 6:
+   no Figma frame; Liubovi draws or checks it). One column on white, as her results page: a circle
+   beside one plain sentence, the person's answer in the form card's grey, the parts as rows with a
+   picture in a ring (the 64px circle, the 81px row and the type are the score rows'), badges over
+   numbered lists, and the stronger answer in the Pro Tips card's shape. */
+.trn-fb {
+  background: var(--white);
+}
+.trn-fb__page {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  max-width: 931px; /* the score page's 867px column, and 32 a side */
+  margin: 0 auto;
+  padding: 40px 32px 56px;
+}
 .trn-fb__title {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 26px 32px 0;
+  gap: 10px;
 }
 .trn-fb__kicker {
   margin: 0;
-  font-size: 13px;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  text-transform: uppercase;
   color: #6b6b6b;
 }
 .trn-fb__q {
   margin: 0;
-  max-width: 900px;
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
 }
-.trn-fb__body {
-  flex: 1 1 auto;
+.trn-fb__head {
+  display: flex;
+  align-items: center;
+  gap: 49px;
+}
+.trn-fb__circle {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 157px;
+  height: 157px;
+  border-radius: 50%;
+  background: #f5f3ff;
+  box-shadow: inset 0 0 0 2px var(--violet-200);
+}
+/* while the interviewer reads: the loading circle's green ring, turning */
+.trn-fb__circle.is-reading {
+  box-shadow: none;
+}
+.trn-fb__ring {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  animation: ats-spin 1.6s linear infinite;
+}
+.trn-fb__ring circle {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trn-fb__ring {
+    animation: none;
+  }
+}
+.trn-fb__emoji {
+  font-family: var(--font-emoji);
+  font-size: 64px;
+  line-height: 1;
+}
+.trn-fb__msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  max-width: 560px;
+}
+.trn-fb__lead {
+  margin: 0;
+  font-size: 20px;
+  line-height: 24px;
+  color: #000;
+}
+/* the person's words, in the form card */
+.trn-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px 32px;
+  background: #f8f8f8;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+.trn-card__head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 20px 32px 28px;
+  align-items: center;
+  gap: 8px 16px;
 }
-.trn-fb__main {
-  flex: 3 1 600px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.trn-fb__side {
-  flex: 1 1 340px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.trn-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px 22px;
-  border-radius: 16px;
-  background: var(--white);
+/* a field's label: 12px Inter, capitals (darker than the form's, which is 3.4:1 on this grey) */
+.trn-label {
+  flex: 1 1 auto;
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  text-transform: uppercase;
+  color: #6b6b6b;
 }
 .trn-fb__answer {
   margin: 0;
@@ -8693,55 +8769,97 @@ select.field__input {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.trn-crit {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
+.trn-fb__counts {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #6b6b6b;
 }
-.trn-crit__box {
+.trn-fb__section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-  border-radius: 12px;
 }
-.trn-crit__box.is-met {
-  background: rgba(0, 196, 80, 0.08);
+.trn-fb__h {
+  margin: 0 0 16px;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
 }
-.trn-crit__box.is-missing {
-  background: #fff3e0;
+/* the parts: the score page's rows, with the state in a word where it shows a score */
+.trn-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--line);
 }
-.trn-crit__name {
+.trn-row {
+  --tone: var(--green);
+  --tone-text: #00843a;
+  display: grid;
+  grid-template-columns: 87px 214px 122px minmax(0, 1fr);
+  align-items: center;
+  min-height: 81px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.trn-row.is-missing {
+  --tone: #ffc107;
+  --tone-text: #a35a00;
+}
+.trn-row__icon {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 2px var(--tone);
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 1;
+}
+.trn-row__label {
+  padding-right: 12px;
+  font-family: var(--font-inter);
   font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
 }
-.is-met .trn-crit__name {
-  color: #0a6b35;
+.trn-row__state {
+  padding-right: 12px;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: -0.36px;
+  color: var(--tone-text);
 }
-.is-missing .trn-crit__name {
-  color: #8a4b00;
-}
-.trn-crit__note {
-  font-size: 13px;
-  line-height: 1.4;
-  color: #444444;
+.trn-row__note {
+  font-size: 16px;
+  line-height: 22px;
+  color: #555555;
   overflow-wrap: anywhere;
 }
+/* what the CV already has, to say next time: the score page's note */
 .trn-callout {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 4px 0 4px 14px;
-  border-left: 3px solid #f0c27a;
+  margin-top: 20px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f1efff;
 }
 .trn-callout__title,
 .trn-callout__line {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 22px;
 }
 .trn-callout__title {
   font-weight: 700;
@@ -8752,42 +8870,84 @@ select.field__input {
 .trn-callout__line strong {
   color: var(--ink);
 }
-.trn-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+/* a badge that is a heading */
+.trn-badge-h {
+  display: flex;
+  margin: 0;
+  font: inherit;
 }
-/* three counts in two columns: the last one takes the row */
-.trn-stat:nth-child(3):last-child {
-  grid-column: 1 / -1;
+.trn-fb .score-group__list li {
+  line-height: 22px;
 }
-.trn-stat {
+/* the stronger answer, in the Pro Tips card's shape: its lilac, its badge, its title */
+.trn-tips {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 12px;
-  border-radius: 12px;
-  background: #f7f7f7;
+  align-items: flex-start;
+  padding: 24px 26px;
+  background: var(--bg-page);
+  border: 1px solid #dad4ff;
+  border-radius: 10px;
 }
-.trn-stat__value {
-  font-size: 22px;
-  font-weight: 700;
-}
-.trn-stat__label {
-  font-size: 13px;
-  line-height: 1.35;
-  color: #555555;
-}
-.trn-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.trn-tips__title {
   margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.6px;
 }
-.trn-chips .trk-chip {
-  padding: 4px 10px;
-  font-size: 13px;
+/* the Pro Tips badge's shape; its own class, because that badge is hidden on a phone and this one says what the AI made */
+.trn-tips__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 100px;
+  background: #d4cdff;
+  color: #4a36c4; /* violet-600 is 3.1:1 on this lilac; 12px text needs 4.5:1 */
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 13px;
+  white-space: nowrap;
 }
+.trn-tips__badge + .trn-tips__title {
+  margin-top: 18px;
+}
+.trn-tips__text {
+  margin: 12px 0 0;
+  font-size: 18px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.trn-tips__note {
+  margin: 12px 0 0;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: -0.28px;
+  color: #6b6b6b;
+}
+/* under a question, in the report */
+.trn-tips--sub {
+  padding: 18px 20px;
+}
+.trn-tips--sub .trn-tips__title {
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+.trn-tips--sub .trn-tips__badge + .trn-tips__title {
+  margin-top: 12px;
+}
+.trn-tips--sub .trn-tips__text {
+  font-size: 16px;
+}
+.trn-fb__named {
+  margin-top: -12px;
+}
+/* the way on: "Try again" on the left, the next question on the right, as Back and Next step */
 .trn-fb__foot {
   position: sticky;
   bottom: 0;
@@ -8799,8 +8959,11 @@ select.field__input {
   background: var(--white);
   border-top: 1px solid var(--line);
 }
-.trn-fb__foot .trk-btn {
-  height: 48px;
+.trn-fb__next {
+  margin-left: auto;
+}
+.trn-fb__foot .trk-error {
+  flex-basis: 100%;
 }
 
 /* the report */
@@ -9033,15 +9196,6 @@ select.field__input {
 .trn-live__status--thinking {
   color: #4a36c4;
 }
-.trn-panel__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-}
-.trn-panel__head .trn-h2 {
-  flex: 1 1 auto;
-}
 .trn-h3 {
   margin: 0;
   font-size: 14px;
@@ -9086,8 +9240,8 @@ select.field__input {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
 }
 .trn-fb__follow-q,
 .trn-q__follow-q {
@@ -9127,51 +9281,37 @@ select.field__input {
 .trn-vague .trn-mark {
   color: var(--ink);
 }
-.trn-panel--ai {
-  border: 1px solid #d9d2ff;
-}
-.trn-ai-chip {
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: #efeaff;
-  color: #4a36c4;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.trn-fb__stronger {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
+/* the English notes: a numbered list like the score page's, each with its way out on the right */
 .trn-notes {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  width: 100%;
 }
-.trn-notes__item {
+.trn-notes .trn-notes__item {
+  align-items: center;
+}
+.trn-notes__body {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 10px 0;
-  border-top: 1px solid #f0f0f0;
+  gap: 4px;
+  min-width: 0;
 }
 .trn-notes__fix {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 .trn-notes__fix del {
   color: #6b6b6b;
 }
+.trn-notes__why {
+  font-size: 14px;
+  line-height: 19px;
+  color: #6b6b6b;
+}
+.trn-notes .trn-chip-btn {
+  flex: none;
+}
 .trn-notes__foot {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.45;
   color: #6b6b6b;
 }
@@ -9180,15 +9320,6 @@ select.field__input {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-.trn-q__body .trn-panel--ai {
-  gap: 8px;
-  padding: 14px 16px;
-  border-radius: 12px;
-}
-.trn-q__body .trn-fb__stronger {
-  font-size: 15px;
-  line-height: 1.55;
 }
 .trn-patterns {
   display: flex;
@@ -9301,32 +9432,108 @@ select.field__input {
   .trn-live__controls .trk-btn:first-child {
     flex-basis: 100%;
   }
-  .trn-fb__title {
-    padding: 18px 16px 0;
+  .trn-fb__page {
+    gap: 28px;
+    padding: 22px 16px 28px;
   }
   .trn-fb__q {
-    font-size: 20px;
+    font-size: 24px;
   }
-  .trn-fb__body {
-    padding: 16px;
+  /* the score page's phone head: a 96px circle, the sentence beside it */
+  .trn-fb__head {
+    align-items: flex-start;
     gap: 16px;
+  }
+  .trn-fb__circle {
+    width: 96px;
+    height: 96px;
+  }
+  .trn-fb__emoji {
+    font-size: 40px;
+  }
+  .trn-fb__lead {
+    font-size: 16px;
+    line-height: 20px;
+  }
+  .trn-card {
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+  /* a row: the picture, the name and the state on a line; the words under them */
+  .trn-row {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "icon label state"
+      "icon note note";
+    column-gap: 12px;
+    row-gap: 4px;
+    min-height: 0;
+    padding: 12px 0;
+  }
+  .trn-row__icon {
+    grid-area: icon;
+    align-self: start;
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+  .trn-row__label {
+    grid-area: label;
+    padding-right: 0;
+    font-size: 16px;
+    line-height: 19px;
+    letter-spacing: -0.32px;
+  }
+  .trn-row__state {
+    grid-area: state;
+    padding-right: 0;
+    font-size: 14px;
+    line-height: 19px;
+    letter-spacing: -0.28px;
+  }
+  .trn-row__note {
+    grid-area: note;
+    font-size: 14px;
+    line-height: 19px;
+  }
+  .trn-callout {
+    padding: 14px 16px;
+  }
+  .trn-callout__title,
+  .trn-callout__line {
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .trn-notes .trn-notes__item {
+    flex-wrap: wrap;
+  }
+  .trn-notes .trn-chip-btn {
+    margin-left: 31px; /* under the note's words, past its number */
+  }
+  .trn-tips {
+    padding: 20px 18px;
+  }
+  .trn-tips__title {
+    font-size: 24px;
+    line-height: 29px;
+    letter-spacing: -0.48px;
+  }
+  .trn-tips__text {
+    font-size: 16px;
   }
   .trn-fb__foot {
     gap: 8px;
     padding: 10px 16px;
   }
-  .trn-fb__foot .trk-btn {
+  .trn-fb__foot .topbtn {
     flex: 1 1 0;
-    height: 44px;
+    height: 48px;
     padding: 0 12px;
-    font-size: 15px;
   }
-  .trn-fb__foot .trn-note {
+  .trn-fb__foot-note {
+    order: 9;
     flex-basis: 100%;
     font-size: 12px;
-  }
-  .trn-panel {
-    padding: 16px;
   }
   /* a finger's target (B8) */
   .trn-notes .trn-chip-btn {
