@@ -96,7 +96,7 @@ function QuestionBlock({ q, open, ai, englishNotes, wait, busy, onDismissNote }:
       <div className="trn-q__body">
         {q.state === "answered" && (
           <>
-            <div className="trn-card trn-q__card">
+            <div className="trn-fcard trn-q__card">
               <span className="trn-label">Your answer</span>
               <p className="trn-fb__answer"><MarkedAnswer text={q.answer ?? ""} ai={q.ai} /></p>
               {q.follow.map((f, i) => (

@@ -122,7 +122,7 @@ export default function TrainerSetup({ setup, initial, busy, error, onChangeCv, 
         </aside>
 
         <div className="trn-setup__main">
-          <div className="trn-card trn-setup__form">
+          <div className="trn-fcard trn-setup__form">
             <fieldset className="trn-fieldset">
               <legend className="trn-label">The interview</legend>
               <div className="trn-tiles">

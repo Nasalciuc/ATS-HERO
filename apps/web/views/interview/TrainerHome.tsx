@@ -34,29 +34,34 @@ function practisedLine(j: HomeJob, now: number): string {
   return j.practised === 1 ? `Practiced once · ${ago}` : `Practiced ${timesLabel(j.practised)} · last one ${ago}`;
 }
 
-function InterviewCard({ job, now }: { job: HomeJob; now: number }) {
+/**
+ * A job to practice for, as a row of the score page: a picture in a ring (green once it has been
+ * practised), the job, where the practice stands in a word, and the way in at the right.
+ */
+function InterviewRow({ job, now }: { job: HomeJob; now: number }) {
   const place = [job.company, job.location, job.since != null ? `in Interview since ${monthDay(job.since)}` : "in Interview"].filter(Boolean);
   return (
-    <article className="trn-card">
-      <div className="trn-card__head">
-        <h3 className="trn-card__role">{job.role}</h3>
-        <p className="trn-card__place">{place.join(" · ")}</p>
+    <li className="trn-job">
+      <span className={`trn-job__icon${job.practised ? " is-done" : ""}`} aria-hidden="true">💼</span>
+      <div className="trn-job__main">
+        <h3 className="trn-job__role">{job.role}</h3>
+        <p className="trn-job__place">{place.join(" · ")}</p>
+        {job.practised > 0 && (job.proven.length > 0 || job.notYet.length > 0) && (
+          <p className="trn-job__proof">
+            <strong>Proof given so far:</strong> {job.proven.length ? listWords(job.proven) : "none yet"}.
+            {job.notYet.length > 0 && ` Not yet: ${listWords(job.notYet)}.`}
+          </p>
+        )}
       </div>
-      <p className="trn-card__chips">
-        {job.required && <span className="trk-chip trk-chip--met">{job.required.met} of {job.required.total} required</span>}
-        <span className="trk-chip">{practisedLine(job, now)}</span>
+      <p className="trn-job__state">
+        <span className={`trn-state ${job.practised ? "is-good" : "is-none"}`}>{practisedLine(job, now)}</span>
+        {job.required && <span className="trn-job__req">{job.required.met} of {job.required.total} required</span>}
       </p>
-      {job.practised > 0 && (job.proven.length > 0 || job.notYet.length > 0) && (
-        <p className="trn-card__proof">
-          <strong>Proof given so far:</strong> {job.proven.length ? listWords(job.proven) : "none yet"}.
-          {job.notYet.length > 0 && ` Not yet: ${listWords(job.notYet)}.`}
-        </p>
-      )}
-      <div className="trn-card__actions">
-        <a className="trn-btn" href={setupHref(job.id)}>{job.practised ? "Practice again" : "Practice"}</a>
+      <div className="trn-job__actions">
         {job.lastReportId && <a className="trk-a" href={reportHref(job.lastReportId)}>Last report</a>}
+        <a className="topbtn topbtn--dark" href={setupHref(job.id)}>{job.practised ? "Practice again" : "Practice"}</a>
       </div>
-    </article>
+    </li>
   );
 }
 
@@ -83,15 +88,15 @@ export default function TrainerHome({ home, now, paste, onPaste, onAddAndPractic
 
       {home.interviews.length > 0 ? (
         <section className="trn-section" aria-labelledby="trn-yours">
-          <h2 id="trn-yours" className="trk-label">Your interviews · from the Tracker</h2>
-          <div className="trn-cards">
-            {home.interviews.map((j) => <InterviewCard key={j.id} job={j} now={now} />)}
-          </div>
+          <h2 id="trn-yours" className="trn-fb__h">Your interviews <span className="trn-muted">· from the Tracker</span></h2>
+          <ul className="trn-jobs">
+            {home.interviews.map((j) => <InterviewRow key={j.id} job={j} now={now} />)}
+          </ul>
         </section>
       ) : (
-        <section className="trn-empty" aria-labelledby="trn-none">
-          <h2 id="trn-none">No job in Interview yet</h2>
-          <p>
+        <section className="trn-tips trn-tips--sub trn-empty" aria-labelledby="trn-none">
+          <h2 id="trn-none" className="trn-tips__title">No job in Interview yet</h2>
+          <p className="trn-tips__note">
             When a job moves to Interview in your Tracker, it shows up here first. You can practice for any other job now, or
             paste a job post below.
           </p>
@@ -100,7 +105,7 @@ export default function TrainerHome({ home, now, paste, onPaste, onAddAndPractic
 
       <div className="trn-split">
         <section className="trn-others" aria-labelledby="trn-others">
-          <h2 id="trn-others" className="trn-h2">Practice for another job</h2>
+          <h2 id="trn-others" className="trn-fb__h">Practice for another job</h2>
           {home.others.length > 0 ? (
             <ul className="trn-others__list">
               {home.others.slice(0, OTHERS_SHOWN).map((o) => (
@@ -116,14 +121,14 @@ export default function TrainerHome({ home, now, paste, onPaste, onAddAndPractic
           <a className="trk-a trn-others__all" href="/app/tracker">All jobs in the Tracker</a>
         </section>
 
-        <section className="trn-paste" aria-labelledby="trn-paste">
+        <section className="trn-fcard trn-paste" aria-labelledby="trn-paste">
           <h2 id="trn-paste" className="trn-h2">The job isn’t in your Tracker?</h2>
           <label className="trn-paste__field">
-            Paste the job post or its link
+            <span className="trn-label">Paste the job post or its link</span>
             <textarea rows={4} maxLength={30000} placeholder="Paste the text of the job post, or a link to it" value={paste} onChange={(e) => onPaste(e.target.value)} />
           </label>
           <div className="trn-paste__row">
-            <button type="button" className="trn-btn trn-btn--ghost" onClick={onAddAndPractice}>Add and practice</button>
+            <button type="button" className="topbtn topbtn--ghost" onClick={onAddAndPractice}>Add and practice</button>
             <span className="trn-note">We add it to your Tracker as Saved.</span>
           </div>
         </section>
@@ -131,7 +136,7 @@ export default function TrainerHome({ home, now, paste, onPaste, onAddAndPractic
 
       {home.past.length > 0 && (
         <section className="trn-section" aria-labelledby="trn-past">
-          <h2 id="trn-past" className="trk-label">Past sessions</h2>
+          <h2 id="trn-past" className="trn-fb__h">Past sessions</h2>
           <ul className="trn-past">
             {home.past.map((p) => (
               <li key={p.id} className="trn-past__row">

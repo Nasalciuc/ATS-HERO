@@ -145,7 +145,7 @@ export default function TrainerLive(p: TrainerLiveProps) {
           )}
 
           {p.phase === "answering" && (
-            <div className="trn-card trn-live__card">
+            <div className="trn-fcard trn-live__card">
               <label className="trn-live__answer">
                 <span className="trn-label">Your answer</span>
                 <textarea
@@ -525,8 +525,8 @@ export function TrainerFeedback(p: TrainerFeedbackProps) {
           </div>
         </div>
 
-        <section className="trn-card" aria-labelledby="trn-fb-answer">
-          <div className="trn-card__head">
+        <section className="trn-fcard" aria-labelledby="trn-fb-answer">
+          <div className="trn-fcard__head">
             <h2 id="trn-fb-answer" className="trn-label">Your answer</h2>
             {marked.some((m) => m.mark === "vague") && <span className="trn-key"><span aria-hidden="true" className="trn-key__mark trn-key__mark--vague" />vague</span>}
             {marked.some((m) => m.mark === "english") && <span className="trn-key"><span aria-hidden="true" className="trn-key__mark trn-key__mark--english" />English note</span>}

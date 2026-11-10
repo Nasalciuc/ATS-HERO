@@ -56,16 +56,11 @@ export interface TrainerBlockedProps {
   back?: boolean;
 }
 
+const PICTURE: Record<BlockedKind, string> = { limit: "📅", signed_out: "👋", no_cv: "📋" };
+
+/** The state's picture, in a ring like a step's. */
 function Icon({ kind }: { kind: BlockedKind }) {
-  return (
-    <span className="trn-blocked__icon" aria-hidden="true">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        {kind === "limit" && <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4" /><path d="M16 3v4" /><path d="M4 10h16" /></>}
-        {kind === "signed_out" && <><circle cx="12" cy="8" r="4" /><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" /></>}
-        {kind === "no_cv" && <><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5" /><path d="M10 13h6" /><path d="M10 17h6" /></>}
-      </svg>
-    </span>
-  );
+  return <span className="trn-blocked__icon" aria-hidden="true">{PICTURE[kind]}</span>;
 }
 
 export default function TrainerBlocked({ kind, limit = 20, resetsOn, lastReportId, onSignIn, back = true }: TrainerBlockedProps) {

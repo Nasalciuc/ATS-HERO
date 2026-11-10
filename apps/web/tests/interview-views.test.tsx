@@ -67,6 +67,18 @@ describe("the home page", () => {
     expect(html).toContain('href="/app/interview/s2/report"');
   });
 
+  it("gives each job a row: a picture in a ring that is green once it was practised, where the practice stands in a word, and the way in", () => {
+    const html = renderToStaticMarkup(<TrainerHome home={home} now={NOW} paste="" onPaste={noop} onAddAndPractice={noop} />);
+    expect((html.match(/<li class="trn-job">/g) ?? []).length).toBe(2);
+    expect((html.match(/class="trn-job__icon is-done"/g) ?? []).length).toBe(1);
+    expect(html).toContain('<span class="trn-state is-good">Practiced twice · last one 2 days ago</span>');
+    expect(html).toContain('<span class="trn-state is-none">Not practiced yet</span>');
+    expect(html).toContain('<a class="topbtn topbtn--dark" href="/app/interview/new?job=j1">Practice again</a>');
+    expect(html).toContain('<a class="topbtn topbtn--dark" href="/app/interview/new?job=j2">Practice</a>');
+    // the job's card class belongs to no other piece of the trainer: the form card is .trn-fcard
+    expect(html).not.toContain('class="trn-card"');
+  });
+
   it("lists the other jobs, the pasted post and the past sessions; an unfinished one is continued", () => {
     expect(t).toContain("BI Analyst · Northfield Group · Saved");
     expect(t).toContain("We add it to your Tracker as Saved.");

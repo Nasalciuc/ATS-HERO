@@ -7962,9 +7962,6 @@ select.field__input {
   background: var(--ink);
   color: var(--white);
 }
-.trn-btn--soft {
-  box-shadow: inset 0 0 0 1px #c9c9c9;
-}
 .trn-btn--danger {
   background: #b3261e;
 }
@@ -7980,13 +7977,15 @@ select.field__input {
   background: #fdf1f0;
 }
 
-/* home */
+/* home, in the score page's language (PROVISIONAL, AGENTS.md rule 6: no Figma frame; Liubovi draws
+   or checks it): one sentence in the results page's type, the jobs as rows under 1px lines with a
+   picture in a ring and the way in at the right, the pasted post in the form card. */
 .trn-lead {
   margin: 0;
-  max-width: 640px;
-  font-size: 16px;
-  line-height: 1.45;
-  color: #444444;
+  max-width: 649px;
+  font-size: 20px;
+  line-height: 24px;
+  color: #000;
 }
 .trn-limit {
   display: flex;
@@ -8004,143 +8003,165 @@ select.field__input {
 .trn-limit__short {
   color: #555555;
 }
-.trn-cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+.trn-home .trn-section {
+  gap: 0;
 }
-.trn-card {
+.trn-home .trn-fb__h .trn-muted {
+  font-weight: 500;
+}
+.trn-jobs {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-}
-.trn-card__role {
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--line);
 }
-.trn-card__place {
-  margin: 4px 0 0;
+.trn-job {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 20px;
+  min-height: 96px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.trn-job__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 1;
+}
+.trn-job__icon.is-done {
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+.trn-job__main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.trn-job__role {
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+.trn-job__place,
+.trn-job__proof {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #555555;
+}
+.trn-job__proof strong {
+  color: var(--ink);
+}
+.trn-job__state {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 260px;
+  margin: 0;
+}
+.trn-job__state .trn-state {
+  white-space: normal;
+}
+.trn-job__req {
   font-size: 14px;
   color: #555555;
 }
-.trn-card__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-}
-.trn-card__proof {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.45;
-  color: #444444;
-}
-.trn-card__proof strong {
-  color: var(--ink);
-}
-.trn-card__actions {
+.trn-job__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  margin-top: auto;
+  justify-content: flex-end;
+  gap: 10px 16px;
   font-size: 14px;
 }
+.trn-job__actions .topbtn {
+  text-decoration: none;
+}
 .trn-empty {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 28px;
-  border: 1px dashed #c9c9c9;
-  border-radius: 16px;
-}
-.trn-empty h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-.trn-empty p {
-  margin: 0;
-  max-width: 620px;
-  font-size: 15px;
-  line-height: 1.45;
-  color: #444444;
+  max-width: 867px;
 }
 .trn-split {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 20px;
+  gap: 24px 32px;
 }
 .trn-others {
   flex: 1 1 420px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 18px 20px;
-  border-radius: 16px;
-  background: #f7f7f7;
-}
-.trn-others .trn-h2 {
-  margin-bottom: 6px;
 }
 .trn-others__list {
   margin: 0;
   padding: 0;
   list-style: none;
+  border-bottom: 1px solid var(--line);
 }
 .trn-others__row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
-  min-height: 48px;
-  border-bottom: 1px solid var(--line);
-  font-size: 15px;
+  min-height: 56px;
+  border-top: 1px solid var(--line);
+  font-size: 16px;
 }
 .trn-others__row .trk-a {
-  font-size: 14px;
+  font-size: 15px;
 }
 .trn-others__job {
   flex: 1 1 240px;
 }
 .trn-others__all {
   align-self: flex-start;
-  margin-top: 8px;
-  font-size: 14px;
+  margin-top: 12px;
+  font-size: 15px;
 }
 .trn-paste {
   flex: 1 1 380px;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 18px 20px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  gap: 14px;
+  padding: 24px 26px;
 }
 .trn-paste__field {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 14px;
-  font-weight: 700;
 }
 .trn-paste__field textarea {
-  padding: 10px 12px;
-  border: 1px solid var(--line);
+  padding: 12px;
+  border: none;
   border-radius: 10px;
+  background: var(--white);
   font-family: inherit;
   font-size: 15px;
   font-weight: 400;
   line-height: 1.4;
+  color: var(--ink);
   resize: vertical;
+}
+.trn-paste__field textarea::placeholder {
+  color: #767676;
+  opacity: 1;
+}
+.trn .trn-paste__field textarea:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--violet-600);
 }
 .trn-paste__row {
   display: flex;
@@ -8152,24 +8173,20 @@ select.field__input {
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
+  border-bottom: 1px solid var(--line);
 }
 .trn-past__row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 16px;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 15px;
-}
-.trn-past__row:last-child {
-  border-bottom: none;
+  min-height: 56px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 16px;
 }
 .trn-past__row .trk-a {
-  font-size: 14px;
+  font-size: 15px;
 }
 .trn-past__when {
   flex: 0 0 140px;
@@ -8180,9 +8197,8 @@ select.field__input {
 }
 .trn-past__kind {
   flex: 0 1 300px;
-  color: #444444;
+  color: #555555;
 }
-
 /* setup */
 /* Setup, on the builder's page (PROVISIONAL, AGENTS.md rule 6: no Figma frame; Liubovi draws or
    checks it): the flow's steps, a tips card at the side, the choices in the form card's grey with
@@ -8396,15 +8412,19 @@ select.field__input {
   border: 1px solid var(--line);
   border-radius: 16px;
 }
+/* the state's picture, in a step's 64px circle */
 .trn-blocked__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: #f0f0f0;
-  color: #444444;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 1;
 }
 .trn-blocked__title {
   margin: 0;
@@ -8925,8 +8945,9 @@ select.field__input {
   line-height: 24px;
   color: #000;
 }
-/* the person's words, in the form card */
-.trn-card {
+/* the builder's form card (its grey, its line, its 20px corners): the person's words, the choices
+   of Setup, the pasted post on the home page. */
+.trn-fcard {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -8935,7 +8956,7 @@ select.field__input {
   border: 1px solid var(--line);
   border-radius: 20px;
 }
-.trn-card__head {
+.trn-fcard__head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -9625,9 +9646,58 @@ select.field__input {
   .trn-limit__short {
     display: inline;
   }
-  .trn-cards,
   .trn-tiles {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .trn-lead {
+    font-size: 16px;
+    line-height: 20px;
+  }
+  /* a job on a phone: the picture and the job on a line, the state under them, the way in as wide as the screen */
+  .trn-job {
+    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-areas:
+      "icon main"
+      "icon state"
+      "actions actions";
+    column-gap: 12px;
+    row-gap: 6px;
+    min-height: 0;
+  }
+  .trn-job__icon {
+    grid-area: icon;
+    align-self: start;
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+  .trn-job__main {
+    grid-area: main;
+  }
+  .trn-job__role {
+    font-size: 18px;
+    line-height: 22px;
+  }
+  .trn-job__state {
+    grid-area: state;
+    max-width: none;
+  }
+  .trn-job__actions {
+    grid-area: actions;
+    justify-content: flex-start;
+    margin-top: 6px;
+  }
+  .trn-job__actions .topbtn {
+    order: -1;
+    flex: 1 1 100%;
+    height: 48px;
+  }
+  .trn-paste {
+    padding: 18px 16px;
+  }
+  .trn-paste__row .topbtn {
+    flex: 1 1 100%;
+    height: 48px;
   }
   /* the report on a phone: the score page's phone head, and rows that stack */
   .trn-count {
@@ -9792,7 +9862,7 @@ select.field__input {
     font-size: 16px;
     line-height: 20px;
   }
-  .trn-card {
+  .trn-fcard {
     padding: 18px 16px;
     border-radius: 16px;
   }
