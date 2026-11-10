@@ -6374,78 +6374,184 @@ select.field__input {
   font-weight: 700;
 }
 
-/* "Did you hear back?" */
+/* ---------------- the tracker page, in the design language of the builder and the score page ----------------
+   PROVISIONAL (AGENTS.md rule 6): no Figma frame yet. What is on the page and where it leads is the
+   canvas "ATS Hero Tracker v2" (approved 3 and 4 Nov 2026). How it looks is built from the score page's
+   and the builder's own pieces: the circle beside one sentence (.score-top), the step circles
+   (.analyze-steps), the Pro Tips and Activities cards, the rows under a line, the pill buttons. Scaler
+   asked for the pages to look like Liubovi's (10 Nov); she draws or checks the frames. */
+
+/* the numbers: a circle with the count, and the numbers in one sentence */
+.trk-head {
+  display: flex;
+  align-items: center;
+  gap: 49px;
+}
+.trk-count {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 157px;
+  height: 157px;
+  margin: 0;
+  border-radius: 50%;
+  background: #f5f3ff;
+  box-shadow: inset 0 0 0 2px var(--violet-200);
+  color: #4a36c4;
+  text-align: center;
+}
+.trk-count__value {
+  font-weight: 700;
+  font-size: 45px;
+  line-height: 54px;
+  letter-spacing: -1px;
+}
+.trk-count__of {
+  font-size: 26px;
+  letter-spacing: 0;
+}
+.trk-count__label {
+  font-size: 16px;
+  line-height: 19px;
+}
+.trk-head__lead {
+  margin: 0;
+  max-width: 620px;
+  font-size: 20px;
+  line-height: 26px;
+  color: #000;
+}
+
+/* "Did you hear back?": something to answer, on the Activities card's mint */
 .trk-ask {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 16px;
-  padding: 16px 20px;
-  border-radius: 16px;
-  background: rgba(114, 91, 254, 0.07);
-  border: 1px solid var(--violet-200);
+  gap: 14px 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--green);
+  border-radius: 10px;
+  background: var(--bg-mint);
 }
 .trk-ask__text {
   flex: 1 1 320px;
   margin: 0;
-  font-size: 15px;
-  line-height: 1.4;
+  font-size: 16px;
+  line-height: 22px;
+}
+.trk-ask__text strong {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
 }
 .trk-ask__buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-
-/* the numbers */
-.trk-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-.trk-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  background: #f7f7f7;
-}
-.trk-stat__label {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #6b6b6b;
-}
-.trk-stat__value {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.trk-stat__of {
+.trk-ask .trk-pill {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 22px;
   font-size: 15px;
-  font-weight: 400;
-  color: #6b6b6b;
+}
+
+/* the daily search: what it does, on the Pro Tips card's lilac */
+.trk-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 14px 20px;
+  border: 1px solid #dad4ff;
+  border-radius: 10px;
+  background: var(--bg-page);
+  font-family: var(--font-helvetica);
+  color: var(--ink);
+}
+.trk-strip__icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--white);
+  color: #4a36c4;
+}
+.trk-strip__text {
+  flex: 1 1 260px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+}
+.trk-strip + .trk-first {
+  margin-top: 28px;
 }
 
 /* search and the archive */
 .trk-tools {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px;
 }
-.trk-tools__search {
+.trk-searchbox {
   flex: 1 1 280px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 20px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: #f8f8f8;
+  color: #6b6b6b;
 }
-.trk-tools__search input {
-  padding: 0 14px;
+.trk-searchbox input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--ink);
+}
+.trk-searchbox input::placeholder {
+  color: #767676;
+  opacity: 1;
+}
+/* the ring goes round the whole box, not round the bare input inside it */
+.trk .trk-searchbox input:focus-visible {
+  outline: none;
+}
+.trk-searchbox:has(input:focus-visible) {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
+.trk-tools .trk-pill {
+  height: 52px;
+  padding: 0 22px;
+  border-radius: 26px;
+  font-size: 16px;
 }
 .trk-archive-title {
   margin: 0;
-  font-size: 20px;
+  font-family: var(--font-inter);
   font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
 }
 
 /* the tracker page is wider than the other app pages (the canvas: 1226px of content, five columns) */
@@ -6464,93 +6570,175 @@ select.field__input {
   }
 }
 
-/* the board (computer) */
+/* the board (computer): each stage under its circle, a line from one to the next, as the builder's steps */
 .trk-board-wrap {
   overflow-x: auto;
   padding-bottom: 8px;
 }
 .trk-board {
   display: grid;
-  grid-template-columns: repeat(5, minmax(200px, 1fr));
-  gap: 12px;
-  min-width: 1048px;
+  grid-template-columns: repeat(5, minmax(188px, 1fr));
+  gap: 20px;
+  min-width: 1020px;
 }
 .trk-col {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-height: 520px;
-  padding: 14px;
-  border-radius: 16px;
-  background: #f7f7f7;
+  gap: 12px;
+  min-width: 0;
 }
 .trk-col__head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 2px 4px 4px;
-  font-size: 15px;
+  gap: 10px;
+  margin: 0 0 4px;
+  font-family: var(--font-inter);
   font-weight: 700;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.32px;
+}
+.trk-col__head::after {
+  content: "";
+  flex: 1 1 0;
+  height: 1px;
+  margin-right: -20px; /* across the gap, to the next stage's circle */
+  background: var(--line);
+}
+.trk-col:last-child .trk-col__head::after {
+  display: none;
+}
+.trk-col__icon {
+  --tone: var(--line);
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 2px var(--tone);
+  font-family: var(--font-emoji);
+  font-size: 26px;
+  line-height: 1;
+}
+.trk-col__icon--saved {
+  --tone: var(--violet-300);
+}
+.trk-col__icon--applied {
+  --tone: var(--ink);
+}
+.trk-col__icon--interview {
+  --tone: var(--green);
+}
+.trk-col__icon--offer {
+  --tone: #ffc107;
+}
+.trk-col__icon--rejected {
+  --tone: #c9c9c9;
 }
 .trk-col__count {
+  font-weight: 500;
   color: #6b6b6b;
-  font-weight: 400;
 }
-.trk-dot {
-  flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-}
-.trk-dot--saved { background: var(--violet-600); }
-.trk-dot--applied { background: var(--ink); }
-.trk-dot--interview { background: var(--green); }
-.trk-dot--offer { background: #e08a00; }
-.trk-dot--rejected { background: var(--gray-500); }
 .trk-tile {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  padding: 12px 14px;
-  border: none;
-  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
   background: var(--white);
-  box-shadow: 0 2px 8px rgba(32, 32, 32, 0.06);
   font-family: inherit;
   text-align: left;
   color: var(--ink);
   cursor: pointer;
 }
 .trk-tile:hover {
-  box-shadow: 0 4px 14px rgba(32, 32, 32, 0.12);
+  border-color: var(--ink);
+}
+/* "New today" sits over the role, as the Pro Tips badge sits over its title */
+.trk-tile__top {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 8px;
 }
 .trk-tile__role {
-  font-size: 15px;
+  flex: 1 1 auto;
+  font-family: var(--font-inter);
   font-weight: 700;
-  line-height: 1.25;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.32px;
+  overflow-wrap: anywhere;
 }
 .trk-tile__company {
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 19px;
   color: #555555;
 }
+/* on a tile, how many required items the CV meets is a state in words, not a chip */
+.trk-tile :is(.trk-chip--met, .trk-chip--partial) {
+  padding: 0;
+  background: none;
+  font-size: 14px;
+  line-height: 19px;
+}
+.trk-tile .trk-chip--met {
+  color: #00843a;
+}
+.trk-tile .trk-chip--partial {
+  color: #a35a00;
+}
+/* the queue's rows still set their chips in this */
 .trk-tile__chips {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
 }
+/* the site and the date: each stays whole when the two don't fit on one line */
 .trk-tile__meta {
-  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 18px;
   color: #6b6b6b;
 }
+.trk-tile__meta > span {
+  white-space: nowrap;
+}
+.trk-tile__meta > span:first-child {
+  font-weight: 700;
+}
+/* "New today": the Pro Tips badge */
+.trk-chip--new {
+  flex: none;
+  padding: 5px 9px;
+  background: #d4cdff;
+  color: #4a36c4;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 12px;
+  white-space: nowrap;
+}
+.trk-row__role .trk-chip--new {
+  margin-left: 8px;
+  vertical-align: 2px;
+}
 
-/* the list (phone) */
+/* the list (phone): rows under a line, as the score page's */
 .trk-phone {
   display: none;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 .trk-filters {
   display: flex;
@@ -6560,42 +6748,49 @@ select.field__input {
 }
 .trk-filter {
   flex: none;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 20px;
-  border: 1px solid var(--line);
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 22px;
+  border: 1px solid var(--ink);
   background: var(--white);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--ink);
   cursor: pointer;
 }
 .trk-filter[aria-pressed="true"] {
-  border-color: var(--ink);
   background: var(--ink);
   color: var(--white);
 }
 .trk-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  border-bottom: 1px solid var(--line);
 }
 .trk-group__head {
-  margin: 0;
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-family: var(--font-inter);
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #6b6b6b;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: -0.36px;
+}
+.trk-group__head .trk-col__icon {
+  width: 40px;
+  height: 40px;
+  font-size: 19px;
 }
 .trk-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #f7f7f7;
+  min-height: 72px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
 }
 .trk-row__main {
   flex-grow: 1;
@@ -6613,11 +6808,14 @@ select.field__input {
   cursor: pointer;
 }
 .trk-row__role {
-  font-size: 15px;
+  font-family: var(--font-inter);
   font-weight: 700;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.32px;
 }
 .trk-row__company {
-  font-size: 13px;
+  font-size: 14px;
   color: #555555;
 }
 .trk-row__status {
@@ -6630,12 +6828,12 @@ select.field__input {
   appearance: none;
   field-sizing: content; /* as wide as the status it shows */
   height: 44px;
-  padding: 0 32px 0 12px;
+  padding: 0 32px 0 14px;
   border: 1px solid var(--ink);
   border-radius: 22px;
   background: var(--white);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--ink);
 }
@@ -6645,67 +6843,337 @@ select.field__input {
   pointer-events: none;
 }
 
-/* the first day */
+/* the first day: the ways to add a job, as rows */
 .trk-first {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 28px;
 }
 .trk-first__lead {
   margin: 0;
-  max-width: 520px;
-  font-size: 17px;
-  line-height: 1.45;
-  color: #444444;
+  max-width: 640px;
+  font-size: 20px;
+  line-height: 26px;
+  color: #000;
 }
 .trk-first__ways {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 560px;
+  max-width: 760px;
+  border-bottom: 1px solid var(--line);
 }
 .trk-way {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
+  gap: 20px;
+  min-height: 96px;
+  padding: 14px 0;
   border: none;
-  border-radius: 16px;
-  background: #f7f7f7;
+  border-top: 1px solid var(--line);
+  background: none;
   font-family: inherit;
   text-align: left;
   text-decoration: none;
   color: var(--ink);
   cursor: pointer;
 }
-.trk-way:hover {
-  background: #efefef;
+.trk-way:hover .trk-way__text strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .trk-way__icon {
   flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 22px;
-  border: 1px solid var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.trk-way__icon svg {
+  width: 26px;
+  height: 26px;
 }
 .trk-way__icon--dark {
-  border-color: var(--ink);
   background: var(--ink);
+  box-shadow: none;
   color: var(--white);
 }
 .trk-way__text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: 14px;
+  gap: 3px;
+  font-size: 15px;
+  line-height: 1.4;
   color: #555555;
 }
 .trk-way__text strong {
-  font-size: 16px;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
   color: var(--ink);
+}
+
+/* "Which CV gets answers": the score page's rows; a table for screen readers */
+.trk-bycv {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+.trk-bycv__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.trk-bycv__title {
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+.trk-bycv__sub {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #6b6b6b;
+}
+.trk-bycv__scroll {
+  overflow-x: auto;
+}
+.trk-bycv__table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 16px;
+}
+.trk-bycv__table thead th {
+  padding: 8px 12px 10px 0;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+.trk-bycv__table tbody tr {
+  border-top: 1px solid var(--line);
+}
+.trk-bycv__table tbody tr:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.trk-bycv__table tbody :is(th, td) {
+  height: 81px;
+  padding: 8px 12px 8px 0;
+  vertical-align: middle;
+  font-weight: 400;
+}
+.trk-bycv__table td strong {
+  font-size: 18px;
+}
+.trk-bycv__cv {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.trk-bycv__icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 1;
+}
+.trk-bycv__name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+.trk-bycv__kind {
+  font-family: var(--font-helvetica);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  letter-spacing: 0;
+  color: #555555;
+}
+/* On a phone the note goes under the CV's name, so the table fits without a sideways scroll. */
+.trk-bycv__few {
+  display: none;
+  font-family: var(--font-helvetica);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 17px;
+  letter-spacing: 0;
+  color: #6b6b6b;
+}
+.trk-bycv__note {
+  font-size: 14px;
+  color: #6b6b6b;
+}
+.trk-bycv__empty {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: #555555;
+}
+.trk-bycv__mark {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f1efff;
+  font-size: 16px;
+  line-height: 22px;
+}
+.trk-bycv__mark > span {
+  flex: 1 1 300px;
+}
+.trk-bycv__foot {
+  margin: 0;
+  max-width: 860px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b6b6b;
+}
+
+@media (max-width: 720px) {
+  .appshell__actions .trk-add {
+    width: 44px;
+    height: 44px;
+  }
+  .trk {
+    gap: 18px;
+  }
+  /* the phone frame has no numbers and no search: the filters do that job */
+  .trk-head,
+  .trk-searchbox {
+    display: none;
+  }
+  .trk-tools:not(:has(.trk-pill)) {
+    display: none;
+  }
+  .trk-tools:not(.trk-tools--archive) {
+    order: 10; /* "Archive (n)" goes under the list */
+  }
+  .trk-bycv {
+    order: 11;
+    margin-top: 4px;
+  }
+  .trk-ask {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+  }
+  .trk-ask__text {
+    flex: none;
+  }
+  .trk-ask__text strong {
+    font-size: 18px;
+    line-height: 22px;
+  }
+  .trk-ask__buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .trk-strip {
+    padding: 12px 14px;
+  }
+  .trk-strip__icon {
+    display: none;
+  }
+  .trk-strip__text {
+    font-size: 15px;
+    line-height: 21px;
+  }
+  .trk-strip + .trk-first {
+    margin-top: 20px;
+  }
+  .trk-wide {
+    display: none;
+  }
+  .trk-board-wrap {
+    display: none;
+  }
+  .trk-phone {
+    display: flex;
+  }
+  .trk-first__lead {
+    font-size: 17px;
+    line-height: 23px;
+  }
+  .trk-way {
+    gap: 14px;
+    min-height: 80px;
+  }
+  .trk-way__icon {
+    width: 44px;
+    height: 44px;
+  }
+  .trk-way__icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  .trk-way__text strong {
+    font-size: 17px;
+    line-height: 21px;
+    letter-spacing: -0.34px;
+  }
+  .trk-bycv__table {
+    min-width: 0;
+    font-size: 14px;
+  }
+  .trk-bycv__table thead th {
+    padding: 6px 6px 8px 0;
+    font-size: 11px;
+  }
+  .trk-bycv__table tbody :is(th, td) {
+    height: auto;
+    padding: 12px 6px 12px 0;
+  }
+  .trk-bycv__table td strong {
+    font-size: 15px;
+  }
+  .trk-bycv__table :is(thead th:last-child, .trk-bycv__note) {
+    display: none;
+  }
+  .trk-bycv__icon {
+    display: none;
+  }
+  .trk-bycv__name {
+    font-size: 16px;
+    line-height: 20px;
+    letter-spacing: -0.32px;
+  }
+  .trk-bycv__few {
+    display: block;
+    margin-top: 2px;
+  }
+  .trk-bycv__mark {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
 }
 
 /* dialogs: "Add a job" and "What did you send?" */
@@ -7035,51 +7503,6 @@ select.field__input {
 }
 
 @media (max-width: 720px) {
-  .appshell__actions .trk-add {
-    width: 44px;
-    height: 44px;
-  }
-  .trk {
-    gap: 16px;
-  }
-  .trk-ask {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    padding: 14px;
-  }
-  .trk-ask__text {
-    flex: none;
-  }
-  .trk-ask__buttons {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .trk-ask .trk-pill {
-    height: 44px;
-    border-radius: 22px;
-  }
-  /* the phone frame has no numbers and no search: the filters do that job */
-  .trk-stats,
-  .trk-tools__search {
-    display: none;
-  }
-  .trk-tools:not(:has(.trk-link)) {
-    display: none;
-  }
-  .trk-tools:not(.trk-tools--archive) {
-    order: 10; /* "Archive (n)" goes under the list */
-  }
-  .trk-wide {
-    display: none;
-  }
-  .trk-board-wrap {
-    display: none;
-  }
-  .trk-phone {
-    display: flex;
-  }
-
   /* dialogs become sheets from the bottom */
   .modal--center.trk-modal--sheet {
     align-items: flex-end;
@@ -7157,24 +7580,6 @@ select.field__input {
    Claude Design canvas "ATS Hero Tracker v2", page "Search & agent" (Ready to send, Daily search, Which CV
    gets answers, the two phone frames), approved by Scaler on 4 Nov 2026; "Check before sending" is the
    canvas's Review frame from 3 Nov. */
-.trk-chip--new {
-  background: var(--violet-600);
-  color: var(--white);
-  font-weight: 700;
-  font-size: 11px;
-}
-.trk-tile__top {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-.trk-tile__top .trk-tile__role {
-  flex-grow: 1;
-}
-.trk-row__role .trk-chip--new {
-  margin-left: 8px;
-  vertical-align: 2px;
-}
 .trk-check {
   display: flex;
   align-items: center;
@@ -7206,26 +7611,6 @@ select.field__input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-/* the daily search's strip over the tracker */
-.trk-strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-  margin-bottom: 24px; /* it sits over .trk, outside its gap */
-  padding: 10px 18px;
-  border-radius: 16px;
-  border: 1px solid var(--violet-200);
-  background: rgba(114, 91, 254, 0.07);
-  font-family: var(--font-helvetica);
-}
-.trk-strip__text {
-  flex: 1 1 260px;
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.4;
 }
 
 /* the daily search's panel (in the job card's drawer) */
@@ -7310,107 +7695,6 @@ select.field__input {
 }
 .trk-text-btn--danger:disabled {
   opacity: 0.5;
-}
-
-/* "Which CV gets answers" */
-.trk-bycv {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 20px 22px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-}
-.trk-bycv__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 16px;
-}
-.trk-bycv__title {
-  flex-grow: 1;
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-.trk-bycv__sub {
-  font-size: 14px;
-  color: #555555;
-}
-.trk-bycv__scroll {
-  position: relative;
-  overflow-x: auto;
-}
-.trk-bycv__table {
-  width: 100%;
-  min-width: 600px;
-  border-collapse: collapse;
-  font-size: 15px;
-}
-.trk-bycv__table thead th {
-  padding: 8px 12px 10px;
-  text-align: left;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #6b6b6b;
-}
-.trk-bycv__table :is(thead th, tbody th):first-child {
-  padding-left: 0;
-}
-.trk-bycv__table tbody tr {
-  border-top: 1px solid #ececec;
-}
-.trk-bycv__table tbody :is(th, td) {
-  padding: 14px 12px;
-  text-align: left;
-  vertical-align: top;
-}
-.trk-bycv__table tbody th {
-  font-weight: 700;
-}
-.trk-bycv__kind {
-  display: block;
-  margin-top: 2px;
-  font-size: 13px;
-  font-weight: 400;
-  color: #555555;
-}
-.trk-bycv__note,
-.trk-bycv__few {
-  font-size: 13px;
-  font-weight: 400;
-  color: #555555;
-}
-/* On a phone the note goes under the CV's name, so the table fits without a sideways scroll. */
-.trk-bycv__few {
-  display: none;
-}
-.trk-bycv__empty,
-.trk-bycv__foot {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: #555555;
-}
-.trk-bycv__mark {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #fff3e0;
-  font-size: 14px;
-  line-height: 1.45;
-  color: #5c3200;
-}
-.trk-bycv__mark > span {
-  flex: 1 1 320px;
-}
-.trk-bycv__mark .trk-link {
-  color: #5c3200;
 }
 
 /* "Ready to send" */
@@ -7785,34 +8069,8 @@ select.field__input {
     height: 18px;
     font-size: 11px;
   }
-  .trk-strip {
-    margin-bottom: 16px;
-    padding: 10px 14px;
-  }
   .trk-search__pair {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .trk-bycv {
-    padding: 16px;
-  }
-  .trk-bycv__table {
-    min-width: 0;
-    font-size: 14px;
-  }
-  .trk-bycv__table thead th {
-    padding: 6px 6px 8px;
-    font-size: 11px;
-    letter-spacing: 0.02em;
-  }
-  .trk-bycv__table tbody :is(th, td) {
-    padding: 12px 6px;
-  }
-  .trk-bycv__table :is(thead th:last-child, .trk-bycv__note) {
-    display: none;
-  }
-  .trk-bycv__few {
-    display: block;
-    margin-top: 4px;
   }
   .trk-q__top,
   .trk-q__limit {

@@ -2,7 +2,7 @@
 // follow-up question and the chips. Behaviour behind the buttons is in tests/db/tracker-v2.test.ts.
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import TrackerBoard from "@/views/tracker/TrackerBoard";
+import TrackerBoard, { numbersLead } from "@/views/tracker/TrackerBoard";
 import type { TrackedJob } from "@/lib/tracker";
 
 const DAY = 864e5;
@@ -50,14 +50,37 @@ describe("TrackerBoard", () => {
     expect(html).toMatch(/trk-chip--partial">3 of 5 required/);
   });
 
-  it("counts the numbers it shows from what was sent", () => {
+  it("says the numbers in one sentence beside a circle, counted from what was sent", () => {
     const html = render([
       job({ status: "applied", submittedAt: NOW - DAY }),
       job({ status: "interview", submittedAt: NOW - 20 * DAY }),
       job({ status: "saved" }),
     ]);
-    expect(html).toMatch(/Sent<\/span><span class="trk-stat__value">2</);
-    expect(html).toMatch(/Answered<\/span><span class="trk-stat__value">1 <span class="trk-stat__of">of 2/);
-    expect(html).toMatch(/Saved, not sent<\/span><span class="trk-stat__value">1</);
+    expect(html).toContain('<span class="trk-count__value">1<span class="trk-count__of"> / 2</span></span><span class="trk-count__label">answered</span>');
+    expect(html).toContain("You sent 2 applications. 1 got an answer, 1 reached an interview. 1 saved job is not sent yet.");
+    // nothing sent yet: the circle counts what is saved
+    const saved = render([job({}), job({})]);
+    expect(saved).toContain('<span class="trk-count__value">2</span><span class="trk-count__label">saved</span>');
+    expect(saved).toContain("Nothing sent yet. 2 saved jobs are waiting.");
+  });
+
+  it("puts the numbers in words: counts only, no rate", () => {
+    expect(numbersLead({ sent: 10, answered: 6, interviews: 3 }, 4)).toBe("You sent 10 applications. 6 got an answer, 3 reached an interview. 4 saved jobs are not sent yet.");
+    expect(numbersLead({ sent: 5, answered: 2, interviews: 0 }, 0)).toBe("You sent 5 applications. 2 got an answer.");
+    expect(numbersLead({ sent: 1, answered: 0, interviews: 0 }, 1)).toBe("You sent 1 application. No answer yet. 1 saved job is not sent yet.");
+    expect(numbersLead({ sent: 0, answered: 0, interviews: 0 }, 0)).toBe("Nothing sent yet.");
+    expect(numbersLead({ sent: 10, answered: 6, interviews: 3 }, 4)).not.toContain("%");
+  });
+
+  it("shows each stage under its circle, the daily search under the numbers and the CV counts under the jobs", () => {
+    const html = renderToStaticMarkup(
+      <TrackerBoard jobs={[job({ role: "Data Analyst", status: "applied", submittedAt: NOW - DAY })]} now={NOW} fit={{}}
+        onOpen={noop} onAdd={noop} onStatus={noop} onFollowUp={noop} notices={<p id="notice" />} afterBoard={<p id="after" />} />,
+    );
+    expect(html).toMatch(/<h2 class="trk-col__head"><span class="trk-col__icon trk-col__icon--applied" aria-hidden="true">📨<\/span><span class="trk-col__name">Applied<\/span><span class="trk-col__count">1<\/span><\/h2>/);
+    const at = (x: string) => html.indexOf(x);
+    expect(at('class="trk-head"')).toBeLessThan(at('id="notice"'));
+    expect(at('id="notice"')).toBeLessThan(at('class="trk-board"'));
+    expect(at('class="trk-phone"')).toBeLessThan(at('id="after"'));
   });
 });

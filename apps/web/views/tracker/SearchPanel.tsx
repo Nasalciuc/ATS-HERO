@@ -32,7 +32,9 @@ export interface SearchStripProps {
 export function SearchStrip({ search, today, onEdit }: SearchStripProps) {
   return (
     <section className="trk-strip" aria-label="Daily search">
-      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5b45e0" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
+      <span className="trk-strip__icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
+      </span>
       <p className="trk-strip__text">
         {!search ? (
           <><strong>Find new jobs every morning.</strong> A daily search puts the ones that fit your CV best in Saved.</>
@@ -45,7 +47,7 @@ export function SearchStrip({ search, today, onEdit }: SearchStripProps) {
           </>
         )}
       </p>
-      <button type="button" className="trk-link" onClick={onEdit}>{search ? "Edit" : "Set it up"}</button>
+      <button type="button" className="trk-pill" onClick={onEdit}>{search ? "Edit" : "Set it up"}</button>
     </section>
   );
 }

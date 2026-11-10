@@ -99,6 +99,9 @@ export default function TrackerPage() {
     return { added: fresh.length, allMet: fresh.filter((j) => fit[j.id] && fit[j.id]!.total > 0 && fit[j.id]!.met === fit[j.id]!.total).length };
   }, [list, now, fit]);
   const searchOn = jobSearchEnabled() && search !== undefined;
+  const strip = searchOn && (list.length > 0 || search)
+    ? <SearchStrip search={search ?? null} today={searchToday} onEdit={() => setSearchOpen(true)} />
+    : null;
 
   const open = list.find((j) => j.id === openId) ?? null;
   const asked = list.find((j) => j.id === askCv?.id) ?? null;
@@ -171,9 +174,8 @@ export default function TrackerPage() {
       ) : (
         <>
           {failed && <p className="trk-error" role="alert">{failed}</p>}
-          {searchOn && (list.length > 0 || search) && (
-            <SearchStrip search={search ?? null} today={searchToday} onEdit={() => setSearchOpen(true)} />
-          )}
+          {/* with no job yet the strip stands over the first day; with jobs it goes under the numbers */}
+          {list.length === 0 && strip}
           <TrackerBoard
             jobs={list}
             now={now}
@@ -183,7 +185,8 @@ export default function TrackerPage() {
             onStatus={changeStatus}
             onFollowUp={(id, answer: FollowUpAnswer) => void run(() => m.followUp(id, answer))}
             onSearch={searchOn ? () => setSearchOpen(true) : undefined}
-            afterStats={<CvResults results={results} cvLabel={cvLabel} onMark={() => firstUnmarked && setOpenId(firstUnmarked.id)} />}
+            notices={list.length > 0 ? strip : undefined}
+            afterBoard={<CvResults results={results} cvLabel={cvLabel} onMark={() => firstUnmarked && setOpenId(firstUnmarked.id)} />}
           />
         </>
       )}
