@@ -3,6 +3,8 @@ import { db } from "@/db";
 import { users, cvs, scans, aiUsage, applications, applicationEvents, jobSearches, applyQueue, applySettings } from "@/db/schema";
 import { dropOwnerForms } from "@/lib/apply/sessions";
 import { removeInterviewData } from "@/lib/interview/store";
+import { removeInterviewUsage } from "@/lib/interview/budget";
+import { removeAiConsents } from "@/lib/ai/consent";
 import { eq } from "drizzle-orm";
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { withLog } from "@/lib/log";
@@ -52,6 +54,9 @@ export async function deleteAccount() {
       await tx.delete(scans).where(eq(scans.ownerId, userId));
       await tx.delete(cvs).where(eq(cvs.ownerId, userId));
       await tx.delete(aiUsage).where(eq(aiUsage.ownerId, userId));
+      // the trainer's own count of model runs, and what the person agreed to send to a model
+      await removeInterviewUsage(tx, userId);
+      await removeAiConsents(tx, userId);
       await tx.delete(users).where(eq(users.clerkId, userId));
     });
     // forms the apply agent keeps open for this person close, with the CV and screenshots they hold

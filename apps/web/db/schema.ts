@@ -6,7 +6,7 @@ import type {
   CvData, ScanKind, ScoreReport, JobFitReport, TemplateId, ApplicationStatus,
   ApplicationSource, ApplyPlatform, AppliedVia, ArchiveReason, ApplicationEventKind, JobBoard, QueueStatus,
   InterviewKind, InterviewStyle, InterviewMode, InterviewStatus, InterviewFeedbackWhen, InterviewPrepared,
-  InterviewPack, CvBulletRef, InterviewMeasures, InterviewFeedback,
+  InterviewPack, CvBulletRef, InterviewMeasures, InterviewFeedback, InterviewPending,
 } from "@/lib/types";
 
 const id = () => text("id").primaryKey().$defaultFn(() => nanoid());
@@ -64,6 +64,18 @@ export const aiUsage = pgTable("ai_usage", {
   count: integer("count").notNull().default(0),
   createdAt: createdAt(),
 }, (t) => [uniqueIndex("ai_usage_owner_day").on(t.ownerId, t.day)]);
+
+/**
+ * "My answers and my CV may go to the AI provider": the person's agreement, with the version of the
+ * text they agreed to (APPLY-COPILOT-DESIGN.md §5.2). A changed text has another version and asks
+ * again. Signed-in only; deleted with the account.
+ */
+export const aiConsents = pgTable("ai_consents", {
+  ownerId: text("owner_id").notNull(),
+  /** the text agreed to: "interview.v1" (lib/ai/consent.ts) */
+  version: text("version").notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("ai_consents_owner_version").on(t.ownerId, t.version)]);
 
 export const webhookEvents = pgTable("webhook_events", {
   eventId: text("event_id").primaryKey(),                    // Paddle event id = idempotency
@@ -256,6 +268,13 @@ export const interviewSessions = pgTable("interview_sessions", {
   secondsUsed: integer("seconds_used").notNull().default(0),
   /** "Practice these again" made this session from that one (IV-16) */
   fromSessionId: text("from_session_id"),
+  /**
+   * The interviewer is the model: it was on at Start and the person had agreed to it (step 5). It asks
+   * follow-ups and gives feedback. False: the pack's questions and what the answers measured, no model.
+   */
+  ai: boolean("ai").notNull().default(false),
+  /** the follow-up the interviewer asked and the person hasn't answered yet; the next turn takes it away */
+  pending: jsonb("pending").$type<InterviewPending>(),
   /** the answer to "Do you feel more prepared?", if given */
   prepared: text("prepared").$type<InterviewPrepared>(),
   createdAt: createdAt(),
@@ -297,6 +316,8 @@ export const interviewTurns = pgTable("interview_turns", {
   feedback: jsonb("feedback").$type<InterviewFeedback>(),
   /** a stronger answer, made only from what the person said and their CV (IV-7) */
   better: text("better"),
+  /** English notes the person marked "I said it right" (B2): their places in feedback.english, never their text */
+  dismissed: jsonb("dismissed").$type<number[]>(),
   createdAt: createdAt(),
 }, (t) => [
   uniqueIndex("interview_turns_by_session").on(t.sessionId, t.position),

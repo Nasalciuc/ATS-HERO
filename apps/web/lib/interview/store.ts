@@ -7,6 +7,10 @@
  *   when it starts, and each is tied to a CV line;
  * - a turn is written once, when its answer is in: the question, the answer and what it measured
  *   never change. Its feedback and stronger answer are added once, when ready, never rewritten;
+ * - a follow-up the interviewer asked waits on the session until it is answered or skipped; then it
+ *   becomes a turn, with the words it was asked in. The next turn of any kind takes it away;
+ * - "I said it right" on an English note keeps the note's place, never its text, and doesn't touch
+ *   the feedback;
  * - a finished session takes no new turns and doesn't go back to live;
  * - deleting a session takes its turns; deleting the job or the account takes the job's sessions;
  * - every session goes on its own INTERVIEW_RETENTION_DAYS after it started (purgeOldSessions).
@@ -19,7 +23,7 @@ import {
 import { INTERVIEW_RETENTION_DAYS } from "@/lib/retention";
 import type {
   CvBulletRef, InterviewFeedback, InterviewFeedbackWhen, InterviewKind, InterviewMeasures, InterviewMode,
-  InterviewPack, InterviewPrepared, InterviewStatus, InterviewStyle,
+  InterviewPack, InterviewPending, InterviewPrepared, InterviewStatus, InterviewStyle,
 } from "@/lib/types";
 
 export class InterviewError extends Error {}
@@ -48,6 +52,8 @@ export type NewSession = {
   feedbackWhen?: InterviewFeedbackWhen;
   timer?: boolean;
   englishNotes?: boolean;
+  /** the interviewer is the model: follow-ups and its feedback (the person agreed, and it was on) */
+  ai?: boolean;
   pack: InterviewPack;
   /** "Practice these again": the session this one was made from */
   fromSessionId?: string;
@@ -57,6 +63,7 @@ export type NewTurn = {
   round: number;
   kind: "question" | "follow_up";
   questionId: string;
+  /** a follow-up's words are the ones the session holds, whatever is passed here */
   question: string;
   requirement?: string | null;
   bullet?: CvBulletRef | null;
@@ -118,23 +125,62 @@ export async function listSessions(ownerId: string, opts: { applicationId?: stri
   return db.select().from(interviewSessions).where(where).orderBy(desc(interviewSessions.createdAt));
 }
 
-/** Adds the next turn to a session that isn't finished. The session row is locked, so two answers can't take one place. */
+/**
+ * Adds the next turn to a session that isn't finished. The session row is locked, so two answers
+ * can't take one place. A follow-up's turn is the follow-up that waits on the session, in the words
+ * it was asked in: without one waiting for that question, there is nothing to answer. Any turn takes
+ * the waiting follow-up away.
+ */
 export async function addTurn(ownerId: string, sessionId: string, turn: NewTurn): Promise<InterviewTurn> {
   return db.transaction(async (tx) => {
-    const [session] = await tx.select({ status: interviewSessions.status }).from(interviewSessions)
+    const [session] = await tx.select({ status: interviewSessions.status, pending: interviewSessions.pending }).from(interviewSessions)
       .where(and(eq(interviewSessions.id, sessionId), eq(interviewSessions.ownerId, ownerId)))
       .for("update");
     if (!session) throw new InterviewError("Session not found");
     if (session.status === "done") throw new InterviewError("The session is finished");
+    const waiting = session.pending;
+    if (turn.kind === "follow_up" && waiting?.questionId !== turn.questionId) throw new InterviewError("No follow-up is waiting for an answer");
     const [{ last }] = await tx.select({ last: sql<number>`coalesce(max(${interviewTurns.position}), 0)` })
       .from(interviewTurns).where(eq(interviewTurns.sessionId, sessionId));
     const [row] = await tx.insert(interviewTurns).values({
       sessionId, ownerId, position: Number(last) + 1, round: turn.round, kind: turn.kind,
-      questionId: turn.questionId, question: turn.question, requirement: turn.requirement ?? null,
+      questionId: turn.questionId, question: turn.kind === "follow_up" && waiting ? waiting.text : turn.question,
+      requirement: turn.requirement ?? null,
       bullet: turn.bullet ?? null, answer: turn.answer, answeredBy: turn.answeredBy ?? null,
       measures: turn.measures ?? null,
     }).returning();
+    if (waiting) await tx.update(interviewSessions).set({ pending: null }).where(eq(interviewSessions.id, sessionId));
     return row;
+  });
+}
+
+/**
+ * The follow-up the interviewer asks next, kept on the session until it is answered or skipped. Only
+ * on a session that isn't finished, and only while nothing else waits: false otherwise, and the
+ * follow-up that waits stays.
+ */
+export async function setPending(ownerId: string, sessionId: string, pending: InterviewPending): Promise<boolean> {
+  const rows = await db.update(interviewSessions).set({ pending })
+    .where(and(
+      eq(interviewSessions.id, sessionId), eq(interviewSessions.ownerId, ownerId),
+      sql`${interviewSessions.status} <> 'done'`, isNull(interviewSessions.pending),
+    )).returning({ id: interviewSessions.id });
+  return rows.length === 1;
+}
+
+/**
+ * "I said it right" on an English note (B2): the note's place is kept on the turn, and the note is
+ * shown and counted no more. False when the turn isn't the owner's or has no note at that place.
+ */
+export async function dismissNote(ownerId: string, turnId: string, index: number): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const [turn] = await tx.select({ feedback: interviewTurns.feedback, dismissed: interviewTurns.dismissed }).from(interviewTurns)
+      .where(and(eq(interviewTurns.id, turnId), eq(interviewTurns.ownerId, ownerId)))
+      .for("update");
+    if (!turn?.feedback || !Number.isInteger(index) || index < 0 || index >= turn.feedback.english.length) return false;
+    const dismissed = [...new Set([...(turn.dismissed ?? []), index])].sort((a, b) => a - b);
+    await tx.update(interviewTurns).set({ dismissed }).where(and(eq(interviewTurns.id, turnId), eq(interviewTurns.ownerId, ownerId)));
+    return true;
   });
 }
 
@@ -161,7 +207,8 @@ export async function updateSession(
     ...(patch.secondsUsed !== undefined
       ? { secondsUsed: sql`greatest(${interviewSessions.secondsUsed}, ${Math.max(0, Math.round(patch.secondsUsed))})` }
       : {}),
-    ...(patch.status === "done" ? { endedAt: new Date() } : {}),
+    // a session that ends waits for nothing
+    ...(patch.status === "done" ? { endedAt: new Date(), pending: null } : {}),
   }).where(and(
     eq(interviewSessions.id, id), eq(interviewSessions.ownerId, ownerId),
     sql`${interviewSessions.status} <> 'done'`,

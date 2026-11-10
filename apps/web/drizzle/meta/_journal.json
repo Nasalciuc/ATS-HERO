@@ -50,6 +50,13 @@
       "when": 1794035819559,
       "tag": "0006_interview_trainer",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794313119589,
+      "tag": "0007_interview_ai",
+      "breakpoints": true
     }
   ]
 }

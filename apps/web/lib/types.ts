@@ -167,6 +167,9 @@ export type InterviewFeedback = {
   prompt?: string;
 };
 
+/** A follow-up the interviewer asked and the person hasn't answered yet: for which question, which one (from 1), its words. */
+export type InterviewPending = { questionId: string; n: number; text: string };
+
 /** Presentation preference stored on a CV. Canonical union lives with the templates. */
 export type { TemplateId } from "../components/cv/templates";
 

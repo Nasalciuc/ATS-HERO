@@ -23,7 +23,7 @@ vi.mock("@clerk/nextjs/server", () => ({
 }));
 
 import {
-  addFeedback, addTurn, createSession, deleteSession, getSession, InterviewError, listSessions, setPrepared,
+  addFeedback, addTurn, createSession, deleteSession, getSession, InterviewError, listSessions, setPending, setPrepared,
   updateSession, type NewSession,
 } from "@/lib/interview/store";
 import { removeApplication } from "@/app/actions/applications";
@@ -129,7 +129,9 @@ describe("interview turns", () => {
   it("are numbered in order, follow-ups keep their question, and the report reads them in order", async () => {
     const s = await createSession("u1", await jobAndCv("u1"));
     await addTurn("u1", s.id, answer(1));
-    await addTurn("u1", s.id, { ...answer(1), kind: "follow_up", question: "And what was the result?", answer: "Sales saw it daily." });
+    // a follow-up is the one the session holds (step 5): the interviewer asks it, then the answer makes it a turn
+    await setPending("u1", s.id, { questionId: "q1", n: 1, text: "And what was the result?" });
+    await addTurn("u1", s.id, { ...answer(1), kind: "follow_up", answer: "Sales saw it daily." });
     await addTurn("u1", s.id, { ...answer(2), answer: null });   // skipped
     const got = await getSession("u1", s.id);
     expect(got?.turns.map((t) => [t.position, t.kind, t.questionId, t.answer === null])).toEqual([
