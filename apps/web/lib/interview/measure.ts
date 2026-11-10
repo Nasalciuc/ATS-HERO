@@ -54,7 +54,7 @@ const sentenceAt = (text: string, index: number) => {
 /** "6 hours", "45%", "120k", "2.3M", "40": the numbers a line gives, as they're written. */
 const NUMBER = /(?<![\p{L}\p{N}.,])\d+(?:[.,]\d+)?\s*(?:%|k\b|m\b|bn\b|x\b)?/giu;
 /** One key per number however it's written: "45%" and "45" meet, "2.3M" and "2,3m" meet. */
-const numberKey = (n: string) => n.toLowerCase().replace(/\s+/g, "").replace(",", ".").replace(/%$/, "");
+export const numberKey = (n: string) => n.toLowerCase().replace(/\s+/g, "").replace(",", ".").replace(/%$/, "");
 
 /** The numbers a text gives, as written, with where they are: the report quotes the CV line around them. */
 export function numbersIn(text: string): { text: string; start: number; end: number }[] {

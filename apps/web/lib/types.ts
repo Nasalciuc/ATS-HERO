@@ -149,11 +149,22 @@ export type InterviewCriterion = {
   met: boolean;
   quote: string | null;
 };
-/** The feedback on one answer: criteria, vague phrases with their question (IV-13), English notes (IV-12, at most 3). */
+/** What an English note is about, so a session's notes add up to patterns (IV-12: grammar and wording, never accent). */
+export type EnglishKind =
+  | "tense" | "preposition" | "article" | "agreement" | "word_form" | "word_choice" | "word_order" | "plural" | "other";
+/**
+ * The model's feedback on one answer, after our checks (lib/interview/feedback.ts): the parts of the
+ * answer it could show with the person's words, vague phrases with their question (IV-13), English
+ * notes (IV-12, at most 3). The requirement and the proof from the CV are measured, not kept here.
+ */
 export type InterviewFeedback = {
   criteria: InterviewCriterion[];
   vague: { phrase: string; ask: string }[];
-  english: { quote: string; better: string }[];
+  english: { quote: string; better: string; why?: string; kind?: EnglishKind }[];
+  /** the model wrote a stronger answer and the check refused it: it held a fact that is in neither the answers nor the CV line (IV-7) */
+  strongerRefused?: boolean;
+  /** the prompt that made it ("interview-feedback.v1") */
+  prompt?: string;
 };
 
 /** Presentation preference stored on a CV. Canonical union lives with the templates. */
