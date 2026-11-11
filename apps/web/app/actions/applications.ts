@@ -8,6 +8,7 @@ import { getOwnerId } from "./_shared";
 import { APPLICATION_STATUSES, type ApplicationStatus, type ArchiveReason } from "@/lib/types";
 import { withLog } from "@/lib/log";
 import { dropForm } from "@/lib/apply/sessions";
+import { removeInterviewData } from "@/lib/interview/store";
 import { jobUrlKey, safeJobUrl, MAX_JOB_URL_CHARS } from "@/lib/job-url";
 import { FOLLOW_UP_DAYS, MAX_DESCRIPTION_CHARS } from "@/lib/tracker";
 
@@ -319,7 +320,7 @@ export async function setCvSent(id: string, choice: { cvId: string } | { other: 
   });
 }
 
-/** Deletes a job and its history. */
+/** Deletes a job and its history, with the interview practice for it. */
 export async function removeApplication(id: string) {
   const ownerId = await requireOwner();
   return withLog("apps.remove", { ownerId, id }, async () => {
@@ -330,6 +331,7 @@ export async function removeApplication(id: string) {
       if (!deleted.length) throw new Error("Not found");
       await tx.delete(applicationEvents)
         .where(and(eq(applicationEvents.applicationId, id), eq(applicationEvents.ownerId, ownerId)));
+      await removeInterviewData(tx, ownerId, { applicationId: id });
       const queued = await tx.delete(applyQueue).where(and(eq(applyQueue.applicationId, id), eq(applyQueue.ownerId, ownerId)))
         .returning({ id: applyQueue.id });
       return queued;

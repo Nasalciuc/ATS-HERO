@@ -11,4 +11,9 @@ export const K = {
   jobSearch: (userId: string | null | undefined) => ["job-search", scope(userId)] as const,
   applyQueue: (userId: string | null | undefined) => ["apply-queue", scope(userId)] as const,
   applyReview: (userId: string | null | undefined, id: string) => ["apply-review", scope(userId), id] as const,
+  interviewHome: (userId: string | null | undefined) => ["interview-home", scope(userId)] as const,
+  interviewSetup: (userId: string | null | undefined, jobId: string, cvId: string) => ["interview-setup", scope(userId), jobId, cvId] as const,
+  interview: (userId: string | null | undefined, id: string) => ["interview", scope(userId), id] as const,
+  interviewReport: (userId: string | null | undefined, id: string) => ["interview-report", scope(userId), id] as const,
+  practiceCounts: (userId: string | null | undefined) => ["practice-counts", scope(userId)] as const,
 };

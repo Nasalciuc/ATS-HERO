@@ -8352,6 +8352,2165 @@ select.field__input {
   }
 }
 
+/* ---------------- Interview Trainer (app/app/interview, views/interview/) ----------------
+   Claude Design canvas "ATS Hero Tracker v2", page "Interview trainer" (Trainer home, Setup, Live,
+   Feedback, Report, Can't start; Phone live and report). Behind NEXT_PUBLIC_INTERVIEW_TRAINER_ENABLED.
+   Typed answers; with the model, the interviewer's style, follow-ups and its feedback
+   (ANTRENOR-INTERVIU-CONSTRUCTIE.md, steps 4 and 5). */
+.trn {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  font-family: var(--font-helvetica);
+  color: var(--ink);
+}
+.trn :is(a, button, select, input, textarea, summary):focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
+.trn .trk-a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.trn-h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.trn-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #555555;
+}
+.trn-muted {
+  color: #555555;
+}
+.trn-foot {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #555555;
+}
+.trn-warn {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff3e0;
+  color: #8a4b00;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.trn-warn .trk-a,
+.trn-warn .trk-link {
+  color: #8a4b00;
+}
+.trn-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.trn-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: -12px 0 -8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #5b45e0;
+  text-decoration: none;
+}
+.trn-back:hover {
+  color: #3f2bb8;
+}
+
+/* buttons: 44px pills (the 52px ones are .trk-btn) */
+.trn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 22px;
+  background: var(--ink);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.trn-btn:hover {
+  background: #000;
+  color: var(--white);
+}
+.trn-btn:disabled {
+  background: #c9c9c9;
+  cursor: default;
+}
+.trn-btn--ghost {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.trn-btn--ghost:hover {
+  background: #f4f4f4;
+  color: var(--ink);
+}
+.trn-btn--ghost.is-on {
+  background: var(--ink);
+  color: var(--white);
+}
+.trn-btn--danger {
+  background: #b3261e;
+}
+.trn-btn--danger:hover {
+  background: #8f1e18;
+}
+.trn-btn--danger-ghost {
+  color: #b3261e;
+  box-shadow: inset 0 0 0 1px #b3261e;
+}
+.trn-btn--danger-ghost:hover {
+  color: #b3261e;
+  background: #fdf1f0;
+}
+
+/* home, in the score page's language (PROVISIONAL, AGENTS.md rule 6: no Figma frame; Liubovi draws
+   or checks it): one sentence in the results page's type, the jobs as rows under 1px lines with a
+   picture in a ring and the way in at the right, the pasted post in the form card. */
+.trn-lead {
+  margin: 0;
+  max-width: 649px;
+  font-size: 20px;
+  line-height: 24px;
+  color: #000;
+}
+.trn-limit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin: 4px 0 0;
+  padding: 0 16px;
+  border-radius: 22px;
+  background: #f7f7f7;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.trn-limit__long,
+.trn-limit__short {
+  color: #555555;
+}
+.trn-home .trn-section {
+  gap: 0;
+}
+.trn-home .trn-fb__h .trn-muted {
+  font-weight: 500;
+}
+.trn-jobs {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--line);
+}
+.trn-job {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 20px;
+  min-height: 96px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.trn-job__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 1;
+}
+.trn-job__icon.is-done {
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+.trn-job__main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.trn-job__role {
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+.trn-job__place,
+.trn-job__proof {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #555555;
+}
+.trn-job__proof strong {
+  color: var(--ink);
+}
+.trn-job__state {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 260px;
+  margin: 0;
+}
+.trn-job__state .trn-state {
+  white-space: normal;
+}
+.trn-job__req {
+  font-size: 14px;
+  color: #555555;
+}
+.trn-job__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px 16px;
+  font-size: 14px;
+}
+.trn-job__actions .topbtn {
+  text-decoration: none;
+}
+.trn-empty {
+  max-width: 867px;
+}
+.trn-split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px 32px;
+}
+.trn-others {
+  flex: 1 1 420px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.trn-others__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--line);
+}
+.trn-others__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-height: 56px;
+  border-top: 1px solid var(--line);
+  font-size: 16px;
+}
+.trn-others__row .trk-a {
+  font-size: 15px;
+}
+.trn-others__job {
+  flex: 1 1 240px;
+}
+.trn-others__all {
+  align-self: flex-start;
+  margin-top: 12px;
+  font-size: 15px;
+}
+.trn-paste {
+  flex: 1 1 380px;
+  min-width: 0;
+  gap: 14px;
+  padding: 24px 26px;
+}
+.trn-paste__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.trn-paste__field textarea {
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--white);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--ink);
+  resize: vertical;
+}
+.trn-paste__field textarea::placeholder {
+  color: #767676;
+  opacity: 1;
+}
+.trn .trn-paste__field textarea:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--violet-600);
+}
+.trn-paste__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.trn-past {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--line);
+}
+.trn-past__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  min-height: 56px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 16px;
+}
+.trn-past__row .trk-a {
+  font-size: 15px;
+}
+.trn-past__when {
+  flex: 0 0 140px;
+  color: #555555;
+}
+.trn-past__job {
+  flex: 1 1 260px;
+}
+.trn-past__kind {
+  flex: 0 1 300px;
+  color: #555555;
+}
+/* setup */
+/* Setup, on the builder's page (PROVISIONAL, AGENTS.md rule 6: no Figma frame; Liubovi draws or
+   checks it): the flow's steps, a tips card at the side, the choices in the form card's grey with
+   white tiles, what to know before the first session in the mint card, and the way on at the right. */
+.trn-setup {
+  gap: 20px;
+}
+.trn-flow {
+  margin-bottom: 4px;
+}
+.trn-setup__job {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.45;
+  color: #444444;
+}
+.trn-setup__job strong {
+  color: var(--ink);
+}
+.trn-setup__job .trk-link {
+  font-size: 16px;
+}
+.trn-setup__cv {
+  max-width: 420px;
+}
+.trn-setup__grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+/* 280 beside the form (which takes the room that is left); the whole row once it wraps under it */
+.trn-setup__side {
+  flex: 1 1 280px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.trn-setup__main {
+  flex: 999 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.trn-setup__form {
+  gap: 26px;
+  padding: 32px 36px;
+}
+.trn-fieldset {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.trn-fieldset legend {
+  padding: 0 0 8px;
+}
+/* the builder's radio is green; these are the browser's own, in a green that is 3:1 on the card */
+.trn-setup :is(input[type="radio"], input[type="checkbox"]) {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #00a040;
+}
+.trn-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.trn-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--white);
+  cursor: pointer;
+}
+.trn-tile.is-on {
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+.trn-tile:has(input:focus-visible) {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+}
+.trn-tile__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.32px;
+}
+.trn-tile__note {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #555555;
+}
+.trn-setup__pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px 36px;
+}
+.trn-pill {
+  padding: 0 18px;
+  background: var(--white);
+  box-shadow: none;
+  font-size: 15px;
+}
+.trn-pill.is-on {
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+.trk-radio.is-off {
+  color: #767676;
+  cursor: not-allowed;
+}
+.trn-options {
+  gap: 2px;
+}
+.trn-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 15px;
+  cursor: pointer;
+}
+/* what the interviewer will ask about: the tips card, with the post's requirements as its list */
+.trn-ask {
+  gap: 0;
+}
+.trn-ask__list {
+  align-self: stretch;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.trn-ask__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 38px;
+  padding: 4px 0;
+  border-top: 1px solid #e4dfff;
+  font-size: 15px;
+}
+.trn-ask__label {
+  flex: 1 1 120px;
+}
+.trn-ask__none {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #444444;
+}
+/* the suggestion card's mint (the builder's "Activities"), for what to know before starting */
+.trn-mint {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px 24px;
+  border: 1px solid var(--green);
+  border-radius: 10px;
+  background: var(--bg-mint);
+}
+.trn-mint__title {
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+.trn-mint p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #333333;
+}
+.trn-mint .trn-note {
+  font-size: 13px;
+  color: #444444;
+}
+/* the builder's footer: the way on at the right, what it will cost beside it */
+.trn-start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px 20px;
+}
+.trn-start .trn-note {
+  flex: 1 1 240px;
+  font-size: 14px;
+}
+
+/* can't start */
+.trn-blocked__card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+  padding: 32px 34px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+/* the state's picture, in a step's 64px circle */
+.trn-blocked__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 1;
+}
+.trn-blocked__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+}
+.trn-blocked__lead {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #444444;
+}
+.trn-blocked__box {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f7f7f7;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.trn-blocked__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  font-size: 15px;
+}
+.trn-blocked .trn-foot {
+  max-width: 720px;
+}
+
+/* the session: full screen, without the menu */
+.trn-live {
+  gap: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--white);
+}
+.trn-live__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  padding: 14px 32px;
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+}
+.trn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  background: #efeaff;
+  color: #4a36c4;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.trn-live__job {
+  font-size: 15px;
+}
+.trn-live__grow {
+  flex: 1 1 auto;
+}
+.trn-live__count,
+.trn-live__time {
+  font-size: 14px;
+  color: #444444;
+}
+.trn-live__time strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.trn-btn--end {
+  height: 40px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+.trn-live__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 28px 32px;
+}
+.trn-live__main {
+  flex: 3 1 620px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 8px 0;
+}
+/* what the session is doing: a field label's type (12px Inter, capitals), not a headline */
+.trn-live__status {
+  margin: 0;
+  font-family: var(--font-inter);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  text-transform: uppercase;
+  text-align: center;
+  color: #6b6b6b;
+}
+.trn-live__status--finished {
+  color: #0a6b35;
+}
+.trn-live__q {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 680px;
+  text-align: center;
+}
+.trn-live__qn {
+  margin: 0;
+  font-size: 13px;
+  color: #6b6b6b;
+}
+.trn-live__qn strong {
+  color: #444444;
+}
+.trn-live__qtext {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+/* the answer: a white field on the form card's grey, as in the builder */
+.trn-live__card {
+  width: 100%;
+  max-width: 760px;
+  gap: 18px;
+}
+.trn-live__answer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.trn-live__answer textarea {
+  padding: 14px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--white);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink);
+  resize: vertical;
+}
+.trn-live__answer textarea::placeholder {
+  color: #767676;
+  opacity: 1;
+}
+.trn .trn-live__answer textarea:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--violet-600);
+}
+/* while the interviewer reads: the score page's loading circle (234px, lilac, the green ring turning) */
+.trn-reading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 36px;
+  text-align: center;
+}
+.trn-reading__badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 234px;
+  height: 234px;
+  margin-bottom: 43px;
+  border-radius: 50%;
+  background: #f5f3ff;
+}
+.trn-reading__ring {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  animation: ats-spin 1.6s linear infinite;
+}
+.trn-reading__ring circle {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trn-reading__ring {
+    animation: none;
+  }
+}
+/* the thought bubble: a line drawing, white inside, as the score page's circle holds a line drawing */
+.trn-reading__icon {
+  width: 120px;
+  height: 120px;
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 5;
+  stroke-linejoin: round;
+}
+.trn-reading__msg {
+  margin: 0;
+  font-size: 20px;
+  line-height: 24px;
+  color: #000;
+}
+.trn-reading__note {
+  margin: 12px 0 0;
+  max-width: 420px;
+  font-size: 16px;
+  line-height: 22px;
+  color: #6b6b6b;
+}
+/* the questions as steps: the progress bar's 64px circles and 12px labels, a number in each */
+.trn-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin: 0;
+  padding: 28px 32px 0;
+  list-style: none;
+}
+.trn-steps__item {
+  display: flex;
+  align-items: flex-start;
+}
+.trn-steps__line {
+  position: relative;
+  width: 46px;
+  height: 62px;
+}
+.trn-steps__line::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30px;
+  height: 1px;
+  background: #c0c0c0;
+}
+.trn-steps__line.is-filled::before {
+  top: 29px;
+  height: 2px;
+  background: var(--green);
+}
+.trn-steps__step {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 64px;
+}
+.trn-steps__node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  color: #757575;
+}
+.trn-steps__node--emoji {
+  font-family: var(--font-emoji);
+  font-size: 30px;
+}
+.trn-steps__node.is-current {
+  background: var(--bg-mint);
+  box-shadow: inset 0 0 0 2px var(--green);
+  color: var(--ink);
+}
+.trn-steps__node.is-done {
+  box-shadow: inset 0 0 0 2px var(--green);
+  color: var(--ink);
+}
+.trn-steps__label {
+  width: max-content;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  color: #757575;
+  white-space: nowrap;
+}
+.trn-steps__label.is-current {
+  font-weight: 600;
+  color: #00843a; /* the progress bar's green is 2.3:1 on white; 12px text needs 4.5:1 */
+}
+.trn-timer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 420px;
+}
+.trn-timer__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: #555555;
+}
+.trn-timer__row strong {
+  color: var(--ink);
+}
+.trn-timer__bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.trn-timer__bar span {
+  display: block;
+  height: 100%;
+  background: var(--violet-600);
+}
+.trn-live__note {
+  margin: 0;
+  max-width: 560px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #444444;
+  text-align: center;
+}
+/* under the card, across its width: the way back on the left, the way on at the right, as Back and Next step */
+.trn-live__controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: 760px;
+}
+.trn-live__controls .topbtn--dark {
+  margin-left: auto;
+}
+.trn-live__side {
+  flex: 1 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 26px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #f8f8f8;
+}
+.trn-live__side-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.trn-live__side-head .trn-h2 {
+  flex: 1 1 auto;
+}
+.trn-chip-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--white);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+.trn-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.trn-line {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.trn-line__who {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.trn-line__who--interviewer {
+  color: #4a36c4;
+}
+.trn-line__who--you {
+  color: #0a6b35;
+}
+.trn-line__text {
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.trn-live__privacy {
+  margin: auto 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b6b6b;
+}
+
+/* the feedback after an answer: built from the score page's pieces (PROVISIONAL, AGENTS.md rule 6:
+   no Figma frame; Liubovi draws or checks it). One column on white, as her results page: a circle
+   beside one plain sentence, the person's answer in the form card's grey, the parts as rows with a
+   picture in a ring (the 64px circle, the 81px row and the type are the score rows'), badges over
+   numbered lists, and the stronger answer in the Pro Tips card's shape. */
+.trn-fb {
+  background: var(--white);
+}
+.trn-fb__page {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  max-width: 931px; /* the score page's 867px column, and 32 a side */
+  margin: 0 auto;
+  padding: 40px 32px 56px;
+}
+.trn-fb__title {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.trn-fb__kicker {
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+.trn-fb__q {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+.trn-fb__head {
+  display: flex;
+  align-items: center;
+  gap: 49px;
+}
+.trn-fb__circle {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 157px;
+  height: 157px;
+  border-radius: 50%;
+  background: #f5f3ff;
+  box-shadow: inset 0 0 0 2px var(--violet-200);
+}
+/* while the interviewer reads: the loading circle's green ring, turning */
+.trn-fb__circle.is-reading {
+  box-shadow: none;
+}
+.trn-fb__ring {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  animation: ats-spin 1.6s linear infinite;
+}
+.trn-fb__ring circle {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trn-fb__ring {
+    animation: none;
+  }
+}
+.trn-fb__emoji {
+  font-family: var(--font-emoji);
+  font-size: 64px;
+  line-height: 1;
+}
+.trn-fb__msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  max-width: 560px;
+}
+.trn-fb__lead {
+  margin: 0;
+  font-size: 20px;
+  line-height: 24px;
+  color: #000;
+}
+/* the builder's form card (its grey, its line, its 20px corners): the person's words, the choices
+   of Setup, the pasted post on the home page. */
+.trn-fcard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px 32px;
+  background: #f8f8f8;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+.trn-fcard__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+/* a field's label: 12px Inter, capitals (darker than the form's, which is 3.4:1 on this grey) */
+.trn-label {
+  flex: 1 1 auto;
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+.trn-fb__answer {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.trn-fb__counts {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #6b6b6b;
+}
+.trn-fb__section {
+  display: flex;
+  flex-direction: column;
+}
+.trn-fb__h {
+  margin: 0 0 16px;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+/* the parts: the score page's rows, with the state in a word where it shows a score */
+.trn-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--line);
+}
+.trn-row {
+  --tone: var(--green);
+  --tone-text: #00843a;
+  display: grid;
+  grid-template-columns: 87px 214px 122px minmax(0, 1fr);
+  align-items: center;
+  min-height: 81px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.trn-row.is-missing {
+  --tone: #ffc107;
+  --tone-text: #a35a00;
+}
+.trn-row__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 2px var(--tone);
+  font-family: var(--font-emoji);
+  font-size: 30px;
+  line-height: 1;
+}
+.trn-row__label {
+  padding-right: 12px;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+.trn-row__state {
+  padding-right: 12px;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: -0.36px;
+  color: var(--tone-text);
+}
+.trn-row__note {
+  font-size: 16px;
+  line-height: 22px;
+  color: #555555;
+  overflow-wrap: anywhere;
+}
+/* what the CV already has, to say next time: the score page's note */
+.trn-callout {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 20px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f1efff;
+}
+.trn-callout__title,
+.trn-callout__line {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+}
+.trn-callout__title {
+  font-weight: 700;
+}
+.trn-callout__line {
+  color: #444444;
+}
+.trn-callout__line strong {
+  color: var(--ink);
+}
+/* a badge that is a heading */
+.trn-badge-h {
+  display: flex;
+  margin: 0;
+  font: inherit;
+}
+.trn-fb .score-group__list li {
+  line-height: 22px;
+}
+/* the stronger answer, in the Pro Tips card's shape: its lilac, its badge, its title */
+.trn-tips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px 26px;
+  background: var(--bg-page);
+  border: 1px solid #dad4ff;
+  border-radius: 10px;
+}
+.trn-tips__title {
+  margin: 0;
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.6px;
+}
+/* the Pro Tips badge's shape; its own class, because that badge is hidden on a phone and this one says what the AI made */
+.trn-tips__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 100px;
+  background: #d4cdff;
+  color: #4a36c4; /* violet-600 is 3.1:1 on this lilac; 12px text needs 4.5:1 */
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 13px;
+  white-space: nowrap;
+}
+.trn-tips__badge + .trn-tips__title {
+  margin-top: 18px;
+}
+.trn-tips__text {
+  margin: 12px 0 0;
+  font-size: 18px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.trn-tips__note {
+  margin: 12px 0 0;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: -0.28px;
+  color: #6b6b6b;
+}
+/* under a question, in the report */
+.trn-tips--sub {
+  padding: 18px 20px;
+}
+.trn-tips--sub .trn-tips__title {
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+.trn-tips--sub .trn-tips__badge + .trn-tips__title {
+  margin-top: 12px;
+}
+.trn-tips--sub .trn-tips__text {
+  font-size: 16px;
+}
+.trn-fb__named {
+  margin-top: -12px;
+}
+/* the way on: "Try again" on the left, the next question on the right, as Back and Next step */
+.trn-fb__foot {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 32px;
+  background: var(--white);
+  border-top: 1px solid var(--line);
+}
+.trn-fb__next {
+  margin-left: auto;
+}
+.trn-fb__foot .trk-error {
+  flex-basis: 100%;
+}
+
+/* the report, built from the score page's pieces (PROVISIONAL, AGENTS.md rule 6: no Figma frame;
+   Liubovi draws or checks it): the flow's steps, a circle beside one sentence and the way on,
+   badges over numbered lists, the job's requirements and the questions as rows under 1px lines
+   (the questions open, with the lilac toggle). */
+.trn-report {
+  gap: 20px;
+}
+.trn-report__meta {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.45;
+  color: #444444;
+}
+.trn-report__meta strong {
+  color: var(--ink);
+}
+.trn-report__head {
+  margin: 16px 0 12px;
+}
+/* the score circle's size and type; lilac, because it counts answers and grades nothing */
+.trn-count {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 157px;
+  height: 157px;
+  margin: 0;
+  border-radius: 50%;
+  background: #f5f3ff;
+  box-shadow: inset 0 0 0 2px var(--violet-200);
+  color: #4a36c4;
+  text-align: center;
+}
+.trn-count__value {
+  font-weight: 700;
+  font-size: 45px;
+  line-height: 54px;
+  letter-spacing: -1px;
+}
+.trn-count__of {
+  font-size: 26px;
+  letter-spacing: 0;
+}
+.trn-count__label {
+  font-size: 16px;
+  line-height: 19px;
+}
+.trn-report__again {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.trn-report__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 12px;
+}
+.trn-report .score-group__list li {
+  line-height: 22px;
+}
+.trn-report__none {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: #444444;
+}
+.trn-report .trn-section,
+.trn-report > .score-group {
+  margin-top: 12px;
+}
+.trn-report .trn-section {
+  gap: 0;
+}
+/* a state in a word: the colour says it again, never alone */
+.trn-state {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.32px;
+  white-space: nowrap;
+}
+.trn-state.is-good {
+  color: #00843a;
+}
+.trn-state.is-fair {
+  color: #a35a00;
+}
+.trn-state.is-none {
+  color: #6b6b6b;
+}
+/* the job's requirements from one session to the next: rows under 1px lines, as the score page's */
+.trn-progress table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.trn-progress thead th {
+  padding: 0 16px 10px 0;
+  text-align: left;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: -0.24px;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+.trn-progress tbody :is(th, td) {
+  padding: 16px 16px 16px 0;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+.trn-progress tbody tr:last-child :is(th, td) {
+  border-bottom: 1px solid var(--line);
+}
+.trn-progress tbody th {
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: -0.36px;
+}
+.trn-progress__note {
+  padding-top: 10px;
+}
+.trn-first {
+  margin: 0;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f1efff;
+  font-size: 15px;
+  line-height: 21px;
+  color: var(--ink);
+}
+/* the questions: the score page's rows that open */
+.trn-qs {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--line);
+}
+.trn-q {
+  border-top: 1px solid var(--line);
+}
+.trn-q__summary {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto 44px;
+  align-items: center;
+  column-gap: 20px;
+  min-height: 81px;
+  padding: 8px 0;
+  list-style: none;
+  cursor: pointer;
+}
+.trn-q__summary::-webkit-details-marker {
+  display: none;
+}
+.trn-q__num {
+  --tone: var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f8f8f8;
+  box-shadow: inset 0 0 0 2px var(--tone);
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+}
+.trn-q__num.is-good {
+  --tone: var(--green);
+}
+.trn-q__num.is-fair {
+  --tone: #ffc107;
+}
+.trn-q__text {
+  font-family: var(--font-inter);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 24px;
+  letter-spacing: -0.36px;
+}
+.trn-q__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--violet-300);
+  color: var(--violet-300);
+}
+.trn-q__summary:hover .trn-q__toggle {
+  box-shadow: inset 0 0 0 2px var(--violet-600);
+  color: var(--violet-600);
+}
+.trn-q__minus,
+.trn-q[open] .trn-q__plus {
+  display: none;
+}
+.trn-q[open] .trn-q__minus {
+  display: block;
+}
+/* the open question: 84 in, under its words (the score rows' 83) */
+.trn-q__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 4px 0 28px 84px;
+}
+.trn-q__card {
+  padding: 22px 26px;
+}
+.trn-q__body .score-group--wide {
+  width: auto;
+}
+/* the parts under a question: the rows, a size down */
+.trn-rows--compact .trn-row {
+  grid-template-columns: 58px 190px 112px minmax(0, 1fr);
+  min-height: 60px;
+  padding: 7px 0;
+}
+.trn-rows--compact .trn-row__icon {
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+}
+.trn-rows--compact .trn-row__label {
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.32px;
+}
+.trn-rows--compact .trn-row__state {
+  font-size: 15px;
+  line-height: 20px;
+  letter-spacing: -0.3px;
+}
+.trn-rows--compact .trn-row__note {
+  font-size: 15px;
+  line-height: 20px;
+}
+.trn-measured {
+  margin-top: 14px;
+  font-size: 14px;
+}
+.trn-measured .trn-label {
+  margin-right: 6px;
+}
+.trn-measured strong {
+  color: var(--ink);
+}
+.trn-pair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 16px;
+  margin-top: 12px;
+}
+.trn-pair > * {
+  flex: 1 1 420px;
+}
+.trn-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 24px 26px;
+  border-radius: 20px;
+}
+.trn-box > p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.trn-box--plain {
+  border: 1px solid var(--line);
+}
+/* the form card's grey */
+.trn-box--grey {
+  background: #f8f8f8;
+  border: 1px solid var(--line);
+}
+.trn-box__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.trn-prepared {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.trn-confirm {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff3e0;
+  color: #8a4b00;
+  font-size: 14px;
+  line-height: 1.45;
+}
+/* with the model (step 5): the agreement in Setup, follow-ups, and the model's part of the feedback.
+   The canvas's colours: a vague phrase on #fff3e0, an English note underlined in #725bfe, what the AI
+   made in a #d9d2ff frame with the "Made with AI" chip. A mark is never the only sign: each marked
+   phrase is also written out under the answer. */
+.trn-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.trn-consent input {
+  margin-top: 1px;
+}
+.trn-live__status--thinking {
+  color: #4a36c4;
+}
+.trn-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #555555;
+}
+.trn-key__mark {
+  display: inline-block;
+  width: 14px;
+}
+.trn-key__mark--vague {
+  height: 10px;
+  border: 1px solid #f0c27a;
+  border-radius: 3px;
+  background: #fff3e0;
+}
+.trn-key__mark--english {
+  height: 0;
+  border-bottom: 2px solid #725bfe;
+}
+.trn-mark {
+  background: transparent;
+  color: inherit;
+}
+.trn-mark--vague {
+  border-radius: 3px;
+  background: #fff3e0;
+  /* the line keeps it visible on the report's grey answer */
+  box-shadow: inset 0 -1px 0 #f0c27a;
+}
+.trn-mark--english {
+  border-bottom: 2px solid #725bfe;
+}
+.trn-fb__follow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.trn-fb__follow-q {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #444444;
+}
+.trn-fb__follow-who {
+  margin-right: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4a36c4;
+}
+.trn-fb__wait {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #efeaff;
+  color: #4a36c4;
+  font-size: 14px;
+  line-height: 1.45;
+}
+/* the English notes: a numbered list like the score page's, each with its way out on the right */
+.trn-notes {
+  width: 100%;
+}
+.trn-notes .trn-notes__item {
+  align-items: center;
+}
+.trn-notes__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.trn-notes__fix {
+  overflow-wrap: anywhere;
+}
+.trn-notes__fix del {
+  color: #6b6b6b;
+}
+.trn-notes__why {
+  font-size: 14px;
+  line-height: 19px;
+  color: #6b6b6b;
+}
+.trn-notes .trn-chip-btn {
+  flex: none;
+}
+.trn-notes__foot {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #6b6b6b;
+}
+
+/* the job's card in the Tracker: "Practice this interview" */
+.trk-panel__practice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 0;
+  font-size: 14px;
+}
+.trk-panel__practice-btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.trn-phone-only {
+  display: none;
+}
+
+.trn-limit__short {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .trn-phone-only {
+    display: inline;
+  }
+  /* the shell's "‹ Back" does it on a phone */
+  .trn-back {
+    display: none;
+  }
+  .trn-limit {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  .trn-limit__beta,
+  .trn-limit__long {
+    display: none;
+  }
+  .trn-limit__short {
+    display: inline;
+  }
+  .trn-tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .trn-lead {
+    font-size: 16px;
+    line-height: 20px;
+  }
+  /* a job on a phone: the picture and the job on a line, the state under them, the way in as wide as the screen */
+  .trn-job {
+    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-areas:
+      "icon main"
+      "icon state"
+      "actions actions";
+    column-gap: 12px;
+    row-gap: 6px;
+    min-height: 0;
+  }
+  .trn-job__icon {
+    grid-area: icon;
+    align-self: start;
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+  .trn-job__main {
+    grid-area: main;
+  }
+  .trn-job__role {
+    font-size: 18px;
+    line-height: 22px;
+  }
+  .trn-job__state {
+    grid-area: state;
+    max-width: none;
+  }
+  .trn-job__actions {
+    grid-area: actions;
+    justify-content: flex-start;
+    margin-top: 6px;
+  }
+  .trn-job__actions .topbtn {
+    order: -1;
+    flex: 1 1 100%;
+    height: 48px;
+  }
+  .trn-paste {
+    padding: 18px 16px;
+  }
+  .trn-paste__row .topbtn {
+    flex: 1 1 100%;
+    height: 48px;
+  }
+  /* the report on a phone: the score page's phone head, and rows that stack */
+  .trn-count {
+    width: 96px;
+    height: 96px;
+  }
+  .trn-count__value {
+    font-size: 28px;
+    line-height: 32px;
+  }
+  .trn-count__of {
+    font-size: 18px;
+  }
+  .trn-count__label {
+    font-size: 12px;
+    line-height: 14px;
+  }
+  .trn-report__again .topbtn {
+    flex: 1 1 100%;
+  }
+  .trn-q__summary {
+    grid-template-columns: 44px minmax(0, 1fr) 36px;
+    grid-template-areas:
+      "num text toggle"
+      "num state toggle";
+    column-gap: 12px;
+    row-gap: 2px;
+    min-height: 0;
+    padding: 12px 0;
+  }
+  .trn-q__num {
+    grid-area: num;
+    align-self: start;
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+  .trn-q__text {
+    grid-area: text;
+    font-size: 16px;
+    line-height: 20px;
+    letter-spacing: -0.32px;
+  }
+  .trn-q__summary .trn-state {
+    grid-area: state;
+    font-size: 14px;
+    white-space: normal;
+  }
+  .trn-q__toggle {
+    grid-area: toggle;
+    width: 36px;
+    height: 36px;
+  }
+  .trn-q__toggle svg {
+    width: 28px;
+    height: 28px;
+  }
+  .trn-q__body {
+    gap: 16px;
+    padding: 0 0 20px;
+  }
+  .trn-box {
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+  .trn-past__when {
+    flex-basis: 100%;
+  }
+  .trn-blocked__card {
+    padding: 24px 20px;
+  }
+  .trn-blocked__title {
+    font-size: 26px;
+  }
+  .trn-live__top {
+    gap: 8px 14px;
+    padding: 12px 16px;
+  }
+  .trn-live__job {
+    order: 9;
+    flex-basis: 100%;
+    font-size: 14px;
+  }
+  .trn-live__count,
+  .trn-wide {
+    display: none;
+  }
+  .trn-live__body {
+    padding: 16px;
+    gap: 16px;
+  }
+  .trn-live__main {
+    padding: 8px 0 0;
+    gap: 18px;
+  }
+  .trn-live__qtext {
+    font-size: 24px;
+  }
+  .trn-live__side {
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+  .trn-live__controls {
+    width: 100%;
+  }
+  .trn-live__controls .topbtn {
+    flex: 1 1 auto;
+    height: 48px;
+  }
+  /* the way on first, and as wide as the screen */
+  .trn-live__controls .topbtn--dark {
+    order: -1;
+    flex-basis: 100%;
+  }
+  .trn-steps {
+    display: none;
+  }
+  .trn-setup__form {
+    padding: 18px 16px;
+  }
+  /* the way on, as wide as the screen (Figma mobile "Continue") */
+  .trn-start .topbtn {
+    flex: 1 1 100%;
+  }
+  .trn-live__card {
+    padding: 16px;
+  }
+  .trn-reading {
+    margin-top: 12px;
+  }
+  .trn-reading__badge {
+    width: 160px;
+    height: 160px;
+    margin-bottom: 28px;
+  }
+  .trn-reading__icon {
+    width: 82px;
+    height: 82px;
+  }
+  .trn-fb__page {
+    gap: 28px;
+    padding: 22px 16px 28px;
+  }
+  .trn-fb__q {
+    font-size: 24px;
+  }
+  /* the score page's phone head: a 96px circle, the sentence beside it */
+  .trn-fb__head {
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .trn-fb__circle {
+    width: 96px;
+    height: 96px;
+  }
+  .trn-fb__emoji {
+    font-size: 40px;
+  }
+  .trn-fb__lead {
+    font-size: 16px;
+    line-height: 20px;
+  }
+  .trn-fcard {
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+  /* a row: the picture, the name and the state on a line; the words under them */
+  .trn-row,
+  .trn-rows--compact .trn-row {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "icon label state"
+      "icon note note";
+    column-gap: 12px;
+    row-gap: 4px;
+    min-height: 0;
+    padding: 12px 0;
+  }
+  .trn-row__icon {
+    grid-area: icon;
+    align-self: start;
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+  .trn-row__label,
+  .trn-rows--compact .trn-row__label {
+    grid-area: label;
+    padding-right: 0;
+    font-size: 16px;
+    line-height: 19px;
+    letter-spacing: -0.32px;
+  }
+  .trn-row__state,
+  .trn-rows--compact .trn-row__state {
+    grid-area: state;
+    padding-right: 0;
+    font-size: 14px;
+    line-height: 19px;
+    letter-spacing: -0.28px;
+  }
+  .trn-row__note,
+  .trn-rows--compact .trn-row__note {
+    grid-area: note;
+    font-size: 14px;
+    line-height: 19px;
+  }
+  .trn-callout {
+    padding: 14px 16px;
+  }
+  .trn-callout__title,
+  .trn-callout__line {
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .trn-notes .trn-notes__item {
+    flex-wrap: wrap;
+  }
+  .trn-notes .trn-chip-btn {
+    margin-left: 31px; /* under the note's words, past its number */
+  }
+  .trn-tips {
+    padding: 20px 18px;
+  }
+  .trn-tips__title {
+    font-size: 24px;
+    line-height: 29px;
+    letter-spacing: -0.48px;
+  }
+  .trn-tips__text {
+    font-size: 16px;
+  }
+  .trn-fb__foot {
+    gap: 8px;
+    padding: 10px 16px;
+  }
+  .trn-fb__foot .topbtn {
+    flex: 1 1 0;
+    height: 48px;
+    padding: 0 12px;
+  }
+  .trn-fb__foot-note {
+    order: 9;
+    flex-basis: 100%;
+    font-size: 12px;
+  }
+  /* a finger's target (B8) */
+  .trn-notes .trn-chip-btn {
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 22px;
+  }
+  /* no wide tables on a phone (B8): each requirement is a block, each session a line */
+  .trn-progress :is(table, tbody, tr, th, td) {
+    display: block;
+  }
+  .trn-progress thead {
+    display: none;
+  }
+  .trn-progress tbody tr {
+    padding: 10px 14px;
+    border-top: 1px solid #f0f0f0;
+  }
+  .trn-progress tbody tr:first-child {
+    border-top: none;
+  }
+  .trn-progress tbody :is(th, td) {
+    padding: 0;
+    border: none;
+  }
+  .trn-progress tbody th {
+    margin-bottom: 6px;
+  }
+  .trn-progress tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 13px;
+  }
+  .trn-progress tbody td::before {
+    content: attr(data-label);
+    color: #555555;
+  }
+}
+
+@media print {
+  .appshell__side,
+  .appshell__menu,
+  .appshell__actions,
+  .appshell__back,
+  .trn-back,
+  .trn-flow,
+  .trn-report__again,
+  .trn-q__toggle,
+  .trn-pair,
+  .trn-notes .trn-chip-btn {
+    display: none !important;
+  }
+  .trn-q {
+    break-inside: avoid;
+  }
+}
+
 /* ============================================================
    ATS CHECK VIEW (Improve / Job Fit results, views/ScorePage.tsx)
    PROVISIONAL (AGENTS.md rule 6): no Figma frame yet (ATS-REAL-VS-NOI.md §6). Built from the

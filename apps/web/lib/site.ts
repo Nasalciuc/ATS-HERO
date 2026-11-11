@@ -16,5 +16,9 @@ export const NOINDEX_ROUTES = [
   "/app/tracker",
   "/app/tracker/send",
   "/app/tracker/send/[id]",
+  "/app/interview",
+  "/app/interview/new",
+  "/app/interview/[id]",
+  "/app/interview/[id]/report",
   "/sso-callback",
 ] as const;

@@ -14,9 +14,10 @@ import { useApplicationEvents, useApplicationMutations, useApplications } from "
 import { cvToText, type ApplicationStatus } from "@/lib/types";
 import { jobFit, type JobFitReport } from "@/lib/job-fit";
 import { daysSince, resultsByCv, trackerCsv, type TrackedJob } from "@/lib/tracker";
-import { applyAgentEnabled, jobSearchEnabled } from "@/lib/features";
+import { applyAgentEnabled, interviewTrainerEnabled, jobSearchEnabled } from "@/lib/features";
 import { useJobSearch, useJobSearchMutations } from "@/hooks/use-job-search";
 import { useApplyQueue } from "@/hooks/use-apply-queue";
+import { usePracticeCounts } from "@/hooks/use-interview";
 import type { FollowUpAnswer } from "@/app/actions/applications";
 import TrackerBoard, { PlusBold, type Fit } from "@/views/tracker/TrackerBoard";
 import JobPanel from "@/views/tracker/JobPanel";
@@ -56,6 +57,7 @@ export default function TrackerPage() {
   const searchMutations = useJobSearchMutations();
   const { result: queue } = useApplyQueue();
   const queued = queue?.ok ? queue.view.rows.filter((r) => ["waiting", "preparing", "ready", "handoff"].includes(r.status)).length : 0;
+  const practised = usePracticeCounts();
 
   const list: TrackedJob[] = useMemo(() => jobs ?? [], [jobs]);
   const cvList = useMemo(() => cvs ?? [], [cvs]);
@@ -218,6 +220,7 @@ export default function TrackerPage() {
             onStatus={(s) => void changeStatus(open.id, s)}
             onSaveDetails={(patch) => save(() => m.updateDetails(open.id, patch))}
             onAskCv={() => askWhichCv(open.id, false)}
+            practice={interviewTrainerEnabled() ? { href: `/app/interview/new?job=${encodeURIComponent(open.id)}`, times: practised[open.id] ?? 0 } : undefined}
             onArchive={() => { void run(() => m.archive(open.id)); setOpenId(null); }}
             onUnarchive={() => void run(() => m.unarchive(open.id))}
             onDelete={() => {
