@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   outputFileTracingIncludes: {
     "/*": ["./certs/**"],
+    // "Ready to send" renders the CV on the server: the fonts are read from disk (fonts.ts)
+    "/app/tracker/send": ["./public/fonts/Inter-*.ttf"],
   },
   turbopack: {
     root: monorepoRoot,

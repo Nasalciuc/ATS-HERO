@@ -98,6 +98,16 @@ export type ArchiveReason = "no_response" | "withdrawn" | "closed" | "other";
 /** One line of a job's history in `application_events`: only added, never rewritten. */
 export type ApplicationEventKind =
   | "created" | "status_changed" | "archived" | "unarchived" | "cv_sent" | "follow_up_snoozed";
+/** The boards a daily search reads (apps/ai /jobs/search through JobSpy). LinkedIn: its public job list only (rule 11). */
+export type JobBoard = "indeed" | "linkedin";
+/**
+ * Where a job is in "Ready to send" (canvas page "Search & agent"):
+ * waiting (queued) → preparing (the agent fills the form) → ready (the person checks it) → sending → sent.
+ * handoff: the person continues on the site; refused: the agent doesn't go there; unconfirmed: Send
+ * was pressed and the page didn't confirm; failed: the agent broke before anything was sent.
+ */
+export type QueueStatus =
+  | "waiting" | "preparing" | "ready" | "sending" | "sent" | "unconfirmed" | "handoff" | "refused" | "failed";
 
 /** Presentation preference stored on a CV. Canonical union lives with the templates. */
 export type { TemplateId } from "../components/cv/templates";

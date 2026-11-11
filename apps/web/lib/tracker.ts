@@ -2,7 +2,7 @@
  * Tracker v2, the rules on data (TRACKER-V2-DESIGN.md §6): pure functions, no model, no network.
  * The screens and the Server Actions share them, and tests/tracker.test.ts holds them.
  */
-import type { ApplicationStatus, ApplyPlatform } from "./types";
+import type { ApplicationSource, ApplicationStatus, ApplyPlatform } from "./types";
 
 /** "Did you hear back?" comes this many days after sending, and again after "Not yet". */
 export const FOLLOW_UP_DAYS = 14;
@@ -38,6 +38,8 @@ export interface TrackedJob {
   archivedAt: number | null;
   cvId: string | null;
   reachedInterview?: boolean;
+  /** where the job came from: "job_search" for the daily search */
+  source?: ApplicationSource | null;
 }
 
 /** The ATS a link goes to, from its host. Null link: unknown. */
@@ -91,14 +93,64 @@ export interface TrackerStats {
   interviews: number;
 }
 
+const isSent = (j: TrackedJob) => j.submittedAt != null && j.status !== "saved";
+/** Any reply, a rejection too. */
+const isAnswered = (j: TrackedJob) => j.status === "interview" || j.status === "offer" || j.status === "rejected";
+/** Reached an interview, even if a rejection came after. */
+const isInterview = (j: TrackedJob) => Boolean(j.reachedInterview) || j.status === "interview" || j.status === "offer";
+
 /** The numbers band. Archived jobs count: a "No reply" is a sent job that got no answer. */
 export function trackerStats(jobs: TrackedJob[]): TrackerStats {
-  const sent = jobs.filter((j) => j.submittedAt != null && j.status !== "saved");
+  const sent = jobs.filter(isSent);
   return {
     sent: sent.length,
-    answered: sent.filter((j) => j.status === "interview" || j.status === "offer" || j.status === "rejected").length,
-    interviews: sent.filter((j) => j.reachedInterview || j.status === "interview" || j.status === "offer").length,
+    answered: sent.filter(isAnswered).length,
+    interviews: sent.filter(isInterview).length,
   };
+}
+
+/** "Which CV gets answers" counts only applications sent at least this many days ago (N4, ATS-LAB-DESIGN.md). */
+export const ANSWER_WAIT_DAYS = 21;
+
+export interface CvResult {
+  /** a CV's id, or "other" for a file made somewhere else */
+  cvId: string;
+  sent: number;
+  answered: number;
+  interviews: number;
+  /** fewer than MIN_SENT_TO_COMPARE sent: the counts show, the comparison doesn't */
+  tooFew: boolean;
+}
+
+export interface CvResults {
+  /** one row per CV that was sent, the most sent first */
+  rows: CvResult[];
+  /** sent jobs, of any age, with no CV marked: the page asks to mark them */
+  unmarked: number;
+}
+
+/**
+ * "Which CV gets answers": for each CV the person sent, how many jobs, answers and interviews.
+ * Only jobs sent ANSWER_WAIT_DAYS or more ago count, so this week's applications don't pull a CV down.
+ * Archived jobs count, like in the numbers band.
+ */
+export function resultsByCv(jobs: TrackedJob[], now: number): CvResults {
+  const sent = jobs.filter(isSent);
+  const old = sent.filter((j) => j.cvId && now - (j.submittedAt as number) >= ANSWER_WAIT_DAYS * DAY_MS);
+  const byCv = new Map<string, TrackedJob[]>();
+  for (const j of old) {
+    const key = j.cvId as string;
+    byCv.set(key, [...(byCv.get(key) ?? []), j]);
+  }
+  const rows = [...byCv].map(([cvId, js]) => ({
+    cvId,
+    sent: js.length,
+    answered: js.filter(isAnswered).length,
+    interviews: js.filter(isInterview).length,
+    tooFew: js.length < MIN_SENT_TO_COMPARE,
+  }));
+  rows.sort((a, b) => b.sent - a.sent || b.answered - a.answered || a.cvId.localeCompare(b.cvId));
+  return { rows, unmarked: sent.filter((j) => !j.cvId).length };
 }
 
 /** Jobs not archived, matching the search on company or role, grouped by status. */

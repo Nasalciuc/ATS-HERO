@@ -9,14 +9,14 @@
  *                        set, a required CV it couldn't attach: the browser closes and the person
  *                        continues from the posting's link)
  *   submitApplication  → "blocked" (an item not gone through, or a new question: nothing was clicked)
- *                      | "sent" | "unconfirmed" | "handoff"
+ *                      | "sent" | "unconfirmed" | "handoff" (`clicked`: before or after Submit was pressed)
  *
  * What the engine never does (§5): press Submit without `confirmedByPerson` for this session and
  * this plan; answer a question itself; get past a CAPTCHA, a code or a login; leave the posting's
  * domains; read the posting's text for instructions (only the controls' own labels feed the plan).
  *
- * No route calls this yet: it runs in the apply lab only (tests/apply-lab), like the job search
- * engine in apps/ai before its screen.
+ * Called by the "Ready to send" queue (lib/apply/queue.ts), behind NEXT_PUBLIC_APPLY_AGENT_ENABLED, and
+ * by the apply lab (tests/apply-lab), which is where it is tested (AGENTS.md rule 11).
  */
 import { mkdtemp } from "node:fs/promises";
 import os from "node:os";
@@ -196,7 +196,11 @@ export type Submitted =
   | { status: "blocked"; reason: "missing"; missing: PersonItem[] }
   /** the form asked something new after the answers went in: the person sees this plan and approves again */
   | { status: "blocked"; reason: "changed"; missing: PersonItem[]; plan: ApplyPlan; digest: string }
-  | { status: "handoff"; reason: Handoff; url: string; screenshot: string | null }
+  /**
+   * the person finishes on the site. `clicked`: Submit was already pressed when the page asked (a
+   * challenge after the click), so the application may have gone out
+   */
+  | { status: "handoff"; reason: Handoff; url: string; screenshot: string | null; clicked: boolean }
   | { status: "sent"; screenshot: string; confirmation: string; pageText: string }
   | { status: "unconfirmed"; screenshot: string | null; pageText: string; error?: string };
 
@@ -272,7 +276,7 @@ export async function submitApplication(session: Session, approval: Approval): P
     const ok = await runner.run(["screenshot", screenshot, "--full"]).then(() => true, () => false);
     session.state = "done";
     await close(runner);
-    return { status: "handoff", reason, url: session.url, screenshot: ok ? screenshot : null };
+    return { status: "handoff", reason, url: session.url, screenshot: ok ? screenshot : null, clicked: false };
   };
 
   // Before the click: the answers go in, and the form is read again. An error here sends nothing.
@@ -318,7 +322,7 @@ export async function submitApplication(session: Session, approval: Approval): P
     screenshot = file;
 
     const blocker = blockerIn(after);
-    if (blocker) return { status: "handoff", reason: blocker, url: session.url, screenshot };
+    if (blocker) return { status: "handoff", reason: blocker, url: session.url, screenshot, clicked: true };
     // what the page said after the click: the person's proof, kept with the screenshot
     const said = pageText.slice(0, 4000);
     // a confirmation counts only if it is new (not the posting's own words) and the form is gone

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  boardColumns, csvCell, followUpDue, FOLLOW_UP_DAYS, platformOf, trackerCsv, trackerStats, type TrackedJob,
+  ANSWER_WAIT_DAYS, boardColumns, csvCell, followUpDue, FOLLOW_UP_DAYS, MIN_SENT_TO_COMPARE, platformOf, resultsByCv,
+  trackerCsv, trackerStats, type TrackedJob,
 } from "@/lib/tracker";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -60,6 +61,44 @@ describe("trackerStats", () => {
       job({ status: "applied", archivedAt: NOW }),
     ]);
     expect(s).toEqual({ sent: 5, answered: 3, interviews: 2 });
+  });
+});
+
+describe("resultsByCv: which CV gets answers", () => {
+  const old = (over: Partial<TrackedJob>) => job({ submittedAt: NOW - ANSWER_WAIT_DAYS * DAY, ...over });
+
+  it("counts sent jobs, answers and interviews per CV, the most sent first", () => {
+    const { rows } = resultsByCv([
+      old({ cvId: "base", status: "applied" }),
+      old({ cvId: "base", status: "rejected" }),
+      old({ cvId: "tailored", status: "interview" }),
+      old({ cvId: "tailored", status: "rejected", reachedInterview: true }),
+      old({ cvId: "tailored", status: "applied", archivedAt: NOW - DAY }),
+      old({ cvId: "other", status: "offer" }),
+    ], NOW);
+    expect(rows).toEqual([
+      { cvId: "tailored", sent: 3, answered: 2, interviews: 2, tooFew: true },
+      { cvId: "base", sent: 2, answered: 1, interviews: 0, tooFew: true },
+      { cvId: "other", sent: 1, answered: 1, interviews: 1, tooFew: true },
+    ]);
+  });
+
+  it(`leaves out jobs sent less than ${ANSWER_WAIT_DAYS} days ago, and saved ones`, () => {
+    const { rows } = resultsByCv([
+      job({ cvId: "base", submittedAt: NOW - (ANSWER_WAIT_DAYS - 1) * DAY, status: "rejected" }),
+      job({ cvId: "base", status: "saved", submittedAt: null }),
+    ], NOW);
+    expect(rows).toEqual([]);
+  });
+
+  it("counts sent jobs with no CV marked, of any age, so the page can ask", () => {
+    const r = resultsByCv([old({ cvId: null }), job({ cvId: null, submittedAt: NOW - DAY }), job({ status: "saved", submittedAt: null })], NOW);
+    expect(r).toEqual({ rows: [], unmarked: 2 });
+  });
+
+  it(`compares only from ${MIN_SENT_TO_COMPARE} sent`, () => {
+    const many = Array.from({ length: MIN_SENT_TO_COMPARE }, () => old({ cvId: "base" }));
+    expect(resultsByCv(many, NOW).rows[0]).toMatchObject({ sent: MIN_SENT_TO_COMPARE, tooFew: false });
   });
 });
 

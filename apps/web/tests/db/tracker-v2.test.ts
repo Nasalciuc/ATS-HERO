@@ -263,7 +263,9 @@ describe("Tracker v2: the migration", () => {
     await cp("./drizzle", folder, { recursive: true });
     const journalPath = path.join(folder, "meta", "_journal.json");
     const journal = JSON.parse(await readFile(journalPath, "utf8"));
-    journal.entries = journal.entries.filter((e: { tag: string }) => !e.tag.startsWith("0002_"));
+    // v1 is 0000–0001 only: a later migration left in would be the newest applied, and the
+    // migrator skips any migration older than the newest one it has seen
+    journal.entries = journal.entries.filter((e: { idx: number }) => e.idx < 2);
     await writeFile(journalPath, JSON.stringify(journal));
 
     const client = new PGlite();

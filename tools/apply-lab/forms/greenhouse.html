@@ -35,11 +35,14 @@
 <div id="received" hidden><h2></h2><pre></pre></div>
 <script src="_done.js"></script>
 <script>
-document.getElementById("application_form").addEventListener("submit", (e) => {
+document.getElementById("application_form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
   const d = Object.fromEntries(new FormData(f));
-  d.resume = f.resume.files[0] ? f.resume.files[0].name : "";
+  const cv = f.resume.files[0];
+  d.resume = cv ? cv.name : "";
+  // a real board uploads the file's bytes, not only its name: read the first ones, as it would
+  d.resume_starts = cv ? await cv.slice(0, 5).text().catch(() => "unreadable") : "";
   d.cover_letter_file = f.cover_letter_file.files[0] ? f.cover_letter_file.files[0].name : "";
   labShow(d, "Thank you for applying! We have received your application.");
 });

@@ -2,7 +2,9 @@
 /**
  * Tracker v2: a job's card (Claude Design canvas "ATS Hero Tracker v2", Desktop · Job card). A
  * panel on the right on a computer, the whole screen on a phone. What isn't built yet (the agent,
- * its screenshots) has no place here until it is (rule 10).
+ * its screenshots) has no place here until it is (rule 10). It is drawn with the builder's grey
+ * card for what the person sets or types, and the score page's rows for what the post asks for
+ * (PROVISIONAL, AGENTS.md rule 6: Liubovi draws or checks the frame).
  */
 import { useEffect, useState } from "react";
 import { Check, Close } from "@/components/icons";
@@ -74,14 +76,14 @@ export default function JobPanel(p: JobPanelProps) {
           <h2 className="trk-panel__role">{job.role}</h2>
           <p className="trk-panel__company">{job.company}{job.location ? ` · ${job.location}` : ""}</p>
           <p className="trk-panel__links">
-            <span className="trk-chip">{PLATFORM_LABEL[platform]}</span>
+            <span className="trk-panel__site">{PLATFORM_LABEL[platform]}</span>
             {job.url && <a href={job.url} target="_blank" rel="noreferrer noopener" className="trk-a">Open the post</a>}
           </p>
         </div>
         <button type="button" className="trk-round trk-panel__close" aria-label="Close" onClick={p.onClose}><Close size={18} aria-hidden="true" /></button>
       </div>
 
-      <div className="trk-panel__status">
+      <div className="trk-fcard trk-panel__status">
         <label className="trk-field">
           <span>Status</span>
           <select value={job.status} onChange={(e) => p.onStatus(e.target.value as ApplicationStatus)}>
@@ -96,27 +98,30 @@ export default function JobPanel(p: JobPanelProps) {
       <section className="trk-panel__section" aria-label="Requirements">
         {p.fit && reqs.length > 0 ? (
           <>
-            <h3 className="trk-label">Requirements · {p.fit.required.met} of {p.fit.required.total} required met</h3>
+            <h3 className="trk-panel__h">
+              Requirements
+              <span className={`trk-state ${p.fit.required.met === p.fit.required.total ? "is-good" : "is-fair"}`}>
+                {p.fit.required.met} of {p.fit.required.total} required met
+              </span>
+            </h3>
             {p.fitAgainst && <p className="trk-panel__against">Checked against {p.fitAgainst}</p>}
+            {/* the score page's rows: a ring, what the post asks for with its own words under it, and the state in a word */}
             <ul className="trk-reqs">
               {reqs.map((r, i) => (
-                <li key={i} className="trk-req">
-                  {r.status === "met" ? (
-                    <Check size={18} role="img" className="trk-req__icon trk-req__icon--met" aria-label="Met" />
-                  ) : (
-                    <Close size={18} role="img" className="trk-req__icon trk-req__icon--missing" aria-label={r.status === "unknown" ? "Not shown in your CV" : "Missing"} />
-                  )}
+                <li key={i} className={`trk-req trk-req--${r.status === "met" ? "met" : "open"}`}>
+                  <span className="trk-req__icon" aria-hidden="true">{r.status === "met" ? <Check size={18} /> : <Close size={18} />}</span>
                   <span className="trk-req__text">
-                    <span><strong>{r.label}</strong> <span className="trk-muted">{r.required ? "required" : "nice to have"}</span></span>
+                    <span className="trk-req__label"><strong>{r.label}</strong> <span className="trk-muted">{r.required ? "required" : "nice to have"}</span></span>
                     <span className="trk-req__quote">“{r.quote}”</span>
                   </span>
+                  <span className="trk-req__state">{r.status === "met" ? "Met" : r.status === "unknown" ? "Not shown in your CV" : "Missing"}</span>
                 </li>
               ))}
             </ul>
           </>
         ) : (
           <>
-            <h3 className="trk-label">Requirements</h3>
+            <h3 className="trk-panel__h">Requirements</h3>
             <p className="trk-panel__note">
               {!job.description
                 ? "Add the post’s text to see what it asks for, checked against your CV."
@@ -127,23 +132,24 @@ export default function JobPanel(p: JobPanelProps) {
           </>
         )}
         {editingPost ? (
-          <div className="trk-panel__post">
+          <div className="trk-fcard trk-panel__post">
             <label className="trk-field">
               <span>The post’s text</span>
               <textarea rows={6} value={post} maxLength={30000} onChange={(e) => setPost(e.target.value)} />
             </label>
+            {unsaved === "post" && <p className="trk-error" role="alert">The post’s text didn’t save. Try again.</p>}
+            {/* the way on at the right, as on the builder's pages */}
             <div className="trk-panel__actions">
+              <button type="button" className="topbtn topbtn--ghost" onClick={() => { setPost(job.description ?? ""); setEditingPost(false); setUnsaved(null); }}>Cancel</button>
               <button type="button" className="topbtn topbtn--dark" onClick={async () => {
                 const ok = await p.onSaveDetails({ description: post });
                 setUnsaved(ok ? null : "post");
                 if (ok) setEditingPost(false);
               }}>Save</button>
-              <button type="button" className="topbtn topbtn--ghost" onClick={() => { setPost(job.description ?? ""); setEditingPost(false); setUnsaved(null); }}>Cancel</button>
             </div>
-            {unsaved === "post" && <p className="trk-error" role="alert">The post’s text didn’t save. Try again.</p>}
           </div>
         ) : (
-          <button type="button" className="trk-link" onClick={() => setEditingPost(true)}>
+          <button type="button" className="trk-pill" onClick={() => setEditingPost(true)}>
             {job.description ? "Edit the post’s text" : "Add the post’s text"}
           </button>
         )}
@@ -151,7 +157,7 @@ export default function JobPanel(p: JobPanelProps) {
 
       {job.status === "saved" && job.url && (
         <section className="trk-panel__section" aria-label="Apply">
-          <h3 className="trk-label">Apply</h3>
+          <h3 className="trk-panel__h">Apply</h3>
           <p className="trk-panel__note">
             <a href={job.url} target="_blank" rel="noreferrer noopener" className="trk-a">Apply on the site</a>, then move the job to Applied.
           </p>
@@ -160,7 +166,7 @@ export default function JobPanel(p: JobPanelProps) {
 
       {job.status !== "saved" && (
         <section className="trk-panel__section" aria-label="CV sent">
-          <h3 className="trk-label">CV sent</h3>
+          <h3 className="trk-panel__h">CV sent</h3>
           <p className="trk-panel__cv">
             {p.cvSentTitle ? <strong>{p.cvSentTitle}</strong> : <span className="trk-muted">Not marked yet</span>}
             <button type="button" className="trk-link" onClick={p.onAskCv}>{p.cvSentTitle ? "Change" : "What did you send?"}</button>
@@ -169,7 +175,7 @@ export default function JobPanel(p: JobPanelProps) {
       )}
 
       <section className="trk-panel__section" aria-label="History">
-        <h3 className="trk-label">History</h3>
+        <h3 className="trk-panel__h">History</h3>
         <ol className="trk-history">
           {[...(p.events ?? [])].reverse().map((e) => (
             <li key={e.id}><span className="trk-history__when">{shortDate(e.at)}</span><span>{eventText(e)}</span></li>
@@ -177,20 +183,22 @@ export default function JobPanel(p: JobPanelProps) {
         </ol>
       </section>
 
-      <label className="trk-field">
-        <span>Notes</span>
-        <textarea
-          rows={3}
-          value={notes}
-          maxLength={400}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={async () => {
-            if (notes === (job.notes ?? "")) return;
-            setUnsaved((await p.onSaveDetails({ notes })) ? null : "notes");
-          }}
-        />
-      </label>
-      {unsaved === "notes" && <p className="trk-error" role="alert">Your notes didn’t save. Click outside the box to try again.</p>}
+      <div className="trk-fcard">
+        <label className="trk-field">
+          <span>Notes</span>
+          <textarea
+            rows={3}
+            value={notes}
+            maxLength={400}
+            onChange={(e) => setNotes(e.target.value)}
+            onBlur={async () => {
+              if (notes === (job.notes ?? "")) return;
+              setUnsaved((await p.onSaveDetails({ notes })) ? null : "notes");
+            }}
+          />
+        </label>
+        {unsaved === "notes" && <p className="trk-error" role="alert">Your notes didn’t save. Click outside the box to try again.</p>}
+      </div>
 
       <div className="trk-panel__foot">
         {job.archivedAt

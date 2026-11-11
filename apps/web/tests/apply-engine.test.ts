@@ -234,7 +234,7 @@ describe("sending", () => {
 
   it("does not click when the form didn't take an answer", async () => {
     const { f, r } = await prepared({ reread: FORM.replace("ref=e5]: Select…", "ref=e5]: No") });
-    expect(await submitApplication(r.session, approve(r, OK))).toMatchObject({ status: "handoff", reason: "unsupported_field", url: LAB });
+    expect(await submitApplication(r.session, approve(r, OK))).toMatchObject({ status: "handoff", reason: "unsupported_field", url: LAB, clicked: false });
     expect(f.verbs()).not.toContain("click");
   });
 
@@ -272,7 +272,8 @@ describe("sending", () => {
 
   it("hands over at a code asked for after the click", async () => {
     const { r } = await prepared({ afterSnapshot: `- textbox "Verification code" [ref=e1]`, afterText: "Enter the code we sent." });
-    expect(await submitApplication(r.session, approve(r, OK))).toMatchObject({ status: "handoff", reason: "email_code", url: LAB });
+    // Submit was pressed: the application may have gone out, and the queue counts it
+    expect(await submitApplication(r.session, approve(r, OK))).toMatchObject({ status: "handoff", reason: "email_code", url: LAB, clicked: true });
   });
 
   it("after the click it never throws: an error is reported as unconfirmed", async () => {

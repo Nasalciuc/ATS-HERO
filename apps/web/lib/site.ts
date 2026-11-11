@@ -14,5 +14,7 @@ export const NOINDEX_ROUTES = [
   "/app/jobfit",
   "/app/score",
   "/app/tracker",
+  "/app/tracker/send",
+  "/app/tracker/send/[id]",
   "/sso-callback",
 ] as const;

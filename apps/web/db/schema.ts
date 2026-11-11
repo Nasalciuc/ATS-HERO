@@ -1,10 +1,10 @@
-import { pgTable, text, jsonb, timestamp, doublePrecision, integer,
+import { pgTable, text, jsonb, timestamp, doublePrecision, integer, boolean,
          index, uniqueIndex, check } from "drizzle-orm/pg-core";
 import { relations, sql, type InferSelectModel } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import type {
   CvData, ScanKind, ScoreReport, JobFitReport, TemplateId, ApplicationStatus,
-  ApplicationSource, ApplyPlatform, AppliedVia, ArchiveReason, ApplicationEventKind,
+  ApplicationSource, ApplyPlatform, AppliedVia, ArchiveReason, ApplicationEventKind, JobBoard, QueueStatus,
 } from "@/lib/types";
 
 const id = () => text("id").primaryKey().$defaultFn(() => nanoid());
@@ -146,6 +146,82 @@ export const applicationEvents = pgTable("application_events", {
   index("app_events_by_owner").on(t.ownerId),
 ]);
 
+/**
+ * Daily search (canvas "ATS Hero Tracker v2", page "Search & agent"): one per owner. Each morning
+ * the new postings that fit the CV best go to Saved. Only the title and the place reach the boards.
+ */
+export const jobSearches = pgTable("job_searches", {
+  id: id(),
+  ownerId: text("owner_id").notNull(),
+  /** the job title searched for, e.g. "Data Analyst" */
+  searchTerm: text("search_term").notNull(),
+  /** the country as JobSpy names it for Indeed ("romania"); `lib/job-search.ts` lists them */
+  country: text("country").notNull(),
+  city: text("city"),
+  remoteOnly: boolean("remote_only").notNull().default(false),
+  boards: jsonb("boards").$type<JobBoard[]>().notNull(),
+  /** at most this many new jobs go to Saved a day */
+  perDay: integer("per_day").notNull().default(10),
+  /** the CV the postings are checked against; null: the one changed last */
+  cvId: text("cv_id"),
+  enabled: boolean("enabled").notNull().default(true),
+  /** the last run, for "Last search": when, how many found, how many added, what failed */
+  lastRunAt: timestamp("last_run_at", { withTimezone: true }),
+  lastFound: integer("last_found"),
+  lastAdded: integer("last_added"),
+  lastError: text("last_error"),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [
+  uniqueIndex("job_searches_by_owner").on(t.ownerId),
+  check("job_searches_per_day", sql`${t.perDay} BETWEEN 1 AND 20`),
+]);
+
+/**
+ * "Ready to send" (canvas page "Search & agent"): the jobs a person queued for the apply agent, one
+ * row per job. No answers, no screenshots, nothing the form showed: only where the job is and when.
+ */
+export const applyQueue = pgTable("apply_queue", {
+  id: id(),
+  ownerId: text("owner_id").notNull(),
+  applicationId: text("application_id").notNull(),
+  /** the CV the agent attaches and takes the contact details from */
+  cvId: text("cv_id").notNull(),
+  status: text("status").$type<QueueStatus>().notNull().default("waiting"),
+  /** why it stopped: a handoff (captcha, login…), a refusal (workday, linkedin…), or what broke */
+  reason: text("reason"),
+  /** the form stays open for the person until then */
+  readyUntil: timestamp("ready_until", { withTimezone: true }),
+  /** Send was pressed: counts against the daily limit from here */
+  sendingAt: timestamp("sending_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  /** the words on the page that confirmed it ("Thank you for applying"), nothing else of the page */
+  confirmation: text("confirmation"),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [
+  index("apply_queue_by_owner").on(t.ownerId),
+  uniqueIndex("apply_queue_by_application").on(t.applicationId),
+]);
+
+/** The daily limit the person set for the agent's applications (1 to 10, 5 until they change it). */
+export const applySettings = pgTable("apply_settings", {
+  ownerId: text("owner_id").primaryKey(),
+  dailyLimit: integer("daily_limit").notNull().default(5),
+  /**
+   * Sends pressed on `countedDay` (a UTC day's start). Kept here, not counted from the queue: taking
+   * a sent job out of the queue, or deleting it, doesn't give the day's sends back.
+   */
+  countedDay: timestamp("counted_day", { withTimezone: true }),
+  sentCount: integer("sent_count").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [
+  check("apply_settings_daily_limit", sql`${t.dailyLimit} BETWEEN 1 AND 10`),
+]);
+
 /* ── relations (app-level; Ep5-7 pattern; NO hard FK to Clerk identity) ── */
 export const usersRelations = relations(users, ({ many }) => ({
   cvs: many(cvs),
@@ -172,3 +248,5 @@ export type Cv   = InferSelectModel<typeof cvs>;
 export type Scan = InferSelectModel<typeof scans>;
 export type Application = InferSelectModel<typeof applications>;
 export type ApplicationEvent = InferSelectModel<typeof applicationEvents>;
+export type JobSearch = InferSelectModel<typeof jobSearches>;
+export type QueueItem = InferSelectModel<typeof applyQueue>;

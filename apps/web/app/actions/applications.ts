@@ -2,11 +2,12 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { db } from "@/db";
-import { applications, applicationEvents, cvs, type Application } from "@/db/schema";
+import { applications, applicationEvents, applyQueue, cvs, type Application } from "@/db/schema";
 import { and, eq, desc, asc, inArray, isNull, isNotNull } from "drizzle-orm";
 import { getOwnerId } from "./_shared";
 import { APPLICATION_STATUSES, type ApplicationStatus, type ArchiveReason } from "@/lib/types";
 import { withLog } from "@/lib/log";
+import { dropForm } from "@/lib/apply/sessions";
 import { jobUrlKey, safeJobUrl, MAX_JOB_URL_CHARS } from "@/lib/job-url";
 import { FOLLOW_UP_DAYS, MAX_DESCRIPTION_CHARS } from "@/lib/tracker";
 
@@ -329,6 +330,12 @@ export async function removeApplication(id: string) {
       if (!deleted.length) throw new Error("Not found");
       await tx.delete(applicationEvents)
         .where(and(eq(applicationEvents.applicationId, id), eq(applicationEvents.ownerId, ownerId)));
+      const queued = await tx.delete(applyQueue).where(and(eq(applyQueue.applicationId, id), eq(applyQueue.ownerId, ownerId)))
+        .returning({ id: applyQueue.id });
+      return queued;
+    }).then(async (queued) => {
+      // a form the agent filled for this job closes, with its CV and screenshots
+      for (const q of queued) await dropForm(q.id);
       return { ok: true };
     });
   });
