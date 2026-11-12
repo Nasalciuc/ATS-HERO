@@ -1,10 +1,10 @@
 // The site's security headers, built in one place so next.config.ts stays small and tests can check
 // them. The Content-Security-Policy is the same everywhere except that, once the cookie banner is on
-// (lib/consent.ts), the public pages also allow the Google Tag Manager and Google Analytics hosts.
+// (lib/consent.ts), the public pages also allow the Google Tag Manager, Google Analytics and PostHog hosts.
 // /app, /api and /dev never get them (AGENTS.md rule 3).
 // Relative imports on purpose: next.config.ts imports this file and has no "@/" alias.
 import { clerkFrontendApi } from "./clerk-config";
-import { GOOGLE_CSP_HOSTS, consentEnabled } from "./consent";
+import { ANALYTICS_CSP_HOSTS, consentEnabled } from "./consent";
 import { PUBLIC_ROUTES } from "./site";
 
 type Header = { key: string; value: string };
@@ -16,14 +16,14 @@ export function isPreviewDeploy(deployEnv: string | undefined = process.env.VERC
 export type HeaderRule = { source: string; headers: Header[] };
 
 export function buildCsp({
-  google = false,
+  analytics = false,
   clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-}: { google?: boolean; clerkKey?: string } = {}): string {
+}: { analytics?: boolean; clerkKey?: string } = {}): string {
   // React's dev build needs eval() for debugging features. Production stays strict —
   // never widen this branch to cover prod.
   const devEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
-  const gScript = google ? " " + GOOGLE_CSP_HOSTS.scriptSrc.join(" ") : "";
-  const gConnect = google ? " " + GOOGLE_CSP_HOSTS.connectSrc.join(" ") : "";
+  const aScript = analytics ? " " + ANALYTICS_CSP_HOSTS.scriptSrc.join(" ") : "";
+  const aConnect = analytics ? " " + ANALYTICS_CSP_HOSTS.connectSrc.join(" ") : "";
   // Clerk: exactly the host the publishable key names (clerk.atshero.app on the production instance,
   // one name under clerk.accounts.dev on a development one), no wildcard. No key, no Clerk: guest mode
   // loads nothing from Clerk. The build reads the key, so each Vercel environment gets its own host.
@@ -38,9 +38,9 @@ export function buildCsp({
     // pages with yoga-layout 3, which is WebAssembly-only (no asm.js fallback). Without it the
     // browser refuses WebAssembly.instantiate() and "Download PDF" fails in production.
     // It permits compiling WASM only — eval()/new Function() stay blocked.
-    `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval}${clerk} https://challenges.cloudflare.com${gScript}`,
-    // No clerk-telemetry.com: Clerk's telemetry is off (app/layout.tsx); the privacy page lists Google Analytics only, opt-in.
-    "connect-src 'self'" + clerk + " " + (process.env.NEXT_PUBLIC_AI_URL ?? "") + gConnect,
+    `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${devEval}${clerk} https://challenges.cloudflare.com${aScript}`,
+    // No clerk-telemetry.com: Clerk's telemetry is off (app/layout.tsx); the privacy page lists only Google Analytics and PostHog, opt-in.
+    "connect-src 'self'" + clerk + " " + (process.env.NEXT_PUBLIC_AI_URL ?? "") + aConnect,
     "img-src 'self' data: blob: https:",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
@@ -54,7 +54,7 @@ export function buildCsp({
 
 /**
  * Every path gets the base headers; when the banner is on, each public page gets a second rule with the
- * Google hosts. Next.js lets the later rule's Content-Security-Policy win for the paths it matches, and the
+ * Google and PostHog hosts. Next.js lets the later rule's Content-Security-Policy win for the paths it matches, and the
  * public paths are exact ("/" matches only the home page), so nothing under /app is ever matched.
  */
 export function securityHeaders({
@@ -72,7 +72,7 @@ export function securityHeaders({
   if (isPreviewDeploy(deployEnv)) base.push({ key: "X-Robots-Tag", value: "noindex, nofollow" });
   const rules: HeaderRule[] = [{ source: "/(.*)", headers: base }];
   if (consent) {
-    const csp = buildCsp({ google: true });
+    const csp = buildCsp({ analytics: true });
     for (const route of PUBLIC_ROUTES) rules.push({ source: route, headers: [{ key: "Content-Security-Policy", value: csp }] });
   }
   return rules;

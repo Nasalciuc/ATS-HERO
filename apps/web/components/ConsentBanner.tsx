@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import * as CookieConsent from "vanilla-cookieconsent";
 import "vanilla-cookieconsent/dist/cookieconsent.css";
 import {
+  ANALYTICS_CONSENT_DENIED_EVENT,
   CONSENT_MODE_DENIED,
   VIRTUAL_PAGE_VIEW_EVENT,
   analyticsPageLocation,
@@ -20,8 +21,8 @@ import {
 // hides it when the visitor moves into /app. The library keeps the choice in the cc_cookie cookie and
 // hides the banner from crawlers and automated browsers by itself.
 //
-// Google Tag Manager (which holds the GA4 tag) loads only after the visitor allows analytics ("basic"
-// Consent Mode: nothing from Google before the choice), and only on a public page. Once it is loaded it
+// Google Tag Manager (which holds the GA4 and PostHog tags) loads only after the visitor allows analytics
+// ("basic" Consent Mode: nothing from Google or PostHog before the choice), and only on a public page. Once it is loaded it
 // cannot be unloaded, so moving into /app reloads the page: /app starts clean, without it (AGENTS.md rule 3).
 
 declare global {
@@ -67,8 +68,10 @@ function applyConsent(): void {
   if (!isConsentRoute(window.location.pathname)) return;
   const mode = consentModeFor(CookieConsent.getUserPreferences().acceptedCategories);
   if (gtmLoaded) {
-    // A later Decline: Google stops storing anything, and the library deletes the _ga cookies (autoClear).
+    // A later Decline: Google stops storing anything, the GTM tag "PostHog - opt out" stops posthog-js and
+    // clears its storage, and the library deletes the _ga and ph_ cookies (autoClear).
     gtag("consent", "update", mode);
+    if (mode.analytics_storage === "denied") window.dataLayer!.push({ event: ANALYTICS_CONSENT_DENIED_EVENT });
   } else if (mode.analytics_storage === "granted") {
     if (documentStartedPublic) loadGtm(mode);
     else window.location.reload();

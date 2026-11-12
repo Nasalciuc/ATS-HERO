@@ -15,12 +15,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import CookieSettingsButton from "@/components/CookieSettingsButton";
 import { NOINDEX_ROUTES, PUBLIC_ROUTES } from "@/lib/site";
 import {
+  ANALYTICS_CONSENT_DENIED_EVENT,
+  ANALYTICS_CSP_HOSTS,
   CATEGORY_ANALYTICS,
   CATEGORY_NECESSARY,
   CONSENT_COOKIE,
   CONSENT_DAYS,
   CONSENT_MODE_DENIED,
   GOOGLE_CSP_HOSTS,
+  POSTHOG_CSP_HOSTS,
   PRIVACY_LISTS_CONSENT,
   analyticsPageLocation,
   consentConfig,
@@ -175,9 +178,12 @@ describe("the banner's configuration", () => {
     expect(en.consentModal.description).toContain('href="/privacy"');
   });
 
-  it("names the provider one layer down, in the settings (AGENTS.md rule 11)", () => {
+  it("names the providers one layer down, in the settings (AGENTS.md rule 11)", () => {
     const sections = (config.language.translations.en as { preferencesModal: { sections: { description?: string }[] } }).preferencesModal.sections;
-    expect(sections.map((s) => s.description).join(" ")).toMatch(/Google Analytics/);
+    const text = sections.map((s) => s.description).join(" ");
+    expect(text).toMatch(/Google Analytics/);
+    expect(text).toMatch(/PostHog/);
+    expect(text).toMatch(/_ga and ph_ cookies/);
   });
 
   it("explains both categories in the settings", () => {
@@ -185,12 +191,13 @@ describe("the banner's configuration", () => {
     expect(linked).toEqual([CATEGORY_NECESSARY, CATEGORY_ANALYTICS]);
   });
 
-  it("removes Google's cookies when analytics is rejected", () => {
+  it("removes Google's and PostHog's cookies when analytics is rejected", () => {
     const cookies = config.categories?.[CATEGORY_ANALYTICS]?.autoClear?.cookies ?? [];
     const names = (n: string) => cookies.some((c) => (c.name instanceof RegExp ? c.name.test(n) : c.name === n));
     expect(names("_ga")).toBe(true);
     expect(names("_ga_ABC1234XYZ")).toBe(true);
     expect(names("_gid")).toBe(true);
+    expect(names("ph_phc_ABC123_posthog")).toBe(true);
     expect(names("cc_cookie")).toBe(false);
     expect(names("__session")).toBe(false);
   });
@@ -198,9 +205,9 @@ describe("the banner's configuration", () => {
   it("also clears them on the site's own domain when the page is on a subdomain such as staging", () => {
     const domains = (host: string) =>
       (consentConfig(host).categories?.[CATEGORY_ANALYTICS]?.autoClear?.cookies ?? []).map((c) => c.domain);
-    expect(domains("staging.atshero.app")).toEqual([undefined, undefined, "atshero.app", "atshero.app"]);
+    expect(domains("staging.atshero.app")).toEqual([undefined, undefined, undefined, "atshero.app", "atshero.app", "atshero.app"]);
     for (const host of ["atshero.app", "www.atshero.app", "ats-hero-git-x.vercel.app", "localhost", "evilatshero.app"]) {
-      expect(domains(host)).toEqual([undefined, undefined]);
+      expect(domains(host)).toEqual([undefined, undefined, undefined]);
     }
   });
 });
@@ -236,6 +243,15 @@ describe("Google Tag Manager loads only through a checked container ID", () => {
     expect(banner).toMatch(/const documentStartedPublic = [^;]*isConsentRoute\(window\.location\.pathname\)/);
     expect(banner).toMatch(/if \(documentStartedPublic\) loadGtm\(mode\);\s*else window\.location\.reload\(\);/);
   });
+
+  it("tells GTM about a Decline after Allow, so the PostHog tag stops at once", () => {
+    const banner = fs.readFileSync(path.join(WEB, "components/ConsentBanner.tsx"), "utf8");
+    expect(ANALYTICS_CONSENT_DENIED_EVENT).toBe("analytics_consent_denied");
+    const loaded = banner.slice(banner.indexOf("if (gtmLoaded) {"), banner.indexOf("} else if (mode.analytics_storage"));
+    expect(loaded).toMatch(
+      /if \(mode\.analytics_storage === "denied"\) window\.dataLayer!\.push\(\{ event: ANALYTICS_CONSENT_DENIED_EVENT \}\);/,
+    );
+  });
 });
 
 describe("page addresses sent to Google Analytics", () => {
@@ -266,36 +282,43 @@ describe("the CSP (AGENTS.md rule 3)", () => {
     rule.headers.find((h) => h.key === "Content-Security-Policy")?.value ?? "";
   const directive = (csp: string, name: string) => csp.split("; ").find((d) => d.startsWith(name + " ")) ?? "";
 
-  it("is unchanged while the banner is off: one rule, no Google host", () => {
+  it("is unchanged while the banner is off: one rule, no Google or PostHog host", () => {
     const rules = securityHeaders({ consent: false });
     expect(rules).toHaveLength(1);
     expect(rules[0].source).toBe("/(.*)");
-    expect(cspOf(rules[0])).not.toMatch(/google/);
+    expect(cspOf(rules[0])).not.toMatch(/google|posthog/);
   });
 
-  it("adds the Google hosts on the public pages only, once the banner is on", () => {
+  it("adds the Google and PostHog hosts on the public pages only, once the banner is on", () => {
     const rules = securityHeaders({ consent: true });
-    expect(cspOf(rules[0])).not.toMatch(/google/);
+    expect(cspOf(rules[0])).not.toMatch(/google|posthog/);
     const extra = rules.slice(1);
     expect(extra.map((r) => r.source).sort()).toEqual([...PUBLIC_ROUTES].sort());
     for (const r of extra) {
       const csp = cspOf(r);
-      for (const host of GOOGLE_CSP_HOSTS.scriptSrc) expect(directive(csp, "script-src")).toContain(host);
-      for (const host of GOOGLE_CSP_HOSTS.connectSrc) expect(directive(csp, "connect-src")).toContain(host);
+      for (const host of ANALYTICS_CSP_HOSTS.scriptSrc) expect(directive(csp, "script-src")).toContain(host);
+      for (const host of ANALYTICS_CSP_HOSTS.connectSrc) expect(directive(csp, "connect-src")).toContain(host);
     }
     // Exact paths only: nothing under /app, /api or /dev can match a public rule.
     for (const r of extra) expect(r.source).toMatch(/^\/[a-z]*$/);
   });
 
-  it("lists every Google host by name: https, no wildcard", () => {
-    for (const host of [...GOOGLE_CSP_HOSTS.scriptSrc, ...GOOGLE_CSP_HOSTS.connectSrc]) {
+  it("lists every Google and PostHog host by name: https, no wildcard", () => {
+    for (const host of [...ANALYTICS_CSP_HOSTS.scriptSrc, ...ANALYTICS_CSP_HOSTS.connectSrc]) {
       expect(host).toMatch(/^https:\/\/[a-z0-9.-]+$/);
+    }
+    expect(ANALYTICS_CSP_HOSTS.scriptSrc).toEqual([...GOOGLE_CSP_HOSTS.scriptSrc, ...POSTHOG_CSP_HOSTS.scriptSrc]);
+    expect(ANALYTICS_CSP_HOSTS.connectSrc).toEqual([...GOOGLE_CSP_HOSTS.connectSrc, ...POSTHOG_CSP_HOSTS.connectSrc]);
+    // PostHog's US cloud only: no EU host, no catch-all.
+    for (const host of [...POSTHOG_CSP_HOSTS.scriptSrc, ...POSTHOG_CSP_HOSTS.connectSrc]) {
+      expect(host).toMatch(/^https:\/\/us(-assets)?\.i\.posthog\.com$/);
     }
   });
 
-  it("keeps the rest of the policy the same with or without Google", () => {
-    const strip = (csp: string) => csp.replace(/ https:\/\/[a-z0-9.-]*google[a-z0-9.-]*\.com/g, "");
-    expect(strip(buildCsp({ google: true }))).toBe(buildCsp());
+  it("keeps the rest of the policy the same with or without the analytics hosts", () => {
+    const strip = (csp: string) =>
+      csp.replace(/ https:\/\/[a-z0-9.-]*google[a-z0-9.-]*\.com/g, "").replace(/ https:\/\/us(-assets)?\.i\.posthog\.com/g, "");
+    expect(strip(buildCsp({ analytics: true }))).toBe(buildCsp());
   });
 });
 
