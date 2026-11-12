@@ -31,7 +31,7 @@ declare global {
   }
 }
 
-// One start for the whole page life, shared by the banner and the "Cookie settings" button, so a click
+// One start for the whole page life, shared by the banner and the "Privacy settings" button, so a click
 // that comes while the library is still starting waits for it instead of starting it twice.
 let ready: Promise<void> | null = null;
 let gtmLoaded = false;

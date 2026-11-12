@@ -125,7 +125,7 @@ const sections: LegalSection[] = [
             ["Read a job post from a link you paste in Check Job Fit", "The link, and the page it leads to (neither is kept)", "You asked us to (our agreement with you)"],
             ["Keep the service safe and working: request logs, sign-in checks, rate limits, the bot check", "IP address, browser, guest code, account and CV IDs", "Our legitimate interest in a service that works and isn’t abused"],
             ["Backups", "Everything in our database", "Our legitimate interest in not losing your work"],
-            ["Count visits to the public pages and see which ones are used (Google Analytics and PostHog)", "Pages you open on the public site, the site that sent you, device, browser, approximate location (country and city, worked out from your IP address), what you click on those pages and the text of what you click, the IDs in the _ga and ph_ cookies", "Your consent, given with Allow in the cookie banner. You can withdraw it at any time in Cookie settings"],
+            ["Count visits to the public pages and see which ones are used (Google Analytics and PostHog)", "Pages you open on the public site, the site that sent you, device, browser, approximate location (country and city, worked out from your IP address), what you click on those pages and the text of what you click, the IDs in the _ga and ph_ cookies", "Your consent, given with Allow in the cookie banner. You can withdraw it at any time in Privacy settings"],
           ]}
         />
         <p>We don’t use your data for advertising, and nothing on ATS Hero makes automated decisions about you.</p>

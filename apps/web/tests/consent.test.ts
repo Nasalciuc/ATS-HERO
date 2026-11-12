@@ -119,7 +119,7 @@ describe("the Privacy page comes first (AGENTS.md rule 11)", () => {
     expect(pageListsThem).toBe(PRIVACY_LISTS_CONSENT);
   });
 
-  it("puts the Cookie settings control on the Privacy page, and it renders nothing while the banner is off", () => {
+  it("puts the Privacy settings control on the Privacy page, and it renders nothing while the banner is off", () => {
     expect(privacy).toContain("<CookieSettingsButton />");
     vi.stubEnv("NEXT_PUBLIC_GTM_ID", "");
     expect(renderToStaticMarkup(createElement(CookieSettingsButton))).toBe("");
@@ -178,12 +178,15 @@ describe("the banner's configuration", () => {
     expect(en.consentModal.description).toContain('href="/privacy"');
   });
 
-  it("names the providers one layer down, in the settings (AGENTS.md rule 11)", () => {
-    const sections = (config.language.translations.en as { preferencesModal: { sections: { description?: string }[] } }).preferencesModal.sections;
-    const text = sections.map((s) => s.description).join(" ");
+  it("names the providers one layer down, in the settings, and links to the Privacy page for the rest (AGENTS.md rule 11)", () => {
+    const sections = (config.language.translations.en as {
+      preferencesModal: { sections: { title?: string; description?: string }[] };
+    }).preferencesModal.sections;
+    const text = sections.map((s) => `${s.title ?? ""} ${s.description ?? ""}`).join(" ");
     expect(text).toMatch(/Google Analytics/);
     expect(text).toMatch(/PostHog/);
-    expect(text).toMatch(/_ga and ph_ cookies/);
+    // The cookie names, what they keep and for how long are on the Privacy page, one link away.
+    expect(text).toContain('href="/privacy"');
   });
 
   it("explains both categories in the settings", () => {

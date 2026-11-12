@@ -163,7 +163,8 @@ export function analyticsCookieParentDomain(
 /**
  * Two equal buttons, no pre-ticked box, no dark patterns (M-5), in English. The first layer says what we
  * ask for without naming a tool; the settings layer and the Privacy page name the provider (rule 11).
- * The look is in app/styles.css ("Cookie consent"), scoped to #cc-main.
+ * The look is in app/styles.css ("Cookie consent"), scoped to #cc-main: "cloud inline" at the bottom
+ * centre is a slim bar on a computer (question left, answers right) and a compact card on a phone.
  */
 export function consentConfig(
   hostname: string = typeof window === "undefined" ? "" : window.location.hostname,
@@ -178,7 +179,7 @@ export function consentConfig(
     revision: 1,
     cookie: { name: CONSENT_COOKIE, expiresAfterDays: CONSENT_DAYS, sameSite: "Lax" },
     guiOptions: {
-      consentModal: { layout: "box", position: "bottom left", equalWeightButtons: true, flipButtons: false },
+      consentModal: { layout: "cloud inline", position: "bottom center", equalWeightButtons: true, flipButtons: false },
       preferencesModal: { layout: "box", equalWeightButtons: true, flipButtons: false },
     },
     categories: {
@@ -197,33 +198,36 @@ export function consentConfig(
       translations: {
         en: {
           consentModal: {
-            title: "Help us improve your experience",
+            // <mark> is the landing headline's green highlight (styles.css); the library renders the title as HTML.
+            title: "Can we <mark>count your visit?</mark>",
             description:
               'Allow us to analyze your usage data to improve your experience. Nothing is measured unless you allow it. <a href="/privacy">Privacy page</a>',
             acceptAllBtn: "Allow",
             acceptNecessaryBtn: "Decline",
           },
+          // The settings say what each choice is for and who does it; the cookie names, what they keep
+          // and for how long stay on the Privacy page.
           preferencesModal: {
-            title: "Cookie settings",
+            title: "Privacy settings",
             acceptAllBtn: "Allow",
             acceptNecessaryBtn: "Decline",
             savePreferencesBtn: "Save my choice",
             closeIconLabel: "Close",
             sections: [
               {
-                title: "You decide",
                 description:
-                  'Change it at any time. What we store and for how long is on the <a href="/privacy">Privacy page</a>.',
+                  'Change your choice at any time. The tools we use, what they store and for how long are on the <a href="/privacy">Privacy page</a>.',
               },
+              // The purpose sits inside the title (styles.css, .cc-purpose), so it shows without opening
+              // anything: a section with a description becomes a fold-out. The library names each switch
+              // with the title's own words only ("Essential", "Usage analysis").
               {
-                title: "Strictly necessary",
-                description: "Needed for sign-in and to remember this choice. Always on.",
+                title: 'Essential<span class="cc-purpose">Always on. Sign-in and remembering this choice.</span>',
                 linkedCategory: CATEGORY_NECESSARY,
               },
               {
-                title: "Usage analysis",
-                description:
-                  "Helps us see which pages are used so we can improve the site. Done with Google Analytics and PostHog, which set the _ga and ph_ cookies. Off unless you allow it, and never runs inside the app.",
+                title:
+                  'Usage analysis<span class="cc-purpose">Shows us which pages people use, so we can improve the site. Done with Google Analytics and PostHog, on the public pages only, never inside the app.</span>',
                 linkedCategory: CATEGORY_ANALYTICS,
               },
             ],
