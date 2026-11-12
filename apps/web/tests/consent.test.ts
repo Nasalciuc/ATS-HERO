@@ -189,6 +189,15 @@ describe("the banner's configuration", () => {
     expect(text).toContain('href="/privacy"');
   });
 
+  it("turns the choices' titles into headings once the settings exist, so no title is a button that does nothing", () => {
+    const banner = fs.readFileSync(path.join(WEB, "components/ConsentBanner.tsx"), "utf8");
+    expect(banner).toMatch(/onModalReady: \(\{ modalName, modal \}\) => \{\s*if \(modalName === "preferencesModal"\) settingsTitlesAsHeadings\(modal\);/);
+    // Only the choices whose purpose sits in the title: none of them has a description to fold out.
+    for (const s of en.preferencesModal.sections as { linkedCategory?: string; description?: string }[]) {
+      if (s.linkedCategory) expect(s.description).toBeUndefined();
+    }
+  });
+
   it("explains both categories in the settings", () => {
     const linked = en.preferencesModal.sections.map((s) => s.linkedCategory).filter(Boolean);
     expect(linked).toEqual([CATEGORY_NECESSARY, CATEGORY_ANALYTICS]);

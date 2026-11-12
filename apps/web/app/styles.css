@@ -11175,21 +11175,32 @@ html #cc-main .cm__title mark::after {
 html #cc-main .cm__title + .cm__desc {
   margin-top: 4px;
 }
-/* On the bar the sentence lines up with the question's first word */
-html #cc-main .cm__desc {
+/* On the bar the sentence lines up with the question's first word. It is two lines at most, so it does
+   not need the library's scroll box, which would also clip the link's hit area below the last line. */
+html #cc-main .cm__desc,
+html #cc-main .cm--cloud .cm__desc {
+  max-height: none;
+  overflow: visible;
   padding: 0 0 0 30px;
   font-size: 14px;
   line-height: 1.45;
 }
 html #cc-main .cm__desc a,
 html #cc-main .pm__section-desc a {
-  padding-block: 12px; /* a finger-sized hit area; vertical padding on a link inside a line does not move the lines */
+  position: relative;
   color: var(--ink);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
   white-space: nowrap;
+}
+/* A finger-sized hit area that moves no line and leaves the focus ring around the words */
+html #cc-main .cm__desc a::after,
+html #cc-main .pm__section-desc a::after {
+  content: "";
+  position: absolute;
+  inset: -10px -4px;
 }
 html #cc-main .cm--cloud .cm__btns {
   flex: none;
@@ -11401,7 +11412,8 @@ html #cc-main .pm__btn-group + .pm__btn-group {
   html #cc-main .cm__title {
     padding: 0 0 0 30px !important;
   }
-  html #cc-main .cm__desc {
+  html #cc-main .cm__desc,
+  html #cc-main .cm--cloud .cm__desc {
     padding: 0 !important;
     line-height: 1.4;
   }
