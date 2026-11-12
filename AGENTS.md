@@ -31,6 +31,7 @@ without an account; signing in keeps the work (guest → claim).
 | Apply agent | Opens a posting, fills what the plan allows, attaches the CV, stops for the person's approval. The "Ready to send" queue calls it (`lib/apply/queue.ts`, behind `NEXT_PUBLIC_APPLY_AGENT_ENABLED`), with the daily limit the person sets; the forms it keeps open live in the server process (`lib/apply/sessions.ts`). Drives agent-browser 0.41.1 (vercel-labs, Apache-2.0), which is **not a dependency** of the app; production will run it in a Vercel Sandbox. Design: `APLICARE-CU-AGENT.md` | `lib/apply/`, `tools/apply-lab/` |
 | Daily search | Each morning, the new postings that fit the person's CV best go to Saved (Job Fit, no AI); only the title and the place reach the boards. Behind `NEXT_PUBLIC_JOB_SEARCH_ENABLED`; `/api/cron/job-search` runs it | `lib/job-search.ts`, `lib/job-search-run.ts`, `app/actions/job-search.ts` |
 | Payments | Paddle (not Stripe) | `app/api/webhooks/paddle`, `lib/paddle-webhook.ts` |
+| Analytics | One GTM container (`NEXT_PUBLIC_GTM_ID`), loaded by the cookie banner only on the public pages and only after Allow; never in `/app`. It holds GA4 and PostHog (US cloud, IPs discarded). The tags live in GTM, not in the repo: a change to them that changes what is collected updates the Privacy page first. The CSP hosts for both are in `lib/consent.ts` | `lib/consent.ts`, `components/ConsentBanner.tsx` |
 | Infra | Vercel for the web app. AWS (us-east-1) as CloudFormation, **not deployed yet** | `infra/` (see `infra/README.md`) |
 
 ## Map
