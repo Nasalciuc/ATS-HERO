@@ -41,7 +41,10 @@ export function gtmContainerId(raw: string | undefined = process.env.NEXT_PUBLIC
   return GTM_ID_PATTERN.test(id) ? id : null;
 }
 
-/** The only script the consent can load: the GTM container, which holds the GA4 tag. */
+/**
+ * The only script the consent can load: the GTM container. It holds the GA4 tag and the PostHog tag; the
+ * PostHog tag loads posthog-js from PostHog's US cloud and sends only public-page events.
+ */
 export const GTM_HOST = "https://www.googletagmanager.com";
 export function gtmScriptUrl(id: string): string {
   return `${GTM_HOST}/gtm.js?id=${encodeURIComponent(id)}`;
@@ -64,8 +67,30 @@ export const GOOGLE_CSP_HOSTS = {
   ],
 } as const;
 
+/**
+ * PostHog's US cloud, the second tag in the same GTM container: posthog-js and its config load from
+ * us-assets.i.posthog.com, events go to us.i.posthog.com. Session replay, surveys and feature flags are
+ * off in the tag, so no other PostHog host is needed. Same rule as Google: public pages only.
+ */
+export const POSTHOG_CSP_HOSTS = {
+  scriptSrc: ["https://us-assets.i.posthog.com"],
+  connectSrc: ["https://us.i.posthog.com", "https://us-assets.i.posthog.com"],
+} as const;
+
+/** Every host the public pages' CSP adds once the banner is on: Google's, then PostHog's. */
+export const ANALYTICS_CSP_HOSTS = {
+  scriptSrc: [...GOOGLE_CSP_HOSTS.scriptSrc, ...POSTHOG_CSP_HOSTS.scriptSrc],
+  connectSrc: [...GOOGLE_CSP_HOSTS.connectSrc, ...POSTHOG_CSP_HOSTS.connectSrc],
+} as const;
+
 /** The custom dataLayer event for a client-side move between public pages (GA4's first page_view is automatic). */
 export const VIRTUAL_PAGE_VIEW_EVENT = "virtual_page_view";
+
+/**
+ * The custom dataLayer event for a Decline after Allow, while GTM is loaded: the GTM tag "PostHog - opt out"
+ * fires on it and stops posthog-js at once (Google's tags follow the Consent Mode update instead).
+ */
+export const ANALYTICS_CONSENT_DENIED_EVENT = "analytics_consent_denied";
 
 /** Campaign tags: the only query parameters a page address keeps when it is sent to Google Analytics. */
 export const ANALYTICS_QUERY_KEEP: readonly string[] = [
@@ -124,8 +149,8 @@ export function consentModeFor(accepted: readonly string[]): ConsentModeState {
 }
 
 /**
- * Google Analytics sets its cookies on the widest domain it can ("auto"): on staging.atshero.app that is
- * atshero.app. The banner's library only clears the current host, so a subdomain of the site also needs
+ * Google Analytics and PostHog set their cookies on the widest domain they can: on staging.atshero.app that
+ * is atshero.app. The banner's library only clears the current host, so a subdomain of the site also needs
  * the site's own domain. Elsewhere (atshero.app itself, vercel.app previews, localhost) there is none.
  */
 export function analyticsCookieParentDomain(
@@ -144,9 +169,10 @@ export function consentConfig(
   hostname: string = typeof window === "undefined" ? "" : window.location.hostname,
 ): CookieConsentConfig {
   const parent = analyticsCookieParentDomain(hostname);
-  const gaCookies = (domain?: string) => [
+  const analyticsCookies = (domain?: string) => [
     { name: /^_ga/, ...(domain ? { domain } : {}) },
     { name: "_gid", ...(domain ? { domain } : {}) },
+    { name: /^ph_/, ...(domain ? { domain } : {}) },
   ];
   return {
     revision: 1,
@@ -159,9 +185,11 @@ export function consentConfig(
       [CATEGORY_NECESSARY]: { enabled: true, readOnly: true },
       [CATEGORY_ANALYTICS]: {
         enabled: false,
-        // Rejecting later removes what Google Analytics set: _ga, _ga_<container> and the older _gid, on this
-        // host and, on a subdomain such as staging, on the site's own domain, where Google puts them.
-        autoClear: { cookies: [...gaCookies(), ...(parent ? gaCookies(parent) : [])] },
+        // Rejecting later removes what Google Analytics set (_ga, _ga_<container> and the older _gid) and
+        // PostHog's ph_<project>_posthog cookie, on this host and, on a subdomain such as staging, on the
+        // site's own domain, where both put them. PostHog's browser storage goes when the GTM tag
+        // "PostHog - opt out" stops posthog-js (opt_out_persistence_by_default).
+        autoClear: { cookies: [...analyticsCookies(), ...(parent ? analyticsCookies(parent) : [])] },
       },
     },
     language: {
@@ -195,7 +223,7 @@ export function consentConfig(
               {
                 title: "Usage analysis",
                 description:
-                  "Helps us see which pages are used so we can improve the site. Done with Google Analytics, which sets the _ga cookies. Off unless you allow it, and never runs inside the app.",
+                  "Helps us see which pages are used so we can improve the site. Done with Google Analytics and PostHog, which set the _ga and ph_ cookies. Off unless you allow it, and never runs inside the app.",
                 linkedCategory: CATEGORY_ANALYTICS,
               },
             ],

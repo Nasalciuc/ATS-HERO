@@ -24,7 +24,7 @@ import { GUEST_RETENTION_DAYS } from "@/lib/retention";
 import { RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /** The date the content last changed. Change it with the content, never compute it. */
-export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-03", label: "3 November 2026" };
+export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-12", label: "12 November 2026" };
 
 const RATE_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
 
@@ -40,7 +40,7 @@ const journey: LegalStep[] = [
     title: "You open the site",
     points: [
       "Visiting without an account puts nothing in our database. There are no ads or tracking pixels.",
-      "On the public pages (home, Privacy, Terms, Credits) a banner asks whether we may count your visit with Google Analytics. Nothing is measured unless you click Allow, and never inside the app, where your CVs are.",
+      "On the public pages (home, Privacy, Terms, Credits) a banner asks whether we may count your visit with Google Analytics and PostHog. Nothing is measured unless you click Allow, and never inside the app, where your CVs are.",
       "Our host, Vercel, sees your IP address and browser in its request logs, to deliver the page and stop attacks.",
       "Clerk, our sign-in service, loads on every page to check whether you’re signed in, so it sees your IP address and browser too.",
       `Requests that read or change your data are counted per IP address (and account) for ${RATE_SECONDS} seconds, in our server’s memory only, to stop abuse.`,
@@ -89,7 +89,7 @@ const journey: LegalStep[] = [
 
 const nevers = [
   { title: "We don’t sell or rent your data.", text: "Not to recruiters, not to advertisers, not to anyone." },
-  { title: "No ads, and no analytics without your yes.", text: "Google Analytics runs only on the public pages, only after you click Allow, and never inside the app." },
+  { title: "No ads, and no analytics without your yes.", text: "Google Analytics and PostHog run only on the public pages, only after you click Allow, and never inside the app." },
   { title: "Your CV doesn’t go to AI services.", text: "If we add AI rewriting, we’ll update this page before it’s switched on." },
   { title: "No payments during the free beta.", text: "Before we charge for anything, we’ll name our payment provider here." },
 ];
@@ -125,7 +125,7 @@ const sections: LegalSection[] = [
             ["Read a job post from a link you paste in Check Job Fit", "The link, and the page it leads to (neither is kept)", "You asked us to (our agreement with you)"],
             ["Keep the service safe and working: request logs, sign-in checks, rate limits, the bot check", "IP address, browser, guest code, account and CV IDs", "Our legitimate interest in a service that works and isn’t abused"],
             ["Backups", "Everything in our database", "Our legitimate interest in not losing your work"],
-            ["Count visits to the public pages and see which ones are used (Google Analytics)", "Pages you open on the public site, the site that sent you, device, browser, approximate location (country and city, worked out from your IP address), the IDs in the _ga cookies", "Your consent, given with Allow in the cookie banner. You can withdraw it at any time in Cookie settings"],
+            ["Count visits to the public pages and see which ones are used (Google Analytics and PostHog)", "Pages you open on the public site, the site that sent you, device, browser, approximate location (country and city, worked out from your IP address), what you click on those pages and the text of what you click, the IDs in the _ga and ph_ cookies", "Your consent, given with Allow in the cookie banner. You can withdraw it at any time in Cookie settings"],
           ]}
         />
         <p>We don’t use your data for advertising, and nothing on ATS Hero makes automated decisions about you.</p>
@@ -146,6 +146,7 @@ const sections: LegalSection[] = [
             ["Clerk, Inc.", "Sign-in and accounts; checks on every page whether you’re signed in", "United States"],
             ["Cloudflare, Inc.", "Protects Clerk’s service and runs the bot check at sign-in", "Worldwide"],
             ["Google (Google Ireland Limited in the EU and EEA; Google LLC elsewhere)", "Google Analytics, loaded through Google Tag Manager: counts visits to the public pages, only after you click Allow", "European Union and United States"],
+            ["PostHog, Inc.", "PostHog, loaded through Google Tag Manager: counts visits and clicks on the public pages, only after you click Allow", "United States"],
           ]}
         />
         <p>
@@ -156,6 +157,12 @@ const sections: LegalSection[] = [
           In Google Analytics, Google signals and every advertising feature are off, and we send no email
           addresses, names or CV content. The page address it gets has no query string, except campaign tags
           such as utm_source. Google Analytics does not store IP addresses.
+        </p>
+        <p>
+          PostHog gets the same kind of page address and no query string beyond campaign tags. It records page
+          views and clicks on the public pages, never inside the app; session recording, surveys and feature
+          flags are off, and we never tell it who you are. Our PostHog project discards IP addresses: PostHog
+          works out the country and city from your IP address, then drops the address.
         </p>
       </>
     ),
@@ -169,7 +176,8 @@ const sections: LegalSection[] = [
         leaves Moldova and the EU. Their data processing terms include the European Commission’s Standard
         Contractual Clauses, which protect data sent from the EU. If you allow analytics, Google may also
         process that data in the United States, under the EU–U.S. Data Privacy Framework and the same
-        Standard Contractual Clauses.
+        Standard Contractual Clauses, and PostHog processes it in the United States, under the Standard
+        Contractual Clauses in its data processing agreement.
       </p>
     ),
   },
@@ -189,6 +197,7 @@ const sections: LegalSection[] = [
           ["What you check in Improve My Resume or Check Job Fit", "In your browser tab, until you close it"],
           ["A job link you paste in Check Job Fit", "Not kept: our server opens the page once and forgets both"],
           ["Google Analytics visit data (only if you clicked Allow)", "14 months (our setting in Google Analytics), then Google deletes it in its monthly clean-up. Totals in its standard reports, which identify no one, are not covered by this limit"],
+          ["PostHog visit data (only if you clicked Allow)", "1 year, PostHog’s limit on our plan, then PostHog deletes it"],
           ["Your answer to the cookie banner (cc_cookie)", "182 days, then the banner asks again"],
         ]}
       />
@@ -209,13 +218,14 @@ const sections: LegalSection[] = [
             ["ats_text, ats_jd, ats_text_draft and the other ats_ keys", "Session storage", "Hold what you check in Improve My Resume and Check Job Fit, an edit of your CV text you haven’t saved yet (ats_text_draft), and the result, until you close the tab"],
             ["cc_cookie", "Cookie set by ATS Hero on the public pages", "Remembers your answer to the cookie banner, for 182 days"],
             ["_ga and _ga_<ID>", "Cookies set by Google Analytics, only after you click Allow", "Tell one visit from another, for up to 2 years. If you later choose Decline, we delete them"],
+            ["ph_<ID>_posthog and PostHog’s other ph_ keys", "Cookie, local storage and session storage set by PostHog, only after you click Allow", "Tell one visit from another, for up to 1 year. If you later choose Decline, we delete them, and PostHog keeps only __ph_opt_in_out_<ID> in local storage, which remembers that you said no"],
           ]}
         />
         <p>
-          The first five are needed for the site to work. The _ga cookies are optional: they exist only if you
-          clicked Allow. They belong to the whole site, so your browser also sends them with pages inside the
-          app, but the app never loads Google Analytics and nothing there reads them. We set no advertising
-          cookies.
+          The first five are needed for the site to work. The _ga and ph_ cookies are optional: they exist only
+          if you clicked Allow. They belong to the whole site, so your browser also sends them with pages inside
+          the app, but the app never loads Google Analytics or PostHog and nothing there reads them. We set no
+          advertising cookies.
         </p>
         <CookieSettingsButton />
       </>
