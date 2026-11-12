@@ -2,9 +2,8 @@
 // Run it after changing app/icon.svg: `npm run icons`. Chromium draws the PNGs, so they are the
 // pixels a browser tab shows.
 //
-// The mark is a CV page with the green score ring on its corner, the hero of the landing page
-// in miniature. app/icon.svg is drawn on a 32-unit grid with even coordinates, so at 16 px most
-// edges land on whole pixels.
+// The mark is a white A with a green spark on a near-black tile (Scaler's design, 12 Nov 2026).
+// app/icon.svg keeps the 32-unit grid; the A and the spark are traced curves scaled into it.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -21,9 +20,12 @@ const inner = svg
   .replace(/<\/svg>\s*$/, "")
   .replace(/<title>[\s\S]*?<\/title>/, "")
   .replace(tile, "");
+// The square takes the tile's own colour, and the 32-unit drawing (4.4x, 141 px) sits in its middle:
+// (180 - 140.8) / 2 = 19.6.
+const tileFill = svg.match(tile)[0].match(/fill="(#[0-9A-Fa-f]{3,8})"/)?.[1] ?? "#202020";
 const appleSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
-  <rect width="180" height="180" fill="#202020"/>
-  <g transform="translate(23.5 19) scale(4.4)">${inner}</g>
+  <rect width="180" height="180" fill="${tileFill}"/>
+  <g transform="translate(19.6 19.6) scale(4.4)">${inner}</g>
 </svg>`;
 
 const browser = await chromium.launch();

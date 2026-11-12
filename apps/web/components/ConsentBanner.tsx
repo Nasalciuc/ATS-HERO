@@ -31,7 +31,7 @@ declare global {
   }
 }
 
-// One start for the whole page life, shared by the banner and the "Cookie settings" button, so a click
+// One start for the whole page life, shared by the banner and the "Privacy settings" button, so a click
 // that comes while the library is still starting waits for it instead of starting it twice.
 let ready: Promise<void> | null = null;
 let gtmLoaded = false;
@@ -78,8 +78,33 @@ function applyConsent(): void {
   }
 }
 
+/**
+ * The two choices in the settings carry their purpose in the title, so there is nothing to fold out, yet
+ * the library still renders each title as a button that does nothing: a dead tab stop, and a "button" to a
+ * screen reader. They become the headings they are, like the library's own heading for the intro section.
+ * The switch next to each title keeps its own label ("Essential", "Usage analysis").
+ */
+export function settingsTitlesAsHeadings(modal: ParentNode): void {
+  modal
+    .querySelectorAll(".pm__section--toggle:not(.pm__section--expandable) button.pm__section-title")
+    .forEach((button) => {
+      const heading = document.createElement("div");
+      heading.className = button.className;
+      heading.setAttribute("role", "heading");
+      heading.setAttribute("aria-level", "3");
+      heading.append(...Array.from(button.childNodes));
+      button.replaceWith(heading);
+    });
+}
+
 function start(): Promise<void> {
-  ready ??= CookieConsent.run({ ...consentConfig(), onConsent: applyConsent, onChange: applyConsent });
+  ready ??= CookieConsent.run({
+    ...consentConfig(),
+    onConsent: applyConsent, onChange: applyConsent,
+    onModalReady: ({ modalName, modal }) => {
+      if (modalName === "preferencesModal") settingsTitlesAsHeadings(modal);
+    },
+  });
   return ready;
 }
 

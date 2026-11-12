@@ -11043,16 +11043,24 @@ select.field__input {
    COOKIE CONSENT (public pages only, see lib/consent.ts)
    vanilla-cookieconsent is styled here, scoped to #cc-main, so nothing else on the site is touched.
    PROVISIONAL (AGENTS.md rule 6): there is no Figma frame for the banner yet; Scaler chose to style it
-   in code for the first version. When Liubovi draws the frame, the frame wins and this section follows it;
-   until then the banner stays off (lib/consent.ts), so no visitor sees this styling.
-   `html #cc-main` (the library mounts it on <html>) outranks its own `#cc-main` rules whatever order the stylesheets load in.
+   in code. When Liubovi draws the frame, the frame wins and this section follows it.
+   It borrows the landing's own pieces: the floating cards (.badge-card: white, violet-200 border, violet
+   glow), the pill buttons (.btn) and the headline's green highlight.
+   Layout ("cloud inline", "bottom center" in lib/consent.ts):
+   - from 900px, a slim bar in the page's 1200px grid: the question on the left, the two answers on the right,
+     low enough to leave the hero's buttons uncovered;
+   - below 900px, a compact card along the bottom, the two answers side by side, 48px tall.
+   `html #cc-main` (the library mounts it on <html>) outranks its own `#cc-main` rules whatever order the
+   stylesheets load in; a rule for one layout repeats the library's modifier classes (.cm--cloud,
+   .cm--inline) so it outranks the library's rule for that layout, and !important answers only the
+   library's own !important phone rules.
    ============================================================ */
 html #cc-main {
   --cc-font-family: var(--font-sans);
   --cc-bg: var(--white);
   --cc-primary-color: var(--ink);
   --cc-secondary-color: #565656;
-  --cc-modal-border-radius: 20px;
+  --cc-modal-border-radius: 16px;
   --cc-modal-margin: 20px;
   --cc-modal-transition-duration: 0.4s;
   --cc-btn-border-radius: 14px; /* sections inside the settings; the buttons themselves are pills below */
@@ -11083,87 +11091,139 @@ html #cc-main {
   --cc-cookie-category-expanded-block-hover-bg: #ece8ff;
   --cc-toggle-on-bg: var(--green);
   --cc-toggle-on-knob-bg: var(--white);
-  --cc-toggle-off-bg: var(--gray-400);
+  --cc-toggle-off-bg: var(--gray-600); /* 3:1 against the lavender card */
   --cc-toggle-off-knob-bg: var(--white);
-  --cc-toggle-readonly-bg: #d4d4d4;
+  /* "Always on": a paler green, locked */
+  --cc-toggle-readonly-bg: #9fe3bb;
   --cc-toggle-readonly-knob-bg: var(--white);
-  --cc-toggle-readonly-knob-icon-color: #d4d4d4;
+  --cc-toggle-readonly-knob-icon-color: var(--green);
   --cc-pm-toggle-border-radius: 100px;
 }
 
-/* The small card: bottom-left on a computer, a sheet along the bottom edge on a phone */
+/* The bar: a floating card like the landing's badges, in the page's 1200px grid */
 html #cc-main .cm {
-  width: calc(100vw - 2 * var(--cc-modal-margin));
-  max-width: 372px;
+  max-width: 1200px;
+  border: 1px solid var(--violet-200);
   border-radius: var(--cc-modal-border-radius);
-  box-shadow: 0 0 0 1px rgba(32, 32, 32, 0.06), 0 18px 48px rgba(32, 32, 32, 0.18);
-  transform: translateY(16px) scale(0.98);
+  box-shadow: 0 0 30px 5px rgba(228, 224, 252, 0.5), 0 14px 36px rgba(32, 32, 32, 0.1);
+  transform: translateY(16px);
 }
 html.show--consent #cc-main .cc--anim .cm {
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 html #cc-main .cc--anim .cm {
   transition: opacity var(--cc-modal-transition-duration) var(--ease-out),
     visibility var(--cc-modal-transition-duration) var(--ease-out),
     transform var(--cc-modal-transition-duration) var(--ease-out);
 }
+html #cc-main .cm--cloud .cm__body {
+  align-items: center;
+  gap: 24px;
+  padding: 14px 14px 14px 22px;
+}
 html #cc-main .cm__texts {
-  padding: 22px 0 0;
+  min-width: 0;
+  padding: 0;
 }
 html #cc-main .cm__title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 22px;
-  font-size: 18px;
+  position: relative;
+  padding: 0 0 0 30px;
+  color: var(--ink);
+  font-size: 16px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
   letter-spacing: -0.02em;
 }
-/* The green dot with a soft ring: the same accent as the status marks in the app */
+/* The green dot with a soft ring, the landing tag's accent, hung before the question */
 html #cc-main .cm__title::before {
   content: "";
-  flex: none;
+  position: absolute;
+  left: 5px;
+  top: calc(0.625em - 5px);
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: var(--green);
   box-shadow: 0 0 0 5px var(--green-tint);
 }
-html #cc-main .cm__title + .cm__desc {
-  margin-top: 10px;
+/* The landing headline's highlight, small: green tint between two green selection handles */
+html #cc-main .cm__title mark {
+  position: relative;
+  margin-left: 2px;
+  padding: 1px 5px;
+  background: var(--green-tint);
+  color: inherit;
 }
-html #cc-main .cm__desc {
-  padding: 0 22px;
+html #cc-main .cm__title mark::before,
+html #cc-main .cm__title mark::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 4px;
+  background:
+    linear-gradient(var(--green), var(--green)) center / 2px 100% no-repeat,
+    linear-gradient(var(--green), var(--green)) top / 4px 4px no-repeat,
+    linear-gradient(var(--green), var(--green)) bottom / 4px 4px no-repeat;
+}
+html #cc-main .cm__title mark::before {
+  left: -2px;
+}
+html #cc-main .cm__title mark::after {
+  right: -2px;
+}
+html #cc-main .cm__title + .cm__desc {
+  margin-top: 4px;
+}
+/* On the bar the sentence lines up with the question's first word. It is two lines at most, so it does
+   not need the library's scroll box, which would also clip the link's hit area below the last line. */
+html #cc-main .cm__desc,
+html #cc-main .cm--cloud .cm__desc {
+  max-height: none;
+  overflow: visible;
+  padding: 0 0 0 30px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 html #cc-main .cm__desc a,
 html #cc-main .pm__section-desc a {
+  position: relative;
   color: var(--ink);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
+  white-space: nowrap;
 }
-html #cc-main .cm__btns {
-  padding: 18px 22px 22px;
-  border-top: none;
+/* A finger-sized hit area that moves no line and leaves the focus ring around the words */
+html #cc-main .cm__desc a::after,
+html #cc-main .pm__section-desc a::after {
+  content: "";
+  position: absolute;
+  inset: -10px -4px;
 }
-html #cc-main .cm__btn-group {
-  grid-auto-flow: column;
+html #cc-main .cm--cloud .cm__btns {
+  flex: none;
+  max-width: none;
+  padding: 0;
+  border: 0;
+}
+html #cc-main .cm--cloud.cm--inline .cm__btn-group {
+  display: flex;
   gap: 10px;
 }
-html #cc-main .cm__btn + .cm__btn,
-html #cc-main .cm__btn-group + .cm__btn-group {
+html #cc-main .cm--inline .cm__btn + .cm__btn {
   margin: 0;
 }
+html #cc-main .cm--cloud.cm--inline .cm__btn {
+  min-width: 132px;
+}
 
-/* Buttons: the site's pills (see .btn), both the same size */
+/* Buttons: the site's pills (see .btn), both the same size, 48px for a finger */
 html #cc-main .cm__btn,
 html #cc-main .pm__btn {
-  min-height: 46px;
-  padding: 0 20px;
+  min-height: 48px;
+  padding: 0 22px;
   border-radius: 100px;
   border-width: 1px;
   font-size: 15px;
@@ -11196,76 +11256,214 @@ html #cc-main a:focus-visible {
   outline-offset: 2px;
 }
 
-/* The settings window, same family: bigger radius, pills, the site's green for "on" */
+/* The settings window: the bar's card, larger. The question's green dot, the FAQ's violet circle for
+   Close, each choice on a lavender card with its purpose in view, the site's green for "on" */
 html #cc-main .pm {
-  border-radius: 24px;
-  box-shadow: 0 0 0 1px rgba(32, 32, 32, 0.06), 0 24px 64px rgba(32, 32, 32, 0.28);
+  border: 1px solid var(--violet-200);
+  border-radius: var(--cc-modal-border-radius);
+  box-shadow: 0 0 30px 5px rgba(228, 224, 252, 0.5), 0 24px 64px rgba(32, 32, 32, 0.22);
 }
 html #cc-main .pm--box {
+  max-width: 600px;
   height: auto; /* fit the content instead of a tall empty window */
 }
 html #cc-main .pm__header {
-  padding: 22px 28px;
+  padding: 22px 24px 4px;
+  border-bottom: 0;
 }
 html #cc-main .pm__title {
+  position: relative;
+  padding-left: 30px;
+  color: var(--ink);
   font-size: 20px;
   font-weight: 700;
+  line-height: 1.25;
   letter-spacing: -0.02em;
 }
-html #cc-main .pm__close-btn {
+html #cc-main .pm__title::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: calc(50% - 5px);
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 5px var(--green-tint);
+}
+html #cc-main .pm__close-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--violet-300);
+  border-radius: 50%;
+  background: var(--white);
+}
+html #cc-main .pm__close-btn:hover {
+  border-color: var(--violet-600);
+  background: var(--bg-page);
+}
+html #cc-main .pm__close-btn svg {
+  stroke: var(--ink);
 }
 html #cc-main .pm__body {
-  padding: 22px 28px;
+  padding: 10px 24px 20px;
 }
-html #cc-main .pm__footer {
-  padding: 18px 28px;
-}
-html #cc-main .pm__section-title {
-  font-size: 16px;
-  font-weight: 700;
+html #cc-main .pm__section:first-child {
+  margin-bottom: 16px;
 }
 html #cc-main .pm__section-desc {
   font-size: 14px;
   line-height: 1.5;
 }
+html #cc-main .pm__section-toggles {
+  display: grid;
+  gap: 10px;
+}
+/* A choice: the name, its purpose under it, the switch on the right */
+html #cc-main .pm__section--toggle {
+  margin: 0;
+  border-radius: 12px;
+  background: var(--bg-page);
+}
+html #cc-main .pm__section--toggle .pm__section-title,
+html #cc-main .pm__section--toggle .pm__section-title:hover {
+  display: block;
+  min-height: 0;
+  padding: 16px 88px 16px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+/* The library still renders the fold-out arrow for a choice that has nothing to fold out */
+html #cc-main .pm__section--toggle:not(.pm__section--expandable) .pm__section-arrow {
+  display: none;
+}
+html #cc-main .pm__section--toggle .pm__section-title {
+  flex: 1;
+  width: 100%;
+}
+html #cc-main .pm__section-title .cc-purpose {
+  display: block;
+  margin-top: 4px;
+  color: var(--cc-secondary-color);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+/* The switch: 52x28 (a finger-sized target), level with the choice's name */
+html #cc-main .section__toggle-wrapper {
+  top: 12px;
+  right: 18px;
+}
+html #cc-main .section__toggle,
+html #cc-main .section__toggle-wrapper,
+html #cc-main .toggle__icon,
+html #cc-main .toggle__label {
+  width: 52px;
+  height: 28px;
+}
+html #cc-main .toggle__icon-circle {
+  width: 28px;
+  height: 28px;
+}
+html #cc-main .section__toggle:checked ~ .toggle__icon .toggle__icon-circle {
+  transform: translateX(24px);
+}
+html #cc-main .pm__footer {
+  gap: 10px;
+  padding: 16px 24px 22px;
+  border-top: 1px solid var(--line);
+}
+html #cc-main .pm__btn-group {
+  gap: 10px;
+}
+html #cc-main .pm__btn + .pm__btn,
+html #cc-main .pm__btn-group + .pm__btn-group {
+  margin: 0;
+}
 
-/* Phone: a sheet along the bottom edge, the two buttons stay side by side (the library stacks them) */
-@media (max-width: 640px) {
+/* Below 900px: a compact card along the bottom, question over sentence, the two answers side by side
+   (the library stacks them on a phone) */
+@media (max-width: 899px) {
   html #cc-main {
-    --cc-modal-margin: 12px;
+    --cc-modal-margin: 10px;
   }
+  /* A plain shadow: the violet glow would wash out the hero's black button just above the card */
   html #cc-main .cm {
-    width: calc(100vw - 24px) !important;
-    max-width: none !important;
-    left: 12px;
-    right: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    margin: 0;
+    width: auto !important;
+    max-width: 560px !important;
+    bottom: calc(var(--cc-modal-margin) + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 10px 28px rgba(32, 32, 32, 0.14);
   }
-  html #cc-main .cm__title,
-  html #cc-main .cm__desc {
-    padding-left: 20px !important;
-    padding-right: 20px !important;
-  }
-  html #cc-main .cm__btns {
-    padding: 16px 20px 20px !important;
-    border-top: 0 !important;
-  }
-  html #cc-main .cm__btn-group {
-    flex-direction: row !important;
+  /* Kept low: on a 390x664 phone the card's top stays under the hero's main button */
+  html #cc-main .cm--cloud .cm__body {
+    flex-direction: column !important;
+    align-items: stretch;
     gap: 10px;
+    padding: 12px 14px !important;
   }
-  html #cc-main .cm__btn + .cm__btn {
+  html #cc-main .cm__title {
+    padding: 0 0 0 30px !important;
+  }
+  html #cc-main .cm__desc,
+  html #cc-main .cm--cloud .cm__desc {
+    padding: 0 !important;
+    line-height: 1.4;
+  }
+  html #cc-main .cm--cloud .cm__btns {
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+  html #cc-main .cm--cloud.cm--inline .cm__btn-group {
+    display: flex !important;
+    flex-direction: row !important;
+  }
+  html #cc-main .cm--inline .cm__btn + .cm__btn {
     margin: 0 !important;
   }
-  html #cc-main .cm__btn {
+  html #cc-main .cm--cloud.cm--inline .cm__btn {
     flex: 1 1 0 !important;
     min-width: 0;
     padding: 0 12px;
   }
+}
+/* Phone: the settings rise as a sheet from the bottom edge, as tall as their content; Allow and Decline
+   side by side, as on the banner, Save my choice under them */
+@media (max-width: 640px) {
   html #cc-main .pm {
-    border-radius: 0;
+    top: auto;
+    max-height: calc(100% - 24px);
+    border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -12px 40px rgba(32, 32, 32, 0.18);
+  }
+  html #cc-main .pm__header {
+    padding: 18px 16px 4px !important;
+  }
+  html #cc-main .pm__body {
+    padding: 8px 16px 16px !important;
+  }
+  html #cc-main .pm__footer {
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  html #cc-main .pm__btn-group:first-child {
+    flex-direction: row !important;
+  }
+  html #cc-main .pm__btn + .pm__btn,
+  html #cc-main .pm__btn-group + .pm__btn-group {
+    margin: 0 !important;
+  }
+  html #cc-main .pm__btn {
+    flex: 1 1 0;
   }
 }
 

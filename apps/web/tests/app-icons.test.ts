@@ -41,6 +41,8 @@ describe("app icons", () => {
     const svg = app("icon.svg").toString("utf8");
     expect(svg).toMatch(/viewBox="0 0 32 32"/);
     expect(svg).toMatch(/<rect id="tile"/); // scripts/build-icons.mjs drops it for the iPhone icon
-    expect(svg).not.toMatch(/<script|<foreignObject|href=|url\(/i);
+    // url(#id) points inside the file (the spark's gradient); any other url() or href reaches outside.
+    expect(svg).not.toMatch(/<script|<foreignObject|href=|url\((?!#)/i);
+    for (const [, id] of svg.matchAll(/url\(#([\w-]+)\)/g)) expect(svg).toContain(`id="${id}"`);
   });
 });
