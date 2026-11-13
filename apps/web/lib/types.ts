@@ -73,6 +73,9 @@ export type CvData = {
   activities: SimpleEntry[];
 };
 
+/** The CV sections whose rows are SimpleEntry (awards, certifications, publications, volunteering, activities). */
+export type SimpleSectionKey = { [K in keyof CvData]: CvData[K] extends SimpleEntry[] ? K : never }[keyof CvData];
+
 export type Cv = {
   id: string;
   ownerId: string | null;

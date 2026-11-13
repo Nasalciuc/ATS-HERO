@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { webhookEvents, subscriptions, subscriptionEvents } from "@/db/schema";
+import type { Db } from "@/db/types";
 
 export const SUBSCRIPTION_EVENTS = new Set([
   "subscription.created",
@@ -37,12 +38,11 @@ type SubscriptionPayload = {
 
 /** Persist idempotency for every event; apply row changes only for subscription.* */
 export async function applyPaddleWebhook(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any,
+  db: Db,
   event: PaddleWebhookEvent,
   raw: string,
 ) {
-  await db.transaction(async (tx: typeof db) => {
+  await db.transaction(async (tx) => {
     const dup = await tx.select().from(webhookEvents).where(eq(webhookEvents.eventId, event.eventId));
     if (dup.length) return;
     await tx.insert(webhookEvents).values({ eventId: event.eventId, type: event.eventType });

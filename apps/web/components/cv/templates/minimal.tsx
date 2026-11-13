@@ -36,7 +36,7 @@ export default function MinimalTemplate({ data: typed, theme }: { data: CvData; 
           <Section title="EXPERIENCE" variant="minimal" theme={theme} entries={experienceEntries(data, theme)} />
           <Section title="EDUCATION" variant="minimal" theme={theme} entries={educationEntries(data, theme)} />
           {ALL_SIMPLE.map(({ key, title }) => (
-            <Section key={key} title={title} variant="minimal" theme={theme} entries={simpleEntries(data[key] as any, theme)} />
+            <Section key={key} title={title} variant="minimal" theme={theme} entries={simpleEntries(data[key], theme)} />
           ))}
         </View>
       </Page>

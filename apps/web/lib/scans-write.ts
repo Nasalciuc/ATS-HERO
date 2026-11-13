@@ -1,4 +1,5 @@
 import { cvs, scans } from "@/db/schema";
+import type { Db } from "@/db/types";
 import { eq } from "drizzle-orm";
 import { canAccessDoc } from "@/lib/ownership";
 import type { JobFitReport, ScanKind, ScoreReport } from "@/lib/types";
@@ -14,9 +15,7 @@ export type SaveScanInput = {
 
 /** Authorize (when cvId is set) then insert. Shared by the server action and PGlite tests. */
 export async function saveScanOn(
-  // drizzle query/insert API is shared across node-postgres and PGlite
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any,
+  db: Db,
   ownerId: string | null,
   input: SaveScanInput,
 ) {
