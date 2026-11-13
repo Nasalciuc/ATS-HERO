@@ -47,7 +47,7 @@ export default function ClassicTemplate({ data: typed, theme }: { data: CvData; 
           <Section title="EXPERIENCE" theme={theme} entries={experienceEntries(data, theme)} />
           <Section title="EDUCATION" theme={theme} entries={educationEntries(data, theme)} />
           {ALL_SIMPLE.map(({ key, title }) => (
-            <Section key={key} title={title} theme={theme} entries={simpleEntries(data[key] as any, theme)} />
+            <Section key={key} title={title} theme={theme} entries={simpleEntries(data[key], theme)} />
           ))}
         </View>
       </Page>

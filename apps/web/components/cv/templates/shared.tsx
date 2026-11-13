@@ -3,7 +3,7 @@
 // contact items, justified split-row meta (title left / dates right), bullet lists,
 // colored section headings with a rule, consistent section spacing.
 import { View, Text, Image, Svg, Path, StyleSheet, Link } from "@react-pdf/renderer";
-import type { CvData, SimpleEntry } from "@/lib/types";
+import type { CvData, SimpleEntry, SimpleSectionKey } from "@/lib/types";
 import { breakLongWords, degreeLine, descLines, displayUrl, fitFontSize, telHref, textWidth, webHref } from "@/lib/cv-print";
 import { FONT, FONT_BOLD, type TemplateTheme } from "./theme";
 
@@ -349,7 +349,8 @@ export function simpleEntries(items: SimpleEntry[], theme: TemplateTheme): Entry
   });
 }
 
-export const ALL_SIMPLE: { key: keyof CvData; title: string }[] = [
+/** The sections made of SimpleEntry rows, in print order. */
+export const ALL_SIMPLE: { key: SimpleSectionKey; title: string }[] = [
   { key: "awards", title: "AWARDS" },
   { key: "certifications", title: "CERTIFICATIONS" },
   { key: "publications", title: "PUBLICATIONS" },

@@ -65,7 +65,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "@emnapi/runtime",
-    "version": "1.11.1",
+    "version": "1.11.3",
     "license": "MIT"
   },
   {
@@ -75,23 +75,28 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "@img/sharp-libvips-linux-x64",
-    "version": "1.2.4",
+    "version": "1.3.4",
     "license": "LGPL-3.0-or-later"
   },
   {
     "name": "@img/sharp-libvips-linuxmusl-x64",
-    "version": "1.2.4",
+    "version": "1.3.4",
     "license": "LGPL-3.0-or-later"
   },
   {
     "name": "@img/sharp-linux-x64",
-    "version": "0.34.5",
+    "version": "0.35.5",
     "license": "Apache-2.0"
   },
   {
     "name": "@img/sharp-linuxmusl-x64",
-    "version": "0.34.5",
+    "version": "0.35.5",
     "license": "Apache-2.0"
+  },
+  {
+    "name": "@img/sharp-wasm32",
+    "version": "0.35.5",
+    "license": "Apache-2.0 AND LGPL-3.0-or-later AND MIT"
   },
   {
     "name": "@napi-rs/canvas",
@@ -110,17 +115,17 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "@next/env",
-    "version": "16.2.9",
+    "version": "16.4.6",
     "license": "MIT"
   },
   {
     "name": "@next/swc-linux-x64-gnu",
-    "version": "16.2.9",
+    "version": "16.4.6",
     "license": "MIT"
   },
   {
     "name": "@next/swc-linux-x64-musl",
-    "version": "16.2.9",
+    "version": "16.4.6",
     "license": "MIT"
   },
   {
@@ -210,11 +215,6 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "@swc/helpers",
-    "version": "0.5.15",
-    "license": "Apache-2.0"
-  },
-  {
-    "name": "@swc/helpers",
     "version": "0.5.23",
     "license": "Apache-2.0"
   },
@@ -235,7 +235,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "@vercel/cli-config",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "license": "Apache-2.0"
   },
   {
@@ -245,12 +245,12 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "@vercel/functions",
-    "version": "3.9.9",
+    "version": "3.11.2",
     "license": "Apache-2.0"
   },
   {
     "name": "@vercel/oidc",
-    "version": "3.8.9",
+    "version": "4.0.9",
     "license": "Apache-2.0"
   },
   {
@@ -275,7 +275,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "baseline-browser-mapping",
-    "version": "2.10.38",
+    "version": "2.11.37",
     "license": "Apache-2.0"
   },
   {
@@ -295,7 +295,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "caniuse-lite",
-    "version": "1.0.30001799",
+    "version": "1.0.30001826",
     "license": "CC-BY-4.0"
   },
   {
@@ -540,17 +540,17 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "nanoid",
-    "version": "3.3.15",
+    "version": "3.3.20",
     "license": "MIT"
   },
   {
     "name": "nanoid",
-    "version": "5.1.15",
+    "version": "5.1.16",
     "license": "MIT"
   },
   {
     "name": "next",
-    "version": "16.2.9",
+    "version": "16.4.6",
     "license": "MIT"
   },
   {
@@ -655,7 +655,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "postcss",
-    "version": "8.4.31",
+    "version": "8.5.23",
     "license": "MIT"
   },
   {
@@ -760,7 +760,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "semver",
-    "version": "7.8.5",
+    "version": "7.8.6",
     "license": "ISC"
   },
   {
@@ -775,7 +775,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "sharp",
-    "version": "0.34.5",
+    "version": "0.35.5",
     "license": "Apache-2.0"
   },
   {
@@ -795,7 +795,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "source-map-js",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "license": "BSD-3-Clause"
   },
   {
@@ -900,7 +900,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "xdg-app-paths",
-    "version": "5.5.1",
+    "version": "5.1.0",
     "license": "MIT"
   },
   {
@@ -935,7 +935,7 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   },
   {
     "name": "zod",
-    "version": "4.1.11",
+    "version": "4.6.7",
     "license": "MIT"
   },
   {

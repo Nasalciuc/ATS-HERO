@@ -1,4 +1,5 @@
 import { aiUsage } from "@/db/schema";
+import type { Db } from "@/db/types";
 import { sql } from "drizzle-orm";
 
 /** Shared by the server action and PGlite tests. Fail closed on a bad limit. */
@@ -10,9 +11,7 @@ export function assertValidDailyLimit(dailyLimit: number): void {
 
 /** Atomic increment-and-check. Returns remaining quota (>=0 means allowed). */
 export async function consumeAiQuotaOn(
-  // drizzle insert API is shared across node-postgres and PGlite
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any,
+  db: Db,
   ownerId: string,
   dailyLimit: number,
 ): Promise<number> {
