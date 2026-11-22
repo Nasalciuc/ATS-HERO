@@ -2,7 +2,8 @@
 // Run it after changing app/icon.svg: `npm run icons`. Chromium draws the PNGs, so they are the
 // pixels a browser tab shows.
 //
-// The mark is a white A with a green spark on a near-black tile (Scaler's design, 12 Nov 2026).
+// The mark is a white A with a violet spark and its soft glow on a near-black tile (Scaler's design,
+// 22 Nov 2026; the spark was green before).
 // app/icon.svg keeps the 32-unit grid; the A and the spark are traced curves scaled into it.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
