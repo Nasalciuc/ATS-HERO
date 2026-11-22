@@ -17,6 +17,9 @@ import { BLOCK_DATA } from "@/components/blog/blocks";
 import ArticleBody from "@/components/blog/ArticleBody";
 import BlogPostPage, { tocOf } from "@/views/BlogPostPage";
 import BlogListPage from "@/views/BlogListPage";
+import { blogJsonLd, blogPostJsonLd } from "@/lib/structured-data";
+import { AUTHORS } from "@/lib/blog/authors";
+import { SITE_URL } from "@/lib/site";
 
 const posts = allPosts();
 const MARKERS = /^```blog-([a-z-]+)[ \t]*$/gm;
@@ -96,6 +99,24 @@ describe("blog posts", () => {
       expect(tag).toContain('target="_blank"');
       expect(tag).toContain('rel="noopener noreferrer"');
     }
+  });
+
+  it.each(posts.map((p) => [p.slug, p] as const))("%s: its JSON-LD says what the page shows", (_slug, post) => {
+    const graph = blogPostJsonLd(post)["@graph"] as Record<string, any>[];
+    const article = graph.find((n) => n["@type"] === "BlogPosting")!;
+    expect(article.headline).toBe(post.title);
+    expect(article.description).toBe(post.description);
+    expect(article.datePublished).toBe(post.publishedAt);
+    expect(article.dateModified).toBe(post.updatedAt);
+    expect(article.author).toEqual({ "@type": "Person", name: AUTHORS[post.author].name, jobTitle: AUTHORS[post.author].role });
+    expect(article.citation).toEqual(post.sources.map((s) => s.url));
+    const crumbs = graph.find((n) => n["@type"] === "BreadcrumbList")!.itemListElement as { item: string }[];
+    expect(crumbs.map((c) => c.item)).toEqual([`${SITE_URL}/`, `${SITE_URL}/blog`, `${SITE_URL}/blog/${post.slug}`]);
+  });
+
+  it("the /blog JSON-LD lists every post, newest first", () => {
+    const blog = (blogJsonLd(posts)["@graph"] as Record<string, any>[]).find((n) => n["@type"] === "Blog")!;
+    expect(blog.blogPost.map((p: { url: string }) => p.url)).toEqual(posts.map((p) => `${SITE_URL}/blog/${p.slug}`));
   });
 
   it("lists every post on /blog, newest first", () => {

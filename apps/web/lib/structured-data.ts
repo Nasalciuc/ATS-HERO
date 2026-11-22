@@ -1,9 +1,12 @@
 // JSON-LD for the landing page: who we are (Organization), the site (WebSite), what the product is
-// (WebApplication) and the FAQ (FAQPage). Search engines and AI search use it to understand the page;
+// (WebApplication) and the FAQ (FAQPage); and for the blog: the Blog on /blog, a BlogPosting and its
+// breadcrumbs on each post. Search engines and AI search use it to understand the page;
 // it earns no rich result on its own. Everything here must match what the page shows and what the
 // Terms say (AGENTS.md rule 10): no ratings or reviews, no price other than the one in the Terms.
 import { SITE_URL } from "@/lib/site";
 import { FAQS, faqAnswerText } from "@/lib/faq";
+import { AUTHORS } from "@/lib/blog/authors";
+import type { Post } from "@/lib/blog/schema";
 
 export type JsonLd = { "@context": "https://schema.org"; "@graph": Record<string, unknown>[] };
 
@@ -64,6 +67,78 @@ export function homeJsonLd(): JsonLd {
           acceptedAnswer: { "@type": "Answer", text: faqAnswerText(item) },
         })),
       },
+    ],
+  };
+}
+
+const ORGANIZATION = {
+  "@type": "Organization",
+  "@id": ORGANIZATION_ID,
+  name: "ATS Hero",
+  url: HOME,
+  logo: `${SITE_URL}/apple-icon.png`,
+};
+
+/** /blog: the blog and its posts, newest first, the way the page lists them. */
+export function blogJsonLd(posts: Post[]): JsonLd {
+  const url = `${SITE_URL}/blog`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Blog",
+        "@id": `${url}#blog`,
+        name: "The ATS Hero blog",
+        url,
+        inLanguage: "en",
+        publisher: { "@id": ORGANIZATION_ID },
+        blogPost: posts.map((post) => ({
+          "@type": "BlogPosting",
+          headline: post.title,
+          url: `${url}/${post.slug}`,
+          datePublished: post.publishedAt,
+          dateModified: post.updatedAt,
+        })),
+      },
+      ORGANIZATION,
+    ],
+  };
+}
+
+/**
+ * A post: who wrote it and when (the dates its page shows), what it cites (its Sources list) and
+ * where it sits (Home › Blog › the post). The author is a Person with the role the byline shows.
+ */
+export function blogPostJsonLd(post: Post): JsonLd {
+  const url = `${SITE_URL}/blog/${post.slug}`;
+  const author = AUTHORS[post.author];
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        "@id": `${url}#article`,
+        headline: post.title,
+        description: post.description,
+        url,
+        mainEntityOfPage: url,
+        inLanguage: "en",
+        datePublished: post.publishedAt,
+        dateModified: post.updatedAt,
+        author: { "@type": "Person", name: author.name, jobTitle: author.role },
+        publisher: { "@id": ORGANIZATION_ID },
+        isPartOf: { "@id": `${SITE_URL}/blog#blog` },
+        citation: post.sources.map((source) => source.url),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "ATS Hero", item: HOME },
+          { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE_URL}/blog` },
+          { "@type": "ListItem", position: 3, name: post.title, item: url },
+        ],
+      },
+      ORGANIZATION,
     ],
   };
 }

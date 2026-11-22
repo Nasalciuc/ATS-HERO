@@ -38,6 +38,7 @@ export default function Footer() {
       </div>
 
       <div className="container footer__legal">
+        <a href="/blog">Blog</a>
         <a href="/terms">Terms and Conditions</a>
         <a href="/privacy">Privacy Policy</a>
         <a href="/credits">Credits</a>

@@ -15,7 +15,8 @@ import path from "node:path";
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 
-import { NOINDEX_ROUTES, PUBLIC_ROUTES, SITE_URL } from "@/lib/site";
+import { NOINDEX_ROUTES, PUBLIC_ROUTE_PATTERNS, PUBLIC_ROUTES, SITE_URL } from "@/lib/site";
+import { allPosts } from "@/lib/blog/posts";
 import { PRIVACY_UPDATED } from "@/views/PrivacyPage";
 import { TERMS_UPDATED } from "@/views/TermsPage";
 import sitemap from "@/app/sitemap";
@@ -57,14 +58,14 @@ afterEach(() => {
 
 describe("route inventory", () => {
   it("classifies every page route as public or noindex", () => {
-    const known = new Set<string>([...PUBLIC_ROUTES, ...NOINDEX_ROUTES]);
+    const known = new Set<string>([...PUBLIC_ROUTES, ...PUBLIC_ROUTE_PATTERNS, ...NOINDEX_ROUTES]);
     for (const route of pageRoutes()) {
-      expect(known.has(route), `${route} is neither in PUBLIC_ROUTES nor in NOINDEX_ROUTES (lib/site.ts)`).toBe(true);
+      expect(known.has(route), `${route} is in none of PUBLIC_ROUTES, PUBLIC_ROUTE_PATTERNS, NOINDEX_ROUTES (lib/site.ts)`).toBe(true);
     }
   });
 
   it("has no route listed twice", () => {
-    const all = [...PUBLIC_ROUTES, ...NOINDEX_ROUTES];
+    const all = [...PUBLIC_ROUTES, ...PUBLIC_ROUTE_PATTERNS, ...NOINDEX_ROUTES];
     expect(new Set(all).size).toBe(all.length);
   });
 });
@@ -72,8 +73,10 @@ describe("route inventory", () => {
 describe("sitemap.xml", () => {
   const entries = sitemap();
 
-  it("lists exactly the public routes, on the public origin", () => {
-    expect(entries.map((e) => e.url).sort()).toEqual([...PUBLIC_ROUTES].map((r) => `${SITE_URL}${r}`).sort());
+  it("lists exactly the public routes and every blog post, on the public origin", () => {
+    const posts = allPosts().map((p) => `/blog/${p.slug}`);
+    expect(posts.length).toBeGreaterThan(0);
+    expect(entries.map((e) => e.url).sort()).toEqual([...PUBLIC_ROUTES, ...posts].map((r) => `${SITE_URL}${r}`).sort());
     for (const e of entries) expect(e.url.startsWith(SITE_URL)).toBe(true);
   });
 
@@ -83,6 +86,13 @@ describe("sitemap.xml", () => {
     expect(new Date(byUrl["/terms"].lastModified as Date).toISOString().slice(0, 10)).toBe(TERMS_UPDATED.iso);
     expect(byUrl["/"].lastModified).toBeUndefined();
     expect(byUrl["/credits"].lastModified).toBeUndefined();
+    // each post by its own updatedAt, /blog by the newest of them
+    const posts = allPosts();
+    for (const post of posts) {
+      expect(new Date(byUrl[`/blog/${post.slug}`].lastModified as Date).toISOString().slice(0, 10)).toBe(post.updatedAt);
+    }
+    const newest = posts.map((p) => p.updatedAt).sort().at(-1);
+    expect(new Date(byUrl["/blog"].lastModified as Date).toISOString().slice(0, 10)).toBe(newest);
   });
 
   it("carries no priority or changeFrequency", () => {
@@ -110,7 +120,8 @@ describe("robots.txt", () => {
 
   it("never blocks a page crawlers must read: public pages, noindex pages, icons", () => {
     const { disallow } = productionDisallow();
-    const mustBeCrawlable = [...PUBLIC_ROUTES, ...NOINDEX_ROUTES, "/apple-icon.png", "/icon.svg", "/favicon.ico"];
+    const posts = allPosts().map((p) => `/blog/${p.slug}`);
+    const mustBeCrawlable = [...PUBLIC_ROUTES, ...posts, ...NOINDEX_ROUTES, "/apple-icon.png", "/icon.svg", "/favicon.ico"];
     for (const url of mustBeCrawlable) {
       for (const rule of disallow) {
         expect(blocks(rule, url), `robots.txt rule "${rule}" blocks ${url}`).toBe(false);

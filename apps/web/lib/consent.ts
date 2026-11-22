@@ -4,7 +4,7 @@
 // (AGENTS.md rule 11).
 import type { CookieConsentConfig } from "vanilla-cookieconsent";
 // Relative on purpose: next.config.ts imports this file (through lib/csp.ts), and it has no "@/" alias.
-import { PUBLIC_ROUTES, SITE_URL } from "./site";
+import { PUBLIC_ROUTE_PATTERNS, PUBLIC_ROUTES, SITE_URL, matchesRoutePattern } from "./site";
 
 /** The visitor's choice, kept by the library in a first-party cookie (name and lifetime are its defaults, spelled out). */
 export const CONSENT_COOKIE = "cc_cookie";
@@ -118,7 +118,10 @@ export function analyticsPageLocation(href: string): string {
 
 /** The banner shows on the public pages (the sitemap's list) and nowhere else: never in /app, /api or /dev. */
 export function isConsentRoute(pathname: string): boolean {
-  return (PUBLIC_ROUTES as readonly string[]).includes(pathname);
+  return (
+    (PUBLIC_ROUTES as readonly string[]).includes(pathname) ||
+    PUBLIC_ROUTE_PATTERNS.some((pattern) => matchesRoutePattern(pattern, pathname))
+  );
 }
 
 export type ConsentValue = "granted" | "denied";

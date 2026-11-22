@@ -5,8 +5,8 @@ dek: Not on their own. Without a job post, an ATS only reads your CV into a prof
 topic: how-ats-works
 cover: score
 author: vladimir-nasalciuc
-publishedAt: 2026-11-13
-updatedAt: 2026-11-13
+publishedAt: 2026-11-23
+updatedAt: 2026-11-23
 checkedAt: 2026-11-01
 
 shortAnswer:

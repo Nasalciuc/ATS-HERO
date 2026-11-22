@@ -13,7 +13,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import CookieSettingsButton from "@/components/CookieSettingsButton";
-import { NOINDEX_ROUTES, PUBLIC_ROUTES } from "@/lib/site";
+import { NOINDEX_ROUTES, PUBLIC_ROUTE_PATTERNS, PUBLIC_ROUTES, headerSource } from "@/lib/site";
 import {
   ANALYTICS_CONSENT_DENIED_EVENT,
   ANALYTICS_CSP_HOSTS,
@@ -47,6 +47,13 @@ function filesUnder(dir: string): string[] {
 describe("where the banner shows", () => {
   it("shows on every public route", () => {
     for (const route of PUBLIC_ROUTES) expect(isConsentRoute(route), route).toBe(true);
+  });
+
+  it("shows on every blog post, and only one segment under /blog", () => {
+    expect(isConsentRoute("/blog/do-ats-systems-give-your-resume-a-score")).toBe(true);
+    for (const route of ["/blog/", "/blog/a/b", "/blogs", "/blogger/x", "/app/blog/x"]) {
+      expect(isConsentRoute(route), route).toBe(false);
+    }
   });
 
   it("never shows in the app, the OAuth callback, the API or the dev pages", () => {
@@ -305,14 +312,14 @@ describe("the CSP (AGENTS.md rule 3)", () => {
     const rules = securityHeaders({ consent: true });
     expect(cspOf(rules[0])).not.toMatch(/google|posthog/);
     const extra = rules.slice(1);
-    expect(extra.map((r) => r.source).sort()).toEqual([...PUBLIC_ROUTES].sort());
+    expect(extra.map((r) => r.source).sort()).toEqual([...PUBLIC_ROUTES, ...PUBLIC_ROUTE_PATTERNS.map(headerSource)].sort());
     for (const r of extra) {
       const csp = cspOf(r);
       for (const host of ANALYTICS_CSP_HOSTS.scriptSrc) expect(directive(csp, "script-src")).toContain(host);
       for (const host of ANALYTICS_CSP_HOSTS.connectSrc) expect(directive(csp, "connect-src")).toContain(host);
     }
-    // Exact paths only: nothing under /app, /api or /dev can match a public rule.
-    for (const r of extra) expect(r.source).toMatch(/^\/[a-z]*$/);
+    // Exact paths, or one named segment under /blog: nothing under /app, /api or /dev can match a public rule.
+    for (const r of extra) expect(r.source).toMatch(/^\/[a-z]*$|^\/blog\/:slug$/);
   });
 
   it("lists every Google and PostHog host by name: https, no wildcard", () => {

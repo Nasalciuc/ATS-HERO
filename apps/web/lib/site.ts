@@ -3,8 +3,15 @@
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://atshero.app").replace(/\/$/, "");
 
 /** Routes Google may index. lastModified comes from the page's own *_UPDATED constant where one exists. */
-export const PUBLIC_ROUTES = ["/", "/privacy", "/terms", "/credits"] as const;
+export const PUBLIC_ROUTES = ["/", "/privacy", "/terms", "/credits", "/blog"] as const;
 export type PublicRoute = (typeof PUBLIC_ROUTES)[number];
+
+/**
+ * Public routes with a parameter: every page they match is public too. The sitemap lists each page
+ * (each blog post, with its own date); the cookie banner and the public CSP match them by pattern.
+ * A [param] stands for exactly one path segment.
+ */
+export const PUBLIC_ROUTE_PATTERNS = ["/blog/[slug]"] as const;
 
 /** Routes that exist but must not be indexed: the app itself, the OAuth callback, dev-only pages. */
 export const NOINDEX_ROUTES = [
@@ -21,7 +28,18 @@ export const NOINDEX_ROUTES = [
   "/app/interview/[id]",
   "/app/interview/[id]/report",
   "/sso-callback",
-  // The blog, until it launches (app/blog/layout.tsx says what launching changes).
-  "/blog",
-  "/blog/[slug]",
 ] as const;
+
+/** Does a path match a route pattern such as "/blog/[slug]"? Each [param] is one non-empty segment. */
+export function matchesRoutePattern(pattern: string, pathname: string): boolean {
+  const source = pattern
+    .split("/")
+    .map((part) => (/^\[[^\]/]+\]$/.test(part) ? "[^/]+" : part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
+    .join("/");
+  return new RegExp(`^${source}$`).test(pathname);
+}
+
+/** The same pattern written for next.config headers(): "/blog/[slug]" becomes "/blog/:slug". */
+export function headerSource(pattern: string): string {
+  return pattern.replace(/\[([^\]/]+)\]/g, ":$1");
+}

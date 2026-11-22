@@ -24,7 +24,7 @@ import { GUEST_RETENTION_DAYS } from "@/lib/retention";
 import { RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /** The date the content last changed. Change it with the content, never compute it. */
-export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-12", label: "12 November 2026" };
+export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-23", label: "23 November 2026" };
 
 const RATE_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
 
@@ -40,7 +40,7 @@ const journey: LegalStep[] = [
     title: "You open the site",
     points: [
       "Visiting without an account puts nothing in our database. There are no ads or tracking pixels.",
-      "On the public pages (home, Privacy, Terms, Credits) a banner asks whether we may count your visit with Google Analytics and PostHog. Nothing is measured unless you click Allow, and never inside the app, where your CVs are.",
+      "On the public pages (home, blog, Privacy, Terms, Credits) a banner asks whether we may count your visit with Google Analytics and PostHog. Nothing is measured unless you click Allow, and never inside the app, where your CVs are.",
       "Our host, Vercel, sees your IP address and browser in its request logs, to deliver the page and stop attacks.",
       "Clerk, our sign-in service, loads on every page to check whether you’re signed in, so it sees your IP address and browser too.",
       `Requests that read or change your data are counted per IP address (and account) for ${RATE_SECONDS} seconds, in our server’s memory only, to stop abuse.`,

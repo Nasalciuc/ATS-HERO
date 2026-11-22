@@ -5,7 +5,7 @@
 // Relative imports on purpose: next.config.ts imports this file and has no "@/" alias.
 import { clerkFrontendApi } from "./clerk-config";
 import { ANALYTICS_CSP_HOSTS, consentEnabled } from "./consent";
-import { PUBLIC_ROUTES } from "./site";
+import { PUBLIC_ROUTE_PATTERNS, PUBLIC_ROUTES, headerSource } from "./site";
 
 type Header = { key: string; value: string };
 
@@ -74,6 +74,10 @@ export function securityHeaders({
   if (consent) {
     const csp = buildCsp({ analytics: true });
     for (const route of PUBLIC_ROUTES) rules.push({ source: route, headers: [{ key: "Content-Security-Policy", value: csp }] });
+    // "/blog/:slug" matches one segment under /blog, never anything under /app.
+    for (const pattern of PUBLIC_ROUTE_PATTERNS) {
+      rules.push({ source: headerSource(pattern), headers: [{ key: "Content-Security-Policy", value: csp }] });
+    }
   }
   return rules;
 }

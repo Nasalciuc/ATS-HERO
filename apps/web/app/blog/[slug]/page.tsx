@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import BlogPostPage from "@/views/BlogPostPage";
+import JsonLd from "@/components/JsonLd";
 import { allPosts, postBySlug, relatedPosts } from "@/lib/blog/posts";
 import { AUTHORS } from "@/lib/blog/authors";
+import { blogPostJsonLd } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -35,5 +37,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPost({ params }: Props) {
   const post = postBySlug((await params).slug);
   if (!post) notFound();
-  return <BlogPostPage post={post} related={relatedPosts(post)} />;
+  return (
+    <>
+      <JsonLd data={blogPostJsonLd(post)} />
+      <BlogPostPage post={post} related={relatedPosts(post)} />
+    </>
+  );
 }
