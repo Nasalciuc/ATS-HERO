@@ -21,4 +21,7 @@ export const NOINDEX_ROUTES = [
   "/app/interview/[id]",
   "/app/interview/[id]/report",
   "/sso-callback",
+  // The blog, until it launches (app/blog/layout.tsx says what launching changes).
+  "/blog",
+  "/blog/[slug]",
 ] as const;

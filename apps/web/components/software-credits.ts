@@ -224,14 +224,64 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "@types/debug",
+    "version": "4.1.13",
+    "license": "MIT"
+  },
+  {
     "name": "@types/diff-match-patch",
     "version": "1.0.36",
+    "license": "MIT"
+  },
+  {
+    "name": "@types/estree",
+    "version": "1.0.10",
+    "license": "MIT"
+  },
+  {
+    "name": "@types/estree-jsx",
+    "version": "1.0.5",
+    "license": "MIT"
+  },
+  {
+    "name": "@types/hast",
+    "version": "3.0.5",
+    "license": "MIT"
+  },
+  {
+    "name": "@types/mdast",
+    "version": "4.0.4",
+    "license": "MIT"
+  },
+  {
+    "name": "@types/ms",
+    "version": "2.1.0",
     "license": "MIT"
   },
   {
     "name": "@types/node",
     "version": "25.9.4",
     "license": "MIT"
+  },
+  {
+    "name": "@types/react",
+    "version": "19.2.17",
+    "license": "MIT"
+  },
+  {
+    "name": "@types/unist",
+    "version": "2.0.11",
+    "license": "MIT"
+  },
+  {
+    "name": "@types/unist",
+    "version": "3.0.3",
+    "license": "MIT"
+  },
+  {
+    "name": "@ungap/structured-clone",
+    "version": "1.4.0",
+    "license": "ISC"
   },
   {
     "name": "@vercel/cli-config",
@@ -262,6 +312,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "name": "ai",
     "version": "4.3.19",
     "license": "Apache-2.0"
+  },
+  {
+    "name": "bail",
+    "version": "2.0.2",
+    "license": "MIT"
   },
   {
     "name": "base64-js",
@@ -299,8 +354,33 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "CC-BY-4.0"
   },
   {
+    "name": "ccount",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
     "name": "chalk",
     "version": "5.6.2",
+    "license": "MIT"
+  },
+  {
+    "name": "character-entities",
+    "version": "2.0.2",
+    "license": "MIT"
+  },
+  {
+    "name": "character-entities-html4",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "character-entities-legacy",
+    "version": "3.0.0",
+    "license": "MIT"
+  },
+  {
+    "name": "character-reference-invalid",
+    "version": "2.0.1",
     "license": "MIT"
   },
   {
@@ -329,6 +409,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "comma-separated-tokens",
+    "version": "2.0.3",
+    "license": "MIT"
+  },
+  {
     "name": "core-util-is",
     "version": "1.0.3",
     "license": "MIT"
@@ -339,8 +424,28 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "csstype",
+    "version": "3.2.3",
+    "license": "MIT"
+  },
+  {
+    "name": "debug",
+    "version": "4.4.3",
+    "license": "MIT"
+  },
+  {
+    "name": "decode-named-character-reference",
+    "version": "1.3.0",
+    "license": "MIT"
+  },
+  {
     "name": "dequal",
     "version": "2.0.3",
+    "license": "MIT"
+  },
+  {
+    "name": "devlop",
+    "version": "1.1.0",
     "license": "MIT"
   },
   {
@@ -369,6 +474,16 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "escape-string-regexp",
+    "version": "5.0.0",
+    "license": "MIT"
+  },
+  {
+    "name": "estree-util-is-identifier-name",
+    "version": "3.0.0",
+    "license": "MIT"
+  },
+  {
     "name": "events",
     "version": "3.3.0",
     "license": "MIT"
@@ -376,6 +491,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   {
     "name": "execa",
     "version": "5.1.1",
+    "license": "MIT"
+  },
+  {
+    "name": "extend",
+    "version": "3.0.2",
     "license": "MIT"
   },
   {
@@ -414,6 +534,16 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "hast-util-to-jsx-runtime",
+    "version": "2.3.7",
+    "license": "MIT"
+  },
+  {
+    "name": "hast-util-whitespace",
+    "version": "3.0.0",
+    "license": "MIT"
+  },
+  {
     "name": "hsl-to-hex",
     "version": "1.0.0",
     "license": "MIT"
@@ -422,6 +552,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "name": "hsl-to-rgb-for-reals",
     "version": "1.1.1",
     "license": "ISC"
+  },
+  {
+    "name": "html-url-attributes",
+    "version": "3.0.1",
+    "license": "MIT"
   },
   {
     "name": "human-signals",
@@ -442,6 +577,36 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "name": "inherits",
     "version": "2.0.4",
     "license": "ISC"
+  },
+  {
+    "name": "inline-style-parser",
+    "version": "0.2.9",
+    "license": "MIT"
+  },
+  {
+    "name": "is-alphabetical",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "is-alphanumerical",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "is-decimal",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "is-hexadecimal",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "is-plain-obj",
+    "version": "4.1.0",
+    "license": "MIT"
   },
   {
     "name": "is-stream",
@@ -514,8 +679,93 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "longest-streak",
+    "version": "3.1.0",
+    "license": "MIT"
+  },
+  {
     "name": "loose-envify",
     "version": "1.4.0",
+    "license": "MIT"
+  },
+  {
+    "name": "markdown-table",
+    "version": "3.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-find-and-replace",
+    "version": "3.0.4",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-from-markdown",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-gfm",
+    "version": "3.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-gfm-autolink-literal",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-gfm-footnote",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-gfm-strikethrough",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-gfm-table",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-gfm-task-list-item",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-mdx-expression",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-mdx-jsx",
+    "version": "3.2.1",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-mdxjs-esm",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-phrasing",
+    "version": "4.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-to-hast",
+    "version": "13.2.2",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-to-markdown",
+    "version": "2.2.3",
+    "license": "MIT"
+  },
+  {
+    "name": "mdast-util-to-string",
+    "version": "4.0.0",
     "license": "MIT"
   },
   {
@@ -529,6 +779,151 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "micromark",
+    "version": "4.0.3",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-core-commonmark",
+    "version": "2.0.4",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-extension-gfm",
+    "version": "3.0.0",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-extension-gfm-autolink-literal",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-extension-gfm-footnote",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-extension-gfm-strikethrough",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-extension-gfm-table",
+    "version": "2.1.2",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-extension-gfm-tagfilter",
+    "version": "2.0.0",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-extension-gfm-task-list-item",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-factory-destination",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-factory-label",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-factory-space",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-factory-title",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-factory-whitespace",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-character",
+    "version": "2.1.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-chunked",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-classify-character",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-combine-extensions",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-decode-numeric-character-reference",
+    "version": "2.0.2",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-decode-string",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-edit-map",
+    "version": "1.0.0",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-encode",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-html-tag-name",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-normalize-identifier",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-resolve-all",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-sanitize-uri",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-subtokenize",
+    "version": "2.1.0",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-symbol",
+    "version": "2.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "micromark-util-types",
+    "version": "2.0.3",
+    "license": "MIT"
+  },
+  {
     "name": "mimic-fn",
     "version": "2.1.0",
     "license": "MIT"
@@ -537,6 +932,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "name": "minimalistic-assert",
     "version": "1.0.1",
     "license": "ISC"
+  },
+  {
+    "name": "ms",
+    "version": "2.1.3",
+    "license": "MIT"
   },
   {
     "name": "nanoid",
@@ -587,6 +987,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "name": "pako",
     "version": "1.0.11",
     "license": "(MIT AND Zlib)"
+  },
+  {
+    "name": "parse-entities",
+    "version": "4.0.2",
+    "license": "MIT"
   },
   {
     "name": "parse-svg-path",
@@ -694,6 +1099,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "property-information",
+    "version": "7.2.0",
+    "license": "MIT"
+  },
+  {
     "name": "queue",
     "version": "6.0.2",
     "license": "MIT"
@@ -714,8 +1124,33 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "react-markdown",
+    "version": "10.1.0",
+    "license": "MIT"
+  },
+  {
     "name": "readable-stream",
     "version": "2.3.8",
+    "license": "MIT"
+  },
+  {
+    "name": "remark-gfm",
+    "version": "4.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "remark-parse",
+    "version": "11.0.0",
+    "license": "MIT"
+  },
+  {
+    "name": "remark-rehype",
+    "version": "11.1.2",
+    "license": "MIT"
+  },
+  {
+    "name": "remark-stringify",
+    "version": "11.0.0",
     "license": "MIT"
   },
   {
@@ -799,6 +1234,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "BSD-3-Clause"
   },
   {
+    "name": "space-separated-tokens",
+    "version": "2.0.2",
+    "license": "MIT"
+  },
+  {
     "name": "split2",
     "version": "4.2.0",
     "license": "ISC"
@@ -819,8 +1259,18 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "stringify-entities",
+    "version": "4.0.4",
+    "license": "MIT"
+  },
+  {
     "name": "strip-final-newline",
     "version": "2.0.0",
+    "license": "MIT"
+  },
+  {
+    "name": "style-to-object",
+    "version": "2.0.2",
     "license": "MIT"
   },
   {
@@ -854,6 +1304,16 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "trim-lines",
+    "version": "3.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "trough",
+    "version": "2.2.0",
+    "license": "MIT"
+  },
+  {
     "name": "tslib",
     "version": "2.8.1",
     "license": "0BSD"
@@ -874,6 +1334,36 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "unified",
+    "version": "11.0.5",
+    "license": "MIT"
+  },
+  {
+    "name": "unist-util-is",
+    "version": "6.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "unist-util-position",
+    "version": "5.0.0",
+    "license": "MIT"
+  },
+  {
+    "name": "unist-util-stringify-position",
+    "version": "4.0.0",
+    "license": "MIT"
+  },
+  {
+    "name": "unist-util-visit",
+    "version": "5.2.0",
+    "license": "MIT"
+  },
+  {
+    "name": "unist-util-visit-parents",
+    "version": "6.1.0",
+    "license": "MIT"
+  },
+  {
     "name": "use-sync-external-store",
     "version": "1.6.0",
     "license": "MIT"
@@ -886,6 +1376,16 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   {
     "name": "vanilla-cookieconsent",
     "version": "3.2.1",
+    "license": "MIT"
+  },
+  {
+    "name": "vfile",
+    "version": "6.0.3",
+    "license": "MIT"
+  },
+  {
+    "name": "vfile-message",
+    "version": "4.0.4",
     "license": "MIT"
   },
   {
@@ -924,6 +1424,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
     "license": "MIT"
   },
   {
+    "name": "yaml",
+    "version": "2.9.1",
+    "license": "ISC"
+  },
+  {
     "name": "yoga-layout",
     "version": "3.2.1",
     "license": "MIT"
@@ -946,6 +1451,11 @@ export const SOFTWARE_CREDITS: SoftwareCredit[] = [
   {
     "name": "zustand",
     "version": "5.0.14",
+    "license": "MIT"
+  },
+  {
+    "name": "zwitch",
+    "version": "2.0.4",
     "license": "MIT"
   }
 ];
