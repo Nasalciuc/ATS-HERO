@@ -3,7 +3,10 @@
 // - every figure a body places (```blog-<name>```) exists and has its data in the frontmatter;
 // - the table of contents links to ids the rendered body really has;
 // - every post sends the reader to the check, and "Keep reading" names real posts;
-// - links that leave the site open in a new tab without handing it our page (noopener).
+// - links that leave the site open in a new tab without handing it our page (noopener);
+// - /blog links every post once (for people and screen readers), whichever layout its size gets;
+// - the row that opens on phones lists the same sections as the side column, and every source
+//   shows the site it is on.
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -11,12 +14,16 @@ import { renderToStaticMarkup } from "react-dom/server";
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 
+import fs from "node:fs";
+import path from "node:path";
 import { allPosts, parsePost } from "@/lib/blog/posts";
-import { slugify } from "@/lib/blog/text";
+import { curlyApostrophes, hostOf, slugify, typographic } from "@/lib/blog/text";
+import PostCover from "@/components/blog/PostCover";
 import { BLOCK_DATA } from "@/components/blog/blocks";
 import ArticleBody from "@/components/blog/ArticleBody";
+import { Sources } from "@/components/blog/parts";
 import BlogPostPage, { tocOf } from "@/views/BlogPostPage";
-import BlogListPage from "@/views/BlogListPage";
+import BlogListPage, { SIDE_LAYOUT_FROM } from "@/views/BlogListPage";
 import { blogJsonLd, blogPostJsonLd } from "@/lib/structured-data";
 import { AUTHORS } from "@/lib/blog/authors";
 import { SITE_URL } from "@/lib/site";
@@ -124,5 +131,84 @@ describe("blog posts", () => {
     for (const post of posts) expect(html).toContain(`href="/blog/${post.slug}"`);
     const dates = posts.map((p) => p.publishedAt);
     expect([...dates].sort().reverse()).toEqual(dates);
+  });
+
+  it.each([1, 2, 3, 4, 5, 8])("/blog with %i posts links each one once, newest first, in the layout for its size", (n) => {
+    const day = (i: number) => `2026-11-${String(28 - i).padStart(2, "0")}`;
+    const many = Array.from({ length: n }, (_, i) => ({
+      ...posts[0],
+      slug: `guide-${i}`,
+      title: `Guide number ${i} on reading CVs`,
+      publishedAt: day(i),
+      updatedAt: day(i),
+    }));
+    const html = renderToStaticMarkup(<BlogListPage posts={many} />);
+    // The link people and screen readers use; a cover or "Read the guide" is a hidden second target.
+    const visible = [...html.matchAll(/<a [^>]*href="\/blog\/(guide-\d+)"[^>]*>/g)]
+      .filter((m) => !m[0].includes('aria-hidden="true"'))
+      .map((m) => m[1]);
+    expect(visible).toEqual(many.map((p) => p.slug));
+    expect(html.includes('<article class="blog-feature">'), "the wide card").toBe(n < SIDE_LAYOUT_FROM);
+    expect(html.includes('class="blog-latest"'), "the Latest column").toBe(n >= SIDE_LAYOUT_FROM);
+  });
+
+  it.each(posts.map((p) => [p.slug, p] as const))("%s: the row that opens on phones lists the side's sections", (_slug, post) => {
+    const html = renderToStaticMarkup(<BlogPostPage post={post} related={[]} />);
+    const part = (start: string, end: string) => {
+      const from = html.indexOf(start);
+      expect(from, start).toBeGreaterThan(-1);
+      return html.slice(from, html.indexOf(end, from));
+    };
+    const hrefs = (s: string) => [...s.matchAll(/href="(#[^"]+)"/g)].map((m) => m[1]);
+    const fold = hrefs(part('<details class="blog-fold"', "</details>"));
+    expect(fold).toEqual(tocOf(post).map((h) => `#${h.id}`));
+    expect(hrefs(part('<nav class="blog-toc"', "</nav>"))).toEqual(fold);
+  });
+
+  it.each(posts.map((p) => [p.slug, p] as const))("%s: every source shows the site it is on", (_slug, post) => {
+    const html = renderToStaticMarkup(<Sources post={post} />);
+    for (const source of post.sources) {
+      expect(html).toContain(`<span class="blog-sources__host">${hostOf(source.url)}</span>`);
+    }
+    expect(hostOf("https://www.icims.com/subprocessors/")).toBe("icims.com");
+    expect(hostOf("https://support.greenhouse.io/hc/en-us/articles/1")).toBe("support.greenhouse.io");
+  });
+
+  it("prints apostrophes the way the site does, and leaves code and addresses as typed", () => {
+    expect(curlyApostrophes("you'll see the ATS's own docs, the vendors' own, and the 90's")).toBe(
+      "you’ll see the ATS’s own docs, the vendors’ own, and the 90’s",
+    );
+    expect(curlyApostrophes("run `don't` here\n\n```blog-x\nit's\n```\n\nit's done")).toBe(
+      "run `don't` here\n\n```blog-x\nit's\n```\n\nit’s done",
+    );
+    expect(curlyApostrophes("“quoted” and 'single' quotes")).toBe("“quoted” and 'single' quotes");
+    expect(typographic({ title: "It's", sources: [{ title: "Bob's page", url: "https://e.com/it's" }] })).toEqual({
+      title: "It’s",
+      sources: [{ title: "Bob’s page", url: "https://e.com/it's" }],
+    });
+  });
+
+  it.each(posts.map((p) => [p.slug, p] as const))("%s: no straight apostrophe inside a word reaches the page", (_slug, post) => {
+    const html = renderToStaticMarkup(<BlogPostPage post={post} related={[]} />);
+    // React writes ' as &#x27;
+    expect(html.match(/\p{L}&#x27;\p{L}/gu) ?? []).toEqual([]);
+  });
+
+  it("the covers' pictures exist, in every size their srcset names", () => {
+    for (const cover of ["score", "fields", "formats"] as const) {
+      for (const size of ["hero", "card", "thumb"] as const) {
+        const html = renderToStaticMarkup(<PostCover cover={cover} size={size} />);
+        const files = [...html.matchAll(/(?:src|srcSet|srcset)="([^"]+)"/g)].flatMap((m) =>
+          m[1].split(",").map((part) => part.trim().split(/\s+/)[0]),
+        );
+        for (const file of files) expect(fs.existsSync(path.join(process.cwd(), "public", file)), file).toBe(true);
+      }
+    }
+  });
+
+  it.each(posts.map((p) => [p.slug, p] as const))("%s: the share row carries the post's own address", (_slug, post) => {
+    const html = renderToStaticMarkup(<BlogPostPage post={post} related={[]} />);
+    const own = encodeURIComponent(`${SITE_URL}/blog/${post.slug}`);
+    expect(html).toContain(`href="https://www.linkedin.com/sharing/share-offsite/?url=${own}"`);
   });
 });

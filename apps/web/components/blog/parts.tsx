@@ -2,8 +2,8 @@
 // Links into /app are plain <a>: a full page load, so nothing a public page loaded comes along
 // into the app (the same reason the Navbar and the landing use <a>).
 import { AUTHORS, type AuthorId } from "@/lib/blog/authors";
-import { formatDate } from "@/lib/blog/text";
-import type { Post } from "@/lib/blog/schema";
+import { formatDate, hostOf } from "@/lib/blog/text";
+import type { Heading, Post } from "@/lib/blog/schema";
 import { TOPICS, type Topic } from "@/lib/blog/topics";
 import { TipsBulb } from "@/components/figma-icons";
 import PostCover from "./PostCover";
@@ -82,6 +82,32 @@ export function Spotlight({ post }: { post: Post }) {
       </h2>
       <p className="blog-spot__dek">{post.dek}</p>
       <AuthorLine author={post.author} />
+    </article>
+  );
+}
+
+/** The newest post as one wide card, the cover beside the text: the top of /blog while it has few posts. */
+export function Feature({ post }: { post: Post }) {
+  const href = postHref(post.slug);
+  return (
+    <article className="blog-feature">
+      {/* As in Spotlight, the title is the link people and screen readers use; the cover and
+          "Read the guide" are bigger targets for the same page, hidden from screen readers. */}
+      <a className="blog-feature__cover" href={href} tabIndex={-1} aria-hidden="true">
+        <PostCover cover={post.cover} size="hero" />
+      </a>
+      <div className="blog-feature__text">
+        <PostMeta post={post} />
+        <h2 className="blog-feature__title">
+          <a href={href}>{post.title}</a>
+        </h2>
+        <p className="blog-feature__dek">{post.dek}</p>
+        <AuthorLine author={post.author} date={`Updated ${formatDate(post.updatedAt)}`} />
+        <a className="blog-feature__read" href={href} tabIndex={-1} aria-hidden="true">
+          Read the guide
+          <Chevron />
+        </a>
+      </div>
     </article>
   );
 }
@@ -218,6 +244,7 @@ export function AuthorBox({ post }: { post: Post }) {
   );
 }
 
+/** The sources, numbered, each with the site it is on: who said it shows before anyone clicks. */
 export function Sources({ post }: { post: Post }) {
   return (
     <section className="blog-sources" aria-labelledby="sources">
@@ -226,13 +253,39 @@ export function Sources({ post }: { post: Post }) {
       </h2>
       <ol className="blog-sources__list">
         {post.sources.map((source) => (
-          <li key={source.url}>
-            <a href={source.url} target="_blank" rel="noopener noreferrer">
+          <li className="blog-sources__item" key={source.url}>
+            <a className="blog-sources__link" href={source.url} target="_blank" rel="noopener noreferrer">
               {source.title}
             </a>
+            <span className="blog-sources__host">{hostOf(source.url)}</span>
           </li>
         ))}
       </ol>
     </section>
+  );
+}
+
+/** "In this guide" on phones and tablets: one closed row above the text that opens into the list.
+ *  A <details>, so it opens without JavaScript and the page doesn't jump when the script arrives. */
+export function ContentsFold({ items }: { items: Heading[] }) {
+  return (
+    <details className="blog-fold">
+      <summary className="blog-fold__summary">
+        <span className="blog-fold__label">In this guide</span>
+        <span className="blog-fold__count">{items.length} sections</span>
+        <svg className="blog-fold__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </summary>
+      <nav aria-label="In this guide">
+        <ol className="blog-fold__list">
+          {items.map((item) => (
+            <li key={item.id}>
+              <a href={`#${item.id}`}>{item.text}</a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </details>
   );
 }

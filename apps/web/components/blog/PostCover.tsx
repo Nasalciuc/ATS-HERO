@@ -6,8 +6,35 @@ import type { Cover } from "@/lib/blog/schema";
 
 type Size = "hero" | "card" | "thumb";
 
-function CvCard() {
-  return <img className="blog-cover__cv" src="/images/hero-cv-card.png" alt="" width={778} height={1104} />;
+/** How wide the CV is drawn in each cover (styles.css: 44% of the hero, 190px, 58px), for srcset. */
+const CV_SIZES: Record<Size, string> = { hero: "(max-width: 900px) 40vw, 290px", card: "190px", thumb: "58px" };
+
+/**
+ * The landing's CV card, as WebP where the browser takes it (79 KB, or 30 KB at 400px, against the
+ * PNG's 311 KB). The hero cover is at the top of its page and is the post page's largest picture:
+ * it loads first; the cards' and thumbnails' wait until they come near the screen.
+ */
+function CvCard({ size }: { size: Size }) {
+  const top = size === "hero";
+  return (
+    <picture>
+      <source
+        type="image/webp"
+        srcSet="/images/hero-cv-card-400.webp 400w, /images/hero-cv-card.webp 778w"
+        sizes={CV_SIZES[size]}
+      />
+      <img
+        className="blog-cover__cv"
+        src="/images/hero-cv-card.png"
+        alt=""
+        width={778}
+        height={1104}
+        decoding="async"
+        loading={top ? "eager" : "lazy"}
+        fetchPriority={top ? "high" : "auto"}
+      />
+    </picture>
+  );
 }
 
 function FileTile({ label, tone }: { label: string; tone: "violet" | "green" }) {
@@ -33,7 +60,7 @@ const FIELDS = [
 function ScoreCover({ size }: { size: Size }) {
   return (
     <>
-      <CvCard />
+      <CvCard size={size} />
       {size === "card" && <span className="blog-cover__tag">No score</span>}
       {size === "hero" && (
         <>
