@@ -366,6 +366,8 @@ Resources:
   # Expected spend is about $22-25 a month (GuardDuty included), so 50 % / 80 % alerts would fire
   # every month.
   # The forecast alert warns early; the actual one says the limit was crossed.
+  # It counts spend before credits: by default a budget subtracts them, so while the account's
+  # credits pay the bill it would see $0 and never warn.
   MonthlyBudget:
     Type: AWS::Budgets::Budget
     Properties:
@@ -374,9 +376,25 @@ Resources:
         BudgetType: COST
         TimeUnit: MONTHLY
         BudgetLimit: { Amount: !Ref MonthlyBudgetUsd, Unit: USD }
+        CostTypes: { IncludeCredit: false }
       NotificationsWithSubscribers:
         - Notification: { NotificationType: FORECASTED, ComparisonOperator: GREATER_THAN, Threshold: 100 }
           Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+        - Notification: { NotificationType: ACTUAL, ComparisonOperator: GREATER_THAN, Threshold: 100 }
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+
+  # What the credits don't pay comes off the card: the credits ran out or expired, or a charge they
+  # don't cover. This budget counts what is left after credits and warns at the first dollar.
+  # Budgets without actions are free.
+  OutOfPocketBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: atshero-out-of-pocket
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit: { Amount: 1, Unit: USD }
+      NotificationsWithSubscribers:
         - Notification: { NotificationType: ACTUAL, ComparisonOperator: GREATER_THAN, Threshold: 100 }
           Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
 
