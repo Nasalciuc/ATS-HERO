@@ -28,7 +28,7 @@ const features = [
 ];
 
 /**
- * "Check your resume ATS score now": click or drop a CV and the Improve analysis runs on it, the
+ * "See what an ATS reads in your CV": click or drop a CV and the Improve analysis runs on it, the
  * same as /app/improve. The file is read in the browser (lib/cv-file.ts). It used to be a drawing
  * of an upload box that did nothing.
  */
@@ -73,7 +73,7 @@ function UploadCard() {
         void onFile(file);
       }}
     >
-      <h3 className="upload-card__title" data-figma="features-upload-title">Check your resume ATS score now</h3>
+      <h3 className="upload-card__title" data-figma="features-upload-title">See what an ATS reads in your CV</h3>
       <button
         type="button"
         className={`upload-card__drop${over ? " is-over" : ""}`}
