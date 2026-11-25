@@ -1,16 +1,31 @@
 // /blog/[slug]: one post. The header has the title, the author and the post's cover; then the
-// table of contents (sticky on wide screens) beside the text, the questions, the author box and the
-// sources; then the related posts. Designed in Claude (canvas "ATS Hero Blog", 13 Nov 2026).
+// table of contents beside the text (sticky on wide screens; a row that opens, above the text, on
+// narrower ones), the questions, the share row, the author box and the sources; then the related
+// posts and the check on a mint band. A thin bar at the top of the window fills as the page is read
+// (CSS only, where the browser can tie it to the scroll). Designed in Claude (canvas "ATS Hero
+// Blog", 13 Nov 2026).
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ArticleBody from "@/components/blog/ArticleBody";
 import BlogFaq from "@/components/blog/BlogFaq";
 import BlogToc from "@/components/blog/BlogToc";
 import PostCover from "@/components/blog/PostCover";
-import { AuthorBox, AuthorLine, CheckTip, PostCard, PostMeta, Sources } from "@/components/blog/parts";
+import ShareRow from "@/components/blog/ShareRow";
+import {
+  AuthorBox,
+  AuthorLine,
+  CheckBand,
+  CheckTip,
+  ContentsFold,
+  PostCard,
+  PostMeta,
+  Sources,
+  postHref,
+} from "@/components/blog/parts";
 import type { Heading, Post } from "@/lib/blog/schema";
 import { formatDate } from "@/lib/blog/text";
 import { TOPICS } from "@/lib/blog/topics";
+import { SITE_URL } from "@/lib/site";
 
 export const FAQ_HEADING: Heading = { id: "faq", text: "Questions people ask" };
 export const SOURCES_HEADING: Heading = { id: "sources", text: "Sources" };
@@ -27,10 +42,12 @@ export function tocOf(post: Post): Heading[] {
 }
 
 export default function BlogPostPage({ post, related }: { post: Post; related: Post[] }) {
+  const toc = tocOf(post);
   return (
     <>
       <Navbar />
       <main className="blog blog-post">
+        <div className="blog-progress" aria-hidden="true" />
         <header className="blog-post__hero">
           <div className="container">
             <nav className="blog-crumbs" aria-label="Breadcrumb">
@@ -57,11 +74,12 @@ export default function BlogPostPage({ post, related }: { post: Post; related: P
 
         <div className="container blog-post__layout">
           <aside className="blog-post__side">
-            <BlogToc items={tocOf(post)} />
+            <BlogToc items={toc} />
             <CheckTip className="blog-post__tip" />
           </aside>
 
           <article className="blog-post__main">
+            <ContentsFold items={toc} />
             <ArticleBody post={post} />
 
             {post.faq.length > 0 && (
@@ -73,6 +91,7 @@ export default function BlogPostPage({ post, related }: { post: Post; related: P
               </section>
             )}
 
+            <ShareRow url={`${SITE_URL}${postHref(post.slug)}`} />
             <AuthorBox post={post} />
             <Sources post={post} />
           </article>
@@ -97,6 +116,8 @@ export default function BlogPostPage({ post, related }: { post: Post; related: P
             </div>
           </section>
         )}
+
+        <CheckBand />
       </main>
       <Footer />
     </>

@@ -17,23 +17,23 @@ const cards = [
   },
   {
     img: "/images/flow-improve-7e14af.png",
-    desc: "Upload your CV to receive instant feedback, clarity score, and personalized improvement recommendations.",
+    desc: "Upload your CV to see what a tracking system reads from it, field by field, and what to fix first.",
     cta: "Improve My Resume",
     to: "/app/improve",
     steps: [
       { title: "Upload or paste your CV", body: "PDF, Word or plain text. We read the text, the same way a tracking system does." },
-      { title: "See your ATS score", body: "A score per section, plus the critical mistakes that cost you the most." },
+      { title: "See what the ATS reads", body: "What two document readers take out of your file, field by field, plus the problems that cost you the most." },
       { title: "Fix the flagged lines", body: "Each finding comes with what to change and why it matters to a recruiter." },
     ],
   },
   {
     img: "/images/flow-jobfit-7e14af.png",
-    desc: "Compare your CV to a job and get match score, skill gap insights, and actionable optimization tips for better results.",
+    desc: "Compare your CV to a job and see which of its requirements you meet and which ones your CV doesn’t show yet.",
     cta: "Check Job Fit",
     to: "/app/jobfit",
     steps: [
       { title: "Add the job description", body: "Paste the posting next to your CV — no account needed to try it." },
-      { title: "Read the match score", body: "See which keywords the posting expects and which ones your CV actually proves." },
+      { title: "See which requirements you meet", body: "Each requirement in the posting, marked met or missing from what your CV shows." },
       { title: "Close the gaps", body: "Add the missing skills you genuinely have, then re-check before you apply." },
     ],
   },

@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import { postSchema, type Heading, type Post } from "./schema";
-import { plainText, slugify } from "./text";
+import { curlyApostrophes, plainText, slugify, typographic } from "./text";
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
@@ -36,8 +36,9 @@ export function parsePost(slug: string, raw: string): Post {
     const fields = parsed.error.issues.map((i) => `${i.path.join(".") || "frontmatter"}: ${i.message}`).join("; ");
     throw new Error(`content/blog/${slug}.md: ${fields}`);
   }
-  const meta = parsed.data;
-  const body = match[2].trim();
+  // Checked as written, then printed with the site's apostrophes (you’ll, not you'll).
+  const meta = typographic(parsed.data);
+  const body = curlyApostrophes(match[2].trim());
   // What a reader reads: the prose plus the figures' words (the short answer, the cards, the FAQ…).
   const figures = [meta.shortAnswer, meta.levels, meta.atsScores, meta.titleFilter, meta.lab, meta.faq];
   const words = countWords(body.replace(FENCES, "")) + countWords(figures);
