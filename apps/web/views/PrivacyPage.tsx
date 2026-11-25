@@ -24,7 +24,7 @@ import { GUEST_RETENTION_DAYS } from "@/lib/retention";
 import { RATE_LIMIT_WINDOW_MS } from "@/lib/ratelimit";
 
 /** The date the content last changed. Change it with the content, never compute it. */
-export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-23", label: "23 November 2026" };
+export const PRIVACY_UPDATED: LegalDate = { iso: "2026-11-25", label: "25 November 2026" };
 
 const RATE_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
 
