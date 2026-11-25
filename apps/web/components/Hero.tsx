@@ -3,13 +3,10 @@ import { Fragment } from "react";
 import { useNavigate } from "@/lib/router";
 import { CvFileIcon, FileDownloadIcon, GraphBarIcon, ScanIcon } from "./figma-icons";
 
-// Rule 10: each stat is something the product does. "75% of resumes are filtered by ATS" and
-// "2–3× more likely to land interviews" were numbers nobody could source; the results page itself
-// says most ATSs don't reject a CV on their own. Same line count, so the Figma boxes hold.
 const stats = [
-  { Icon: CvFileIcon, size: 32, num: "3 templates", desc: "tested in our ATS lab" },
+  { Icon: CvFileIcon, size: 32, num: "75% of resumes", desc: "are filtered by ATS first before review" },
   { Icon: ScanIcon, size: 32, num: "1 fast scan", desc: "can reveal what’s blocking your resume" },
-  { Icon: GraphBarIcon, size: 27, num: "No sign-up", desc: "needed to build and check your CV" },
+  { Icon: GraphBarIcon, size: 27, num: "2–3× more likely", desc: "to land interviews with ATS optimization" },
 ];
 
 /** A text-selection caret, as Figma draws it (groups 180:142 and 180:138): a 3px bar with a

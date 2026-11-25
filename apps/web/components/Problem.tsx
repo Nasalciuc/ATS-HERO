@@ -19,9 +19,9 @@ export default function Problem() {
             It’s just untranslated.
           </h2>
           <p className="problem__body" data-figma="problem-text">
-            Software reads your CV before people do.
+            Most CVs never reach human eyes.
             <br />
-            If a tracking system misreads a field, recruiters searching for it won’t find you.
+            Up to 75% are filtered out by automated systems before a recruiter even opens them.
           </p>
         </div>
 
