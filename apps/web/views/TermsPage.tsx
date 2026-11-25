@@ -20,7 +20,7 @@ import { OPERATOR, PRIVACY_EMAIL, SUPPORT_EMAIL, type LegalDate } from "@/lib/le
 import { GUEST_RETENTION_DAYS } from "@/lib/retention";
 
 /** The date the content last changed. Change it with the content, never compute it. */
-export const TERMS_UPDATED: LegalDate = { iso: "2026-10-17", label: "17 October 2026" };
+export const TERMS_UPDATED: LegalDate = { iso: "2026-11-25", label: "25 November 2026" };
 
 const DELETE_STEPS = "Your CVs → type DELETE → Delete my account";
 
